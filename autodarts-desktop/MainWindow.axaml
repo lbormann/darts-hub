@@ -1,0 +1,70 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="720"
+        x:Class="autodarts_desktop.MainWindow"
+        Title="Autodarts-desktop"
+		Icon="/Assets/favicon.ico"
+		Width="480"
+		Height="720"
+		WindowStartupLocation="CenterScreen"
+		CanResize="False"
+		Closing="Window_Closing"
+		>
+
+	<Window.Background>
+		<ImageBrush Source="/Assets/background.png" Stretch="UniformToFill"/>
+	</Window.Background>
+
+	
+	
+	<ScrollViewer
+		x:Name="scroller"
+		VerticalScrollBarVisibility="Auto" 
+		HorizontalScrollBarVisibility="Hidden" 
+		VerticalAlignment="Top"
+        Margin="0,0,0,15"
+
+		>
+		
+		<Grid x:Name="GridMain">
+
+			<Button x:Name="Buttonabout" Margin="295,10,20,0" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Click="Buttonabout_Click">
+				<Image Width="24" Height="24" Source="/Assets/about.png"></Image>
+			</Button>
+			
+			<Label x:Name="SelectProfile" Content="Select profile:" HorizontalAlignment="Left" Margin="12,47,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.98,0.757" Foreground="White"/>
+
+			<ComboBox x:Name="Comboboxportal" HorizontalAlignment="Left" Margin="17,71,0,0" VerticalAlignment="Top" Width="360" SelectionChanged="Comboboxportal_SelectionChanged" SelectedIndex="0" />
+
+			<Button x:Name="Buttonstart" HorizontalAlignment="Right" Margin="290,70,28,0" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Click="Buttonstart_Click" RenderTransformOrigin="0.512,1.722">
+				<Image x:Name="darts_png" Width="32" Height="32" Source="/Assets/go.png" Stretch="Fill"/>
+			</Button>
+
+			<CheckBox x:Name="CheckBoxStartProfileOnProgramStart" Content="Autostart" HorizontalAlignment="Left" Margin="330,53,0,0" VerticalAlignment="Top" Foreground="White"/>
+
+			<Image x:Name="Waiting" Width="40" Margin="0,13,0,0" IsVisible="False" />
+
+			<TextBlock x:Name="WaitingText"
+                        Text="Please wait.."
+                        TextWrapping="Wrap"
+                        VerticalAlignment="Top"
+                        HorizontalAlignment="Center"
+                        MaxWidth="260"
+                        Margin="0,0,0,0"
+                        FontSize="12"
+                        Background="Black"
+                        Foreground="Orange"
+						PointerPressed="WaitingText_PointerPressed"
+						IsVisible="False"/>
+
+		</Grid>
+
+	</ScrollViewer>
+
+
+
+</Window>
+
+
