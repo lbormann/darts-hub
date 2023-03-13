@@ -1,5 +1,11 @@
 # AUTODARTS-DESKTOP
 
+IMPORTANT!!
+
+Use https://github.com/Semtexmagix/autodarts-desktop until this repository is ready for cross-platform!
+
+
+
 Autodarts-desktop manages several extension-tools for https://autodarts.io.
 It automatically handles download, setup, use updates to recent versions.
  - You can start tools like caller or extern to transfer thrown darts to other web-dart-platforms.
