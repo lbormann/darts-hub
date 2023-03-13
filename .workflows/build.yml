@@ -198,7 +198,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         #if: startsWith(github.ref, 'refs/tags/')
         with:
-          draft: false
+          draft: true
           tag_name: v${{ env.VERSION }}
           generate_release_notes: true
           files: |
