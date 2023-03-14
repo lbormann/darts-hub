@@ -14,8 +14,6 @@ using System.Net;
 using MessageBox.Avalonia;
 using MessageBox.Avalonia.DTO;
 using MessageBox.Avalonia.Enums;
-using Avalonia.Threading;
-using System.Threading.Tasks;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -82,8 +80,7 @@ namespace autodarts_desktop
                 Updater.ReleaseDownloadStarted += Updater_ReleaseDownloadStarted;
                 Updater.ReleaseDownloadFailed += Updater_ReleaseDownloadFailed;
                 Updater.ReleaseDownloadProgressed += Updater_ReleaseDownloadProgressed;
-                // TODO
-                //Updater.CheckNewVersion();
+                Updater.CheckNewVersion();
             }
             catch (ConfigurationException ex)
             {
@@ -95,9 +92,6 @@ namespace autodarts_desktop
                     ContentMessage = "$Configuration - file '{ex.File}' not readable.You can fix it by yourself or let it go to hell and I recreate it for you.Do you want me to reset it ? (All of your settings will be lost)"
                 }).Show();
                 result.Wait();
-
-                //var result = ShowDialog("Configuration Error", "ok", this);
-                //result.Wait();
 
                 if (result.Result == ButtonResult.Yes)
                 {
@@ -126,10 +120,10 @@ namespace autodarts_desktop
             RunSelectedProfile();
         }
 
-        private async void Buttonabout_Click(object sender, RoutedEventArgs e)
+        private void Buttonabout_Click(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Minimized;
-            await new About().ShowDialog(this);
+            new About().ShowDialog(this).Wait();
             WindowState = WindowState.Normal;
         }
 

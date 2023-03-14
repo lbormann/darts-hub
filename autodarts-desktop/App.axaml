@@ -4,7 +4,6 @@
 	
     <Application.Styles>
         <FluentTheme Mode="Dark"/>
-		<StyleInclude Source="avares://autodarts-desktop/Icons.axaml" />
     </Application.Styles>
 
 </Application>
