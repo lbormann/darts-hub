@@ -4,6 +4,33 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="autodarts_desktop.SettingsWindow"
-        Title="Settings">
-  Welcome to Avalonia!
+        Title="Autodarts-desktop"
+		Icon="/Assets/favicon.ico"
+		Width="480"
+		Height="720"
+		MinWidth="480"
+		MaxHeight="720"
+		WindowStartupLocation="CenterScreen"
+		CanResize="False"
+		Closing="Window_Closing"
+		ExtendClientAreaToDecorationsHint="True"
+		ExtendClientAreaChromeHints="Default"
+		>
+	
+	<Window.Background>
+		<ImageBrush Opacity="0.4" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background_4.png" />
+	</Window.Background>
+
+	<ScrollViewer
+		x:Name="scroller"
+		VerticalScrollBarVisibility="Auto"
+		HorizontalScrollBarVisibility="Hidden"
+		VerticalAlignment="Top"
+        Margin="0,0,0,15">
+
+		<Grid x:Name="GridMain">
+		</Grid>
+	</ScrollViewer>
+
+
 </Window>

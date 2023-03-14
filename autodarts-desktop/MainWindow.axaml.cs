@@ -7,7 +7,6 @@ using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
-using Avalonia.Styling;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,9 +16,10 @@ using MessageBox.Avalonia.DTO;
 using MessageBox.Avalonia.Enums;
 using Avalonia.Threading;
 using System.Threading.Tasks;
-using System.Net.WebSockets;
 using Avalonia.Media;
-using System.Runtime.InteropServices;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
+
 
 namespace autodarts_desktop
 {
@@ -38,36 +38,10 @@ namespace autodarts_desktop
 
 
 
-        private Task ShowDialog(string title,
-                                string message,
-                                Window parentWindow,
-                                Icon icon = MessageBox.Avalonia.Enums.Icon.Info,
-                                DispatcherPriority priority = DispatcherPriority.Normal)
-        {
-            return Dispatcher.UIThread.InvokeAsync(async () =>
-            {
-                var messageBoxParams = new MessageBoxStandardParams()
-                {
-                    CanResize = false,
-                    ContentTitle = title,
-                    ContentMessage = message,
-                    Icon = icon,
-                    ButtonDefinitions = ButtonEnum.Ok,
-                    WindowStartupLocation = WindowStartupLocation.CenterScreen
-                    //Style = GetDialogStyle()
-                };
-                var messageBoxStandardWindow = MessageBoxManager.GetMessageBoxStandardWindow(messageBoxParams);
-                await messageBoxStandardWindow.Show(parentWindow);
 
-            }, priority);
-        }
 
-        //private static Style GetDialogStyle()
-        //{
-        //    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) return Style.UbuntuLinux;
-        //    return RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? Style.MacOs : Style.Windows;
-        //}
 
+        // METHODES
 
         public MainWindow()
         {
@@ -108,32 +82,34 @@ namespace autodarts_desktop
                 Updater.ReleaseDownloadStarted += Updater_ReleaseDownloadStarted;
                 Updater.ReleaseDownloadFailed += Updater_ReleaseDownloadFailed;
                 Updater.ReleaseDownloadProgressed += Updater_ReleaseDownloadProgressed;
-                Updater.CheckNewVersion();
+                // TODO
+                //Updater.CheckNewVersion();
             }
             catch (ConfigurationException ex)
             {
-                var msBoxStandardWindow = MessageBoxManager
+                var result = MessageBoxManager
                 .GetMessageBoxStandardWindow(new MessageBoxStandardParams
                 {
                     ButtonDefinitions = ButtonEnum.YesNo,
                     ContentTitle = "Configuration Error",
                     ContentMessage = "$Configuration - file '{ex.File}' not readable.You can fix it by yourself or let it go to hell and I recreate it for you.Do you want me to reset it ? (All of your settings will be lost)"
-                });
+                }).Show();
+                result.Wait();
 
-                // TODO
-                //msBoxStandardWindow.ShowDialog(this)
-                
-                //if (await ShowDialog("Configuration Error", "ok", this) == ButtonResult.Yes)
-                //{
-                //    try
-                //    {
-                //        profileManager.DeleteConfigurationFile(ex.File);
-                //    }
-                //    catch (Exception e)
-                //    {
-                //        MessageBoxManager.GetMessageBoxStandardWindow("Error", "Configuration-file-deletion failed. Please delete it by yourself. " + e.Message).Show();
-                //    }
-                //}
+                //var result = ShowDialog("Configuration Error", "ok", this);
+                //result.Wait();
+
+                if (result.Result == ButtonResult.Yes)
+                {
+                    try
+                    {
+                        profileManager.DeleteConfigurationFile(ex.File);
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBoxManager.GetMessageBoxStandardWindow("Error", "Configuration-file-deletion failed. Please delete it by yourself. " + e.Message).Show();
+                    }
+                }
                 MessageBoxManager.GetMessageBoxStandardWindow("Restart", "Please restart the application.").Show();
                 Environment.Exit(1);
             }
@@ -150,12 +126,11 @@ namespace autodarts_desktop
             RunSelectedProfile();
         }
 
-        private void Buttonabout_Click(object sender, RoutedEventArgs e)
+        private async void Buttonabout_Click(object sender, RoutedEventArgs e)
         {
-            //IsVisible = false;
-            // TODO
-            new About().ShowDialog(this);
-            IsVisible = true;
+            WindowState = WindowState.Minimized;
+            await new About().ShowDialog(this);
+            WindowState = WindowState.Normal;
         }
 
         private void Comboboxportal_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -190,18 +165,18 @@ namespace autodarts_desktop
 
 
 
-        private async void Updater_NewReleaseFound(object? sender, ReleaseEventArgs e)
+        private void Updater_NewReleaseFound(object? sender, ReleaseEventArgs e)
         {
-            var questionBox = MessageBoxManager
+            var result = MessageBoxManager
             .GetMessageBoxStandardWindow(new MessageBoxStandardParams
             {
                 ButtonDefinitions = ButtonEnum.YesNo,
                 ContentTitle = "New Version",
                 ContentMessage = $"New Version '{e.Version}' available! Do you want to update?"
-            });
+            }).Show();
+            result.Wait();
 
-            // TODO
-            if (await questionBox.Show(this) == ButtonResult.Yes)
+            if (result.Result == ButtonResult.Yes)
             {
                 try
                 {
@@ -209,8 +184,7 @@ namespace autodarts_desktop
                 }
                 catch (Exception ex)
                 {   
-                    // TODO
-                    await MessageBoxManager.GetMessageBoxStandardWindow("Error", "Update to new version failed: " + ex.Message).Show();
+                    MessageBoxManager.GetMessageBoxStandardWindow("Error", "Update to new version failed: " + ex.Message).Show();
                 }
             }
         }
@@ -277,9 +251,7 @@ namespace autodarts_desktop
 
         private void ProfileManager_AppConfigurationRequired(object? sender, AppEventArgs e)
         {
-            MessageBoxManager.GetMessageBoxStandardWindow("Configuration Required", e.Message).Show();
             new SettingsWindow(profileManager, e.App).ShowDialog(this);
-            RunSelectedProfile();
         }
 
 
@@ -324,8 +296,6 @@ namespace autodarts_desktop
 
         private void RenderProfiles()
         {
-            // TODO
-            //Comboboxportal.Items.Clear();
             ComboBoxItem lastItemTaggedForStart = null;
             var profiles = profileManager.GetProfiles();
             if (profiles.Count == 0)
@@ -361,8 +331,10 @@ namespace autodarts_desktop
             var startMargin = Comboboxportal.Margin;
             int top = 30;
             int counter = 1;
+            var assets = AvaloniaLocator.Current.GetService<IAssetLoader>();
+            
 
-            foreach (var app in selectedProfile.Apps.OrderByDescending(a => a.Value.TaggedForStart))
+            foreach (var app in selectedProfile.Apps.OrderByDescending(a => a.Value.TaggedForStart).OrderByDescending(a => a.Value.IsRequired))
             {
                 var marginTop = counter * top + 10;
                 selectedProfile.Apps.TryGetValue(app.Key, out ProfileState? appProfile);
@@ -370,44 +342,40 @@ namespace autodarts_desktop
 
                 var imageConfiguration = new Image();
                 imageConfiguration.HorizontalAlignment = HorizontalAlignment.Left;
-                imageConfiguration.Width = 18;
-                imageConfiguration.Height = 18;
-                // TODO
-                //imageConfiguration.Source = "/Assets/configuration.png";
+                imageConfiguration.Width = 24;
+                imageConfiguration.Height = 24;
+                imageConfiguration.Source = new Bitmap(assets.Open(new Uri("avares://autodarts-desktop/Assets/configuration.png")));
 
                 var buttonConfiguration = new Button();
                 buttonConfiguration.Margin = new Thickness(nextMargin.Left, nextMargin.Top + 5, nextMargin.Right, nextMargin.Bottom);
-                //buttonConfiguration.Style = (Style)GridMain.Resources["BtnStyle"];
                 buttonConfiguration.Content = imageConfiguration;
                 buttonConfiguration.HorizontalAlignment = HorizontalAlignment.Left;
                 buttonConfiguration.VerticalAlignment = VerticalAlignment.Top;
                 buttonConfiguration.VerticalContentAlignment = VerticalAlignment.Center;
                 buttonConfiguration.FontSize = fontSize;
-                //buttonConfiguration.Background = Brushes.Transparent;
+                buttonConfiguration.Background = Brushes.Transparent;
                 buttonConfiguration.BorderThickness = new Thickness(0);
                 buttonConfiguration.IsEnabled = appProfile.App.IsConfigurable() || appProfile.App.IsInstallable();
 
                 buttonConfiguration.Click += async (s, e) =>
                 {
-                    IsVisible = false;
-                    // TODO
+                    WindowState = WindowState.Minimized;
                     await new SettingsWindow(profileManager, app.Value.App).ShowDialog(this);
                     scroller.ScrollToHome();
-                    IsVisible = true;
+                    WindowState = WindowState.Normal;
                 };
                 GridMain.Children.Add(buttonConfiguration);
                 selectedProfileElements.Add(buttonConfiguration);
 
                 var checkBoxTagger = new CheckBox();
-                checkBoxTagger.Margin = new Thickness(nextMargin.Left + 25, nextMargin.Top + 3, nextMargin.Right, nextMargin.Bottom);
+                checkBoxTagger.Margin = new Thickness(nextMargin.Left + 39, nextMargin.Top + 6, nextMargin.Right, nextMargin.Bottom);
                 checkBoxTagger.Content = appProfile.App.Name;
                 checkBoxTagger.HorizontalAlignment = HorizontalAlignment.Left;
                 checkBoxTagger.VerticalAlignment = VerticalAlignment.Top;
                 checkBoxTagger.VerticalContentAlignment = VerticalAlignment.Center;
                 checkBoxTagger.DataContext = appProfile;
                 checkBoxTagger.FontSize = fontSize;
-
-                //checkBoxTagger.SetBinding(CheckBox.IsCheckedProperty, new Binding("TaggedForStart"));
+                checkBoxTagger.Bind(CheckBox.IsCheckedProperty, new Binding("TaggedForStart"));
                 checkBoxTagger.IsEnabled = !appProfile.IsRequired;
                 checkBoxTagger.Foreground = appProfile.TaggedForStart ? Brushes.White : Brushes.Gray;
                 checkBoxTagger.FontWeight = appProfile.TaggedForStart ? FontWeight.Bold : FontWeight.Normal;
@@ -421,8 +389,15 @@ namespace autodarts_desktop
                     checkBoxTagger.Foreground = Brushes.Gray;
                     checkBoxTagger.FontWeight = FontWeight.Normal;
                 };
+                    
                 // TODO
-                //if (!String.IsNullOrEmpty(appProfile.App.DescriptionShort)) checkBoxTagger.ToolTip = appProfile.App.DescriptionShort;
+                //if (!String.IsNullOrEmpty(appProfile.App.DescriptionShort))
+                //{
+                //    var tt = new ToolTip();
+                //    tt.Content = appProfile.App.DescriptionShort;
+                //    tt.DataContext = checkBoxTagger;
+                //}
+                
                 GridMain.Children.Add(checkBoxTagger);
                 selectedProfileElements.Add(checkBoxTagger);
 

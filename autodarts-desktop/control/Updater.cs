@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using autodarts_desktop.model;
 
 namespace autodarts_desktop.control
@@ -18,7 +19,7 @@ namespace autodarts_desktop.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v1.2.22";
+        public static readonly string version = "v1.0.0";
 
         
         public static event EventHandler<ReleaseEventArgs>? NewReleaseFound;
@@ -28,9 +29,8 @@ namespace autodarts_desktop.control
         public static event EventHandler<DownloadProgressChangedEventArgs>? ReleaseDownloadProgressed;
 
         private static string latestRepoVersion = string.Empty;
-        private const string appSourceUrl = "https://github.com/Semtexmagix/autodarts-desktop/releases/download";
-        private const string appSourceUrlLatest = "https://api.github.com/repos/Semtexmagix/autodarts-desktop/releases/latest";
-        private const string appSourceFile = "autodarts-desktop.zip";
+        private const string appSourceUrl = "https://github.com/lbormann/autodarts-desktop/releases/download";
+        private const string appSourceUrlLatest = "https://github.com/lbormann/autodarts-desktop/releases/latest";
         private const string appDestination = "updates";
         private const string requestUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36";
 
@@ -41,6 +41,7 @@ namespace autodarts_desktop.control
 
 
         // METHODS
+
 
         public static async void CheckNewVersion()
         {
@@ -73,12 +74,16 @@ namespace autodarts_desktop.control
         {
             if (!string.IsNullOrEmpty(latestRepoVersion))
             {
-                destinationPath = Helper.GetAppBasePath();
-                downloadPath = Path.Join(destinationPath, appDestination, appSourceFile);
-                downloadDirectory = Path.GetDirectoryName(downloadPath);
 
                 try
                 {
+                    var appSourceFile = GetAppFileByOS();
+                    if (String.IsNullOrEmpty(appSourceFile)) throw new Exception("There are no releases for your specific OS.");
+
+                    destinationPath = Helper.GetAppBasePath();
+                    downloadPath = Path.Join(destinationPath, appDestination, appSourceFile);
+                    downloadDirectory = Path.GetDirectoryName(downloadPath);
+
                     string downloadUrl = appSourceUrl + "/" + latestRepoVersion + "/" + appSourceFile;
 
                     // Removes existing download-directory and creates a new one
@@ -102,6 +107,133 @@ namespace autodarts_desktop.control
             }
         }
 
+
+
+        private static string GetUpdateFileByOs()
+        {
+            string updateFile = String.Empty;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+                {
+                    updateFile = "update.sh";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
+                {
+                    updateFile = "update.sh";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    updateFile = "update.sh";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm)
+                {
+                    updateFile = "update.sh";
+                }
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+                {
+                    updateFile = "update.bat";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
+                {
+                    updateFile = "update.bat";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    updateFile = "update.bat";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm)
+                {
+                    updateFile = "update.bat";
+                }
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+                {
+                    updateFile = "update.sh";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
+                {
+                    updateFile = "update.sh";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    updateFile = "update.sh";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm)
+                {
+                    updateFile = "update.sh";
+                }
+            }
+            return updateFile;
+        }
+
+        private static string GetAppFileByOS()
+        {
+            string appFile = String.Empty;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+                {
+                    appFile = "autodarts-desktop-linux-X64.zip";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
+                {
+
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    appFile = "autodarts-desktop-linux-ARM64.zip";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm)
+                {
+                    appFile = "autodarts-desktop-linux-ARM.zip";
+                }
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+                {
+                    appFile = "autodarts-desktop-windows-X64.zip";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
+                {
+                    appFile = "autodarts-desktop-windows-X86.zip";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    appFile = "autodarts-desktop-windows-ARM64.zip";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm)
+                {
+                    appFile = "autodarts-desktop-windows-ARM.zip";
+                }
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+                {
+                    appFile = "autodarts-desktop-macOS-X64.zip";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
+                {
+
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    appFile = "autodarts-desktop-macOS-ARM64.zip";
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm)
+                {
+
+                }
+            }
+            return appFile;
+        }
 
 
         private static void WebClient_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
@@ -130,8 +262,11 @@ namespace autodarts_desktop.control
                 {
                     try
                     {
+                        var updateFile = GetUpdateFileByOs();
+                        if (String.IsNullOrEmpty(updateFile)) throw new Exception("There is no update-script for your specific OS.");
+
                         process.StartInfo.WorkingDirectory = destinationPath;
-                        process.StartInfo.FileName = "update.bat";
+                        process.StartInfo.FileName = updateFile;
                         process.StartInfo.RedirectStandardOutput = false;
                         process.StartInfo.RedirectStandardError = false;
                         process.StartInfo.UseShellExecute = true;
@@ -139,7 +274,7 @@ namespace autodarts_desktop.control
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"An error occurred trying to start \"update.bat\":\n{ex.Message}");
+                        Console.WriteLine($"An error occurred trying to start \"update-script\":\n{ex.Message}");
                         throw;
                     }
                 }

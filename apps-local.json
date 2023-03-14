@@ -1,0 +1,25 @@
+[
+  {
+    "Name": "custom",
+    "DescriptionShort": "Starts a program on your file-system",
+    "StartWindowState": 2,
+    "Configuration": {
+      "Prefix": "",
+      "Delimitter": "",
+      "Arguments": [
+        {
+          "Name": "path-to-executable",
+          "Required": true,
+          "Type": "file",
+          "NameHuman": "path-to-executable"
+        },
+        {
+          "Name": "arguments",
+          "Type": "string",
+          "NameHuman": "arguments"
+        }
+      ],
+      "IsRaw": true
+    }
+  }
+]

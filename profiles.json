@@ -1,0 +1,85 @@
+[
+  {
+    "Name": "autodarts-caller",
+    "Apps": {
+      "autodarts-client": {},
+      "autodarts.io": {},
+      "autodarts-caller": {
+        "IsRequired": true,
+        "TaggedForStart": true
+      },
+      "autodarts-wled": {},
+      "custom": {}
+    }
+  },
+  {
+    "Name": "autodarts-extern: lidarts.org",
+    "Apps": {
+      "autodarts-client": {},
+      "autodarts.io": {},
+      "autodarts-caller": {
+        "IsRequired": true,
+        "TaggedForStart": true
+      },
+      "autodarts-wled": {},
+      "autodarts-extern": {
+        "IsRequired": true,
+        "TaggedForStart": true,
+        "RuntimeArguments": {
+          "extern_platform": "lidarts"
+        }
+      },
+      "virtual-darts-zoom": {},
+      "droid-cam": {},
+      "epoc-cam": {},
+      "custom": {}
+    }
+  },
+  {
+    "Name": "autodarts-extern: nakka.com/n01/online",
+    "Apps": {
+      "autodarts-client": {},
+      "autodarts.io": {},
+      "autodarts-caller": {
+        "IsRequired": true,
+        "TaggedForStart": true
+      },
+      "autodarts-wled": {},
+      "autodarts-extern": {
+        "IsRequired": true,
+        "TaggedForStart": true,
+        "RuntimeArguments": {
+          "extern_platform": "nakka"
+        }
+      },
+      "virtual-darts-zoom": {},
+      "droid-cam": {},
+      "epoc-cam": {},
+      "custom": {}
+    }
+  },
+  {
+    "Name": "autodarts-extern: dartboards.online",
+    "Apps": {
+      "autodarts-client": {},
+      "autodarts.io": {},
+      "autodarts-caller": {
+        "IsRequired": true,
+        "TaggedForStart": true
+      },
+      "autodarts-wled": {},
+      "autodarts-extern": {
+        "IsRequired": true,
+        "TaggedForStart": true,
+        "RuntimeArguments": {
+          "extern_platform": "dartboards"
+        }
+      },
+      "virtual-darts-zoom": {},
+      "dartboards-client": {},
+      "droid-cam": {},
+      "epoc-cam": {},
+      "custom": {}
+    }
+  }
+]

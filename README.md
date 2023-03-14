@@ -1,8 +1,9 @@
 # AUTODARTS-DESKTOP
 
-IMPORTANT!!
 
-Use https://github.com/Semtexmagix/autodarts-desktop until this repository is ready for cross-platform!
+## IMPORTANT!!
+
+USE! https://github.com/Semtexmagix/autodarts-desktop until this repository is ready for cross-platform!
 
 
 Autodarts-desktop manages several extension-tools for https://autodarts.io.
@@ -10,54 +11,27 @@ It automatically handles download, setup, use updates to recent versions.
  - You can start tools like caller or extern to transfer thrown darts to other web-dart-platforms.
  - The app-administration is simplified by configuration windows - no more console/batch-file handling. =)
 
-## Presentation
-![alt text](https://github.com/Semtexmagix/autodarts-desktop/blob/master/Main.png?raw=true)
 
 
-## Examples
-autodarts-caller (Setup-page):
- - calls your thrown score/ possible checkouts accordingly to the state of an https://autodarts.io match.
- ![alt text](https://github.com/Semtexmagix/autodarts-desktop/blob/master/SetupCaller.png?raw=true)
-  - for more info about autodarts-caller visit https://github.com/lbormann/autodarts-caller
-
-Autodarts-extern (Setup-page):
- - automates multiple dart-web-platforms accordingly to the state of an https://autodarts.io match.
- ![alt text](https://github.com/Semtexmagix/autodarts-desktop/blob/master/SetupExtern.png?raw=true)
-  - for more info about autodarts-extern visit https://github.com/lbormann/autodarts-extern
-
-You can also use other assistant-programs:
- - dartboards-client (for webcam support with dartboards.online)
- - visual-darts-zoom (for an image zoom onto thrown darts)
- ![alt text](https://github.com/Semtexmagix/autodarts-desktop/blob/master/vdz.png?raw=true)
-  - for more info about visual-darts-zoom visit https://lehmann-bo.de/
-  - for more info about dartboards-client visit https://dartboards.online/
+## COMPATIBILITY
 
 
-Moreover you can start custom-apps, e.g. OBS (Open Brodcast System) - to compose a customized virtual-camera:
+Autodarts-desktop supports all major platforms:
 
-![alt text](https://github.com/Semtexmagix/autodarts-desktop/blob/master/OBS4.PNG?raw=true)
-Since autodarts-client version 0.18.0-rc1 it's possible to stream your board cams!
+| OS | X64 | X86 | ARM | ARM64
+| ------------- | ------------- | ------------- | ------------- | ------------- | 
+| Windows | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Linux | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| macOS | :heavy_check_mark: |  | :heavy_check_mark: | :heavy_check_mark: |
 
-
-![alt text](https://github.com/Semtexmagix/autodarts-desktop/blob/master/OBS2.png?raw=true)
-With OBS it is possible to display the autodarts-match in the virtual camera.
-
-
-![alt text](https://github.com/Semtexmagix/autodarts-desktop/blob/master/OBS1.png?raw=true)
-It is also possible, to integrate a player camera into the view.
+For more information, checkout: https://docs.avaloniaui.net/
 
 
-![alt text](https://github.com/Semtexmagix/autodarts-desktop/blob/master/OBS3.png?raw=true)
-or .. a full screen mode for the board.
-
-This can be realized by OBS scenes: The scenes can be switched during the game or via hotkeys.
-
-Hint: If you start OBS by "custom-app function", use "--startvirtualcam --disable-updater --minimize-to-tray" for start-arguments! OBS will start in optimal way. 
 
 
 ## BUGS
 
-It may be buggy. You can give me feedback in Discord (Autodarts.io) ---> Reepa86
+It may be buggy. You can give me feedback in Discord (Autodarts.io) > wusaaa
 
 
 ## TODOs
@@ -94,4 +68,3 @@ It may be buggy. You can give me feedback in Discord (Autodarts.io) ---> Reepa86
 
 ## LAST WORDS
 Thanks to Timo for awesome https://autodarts.io.
-Thanks to Wusaaa for the caller and the extern tools and also for the many help =D 

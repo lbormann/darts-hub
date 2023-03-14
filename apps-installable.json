@@ -1,0 +1,32 @@
+[
+  {
+    "Executable": "dartboardsonlineclient.exe",
+    "DefaultPathExecutable": "C:\\Users\\Luca\\AppData\\Local\\Programs\\dartboardsonlineclient",
+    "StartsAfterInstallation": true,
+    "DownloadUrl": "https://dartboards.online/dboclient_0.8.6.exe",
+    "Name": "dartboards-client",
+    "HelpUrl": "https://dartboards.online/client",
+    "DescriptionShort": "webcam connection client for dartboards.online",
+    "StartWindowState": 2
+  },
+  {
+    "Executable": "DroidCamApp.exe",
+    "DefaultPathExecutable": "C:\\Program Files (x86)\\DroidCam",
+    "RunAsAdminInstall": true,
+    "DownloadUrl": "https://github.com/dev47apps/windows-releases/releases/download/win-6.5.2/DroidCam.Setup.6.5.2.exe",
+    "Name": "droid-cam",
+    "HelpUrl": "https://www.dev47apps.com",
+    "DescriptionShort": "uses your android phone/tablet as local camera",
+    "StartWindowState": 2
+  },
+  {
+    "Executable": "EpocCamService.exe",
+    "DefaultPathExecutable": "C:\\Program Files (x86)\\Elgato\\EpocCam",
+    "IsService": true,
+    "DownloadUrl": "https://edge.elgato.com/egc/windows/epoccam/EpocCam_Installer64_3_4_0.exe",
+    "Name": "epoc-cam",
+    "HelpUrl": "https://www.elgato.com/de/epoccam",
+    "DescriptionShort": "uses your iOS phone/tablet as local camera",
+    "StartWindowState": 2
+  }
+]
