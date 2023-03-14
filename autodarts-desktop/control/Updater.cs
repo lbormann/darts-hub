@@ -19,7 +19,7 @@ namespace autodarts_desktop.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v1.0.0";
+        public static readonly string version = "v0.7.0";
 
         
         public static event EventHandler<ReleaseEventArgs>? NewReleaseFound;
@@ -37,6 +37,7 @@ namespace autodarts_desktop.control
         private static string destinationPath = String.Empty;
         private static string downloadPath = String.Empty;
         private static string downloadDirectory = String.Empty;
+
 
 
 
