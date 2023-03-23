@@ -242,6 +242,36 @@ namespace autodarts_desktop.control
             OnReleaseDownloadProgressed(e);
         }
 
+
+
+        private static void EnsureExecutablePermissions(string destinationPath, string updateFile)
+        {
+            var scriptPath = Path.Combine(destinationPath, updateFile);
+            if (updateFile.EndsWith(".sh"))
+            {
+                var chmodProcess = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "/bin/bash",
+                        Arguments = $"-c \"chmod +x {scriptPath}\"",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+
+                chmodProcess.Start();
+                chmodProcess.WaitForExit();
+
+                if (chmodProcess.ExitCode != 0)
+                {
+                    throw new Exception($"Failed to set executable permissions for {scriptPath}. Exit code: {chmodProcess.ExitCode}");
+                }
+            }
+        }
+
         private static void WebClient_DownloadCompleted(object? sender, AsyncCompletedEventArgs e)
         {
             try
@@ -265,6 +295,8 @@ namespace autodarts_desktop.control
                     {
                         var updateFile = GetUpdateFileByOs();
                         if (String.IsNullOrEmpty(updateFile)) throw new Exception("There is no update-script for your specific OS.");
+
+                        EnsureExecutablePermissions(destinationPath, updateFile);
 
                         process.StartInfo.WorkingDirectory = destinationPath;
                         process.StartInfo.FileName = updateFile;

@@ -1,9 +1,12 @@
 ﻿using autodarts_desktop.model;
+using Avalonia.Controls;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
+using static System.Net.WebRequestMethods;
 using File = System.IO.File;
 using Path = System.IO.Path;
 
@@ -312,11 +315,31 @@ namespace autodarts_desktop.control
 
         private void CreateDummyAppsInstallable()
         {
-            List<AppInstallable> apps = new();
+            // TODO define os urls
 
-            AppInstallable dartboardsClient =
+            // Define Download-Maps for Apps with os
+            var dartboardsClientDownloadMap = new DownloadMap();
+            dartboardsClientDownloadMap.WindowsX64 = "https://dartboards.online/dboclient_***VERSION***.exe";
+            var dartboardsClientDownloadUrl = dartboardsClientDownloadMap.GetDownloadUrlByOs("0.8.6");
+
+            var droidCamDownloadMap = new DownloadMap();
+            droidCamDownloadMap.WindowsX64 = "https://github.com/dev47apps/windows-releases/releases/download/win-***VERSION***/DroidCam.Setup.***VERSION***.exe";
+            var droidCamDownloadUrl = droidCamDownloadMap.GetDownloadUrlByOs("6.5.2");
+
+            var epocCamDownloadMap = new DownloadMap();
+            epocCamDownloadMap.WindowsX64 = "https://edge.elgato.com/egc/windows/epoccam/EpocCam_Installer64_***VERSION***.exe";
+            //epocCamDownloadMap.MacX64 = "https://edge.elgato.com/egc/macos/epoccam/EpocCam_Installer_***VERSION***.pkg";
+            var epocCamDownloadUrl = epocCamDownloadMap.GetDownloadUrlByOs("3_4_0");
+
+
+
+            List <AppInstallable> apps = new();
+
+            if(dartboardsClientDownloadUrl != null)
+            {
+                AppInstallable dartboardsClient =
                 new(
-                    downloadUrl: "https://dartboards.online/dboclient_0.8.6.exe",
+                    downloadUrl: dartboardsClientDownloadUrl,
                     name: "dartboards-client",
                     helpUrl: "https://dartboards.online/client",
                     descriptionShort: "webcam connection client for dartboards.online",
@@ -324,10 +347,14 @@ namespace autodarts_desktop.control
                     defaultPathExecutable: Path.Join(Helper.GetUserDirectoryPath(), @"AppData\Local\Programs\dartboardsonlineclient"),
                     startsAfterInstallation: true
                     );
+                apps.Add(dartboardsClient);
+            }
 
-            AppInstallable droidCam =
+            if (droidCamDownloadUrl != null)
+            {
+                AppInstallable droidCam =
                 new(
-                    downloadUrl: "https://github.com/dev47apps/windows-releases/releases/download/win-6.5.2/DroidCam.Setup.6.5.2.exe",
+                    downloadUrl: droidCamDownloadUrl,
                     name: "droid-cam",
                     helpUrl: "https://www.dev47apps.com",
                     descriptionShort: "uses your android phone/tablet as local camera",
@@ -336,10 +363,14 @@ namespace autodarts_desktop.control
                     runAsAdminInstall: true,
                     startsAfterInstallation: false
                     );
+                apps.Add(droidCam);
+            }
 
-            AppInstallable epocCam =
+            if (epocCamDownloadUrl != null)
+            {
+                AppInstallable epocCam =
                 new(
-                    downloadUrl: "https://edge.elgato.com/egc/windows/epoccam/EpocCam_Installer64_3_4_0.exe",
+                    downloadUrl: epocCamDownloadUrl,
                     name: "epoc-cam",
                     helpUrl: "https://www.elgato.com/de/epoccam",
                     descriptionShort: "uses your iOS phone/tablet as local camera",
@@ -350,10 +381,8 @@ namespace autodarts_desktop.control
                     startsAfterInstallation: false,
                     isService: true
                     );
-
-            apps.Add(dartboardsClient);
-            apps.Add(droidCam);
-            apps.Add(epocCam);
+                apps.Add(epocCam);
+            }
 
             AppsInstallable.AddRange(apps);
             AppsAll.AddRange(apps);
@@ -368,26 +397,64 @@ namespace autodarts_desktop.control
 
         private void CreateDummyAppsDownloadable()
         {
+            // Define Download-Maps for Apps with os
+            var autodartsClientDownloadMap = new DownloadMap();
+            autodartsClientDownloadMap.MacX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-amd64.opencv4.7.0.tar.gz";
+            autodartsClientDownloadMap.MacArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-arm64.opencv4.7.0.tar.gz";
+            autodartsClientDownloadMap.LinuxX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-amd64.tar.gz";
+            autodartsClientDownloadMap.LinuxArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-arm64.tar.gz";
+            autodartsClientDownloadMap.LinuxArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-armv7l.tar.gz";
+            autodartsClientDownloadMap.WindowsX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.windows-amd64.zip";
+            var autodartsClientDownloadUrl = autodartsClientDownloadMap.GetDownloadUrlByOs("0.18.0");
+
+            var autodartsCallerDownloadMap = new DownloadMap();
+            autodartsCallerDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller.exe";
+            autodartsCallerDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller";
+            autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller-mac";
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.1.3");
+
+            var autodartsExternDownloadMap = new DownloadMap();
+            autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern.exe";
+            autodartsExternDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern";
+            autodartsExternDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern-mac";
+            var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("v1.5.3");
+
+            var autodartsWledDownloadMap = new DownloadMap();
+            autodartsWledDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-wled/releases/download/***VERSION***/autodarts-wled.exe";
+            autodartsWledDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-wled/releases/download/***VERSION***/autodarts-wled";
+            autodartsWledDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-wled/releases/download/***VERSION***/autodarts-wled-mac";
+            var autodartsWledDownloadUrl = autodartsWledDownloadMap.GetDownloadUrlByOs("v1.4.6");
+
+            var virtualDartsZoomDownloadMap = new DownloadMap();
+            virtualDartsZoomDownloadMap.WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip";
+            var virtualDartsZoomDownloadUrl = virtualDartsZoomDownloadMap.GetDownloadUrlByOs();
+
             List<AppDownloadable> apps = new();
 
-            AppDownloadable autodarts =
+            if (!String.IsNullOrEmpty(autodartsClientDownloadUrl))
+            {
+                AppDownloadable autodarts =
                 new(
-                    downloadUrl: "https://github.com/autodarts/releases/releases/download/v0.18.0/autodarts0.18.0.windows-amd64.zip",
+                    downloadUrl: autodartsClientDownloadUrl,
                     name: "autodarts-client",
                     helpUrl: "https://docs.autodarts.io/",
                     descriptionShort: "Client for dart recognition with cameras"
                     );
+                apps.Add(autodarts);
+            }
 
-            AppDownloadable autodartsCaller =
-                new(
-                    downloadUrl: "https://github.com/lbormann/autodarts-caller/releases/download/v2.0.14/autodarts-caller.exe",
-                    name: "autodarts-caller",
-                    helpUrl: "https://github.com/lbormann/autodarts-caller",
-                    descriptionShort: "calls out thrown points",
-                    configuration: new(
-                        prefix: "-",
-                        delimitter: " ",
-                        arguments: new List<Argument> {
+            if (!String.IsNullOrEmpty(autodartsCallerDownloadUrl))
+            {
+                AppDownloadable autodartsCaller =
+                    new(
+                        downloadUrl: autodartsCallerDownloadUrl,
+                        name: "autodarts-caller",
+                        helpUrl: "https://github.com/lbormann/autodarts-caller",
+                        descriptionShort: "calls out thrown points",
+                        configuration: new(
+                            prefix: "-",
+                            delimitter: " ",
+                            arguments: new List<Argument> {
                             new(name: "U", type: "string", required: true, nameHuman: "autodarts-username", section: "Autodarts"),
                             new(name: "P", type: "password", required: true, nameHuman: "autodarts-password", section: "Autodarts"),
                             new(name: "B", type: "string", required: true, nameHuman: "autodarts-board-id", section: "Autodarts"),
@@ -410,12 +477,15 @@ namespace autodarts_desktop.control
                             new(name: "BAV", type: "float[0.0..1.0]", required: false, nameHuman: "background-audio-volume", section: "Calls"),
                             new(name: "HP", type: "int", required: false, nameHuman: "host-port", section: "Service"),
                             new(name: "DEB", type: "bool", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"})
-                        })
-                    );
+                            })
+                        );
+                apps.Add(autodartsCaller);
+            }
 
-            AppDownloadable autodartsExtern =
+            if (!String.IsNullOrEmpty(autodartsExternDownloadUrl)) {
+                AppDownloadable autodartsExtern =
                 new(
-                    downloadUrl: "https://github.com/lbormann/autodarts-extern/releases/download/v1.5.2/autodarts-extern.exe",
+                    downloadUrl: autodartsExternDownloadUrl,
                     name: "autodarts-extern",
                     helpUrl: "https://github.com/lbormann/autodarts-extern",
                     descriptionShort: "automates dart web platforms with autodarts",
@@ -441,10 +511,12 @@ namespace autodarts_desktop.control
                             new(name: "dartboards_skip_dart_modals", type: "bool", required: false, nameHuman: "Skip dart-modals", section: "Dartboards"),
                         })
                 );
+                apps.Add(autodartsExtern);
+            }
 
-
-
-            var autodartsWledArguments = new List<Argument> {
+            if (!String.IsNullOrEmpty(autodartsWledDownloadUrl))
+            {
+                var autodartsWledArguments = new List<Argument> {
                         new(name: "CON", type: "string", required: false, nameHuman: "Connection", section: "Service"),
                         new(name: "WEPS", type: "string", required: true, isMulti: true, nameHuman: "wled-endpoints", section: "WLED"),
                         new(name: "DU", type: "int[0..10]", required: false, nameHuman: "effects-duration", section: "WLED"),
@@ -459,45 +531,45 @@ namespace autodarts_desktop.control
                         new(name: "DEB", type: "bool", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
 
                     };
-            for (int i = 0; i <= 180; i++)
-            {
-                var score = i.ToString();
-                Argument scoreArgument = new(name: "S" + score, type: "string", required: false, isMulti: true, nameHuman: "score " + score, section: "WLED");
-                autodartsWledArguments.Add(scoreArgument);
-            }
-            for (int i = 1; i <= 12; i++)
-            {
-                var areaNumber = i.ToString();
-                Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "area-" + areaNumber, section: "WLED");
-                autodartsWledArguments.Add(areaArgument);
-            }
+                for (int i = 0; i <= 180; i++)
+                {
+                    var score = i.ToString();
+                    Argument scoreArgument = new(name: "S" + score, type: "string", required: false, isMulti: true, nameHuman: "score " + score, section: "WLED");
+                    autodartsWledArguments.Add(scoreArgument);
+                }
+                for (int i = 1; i <= 12; i++)
+                {
+                    var areaNumber = i.ToString();
+                    Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "area-" + areaNumber, section: "WLED");
+                    autodartsWledArguments.Add(areaArgument);
+                }
 
-            AppDownloadable autodartsWled =
-            new(
-                downloadUrl: "https://github.com/lbormann/autodarts-wled/releases/download/v1.4.5/autodarts-wled.exe",
-                name: "autodarts-wled",
-                helpUrl: "https://github.com/lbormann/autodarts-wled",
-                descriptionShort: "control wled installations",
-                configuration: new(
-                    prefix: "-",
-                    delimitter: " ",
-                    arguments: autodartsWledArguments)
-                );
-
-            AppDownloadable virtualDartsZoom =
+                AppDownloadable autodartsWled =
                 new(
-                    downloadUrl: "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip",
+                    downloadUrl: autodartsWledDownloadUrl,
+                    name: "autodarts-wled",
+                    helpUrl: "https://github.com/lbormann/autodarts-wled",
+                    descriptionShort: "control wled installations",
+                    configuration: new(
+                        prefix: "-",
+                        delimitter: " ",
+                        arguments: autodartsWledArguments)
+                    );
+                apps.Add(autodartsWled);
+            }
+
+            if (!String.IsNullOrEmpty(virtualDartsZoomDownloadUrl))
+            {
+                AppDownloadable virtualDartsZoom =
+                new(
+                    downloadUrl: virtualDartsZoomDownloadUrl,
                     name: "virtual-darts-zoom",
                     helpUrl: "https://lehmann-bo.de/?p=28",
                     descriptionShort: "zooms webcam image onto the thrown darts",
                     runAsAdmin: true
                     );
-
-            apps.Add(autodarts);
-            apps.Add(autodartsCaller);
-            apps.Add(autodartsExtern);
-            apps.Add(autodartsWled);
-            apps.Add(virtualDartsZoom);
+                apps.Add(virtualDartsZoom);
+            }
 
             AppsDownloadable.AddRange(apps);
             AppsAll.AddRange(apps);
@@ -507,6 +579,8 @@ namespace autodarts_desktop.control
 
         private void MigrateAppsDownloadable()
         {
+            // !!! DO NOT TOUCH THIS ANYMORE !!!!
+
             var autodartsCaller = AppsDownloadable.Single(a => a.Name == "autodarts-caller");
             if (autodartsCaller != null)
             {
@@ -938,69 +1012,230 @@ namespace autodarts_desktop.control
             }
 
 
+            // Add more migs..
 
+
+            // Go further here!
+            MigrateAppsDownloadableSinceCrossPlatform();
+        }
+
+        private void MigrateAppsDownloadableSinceCrossPlatform()
+        {
+            // Define Download-Maps for Apps with os
+            var autodartsClientDownloadMap = new DownloadMap();
+            autodartsClientDownloadMap.MacX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-amd64.opencv4.7.0.tar.gz";
+            autodartsClientDownloadMap.MacArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-arm64.opencv4.7.0.tar.gz";
+            autodartsClientDownloadMap.LinuxX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-amd64.tar.gz";
+            autodartsClientDownloadMap.LinuxArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-arm64.tar.gz";
+            autodartsClientDownloadMap.LinuxArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-armv7l.tar.gz";
+            autodartsClientDownloadMap.WindowsX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.windows-amd64.zip";
+            var autodartsClientDownloadUrl = autodartsClientDownloadMap.GetDownloadUrlByOs("0.18.0");
+
+            var autodartsCallerDownloadMap = new DownloadMap();
+            autodartsCallerDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller.exe";
+            autodartsCallerDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller";
+            autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller-mac";
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.1.3");
+
+            var autodartsExternDownloadMap = new DownloadMap();
+            autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern.exe";
+            autodartsExternDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern";
+            autodartsExternDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern-mac";
+            var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("v1.5.3");
+
+            var autodartsWledDownloadMap = new DownloadMap();
+            autodartsWledDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-wled/releases/download/***VERSION***/autodarts-wled.exe";
+            autodartsWledDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-wled/releases/download/***VERSION***/autodarts-wled";
+            autodartsWledDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-wled/releases/download/***VERSION***/autodarts-wled-mac";
+            var autodartsWledDownloadUrl = autodartsWledDownloadMap.GetDownloadUrlByOs("v1.4.6");
+
+            var virtualDartsZoomDownloadMap = new DownloadMap();
+            virtualDartsZoomDownloadMap.WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip";
+            var virtualDartsZoomDownloadUrl = virtualDartsZoomDownloadMap.GetDownloadUrlByOs();
+
+
+            // 1. Mig (Update download version)
+            var autodartsClient = AppsDownloadable.Find(a => a.Name == "autodarts-client");
+            if (autodartsClient != null)
+            {
+                if (autodartsClientDownloadUrl != null)
+                {
+                    autodartsClient.DownloadUrl = autodartsClientDownloadUrl;
+                }
+                else
+                {
+                    var autodartsClientIndex = AppsDownloadable.FindIndex(a => a.Name == "autodarts-client");
+                    if (autodartsClientIndex != -1)
+                    {
+                        AppsDownloadable.RemoveAt(autodartsClientIndex);
+                    }
+                }
+            }
+
+            var autodartsCaller = AppsDownloadable.Find(a => a.Name == "autodarts-caller");
+            if (autodartsCaller != null)
+            {
+                if (autodartsCallerDownloadUrl != null)
+                {
+                    autodartsCaller.DownloadUrl = autodartsCallerDownloadUrl;
+                }
+                else
+                {
+                    var autodartsCallerIndex = AppsDownloadable.FindIndex(a => a.Name == "autodarts-caller");
+                    if (autodartsCallerIndex != -1)
+                    {
+                        AppsDownloadable.RemoveAt(autodartsCallerIndex);
+                    }
+                }
+            }
+
+            var autodartsExtern = AppsDownloadable.Find(a => a.Name == "autodarts-extern");
+            if (autodartsExtern != null)
+            {
+                if (autodartsExternDownloadUrl != null)
+                {
+                    autodartsExtern.DownloadUrl = autodartsExternDownloadUrl;
+                }
+                else
+                {
+                    var autodartsExternIndex = AppsDownloadable.FindIndex(a => a.Name == "autodarts-extern");
+                    if (autodartsExternIndex != -1)
+                    {
+                        AppsDownloadable.RemoveAt(autodartsExternIndex);
+                    }
+                }
+            }
+
+            var autodartsWled = AppsDownloadable.Find(a => a.Name == "autodarts-wled");
+            if (autodartsWled != null)
+            {
+                if (autodartsWledDownloadUrl != null)
+                {
+                    autodartsWled.DownloadUrl = autodartsWledDownloadUrl;
+                }
+                else
+                {
+                    var autodartsWledIndex = AppsDownloadable.FindIndex(a => a.Name == "autodarts-wled");
+                    if (autodartsWledIndex != -1)
+                    {
+                        AppsDownloadable.RemoveAt(autodartsWledIndex);
+                    }
+                }
+            }
+
+            var virtualDartsZoom = AppsDownloadable.Find(a => a.Name == "virtual-darts-zoom");
+            if (virtualDartsZoom != null)
+            {
+                if (virtualDartsZoomDownloadUrl != null)
+                {
+                    virtualDartsZoom.DownloadUrl = virtualDartsZoomDownloadUrl;
+                }
+                else
+                {
+                    var virtualDartsZoomIndex = AppsDownloadable.FindIndex(a => a.Name == "virtual-darts-zoom");
+                    if (virtualDartsZoomIndex != -1)
+                    {
+                        AppsDownloadable.RemoveAt(virtualDartsZoomIndex);
+                    }
+                }
+            }
 
             // Add more migs..
         }
 
+
+
+
         private void CreateDummyProfiles()
         {
-            var p1Name = "autodarts-caller";
-            var p1Apps = new Dictionary<string, ProfileState> {
-                { "autodarts-client", new() },
-                { "autodarts.io", new() },
-                { "autodarts-caller", new (isRequired: true) },
-                { "autodarts-wled", new() },
-                { "custom", new() },
-            };
+            var autodartsClient = AppsDownloadable.Find(a => a.Name == "autodarts-client") != null;
+            var autodartsCaller = AppsDownloadable.Find(a => a.Name == "autodarts-caller") != null;
+            var autodartsExtern = AppsDownloadable.Find(a => a.Name == "autodarts-extern") != null;
+            var autodartsWled = AppsDownloadable.Find(a => a.Name == "autodarts-wled") != null;
+            var virtualDartsZoom = AppsDownloadable.Find(a => a.Name == "virtual-darts-zoom") != null;
+            var droidCam = AppsInstallable.Find(a => a.Name == "droid-cam") != null;
+            var epocCam = AppsInstallable.Find(a => a.Name == "epoc-cam") != null;
+            var dartboardsClient = AppsInstallable.Find(a => a.Name == "dartboards-client") != null;
+            var custom = AppsLocal.Find(a => a.Name == "custom") != null;
 
-            var p2Name = "autodarts-extern: lidarts.org";
-            var p2Args = new Dictionary<string, string> { { "extern_platform", "lidarts" } };
-            var p2Apps = new Dictionary<string, ProfileState> {
-                { "autodarts-client", new() },
-                { "autodarts.io", new() },
-                { "autodarts-caller", new(isRequired: true) },
-                { "autodarts-wled", new() },
-                { "autodarts-extern", new(isRequired: true, runtimeArguments: p2Args) },
-                { "virtual-darts-zoom", new() },
-                { "droid-cam", new() },
-                { "epoc-cam", new () },
-                { "custom", new() },
-            };
 
-            var p3Name = "autodarts-extern: nakka.com/n01/online";
-            var p3Args = new Dictionary<string, string> { { "extern_platform", "nakka" } };
-            var p3Apps = new Dictionary<string, ProfileState> {
-                { "autodarts-client", new() },
-                { "autodarts.io", new () },
-                { "autodarts-caller", new (isRequired: true) },
-                { "autodarts-wled", new() },
-                { "autodarts-extern", new (isRequired: true, runtimeArguments: p3Args) },
-                { "virtual-darts-zoom", new() },
-                { "droid-cam", new() },
-                { "epoc-cam", new () },
-                { "custom", new() },
-            };
+            if (autodartsCaller)
+            {
+                var p1Name = "autodarts-caller";
+                var p1Apps = new Dictionary<string, ProfileState>();
+                if (autodartsClient) p1Apps.Add("autodarts-client", new ProfileState());
+                p1Apps.Add("autodarts.io", new ProfileState());
+                if (autodartsCaller) p1Apps.Add("autodarts-caller", new ProfileState(true));
+                if (autodartsWled) p1Apps.Add("autodarts-wled", new ProfileState());
+                if (custom) p1Apps.Add("custom", new ProfileState());
+                Profiles.Add(new Profile(p1Name, p1Apps));
+            }
+            
+            if(autodartsCaller && autodartsExtern)
+            {
+                var p2Name = "autodarts-extern: lidarts.org";
+                var p2Args = new Dictionary<string, string> { { "extern_platform", "lidarts" } };
+                var p2Apps = new Dictionary<string, ProfileState>();
+                if (autodartsClient) p2Apps.Add("autodarts-client", new ProfileState());
+                p2Apps.Add("autodarts.io", new ProfileState());
+                if (autodartsCaller) p2Apps.Add("autodarts-caller", new ProfileState(true));
+                if (autodartsWled) p2Apps.Add("autodarts-wled", new ProfileState());
+                if (autodartsExtern) p2Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p2Args));
+                if (virtualDartsZoom) p2Apps.Add("virtual-darts-zoom", new ProfileState());
+                if (droidCam) p2Apps.Add("droid-cam", new ProfileState());
+                if (epocCam) p2Apps.Add("epoc-cam", new ProfileState());
+                if (custom) p2Apps.Add("custom", new ProfileState());
+                Profiles.Add(new Profile(p2Name, p2Apps));
+            }
 
-            var p4Name = "autodarts-extern: dartboards.online";
-            var p4Args = new Dictionary<string, string> { { "extern_platform", "dartboards" } };
-            var p4Apps = new Dictionary<string, ProfileState> {
-                { "autodarts-client", new() },
-                { "autodarts.io", new () },
-                { "autodarts-caller", new (isRequired: true) },
-                { "autodarts-wled", new() },
-                { "autodarts-extern", new (isRequired: true, runtimeArguments: p4Args) },
-                { "virtual-darts-zoom", new() },
-                { "dartboards-client", new() },
-                { "droid-cam", new() },
-                { "epoc-cam", new () },
-                { "custom", new() },
-            };
 
-            Profiles.Add(new Profile(p1Name, p1Apps));
-            Profiles.Add(new Profile(p2Name, p2Apps));
-            Profiles.Add(new Profile(p3Name, p3Apps));
-            Profiles.Add(new Profile(p4Name, p4Apps));
+            if (autodartsCaller && autodartsExtern)
+            {
+                var p3Name = "autodarts-extern: nakka.com/n01/online";
+                var p3Args = new Dictionary<string, string> { { "extern_platform", "nakka" } };
+                var p3Apps = new Dictionary<string, ProfileState>();
+                if (autodartsClient) p3Apps.Add("autodarts-client", new ProfileState());
+                p3Apps.Add("autodarts.io", new ProfileState());
+                if (autodartsCaller) p3Apps.Add("autodarts-caller", new ProfileState(true));
+                if (autodartsWled) p3Apps.Add("autodarts-wled", new ProfileState());
+                if (autodartsExtern) p3Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p3Args));
+                if (virtualDartsZoom) p3Apps.Add("virtual-darts-zoom", new ProfileState());
+                if (droidCam) p3Apps.Add("droid-cam", new ProfileState());
+                if (epocCam) p3Apps.Add("epoc-cam", new ProfileState());
+                if (custom) p3Apps.Add("custom", new ProfileState());
+                Profiles.Add(new Profile(p3Name, p3Apps));
+            }
+
+            if (autodartsCaller && autodartsExtern)
+            {
+                var p4Name = "autodarts-extern: dartboards.online";
+                var p4Args = new Dictionary<string, string> { { "extern_platform", "dartboards" } };
+                var p4Apps = new Dictionary<string, ProfileState>();
+                if (autodartsClient) p4Apps.Add("autodarts-client", new ProfileState());
+                p4Apps.Add("autodarts.io", new ProfileState());
+                if (autodartsCaller) p4Apps.Add("autodarts-caller", new ProfileState(true));
+                if (autodartsWled) p4Apps.Add("autodarts-wled", new ProfileState());
+                if (autodartsExtern) p4Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p4Args));
+                if (virtualDartsZoom) p4Apps.Add("virtual-darts-zoom", new ProfileState());
+                if (dartboardsClient) p4Apps.Add("dartboards-client", new ProfileState());
+                if (droidCam) p4Apps.Add("droid-cam", new ProfileState());
+                if (epocCam) p4Apps.Add("epoc-cam", new ProfileState());
+                if (custom) p4Apps.Add("custom", new ProfileState());
+                Profiles.Add(new Profile(p4Name, p4Apps));
+            }
+
+            if(autodartsClient)
+            {
+                var p5Name = "autodarts-client";
+                var p5Apps = new Dictionary<string, ProfileState>();
+                if (autodartsClient) p5Apps.Add("autodarts-client", new ProfileState(true));
+                p5Apps.Add("autodarts.io", new ProfileState());
+                if (virtualDartsZoom) p5Apps.Add("virtual-darts-zoom", new ProfileState());
+                if (droidCam) p5Apps.Add("droid-cam", new ProfileState());
+                if (epocCam) p5Apps.Add("epoc-cam", new ProfileState());
+                if (custom) p5Apps.Add("custom", new ProfileState());
+                Profiles.Add(new Profile(p5Name, p5Apps));
+            }
 
             SerializeProfiles(Profiles, profilesFile);
         }
@@ -1021,6 +1256,63 @@ namespace autodarts_desktop.control
                     p.Apps.Add("autodarts-wled", new());
                 }      
             }
+
+            var autodartsClient = AppsDownloadable.Find(a => a.Name == "autodarts-client") != null;
+            var autodartsCaller = AppsDownloadable.Find(a => a.Name == "autodarts-caller") != null;
+            var autodartsExtern = AppsDownloadable.Find(a => a.Name == "autodarts-extern") != null;
+            var autodartsWled = AppsDownloadable.Find(a => a.Name == "autodarts-wled") != null;
+            var virtualDartsZoom = AppsDownloadable.Find(a => a.Name == "virtual-darts-zoom") != null;
+            var droidCam = AppsInstallable.Find(a => a.Name == "droid-cam") != null;
+            var epocCam = AppsInstallable.Find(a => a.Name == "epoc-cam") != null;
+            var dartboardsClient = AppsInstallable.Find(a => a.Name == "dartboards-client") != null;
+            var custom = AppsLocal.Find(a => a.Name == "custom") != null;
+
+
+            if (!autodartsCaller)
+            {
+                Profiles.RemoveAll(p => p.Name == "autodarts-caller");
+                Profiles.RemoveAll(p => p.Name == "autodarts-extern: lidarts.org");
+                Profiles.RemoveAll(p => p.Name == "autodarts-extern: nakka.com/n01/online");
+                Profiles.RemoveAll(p => p.Name == "autodarts-extern: dartboards.online");
+            }
+            if (!autodartsExtern)
+            {
+                Profiles.RemoveAll(p => p.Name == "autodarts-extern: lidarts.org");
+                Profiles.RemoveAll(p => p.Name == "autodarts-extern: nakka.com/n01/online");
+                Profiles.RemoveAll(p => p.Name == "autodarts-extern: dartboards.online");
+            }
+
+            foreach (var p in Profiles)
+            {
+                if (!autodartsClient) p.Apps.Remove("autodarts-client");
+                if (!autodartsCaller) p.Apps.Remove("autodarts-caller");
+                if (!autodartsWled) p.Apps.Remove("autodarts-wled");
+                if (!autodartsExtern) p.Apps.Remove("autodarts-extern");
+                if (!virtualDartsZoom) p.Apps.Remove("virtual-darts-zoom");
+                if (!dartboardsClient) p.Apps.Remove("dartboards-client");
+                if (!droidCam) p.Apps.Remove("droid-cam");
+                if (!epocCam) p.Apps.Remove("epoc-cam");
+                if (!custom) p.Apps.Remove("custom");
+            }
+
+            var p5 = Profiles.Find(p => p.Name == "autodarts-client") != null;
+
+            if (autodartsClient)
+            {
+                if (!p5)
+                {
+                    var p5Name = "autodarts-client";
+                    var p5Apps = new Dictionary<string, ProfileState>();
+                    if (autodartsClient) p5Apps.Add("autodarts-client", new ProfileState(true));
+                    p5Apps.Add("autodarts.io", new ProfileState());
+                    if (virtualDartsZoom) p5Apps.Add("virtual-darts-zoom", new ProfileState());
+                    if (droidCam) p5Apps.Add("droid-cam", new ProfileState());
+                    if (epocCam) p5Apps.Add("epoc-cam", new ProfileState());
+                    if (custom) p5Apps.Add("custom", new ProfileState());
+                    Profiles.Add(new Profile(p5Name, p5Apps));
+                }
+            }
+
 
             // Add more migs..
         }

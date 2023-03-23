@@ -1,44 +1,40 @@
 # AUTODARTS-DESKTOP
 
+Autodarts-desktop manages several apps for https://autodarts.io.
+It handles automatic download/updates, configuration and starting of apps.
+It uses pre-configured profiles for every scenario.
+
 
 ## IMPORTANT!!
 
 USE! https://github.com/Semtexmagix/autodarts-desktop until this repository is ready for cross-platform!
 
 
-Autodarts-desktop manages several extension-tools for https://autodarts.io.
-It automatically handles download, setup, use updates to recent versions.
- - You can start tools like caller or extern to transfer thrown darts to other web-dart-platforms.
- - The app-administration is simplified by configuration windows - no more console/batch-file handling. =)
-
-
-
 ## COMPATIBILITY
-
 
 Autodarts-desktop supports all major platforms:
 
 | OS | X64 | X86 | ARM | ARM64
 | ------------- | ------------- | ------------- | ------------- | ------------- | 
 | Windows | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Linux | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| macOS | :heavy_check_mark: |  | :heavy_check_mark: | :heavy_check_mark: |
+| Linux | :heavy_check_mark: |  | :heavy_check_mark: | :heavy_check_mark: |
+| macOS | :heavy_check_mark: |  |  | :heavy_check_mark: |
 
-For more information, checkout: https://docs.avaloniaui.net/
+Autodarts-desktop is built with Avalonia. check it out: https://docs.avaloniaui.net/
 
+
+![alt text](https://github.com/lbormann/autodarts-desktop/blob/master/MAIN.png?raw=true)
+![alt text](https://github.com/lbormann/autodarts-desktop/blob/master/SETTINGS.png?raw=true)
 
 
 
 ## BUGS
 
-It may be buggy. You can give me feedback in Discord (Autodarts.io) > wusaaa
+It may be buggy. I've just coded it for fast fun with https://autodarts.io. You can give me feedback in Discord > wusaaa
 
 
 ## TODOs
-- cross-platform
-- update images / text in Readme
 - update when autostart is activated
-- Do not put any folder oder files in autodarts-desktops`s extensions folders
 - Update without question!
 
 ### Done
@@ -64,7 +60,14 @@ It may be buggy. You can give me feedback in Discord (Autodarts.io) > wusaaa
 - Fixes highlighting of required arguments in settings
 - Fix typo on argument required
 - Try to start app after user filled required argument
+- cross-platform
+- update images / text in Readme
 
+
+## Ressources
+
+Icon by <a href="https://freeicons.io/profile/8178">Ognjen Vukomanov</a> on <a href="https://freeicons.io">freeicons.io</a>
+                                
 
 ## LAST WORDS
 Thanks to Timo for awesome https://autodarts.io.

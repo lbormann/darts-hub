@@ -5,6 +5,8 @@ using System;
 using MessageBox.Avalonia;
 using Avalonia;
 using Avalonia.Interactivity;
+using MessageBox.Avalonia.DTO;
+using MessageBox.Avalonia.Enums;
 
 namespace autodarts_desktop
 {
@@ -38,7 +40,22 @@ namespace autodarts_desktop
                     break;
                 case "donation":
                     Application.Current.Clipboard.SetTextAsync(donationAdress);
-                    MessageBoxManager.GetMessageBoxStandardWindow(":)", $"{donationAdress} copied to clipboard - Thank you!").Show();
+                    MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
+                    {
+                        Icon = MessageBox.Avalonia.Enums.Icon.Success,
+                        WindowIcon = Icon,
+                        Width = Width / 1.3,
+                        Height = Height / 1.3,
+                        MaxWidth = MaxWidth / 1.3,
+                        MaxHeight = MaxHeight / 1.3,
+                        CanResize = false,
+                        EscDefaultButton = ClickEnum.No,
+                        EnterDefaultButton = ClickEnum.Yes,
+                        SystemDecorations = SystemDecorations.Full,
+                        WindowStartupLocation = WindowStartupLocation,
+                        ButtonDefinitions = ButtonEnum.Ok,
+                        ContentMessage = $"{donationAdress} copied to clipboard - Thank you!"
+                    }).ShowDialog(this);
                     break;
             }
         }

@@ -17,7 +17,7 @@ using MessageBox.Avalonia.Enums;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-
+using System.Threading.Tasks;
 
 namespace autodarts_desktop
 {
@@ -33,7 +33,7 @@ namespace autodarts_desktop
         private double fontSize;
         private int elementWidth;
         private HorizontalAlignment elementHoAl;
-
+        private WaitWindow waitWindow;
 
 
 
@@ -59,6 +59,8 @@ namespace autodarts_desktop
             CheckBoxStartProfileOnProgramStart.IsChecked = Settings.Default.start_profile_on_start;
             CheckBoxStartProfileOnProgramStart.FontSize = fontSize - 6;
 
+            waitWindow = new WaitWindow();
+
             try
             {
                 profileManager = new ProfileManager();
@@ -80,39 +82,20 @@ namespace autodarts_desktop
                 Updater.ReleaseDownloadStarted += Updater_ReleaseDownloadStarted;
                 Updater.ReleaseDownloadFailed += Updater_ReleaseDownloadFailed;
                 Updater.ReleaseDownloadProgressed += Updater_ReleaseDownloadProgressed;
-                Updater.CheckNewVersion();
+                //Updater.CheckNewVersion();
             }
             catch (ConfigurationException ex)
             {
-                var result = MessageBoxManager
-                .GetMessageBoxStandardWindow(new MessageBoxStandardParams
-                {
-                    ButtonDefinitions = ButtonEnum.YesNo,
-                    ContentTitle = "Configuration Error",
-                    ContentMessage = "$Configuration - file '{ex.File}' not readable.You can fix it by yourself or let it go to hell and I recreate it for you.Do you want me to reset it ? (All of your settings will be lost)"
-                }).Show();
-                result.Wait();
-
-                if (result.Result == ButtonResult.Yes)
-                {
-                    try
-                    {
-                        profileManager.DeleteConfigurationFile(ex.File);
-                    }
-                    catch (Exception e)
-                    {
-                        MessageBoxManager.GetMessageBoxStandardWindow("Error", "Configuration-file-deletion failed. Please delete it by yourself. " + e.Message).Show();
-                    }
-                }
-                MessageBoxManager.GetMessageBoxStandardWindow("Restart", "Please restart the application.").Show();
-                Environment.Exit(1);
+                ShowCorruptedConfigHandlingBox(ex);
             }
             catch (Exception ex)
             {
-                MessageBoxManager.GetMessageBoxStandardWindow("Restart", "Something went wrong: " + ex.Message).Show();
+                RenderMessageBox("", "Something went wrong: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
                 Environment.Exit(1);
             }
         }
+
+      
 
 
         private void Buttonstart_Click(object sender, RoutedEventArgs e)
@@ -120,10 +103,10 @@ namespace autodarts_desktop
             RunSelectedProfile();
         }
 
-        private void Buttonabout_Click(object sender, RoutedEventArgs e)
+        private async void Buttonabout_Click(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Minimized;
-            new About().ShowDialog(this).Wait();
+            await new About().ShowDialog(this);
             WindowState = WindowState.Normal;
         }
 
@@ -148,7 +131,7 @@ namespace autodarts_desktop
             }
             catch (Exception ex)
             {
-                MessageBoxManager.GetMessageBoxStandardWindow("Error", "Error occured: " + ex.Message).Show();
+                RenderMessageBox("", "Error occured: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
             }
         }
 
@@ -159,28 +142,76 @@ namespace autodarts_desktop
 
 
 
-        private void Updater_NewReleaseFound(object? sender, ReleaseEventArgs e)
-        {
-            var result = MessageBoxManager
-            .GetMessageBoxStandardWindow(new MessageBoxStandardParams
-            {
-                ButtonDefinitions = ButtonEnum.YesNo,
-                ContentTitle = "New Version",
-                ContentMessage = $"New Version '{e.Version}' available! Do you want to update?"
-            }).Show();
-            result.Wait();
 
-            if (result.Result == ButtonResult.Yes)
+        private async void ShowCorruptedConfigHandlingBox(ConfigurationException ex)
+        {
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
             {
-                try
+                IsEnabled = false;
+                Opacity = 0.25;
+
+                var result = await RenderMessageBox("", $"Configuration - file '{ex.File}' not readable ('{ex.Message}'). You can fix it by yourself or let it go to hell and I recreate it for you. Do you want me to reset it ? (All of your settings will be lost)", MessageBox.Avalonia.Enums.Icon.Error, ButtonEnum.YesNo);
+                if (result == ButtonResult.Yes)
                 {
-                    Updater.UpdateToNewVersion();
+                    try
+                    {
+                        profileManager.DeleteConfigurationFile(ex.File);
+                    }
+                    catch (Exception e)
+                    {
+                        await MessageBoxManager.GetMessageBoxStandardWindow("Error", "Configuration-file-deletion failed. Please delete it by yourself. " + e.Message).Show();
+                    }
                 }
-                catch (Exception ex)
-                {   
-                    MessageBoxManager.GetMessageBoxStandardWindow("Error", "Update to new version failed: " + ex.Message).Show();
+                await RenderMessageBox("", "Application will close now. Please restart it.", MessageBox.Avalonia.Enums.Icon.Warning);
+                Environment.Exit(1);
+            });
+        }
+
+
+        private Task<ButtonResult> RenderMessageBox(string title, string message, Icon icon, ButtonEnum buttons = ButtonEnum.Ok)
+        {
+            return MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
+            {
+                Icon = icon,
+                WindowIcon = Icon,
+                Width = Width / 1.3,
+                Height = Height / 1.3,
+                MaxWidth = MaxWidth / 1.3,
+                MaxHeight = MaxHeight / 1.3,
+                CanResize = false,
+                EscDefaultButton = ClickEnum.No,
+                EnterDefaultButton = ClickEnum.Yes,
+                SystemDecorations = SystemDecorations.Full,
+                WindowStartupLocation = WindowStartupLocation,
+                ButtonDefinitions = buttons,
+
+                ContentTitle = title,
+                ContentMessage = message
+            }).Show(this);
+        }
+
+
+        private async void Updater_NewReleaseFound(object? sender, ReleaseEventArgs e)
+        {
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                IsEnabled = false;
+                Opacity = 0.25;
+
+                var result = await RenderMessageBox("", $"New Version '{e.Version}' available! Do you want to update?", MessageBox.Avalonia.Enums.Icon.Warning, ButtonEnum.YesNo);
+
+                if (result == ButtonResult.Yes)
+                {
+                    try
+                    {
+                        Updater.UpdateToNewVersion();
+                    }
+                    catch (Exception ex)
+                    {
+                        await RenderMessageBox("", "Update to new version failed: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
+                    }
                 }
-            }
+            });
         }
 
         private void Updater_ReleaseDownloadStarted(object? sender, ReleaseEventArgs e)
@@ -188,10 +219,10 @@ namespace autodarts_desktop
             SetWait(true, "Downloading " + e.Version + "..");
         }
 
-        private void Updater_ReleaseDownloadFailed(object? sender, ReleaseEventArgs e)
+        private async void Updater_ReleaseDownloadFailed(object? sender, ReleaseEventArgs e)
         {
             Hide();
-            MessageBoxManager.GetMessageBoxStandardWindow("Error", "Checking for new release failed! Please check your internet-connection and try again. " + e.Message).Show();
+            await RenderMessageBox("", "Checking for new release failed! Please check your internet-connection and try again. " + e.Message, MessageBox.Avalonia.Enums.Icon.Error);
             Close();
             return;
         }
@@ -245,11 +276,11 @@ namespace autodarts_desktop
 
         private void ProfileManager_AppConfigurationRequired(object? sender, AppEventArgs e)
         {
-            new SettingsWindow(profileManager, e.App).ShowDialog(this);
+            new SettingsWindow(profileManager, e.App).Show(this);
         }
 
 
-        private void RunSelectedProfile()
+        private async void RunSelectedProfile()
         {
             try
             {
@@ -259,7 +290,7 @@ namespace autodarts_desktop
             }
             catch (Exception ex)
             {
-                MessageBoxManager.GetMessageBoxStandardWindow("Error", "An error ocurred: " + ex.Message).Show();
+                await RenderMessageBox("", "An error ocurred: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
             }
             finally
             {
@@ -269,32 +300,34 @@ namespace autodarts_desktop
 
         private void SetWait(bool wait, string waitingText = "")
         {
-            string waitingMessage = String.IsNullOrEmpty(waitingText) ? WaitingText.Text : waitingText;
+            string waitingMessage = String.IsNullOrEmpty(waitingText) ? waitWindow.GetMessage() : waitingText;
 
             if (wait)
             {
                 Opacity = 0.5;
+                GridMain.Opacity = 0.2;
                 GridMain.IsEnabled = false;
-                Waiting.IsVisible = true;
-                WaitingText.IsVisible = true;
+                //waitWindow.ShowDialog(this);
+                //waitWindow.SetMessageVisibility(true);
             }
             else
             {
                 Opacity = 1.0;
+                GridMain.Opacity = 1.0;
                 GridMain.IsEnabled = true;
-                Waiting.IsVisible = false;
-                WaitingText.IsVisible = !String.IsNullOrEmpty(waitingText);
+                //waitWindow.Hide();
+                //waitWindow.SetMessageVisibility(!String.IsNullOrEmpty(waitingText));
             }
-            WaitingText.Text = waitingMessage;
+            waitWindow.SetMessage(waitingMessage);
         }
 
-        private void RenderProfiles()
+        private async void RenderProfiles()
         {
             ComboBoxItem lastItemTaggedForStart = null;
             var profiles = profileManager.GetProfiles();
             if (profiles.Count == 0)
             {
-                MessageBoxManager.GetMessageBoxStandardWindow("Error", "No profiles available.").Show();
+                await RenderMessageBox("", "No profiles available.", MessageBox.Avalonia.Enums.Icon.Warning);
                 Environment.Exit(1);
             }
 

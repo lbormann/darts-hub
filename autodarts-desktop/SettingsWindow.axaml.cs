@@ -3,7 +3,6 @@ using autodarts_desktop.model;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
-using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using System.Diagnostics;
@@ -13,8 +12,8 @@ using MessageBox.Avalonia;
 using Avalonia.Platform;
 using Avalonia.Media.Imaging;
 using System.Globalization;
-using System.Threading;
-using System.Runtime.ConstrainedExecution;
+using model;
+using Avalonia.Interactivity;
 
 namespace autodarts_desktop
 {
@@ -47,10 +46,6 @@ namespace autodarts_desktop
         {
             InitializeComponent();
 
-            // TODO
-            //var ci = new CultureInfo("en-us");
-            //Thread.CurrentThread.CurrentCulture = ci;
-            //Thread.CurrentThread.CurrentUICulture = ci;
 
             this.profileManager = profileManager;
             this.app = app;
@@ -63,7 +58,7 @@ namespace autodarts_desktop
             elementHoAl = HorizontalAlignment.Left;
             elementOffsetRight = 0.0;
             elementOffsetLeft = 25.0;
-            elementClearedOpacity = 0.5;
+            elementClearedOpacity = 0.4;
             Title = "Configuration - " + this.app.Name;
 
             RenderAppConfiguration();
@@ -88,6 +83,13 @@ namespace autodarts_desktop
 
         private void RenderAppConfiguration()
         {
+            // Set the CultureInfo to use a dot as the decimal separator
+            CultureInfo customCulture = (CultureInfo)CultureInfo.CurrentCulture.Clone();
+            customCulture.NumberFormat.NumberDecimalSeparator = ".";
+
+            var dotDecimalSeparatorValueConverter = new DotDecimalSeparatorValueConverter();
+
+
             var assets = AvaloniaLocator.Current.GetService<IAssetLoader>();
 
             var labelHeader = new Label();
@@ -108,7 +110,7 @@ namespace autodarts_desktop
                 imageHelp.Source = new Bitmap(assets.Open(new Uri("avares://autodarts-desktop/Assets/help.png")));
 
                 var buttonHelp = new Button();
-                buttonHelp.Margin = new Thickness(0, 23, 3, 0);
+                buttonHelp.Margin = new Thickness(0, 25, 20, 0);
                 buttonHelp.Content = imageHelp;
                 buttonHelp.HorizontalAlignment = HorizontalAlignment.Right;
                 buttonHelp.VerticalAlignment = VerticalAlignment.Top;
@@ -203,6 +205,7 @@ namespace autodarts_desktop
 
 
                     Control customElement = null;
+                    bool customElementNeedsClear = false;
 
                     if (type == Argument.TypeString)
                     {
@@ -215,6 +218,7 @@ namespace autodarts_desktop
                         textBox.Width = elementWidth;
                         textBox.BorderBrush = borderColor;
                         textBox.BorderThickness = borderThickness;
+                        
                         textBox.KeyDown += (s, e) => textBox.Opacity = 1.0;
                         textBox.DataContext = argument;
                        
@@ -236,6 +240,7 @@ namespace autodarts_desktop
                         selectButton.BorderBrush = borderColor;
                         selectButton.BorderThickness = borderThickness;
 
+
                         var textBox = new TextBox();
                         textBox.HorizontalAlignment = elementHoAl;
                         textBox.Foreground = fontColorContent;
@@ -245,9 +250,17 @@ namespace autodarts_desktop
                         textBox.Width = elementWidth - 70;
                         textBox.BorderBrush = borderColor;
                         textBox.BorderThickness = borderThickness;
-                        textBox.KeyDown += (s, e) => textBox.Opacity = 1.0;
+                        textBox.PropertyChanged += (s, e) =>
+                        {
+                            if (e.Property.Name == "Text")
+                            {
+                                selectButton.Opacity = 1.0;
+                                textBox.Opacity = 1.0;
+                            }
+                        };
                         textBox.DataContext = argument;
                         textBox.Bind(TextBox.TextProperty, new Binding("Value"));
+                        textBox.Tag = selectButton;
                         HighlightElement(textBox, argument);
                         customElement = textBox;
 
@@ -332,24 +345,61 @@ namespace autodarts_desktop
                             slider.PropertyChanged += (s, e) => slider.Opacity = 1.0;
                             slider.Tag = textBoxSlider;
 
-                            if (type == Argument.TypeFloat)
-                            {
-                                slider.TickFrequency = 0.1;
-                                slider.Minimum = Helper.GetDoubleByString(argument.RangeBy);
-                                slider.Maximum = Helper.GetDoubleByString(argument.RangeTo);
-                            }
-                            else if (type == Argument.TypeInt)
-                            {
-                                slider.TickFrequency = 1.0;
-                                slider.Minimum = Helper.GetIntByString(argument.RangeBy);
-                                slider.Maximum = Helper.GetIntByString(argument.RangeTo);
-                            }
-                            slider.DataContext = argument;
-                            slider.Bind(Slider.ValueProperty, new Binding("Value"));
-                            
-                            slider.TickPlacement = TickPlacement.TopLeft;
-                            HighlightElement(slider, argument);
 
+                            if(argument.Value == null)
+                            {
+                                slider.PropertyChanged += (s, e) =>
+                                {
+                                    if (slider.DataContext == null && e.Property.Name == "Value")
+                                    {
+                                        slider.DataContext = argument;
+                                        if (type == Argument.TypeFloat)
+                                        {
+                                            slider.TickFrequency = 0.01;
+                                            slider.Minimum = Helper.GetDoubleByString(argument.RangeBy);
+                                            slider.Maximum = Helper.GetDoubleByString(argument.RangeTo);
+                                            var binding = new Binding("Value")
+                                            {
+                                                Mode = BindingMode.Default,
+                                                Converter = dotDecimalSeparatorValueConverter
+                                            };
+                                            slider.Bind(Slider.ValueProperty, binding);
+                                        }
+                                        else if (type == Argument.TypeInt)
+                                        {
+                                            slider.TickFrequency = 1.0;
+                                            slider.Minimum = Helper.GetIntByString(argument.RangeBy);
+                                            slider.Maximum = Helper.GetIntByString(argument.RangeTo);
+                                            slider.Bind(Slider.ValueProperty, new Binding("Value"));
+                                        }
+                                    }
+                                };
+                            }
+                            else
+                            {
+                                slider.DataContext = argument;
+                                if (type == Argument.TypeFloat)
+                                {
+                                    slider.TickFrequency = 0.01;
+                                    slider.Minimum = Helper.GetDoubleByString(argument.RangeBy);
+                                    slider.Maximum = Helper.GetDoubleByString(argument.RangeTo);
+                                    var binding = new Binding("Value")
+                                    {
+                                        Mode = BindingMode.Default,
+                                        Converter = dotDecimalSeparatorValueConverter
+                                    };
+                                    slider.Bind(Slider.ValueProperty, binding);
+                                }
+                                else if (type == Argument.TypeInt)
+                                {
+                                    slider.TickFrequency = 1.0;
+                                    slider.Minimum = Helper.GetIntByString(argument.RangeBy);
+                                    slider.Maximum = Helper.GetIntByString(argument.RangeTo);
+                                    slider.Bind(Slider.ValueProperty, new Binding("Value"));
+                                }
+                            }
+
+                            HighlightElement(slider, argument);
 
                             GridMain.Children.Add(textBoxSlider);
                             GridMain.Children.Add(slider);
@@ -357,6 +407,8 @@ namespace autodarts_desktop
                         }
                         else if (type == Argument.TypeInt)
                         {
+                            if (argument.Value == null) customElementNeedsClear = true;
+
                             var integerUpDown = new NumericUpDown();
                             integerUpDown.Foreground = fontColorContent;
                             integerUpDown.HorizontalAlignment = elementHoAl;
@@ -365,7 +417,7 @@ namespace autodarts_desktop
                             integerUpDown.Margin = new Thickness(elementOffsetLeft, counter * marginTop, elementOffsetRight, 0);
                             integerUpDown.Width = elementWidth;
                             //integerUpDown.BorderBrush = borderColor;
-                            //integerUpDown.CultureInfo = new CultureInfo("en-us");
+                            integerUpDown.CultureInfo = customCulture;
                             integerUpDown.BorderThickness = borderThickness;
                             integerUpDown.ValueChanged += (s, e) => integerUpDown.Opacity = 1.0;
                             integerUpDown.DataContext = argument;
@@ -376,6 +428,8 @@ namespace autodarts_desktop
                         }
                         else if (type == Argument.TypeFloat)
                         {
+                            if (argument.Value == null) customElementNeedsClear = true;
+
                             var decimalUpDown = new NumericUpDown();
                             decimalUpDown.Foreground = fontColorContent;
                             decimalUpDown.HorizontalAlignment = elementHoAl;
@@ -386,7 +440,7 @@ namespace autodarts_desktop
                             //decimalUpDown.BorderBrush = borderColor;
                             decimalUpDown.Increment = (double)0.1;
                             decimalUpDown.FormatString = "F1";
-                            //decimalUpDown.CultureInfo = new CultureInfo("en-us");
+                            decimalUpDown.CultureInfo = customCulture;
                             decimalUpDown.BorderThickness = borderThickness;
                             decimalUpDown.ValueChanged += (s, e) => decimalUpDown.Opacity = 1.0;
                             decimalUpDown.DataContext = argument;
@@ -404,6 +458,7 @@ namespace autodarts_desktop
                         checkBox.Margin = new Thickness(elementOffsetLeft, counter * marginTop, elementOffsetRight, 0);
                         var checkBoxContent = new TextBox();
                         checkBoxContent.FontSize = fontSize - 6;
+                        checkBoxContent.Focusable = false;
                         checkBoxContent.Text = argument.NameHuman;
                         checkBoxContent.Background = Brushes.Transparent;
                         checkBoxContent.Foreground = fontColor;
@@ -441,7 +496,7 @@ namespace autodarts_desktop
                         imageClear.Source = new Bitmap(assets.Open(new Uri("avares://autodarts-desktop/Assets/clear.png")));
 
                         var button = new Button();
-                        button.Margin = new Thickness(0, counter * marginTop - (imageClear.Height / 6), (imageClear.Width + 20), 0);
+                        button.Margin = new Thickness(0, counter * marginTop - (imageClear.Height / 6), 26, 0);
                         button.IsTabStop = false;
                         button.Content = imageClear;
                         button.HorizontalAlignment = HorizontalAlignment.Right;
@@ -465,7 +520,14 @@ namespace autodarts_desktop
                                 cet.Opacity = elementClearedOpacity;
                             }
                         };
-                        if (argument.Value == null)
+
+                        GridMain.Children.Add(button);
+
+                        if (customElementNeedsClear == true)
+                        {
+                            button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        }
+                        else if (argument.Value == null)
                         {
                             customElement.Opacity = elementClearedOpacity;
                             if (customElement.Tag != null)
@@ -474,7 +536,9 @@ namespace autodarts_desktop
                                 cet.Opacity = elementClearedOpacity;
                             }
                         }
-                        GridMain.Children.Add(button);
+                       
+
+                       
 
                     }
                 }

@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="720"
         x:Class="autodarts_desktop.SettingsWindow"
         Title="Autodarts-desktop"
 		Icon="/Assets/favicon.ico"
@@ -13,12 +13,11 @@
 		WindowStartupLocation="CenterScreen"
 		CanResize="False"
 		Closing="Window_Closing"
-		ExtendClientAreaToDecorationsHint="True"
-		ExtendClientAreaChromeHints="Default"
+
 		>
 	
 	<Window.Background>
-		<ImageBrush Opacity="0.4" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background_4.png" />
+		<ImageBrush Opacity="0.2" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background.png" />
 	</Window.Background>
 
 	<ScrollViewer

@@ -191,7 +191,7 @@ namespace autodarts_desktop.model
                 return ret;
             }
             catch (Exception ex)
-            { 
+            {
                 if (ex.Message.StartsWith(Configuration.ArgumentErrorKey))
                 {
                     string invalidArgumentErrorMessage = ex.Message.Substring(Configuration.ArgumentErrorKey.Length, ex.Message.Length - Configuration.ArgumentErrorKey.Length);

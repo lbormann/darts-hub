@@ -6,21 +6,19 @@
     <!--Avalonia doesen't support TrimMode=link currently,but we are working on that https://github.com/AvaloniaUI/Avalonia/issues/6892 -->
     <TrimMode>copyused</TrimMode>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+	<ApplicationIcon>Assets\favicon.ico</ApplicationIcon>
+	<BundleIcon>Assets\favicon.icns</BundleIcon>
   </PropertyGroup>
   <ItemGroup>
     <None Remove=".gitignore" />
     <None Remove="Assets\about.png" />
     <None Remove="Assets\background.png" />
-    <None Remove="Assets\background_2.png" />
-    <None Remove="Assets\background_3.png" />
-    <None Remove="Assets\background_4.png" />
+    <None Remove="Assets\background_color.png" />
     <None Remove="Assets\bug.png" />
     <None Remove="Assets\clear.png" />
     <None Remove="Assets\configuration.png" />
     <None Remove="Assets\contact.png" />
     <None Remove="Assets\donation.png" />
-    <None Remove="Assets\go.png" />
-    <None Remove="Assets\spinner.gif" />
     <None Remove="favicon.ico" />
     <None Remove="update.bat" />
     <None Remove="update.sh" />

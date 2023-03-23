@@ -8,17 +8,15 @@
 		Icon="/Assets/favicon.ico"
 		Width="480"
 		Height="720"
-		MinWidth="480"
+		MaxWidth="480"
 		MaxHeight="720"
+		CanResize="False"
 		WindowStartupLocation="CenterScreen"
 		Closing="Window_Closing"
-        ExtendClientAreaToDecorationsHint="True"
-		ExtendClientAreaChromeHints="Default"
-		CanResize="False"
 		>
 
 	<Window.Background>
-		<ImageBrush Opacity="0.4" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background_4.png" />
+		<ImageBrush Opacity="0.2" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background.png" />
 	</Window.Background>
 
 	
@@ -40,16 +38,13 @@
 
 			<ComboBox x:Name="Comboboxportal" HorizontalAlignment="Left" Margin="17,71,0,0" VerticalAlignment="Top" Width="360" SelectionChanged="Comboboxportal_SelectionChanged" SelectedIndex="0" />
 
-			<Button x:Name="Buttonstart" HorizontalAlignment="Right" Margin="0,60,10,0" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Click="Buttonstart_Click" >
+			<Button x:Name="Buttonstart" HorizontalAlignment="Right" Margin="0,60,0,0" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Click="Buttonstart_Click" >
 				<Image x:Name="darts_png" Width="60" Height="60" Source="/Assets/darts.png" Stretch="Fill"/>
 			</Button>
 
 			<CheckBox x:Name="CheckBoxStartProfileOnProgramStart" Content="Start with App" HorizontalAlignment="Left" Margin="283,103,0,0" VerticalAlignment="Top" Foreground="White"/>
 
-			<Image x:Name="Waiting" Width="40" Margin="0,13,0,0" VerticalAlignment="Top" Source="/Assets/spinner.gif" IsVisible="False" />
-			   
-		
-			
+
 			<TextBlock x:Name="WaitingText"
                         Text="Please wait.."
                         TextWrapping="Wrap"
@@ -62,7 +57,6 @@
                         Foreground="Orange"
 						PointerPressed="WaitingText_PointerPressed"
 						IsVisible="False"/>
-
 		</Grid>
 
 	</ScrollViewer>

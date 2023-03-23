@@ -1,18 +1,46 @@
 using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
 using System;
+using System.Threading;
+
 
 namespace autodarts_desktop
 {
+
+
     internal class Program
     {
+        private static Mutex _mutex;
+
+
         // Initialization code. Don't use any Avalonia, third-party APIs or any
         // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
         // yet and stuff might break.
         [STAThread]
-        public static void Main(string[] args) => BuildAvaloniaApp()
-            .StartWithClassicDesktopLifetime(args);
+        public static void Main(string[] args) {
+            const string MutexName = "YourAppName-UniqueMutexName";
+            bool createdNew;
+
+            _mutex = new Mutex(true, MutexName, out createdNew);
+
+            if (!createdNew)
+            {
+                // Die Anwendung ist bereits gestartet.
+                // Hier können Sie die gewünschte Aktion ausführen, z.B. das Hauptfenster der anderen Instanz fokussieren.
+                // Da Avalonia jedoch keine native Win32-API verwendet, ist es schwierig, das Hauptfenster der anderen Instanz direkt zu finden.
+                // Eine mögliche Lösung könnte die Verwendung von IPC (Inter-Process Communication) sein, um die beiden Instanzen miteinander kommunizieren zu lassen.
+                return;
+            }
+
+            try
+            {
+                //BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+                BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+            }
+            finally
+            {
+                _mutex?.Close();
+            }
+        } 
 
         // Avalonia configuration, don't remove; also used by visual designer.
         public static AppBuilder BuildAvaloniaApp()
