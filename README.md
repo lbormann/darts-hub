@@ -23,8 +23,8 @@ Autodarts-desktop supports all major platforms:
 Autodarts-desktop is built with Avalonia. check it out: https://docs.avaloniaui.net/
 
 
-![alt text](https://github.com/lbormann/autodarts-desktop/blob/master/MAIN.png?raw=true)
-![alt text](https://github.com/lbormann/autodarts-desktop/blob/master/SETTINGS.png?raw=true)
+![alt text](https://github.com/lbormann/autodarts-desktop/blob/main/MAIN.PNG?raw=true)
+![alt text](https://github.com/lbormann/autodarts-desktop/blob/main/SETTINGS.PNG?raw=true)
 
 
 
