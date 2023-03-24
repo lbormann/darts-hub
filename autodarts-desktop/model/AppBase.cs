@@ -190,7 +190,7 @@ namespace autodarts_desktop.model
                 try
                 {
                     process.StartInfo.FileName = terminalEmulator;
-                    process.StartInfo.Arguments = $"-e \"\"{Path.Combine(process.StartInfo.WorkingDirectory, executable)}\" {arguments}\"";
+                    process.StartInfo.Arguments = $"-e \"{Path.Combine(process.StartInfo.WorkingDirectory, executable)}\" {arguments}";
                     process.Start();
                     return;
                 }
@@ -209,7 +209,7 @@ namespace autodarts_desktop.model
             try
             {
                 process.StartInfo.FileName = "open";
-                process.StartInfo.Arguments = $"-a Terminal \"{Path.Combine(process.StartInfo.WorkingDirectory, executable)} {arguments}\"";
+                process.StartInfo.Arguments = $"-a Terminal \"{Path.Combine(process.StartInfo.WorkingDirectory, executable)}\" {arguments}";
                 process.Start();
                 return;
             }
