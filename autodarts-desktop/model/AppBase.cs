@@ -136,15 +136,16 @@ namespace autodarts_desktop.model
 
             try
             {
+                process = new Process();
+                process.StartInfo.WindowStyle = StartWindowState;
+                process.EnableRaisingEvents = true;
+                process.Exited += process_Exited;
+
                 bool isUri = Uri.TryCreate(executable, UriKind.Absolute, out Uri uriResult)
                 && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
                 if (!isUri) process.StartInfo.WorkingDirectory = Path.GetDirectoryName(executable);
 
-                process = new Process();
-                process.StartInfo.WindowStyle = StartWindowState;
-                process.EnableRaisingEvents = true;
-                process.Exited += process_Exited;
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
