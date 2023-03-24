@@ -33,9 +33,6 @@ namespace autodarts_desktop
         private double fontSize;
         private int elementWidth;
         private HorizontalAlignment elementHoAl;
-        private WaitWindow waitWindow;
-
-
 
 
 
@@ -60,8 +57,6 @@ namespace autodarts_desktop
             CheckBoxStartProfileOnProgramStart.IsChecked = Settings.Default.start_profile_on_start;
             CheckBoxStartProfileOnProgramStart.FontSize = fontSize - 6;
 
-            waitWindow = new WaitWindow();
-
             try
             {
                 profileManager = new ProfileManager();
@@ -83,7 +78,7 @@ namespace autodarts_desktop
                 Updater.ReleaseDownloadStarted += Updater_ReleaseDownloadStarted;
                 Updater.ReleaseDownloadFailed += Updater_ReleaseDownloadFailed;
                 Updater.ReleaseDownloadProgressed += Updater_ReleaseDownloadProgressed;
-                //Updater.CheckNewVersion();
+                Updater.CheckNewVersion();
             }
             catch (ConfigurationException ex)
             {
@@ -222,10 +217,7 @@ namespace autodarts_desktop
 
         private async void Updater_ReleaseDownloadFailed(object? sender, ReleaseEventArgs e)
         {
-            Hide();
             await RenderMessageBox("", "Checking for new release failed! Please check your internet-connection and try again. " + e.Message, MessageBox.Avalonia.Enums.Icon.Error);
-            Close();
-            return;
         }
 
         private void Updater_ReleaseDownloadProgressed(object? sender, DownloadProgressChangedEventArgs e)
@@ -304,26 +296,26 @@ namespace autodarts_desktop
 
         private void SetWait(bool wait, string waitingText = "")
         {
-            //if(waitWindow == null) waitWindow = new WaitWindow();
-            string waitingMessage = String.IsNullOrEmpty(waitingText) ? waitWindow.GetMessage() : waitingText;
-
+            string waitingMessage = String.IsNullOrEmpty(waitingText) ? WaitingText.Text : waitingText;
             if (wait)
             {
-                Opacity = 0.5;
-                GridMain.Opacity = 0.2;
                 GridMain.IsEnabled = false;
-                //waitWindow.ShowDialog(this);
-                //waitWindow.SetMessageVisibility(true);
+                foreach(var c in GridMain.Children)
+                {
+                    if(c.Name != "WaitingText") c.IsVisible = false;
+                }
+                WaitingText.IsVisible = true;
             }
             else
             {
-                Opacity = 1.0;
-                GridMain.Opacity = 1.0;
                 GridMain.IsEnabled = true;
-                //waitWindow.Hide();
-                //waitWindow.SetMessageVisibility(!String.IsNullOrEmpty(waitingText));
+                foreach (var c in GridMain.Children)
+                {
+                    c.IsVisible = true;
+                }
+                WaitingText.IsVisible = false;
             }
-            waitWindow.SetMessage(waitingMessage);
+            WaitingText.Text = waitingMessage;
         }
 
         private async void RenderProfiles()

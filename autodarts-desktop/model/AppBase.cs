@@ -98,6 +98,7 @@ namespace autodarts_desktop.model
             {
                 //Console.WriteLine(Name + " tries to exit");
                 process.CloseMainWindow();
+                process.Close();
 
                 if (processId != defaultProcessId)
                 {
