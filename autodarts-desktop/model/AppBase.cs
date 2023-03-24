@@ -190,7 +190,20 @@ namespace autodarts_desktop.model
                 try
                 {
                     process.StartInfo.FileName = terminalEmulator;
-                    process.StartInfo.Arguments = $"-e \"{executable} {arguments}\"";
+
+
+                    string command = $"\"{executable} {arguments}; read\"";
+                    if (terminalEmulator == "gnome-terminal")
+                    {
+                        process.StartInfo.Arguments = $"-- bash -c \"{command}\"";
+                    }
+                    else
+                    {
+                        process.StartInfo.Arguments = $"-e \"{command}\"";
+                    }
+
+
+                    //process.StartInfo.Arguments = $"-e \"{executable} {arguments}\"";
                     process.Start();
                     return;
                 }
