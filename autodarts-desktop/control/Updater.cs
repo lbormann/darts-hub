@@ -19,7 +19,7 @@ namespace autodarts_desktop.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v0.7.2";
+        public static readonly string version = "v0.7.3";
 
         
         public static event EventHandler<ReleaseEventArgs>? NewReleaseFound;
@@ -30,7 +30,7 @@ namespace autodarts_desktop.control
 
         private static string latestRepoVersion = string.Empty;
         private const string appSourceUrl = "https://github.com/lbormann/autodarts-desktop/releases/download";
-        private const string appSourceUrlLatest = "https://github.com/lbormann/autodarts-desktop/releases/latest";
+        private const string appSourceUrlLatest = "https://api.github.com/repos/lbormann/autodarts-desktop/releases/latest";
         private const string appDestination = "updates";
         private const string requestUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36";
 
