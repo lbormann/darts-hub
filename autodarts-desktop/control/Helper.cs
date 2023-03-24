@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 
 namespace autodarts_desktop.control
 {
@@ -124,9 +125,25 @@ namespace autodarts_desktop.control
         {
             if (!Directory.Exists(path)) return null;
 
+            string[] executableExtensions;
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                executableExtensions = new[] { "exe" };
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                executableExtensions = new[] { "" }; // Keine Erweiterung für ausführbare Dateien unter Linux und macOS
+            }
+            else
+            {
+                return null; // Nicht unterstützte Plattform
+            }
+
             string executable = Directory
                 .EnumerateFiles(path, "*.*", SearchOption.AllDirectories)
-                .FirstOrDefault(s => Path.GetExtension(s).TrimStart('.').ToLowerInvariant() == "exe");
+                .FirstOrDefault(s => executableExtensions.Contains(Path.GetExtension(s).TrimStart('.').ToLowerInvariant()));
+
             return executable;
         }
 
