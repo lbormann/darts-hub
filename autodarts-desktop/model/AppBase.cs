@@ -161,7 +161,7 @@ namespace autodarts_desktop.model
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
                     process.StartInfo.UseShellExecute = false;
-                    TryStartLinuxTerminalEmulator(process, new[] { "konsole", "gnome-terminal", "lxterminal", "xfce4-terminal", "xterm" }, executable, arguments);
+                    TryStartLinuxTerminalEmulator(process, new[] { "konsole", "xterm", "lxterminal", "xfce4-terminal", "gnome-terminal"}, executable, arguments);
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
@@ -192,7 +192,7 @@ namespace autodarts_desktop.model
                     process.StartInfo.FileName = terminalEmulator;
 
 
-                    string command = $"\"{executable} {arguments}; read\"";
+                    string command = $"\"{Path.Combine(process.StartInfo.WorkingDirectory, executable)} {arguments}; read\"";
                     if (terminalEmulator == "gnome-terminal")
                     {
                         process.StartInfo.Arguments = $"-- bash -c \"{command}\"";
@@ -223,7 +223,7 @@ namespace autodarts_desktop.model
             try
             {
                 process.StartInfo.FileName = "open";
-                process.StartInfo.Arguments = $"-a Terminal \"{executable} {arguments}\"";
+                process.StartInfo.Arguments = $"-a Terminal \"{Path.Combine(process.StartInfo.WorkingDirectory, executable)} {arguments}\"";
                 process.Start();
                 return;
             }

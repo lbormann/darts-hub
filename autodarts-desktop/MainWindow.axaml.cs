@@ -304,6 +304,7 @@ namespace autodarts_desktop
 
         private void SetWait(bool wait, string waitingText = "")
         {
+            //if(waitWindow == null) waitWindow = new WaitWindow();
             string waitingMessage = String.IsNullOrEmpty(waitingText) ? waitWindow.GetMessage() : waitingText;
 
             if (wait)
