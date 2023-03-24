@@ -206,7 +206,7 @@ namespace autodarts_desktop
 
 
 
-                    Control customElement = null;
+                    Control? customElement = null;
                     bool customElementNeedsClear = false;
 
                     if (type == Argument.TypeString)
@@ -268,24 +268,21 @@ namespace autodarts_desktop
 
                         if (type == Argument.TypePath)
                         {
-                            selectButton.Click += (s, e) =>
+                            selectButton.Click += async (s, e) =>
                             {
-                                var res = new OpenFolderDialog().ShowAsync(this);
-                                res.Wait();
-                                if (!String.IsNullOrEmpty(res.Result)) textBox.Text = res.Result;
+                                var res = await new OpenFolderDialog().ShowAsync(this);
+                                if (res != null) textBox.Text = res;
                             };
                         }
                         else if (type == Argument.TypeFile)
                         {
-                            selectButton.Click += (s, e) =>
+                            selectButton.Click += async (s, e) =>
                             {
                                 var ofd = new OpenFileDialog();
                                 ofd.Title = "Select File for " + argument.NameHuman;
-                                // TODO
-                                //ofd.Filters = "All files (*.*)|*.*|Anwendung (*.exe)|*.exe";
-                                var res = ofd.ShowAsync(this);
-                                res.Wait();
-                                if (!String.IsNullOrEmpty(res.Result[0])) textBox.Text = res.Result[0];
+                                ofd.AllowMultiple = false;
+                                var res = await ofd.ShowAsync(this);
+                                if (res != null) textBox.Text = res[0];
                             };
                         }
 

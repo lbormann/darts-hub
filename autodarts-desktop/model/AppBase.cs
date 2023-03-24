@@ -133,33 +133,41 @@ namespace autodarts_desktop.model
             if (arguments == null) return;
 
             eventHandled = new TaskCompletionSource<bool>();
-            process = new Process();
-            
+
             try
             {
                 bool isUri = Uri.TryCreate(executable, UriKind.Absolute, out Uri uriResult)
                 && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
                 if (!isUri) process.StartInfo.WorkingDirectory = Path.GetDirectoryName(executable);
-                process.StartInfo.FileName = executable;
-                process.StartInfo.Arguments = arguments;
-                process.StartInfo.RedirectStandardOutput = false;
-                process.StartInfo.RedirectStandardError = false;
+
+                process = new Process();
+                process.StartInfo.WindowStyle = StartWindowState;
+                process.EnableRaisingEvents = true;
+                process.Exited += process_Exited;
+
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     process.StartInfo.UseShellExecute = true;
+                    process.StartInfo.FileName = executable;
+                    process.StartInfo.Arguments = arguments;
+                    process.StartInfo.RedirectStandardOutput = false;
+                    process.StartInfo.RedirectStandardError = false;
                     if (RunAsAdmin) process.StartInfo.Verb = "runas";
+                    process.Start();
+                    processId = process.Id;
                 }
-                else
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
                     process.StartInfo.UseShellExecute = false;
+                    TryStartLinuxTerminalEmulator(process, new[] { "konsole", "gnome-terminal", "lxterminal", "xfce4-terminal", "xterm" }, executable, arguments);
                 }
-                process.StartInfo.WindowStyle = StartWindowState;
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    process.StartInfo.UseShellExecute = false;
+                    TryStartMacTerminalEmulator(process, executable, arguments);
+                }
 
-                process.EnableRaisingEvents = true;
-                process.Exited += process_Exited;
-                process.Start();
-                processId = process.Id;
             }
             catch (Exception ex)
             {
@@ -171,6 +179,50 @@ namespace autodarts_desktop.model
             await Task.WhenAny(eventHandled.Task);
             
         }
+
+
+
+        private void TryStartLinuxTerminalEmulator(Process process, string[] terminalEmulators, string executable, string arguments)
+        {
+            foreach (string terminalEmulator in terminalEmulators)
+            {
+                try
+                {
+                    process.StartInfo.FileName = terminalEmulator;
+                    process.StartInfo.Arguments = $"-e \"{executable} {arguments}\"";
+                    process.Start();
+                    return;
+                }
+                catch
+                {
+                    
+                }
+            }
+
+            process.StartInfo.FileName = executable;
+            process.StartInfo.Arguments = arguments;
+            process.Start();
+        }
+
+        private void TryStartMacTerminalEmulator(Process process, string executable, string arguments)
+        {
+            try
+            {
+                process.StartInfo.FileName = "open";
+                process.StartInfo.Arguments = $"-a Terminal \"{executable} {arguments}\"";
+                process.Start();
+                return;
+            }
+            catch
+            {
+
+            }
+
+            process.StartInfo.FileName = executable;
+            process.StartInfo.Arguments = arguments;
+            process.Start();
+        }
+
 
         private void process_Exited(object sender, EventArgs e)
         {
