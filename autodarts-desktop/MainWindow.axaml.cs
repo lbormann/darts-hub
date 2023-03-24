@@ -18,10 +18,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using System.Threading.Tasks;
-using System.IO.Compression;
-using SharpCompress.Common;
-using SharpCompress.Readers;
-using System.IO;
+
 
 namespace autodarts_desktop
 {
@@ -195,9 +192,6 @@ namespace autodarts_desktop
         {
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
             {
-                IsEnabled = false;
-                Opacity = 0.25;
-
                 var result = await RenderMessageBox("", $"New Version '{e.Version}' available! Do you want to update?", MessageBox.Avalonia.Enums.Icon.Warning, ButtonEnum.YesNo);
 
                 if (result == ButtonResult.Yes)
@@ -222,6 +216,7 @@ namespace autodarts_desktop
         private async void Updater_ReleaseDownloadFailed(object? sender, ReleaseEventArgs e)
         {
             await RenderMessageBox("", "Checking for new release failed! Please check your internet-connection and try again. " + e.Message, MessageBox.Avalonia.Enums.Icon.Error);
+            SetWait(false);
         }
 
         private void Updater_ReleaseDownloadProgressed(object? sender, DownloadProgressChangedEventArgs e)
