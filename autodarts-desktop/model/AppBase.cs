@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace autodarts_desktop.model
@@ -144,8 +145,15 @@ namespace autodarts_desktop.model
                 process.StartInfo.Arguments = arguments;
                 process.StartInfo.RedirectStandardOutput = false;
                 process.StartInfo.RedirectStandardError = false;
-                process.StartInfo.UseShellExecute = true;
-                if (RunAsAdmin) process.StartInfo.Verb = "runas";
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    process.StartInfo.UseShellExecute = true;
+                    if (RunAsAdmin) process.StartInfo.Verb = "runas";
+                }
+                else
+                {
+                    process.StartInfo.UseShellExecute = false;
+                }
                 process.StartInfo.WindowStyle = StartWindowState;
 
                 process.EnableRaisingEvents = true;

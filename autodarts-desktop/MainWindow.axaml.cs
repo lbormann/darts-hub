@@ -44,6 +44,7 @@ namespace autodarts_desktop
         public MainWindow()
         {
             InitializeComponent();
+            WindowHelper.CenterWindowOnScreen(this);
 
             fontSize = 18.0;
             elementWidth = (int)(Width * 0.80);

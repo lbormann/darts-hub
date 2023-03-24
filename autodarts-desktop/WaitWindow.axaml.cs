@@ -7,6 +7,7 @@ namespace autodarts_desktop
         public WaitWindow()
         {
             InitializeComponent();
+            WindowHelper.CenterWindowOnScreen(this);
         }
 
         public void SetMessage(string waitingMessage)

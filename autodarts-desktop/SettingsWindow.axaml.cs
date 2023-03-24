@@ -41,10 +41,12 @@ namespace autodarts_desktop
         public SettingsWindow()
         {
             InitializeComponent();
+            WindowHelper.CenterWindowOnScreen(this);
         }
         public SettingsWindow(ProfileManager profileManager, AppBase app)
         {
             InitializeComponent();
+            WindowHelper.CenterWindowOnScreen(this);
 
 
             this.profileManager = profileManager;

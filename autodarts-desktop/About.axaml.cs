@@ -20,6 +20,7 @@ namespace autodarts_desktop
         public About()
         {
             InitializeComponent();
+            WindowHelper.CenterWindowOnScreen(this);
             appVersion.Content = Updater.version;
         }
 
