@@ -8,6 +8,7 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
 	<ApplicationIcon>Assets\favicon.ico</ApplicationIcon>
 	<BundleIcon>Assets\favicon.icns</BundleIcon>
+	<AssemblyName></AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <None Remove=".gitignore" />

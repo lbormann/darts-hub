@@ -274,9 +274,12 @@ namespace autodarts_desktop
             SetWait(false, "Install " + e.App.Name + " failed. " + e.Message);
         }
 
-        private void ProfileManager_AppConfigurationRequired(object? sender, AppEventArgs e)
+        private async void ProfileManager_AppConfigurationRequired(object? sender, AppEventArgs e)
         {
-            new SettingsWindow(profileManager, e.App).Show(this);
+            WindowState = WindowState.Minimized;
+            await new SettingsWindow(profileManager, e.App).ShowDialog(this);
+            scroller.ScrollToHome();
+            WindowState = WindowState.Normal;
         }
 
 
@@ -323,7 +326,7 @@ namespace autodarts_desktop
 
         private async void RenderProfiles()
         {
-            ComboBoxItem lastItemTaggedForStart = null;
+            ComboBoxItem? lastItemTaggedForStart = null;
             var profiles = profileManager.GetProfiles();
             if (profiles.Count == 0)
             {
@@ -342,7 +345,9 @@ namespace autodarts_desktop
                 if (profile.IsTaggedForStart) lastItemTaggedForStart = comboBoxItem;
             }
             Comboboxportal.Items = cbiProfiles;
-            if (lastItemTaggedForStart != null) Comboboxportal.SelectedItem = lastItemTaggedForStart;
+            Comboboxportal.SelectedItem = lastItemTaggedForStart != null ? lastItemTaggedForStart : cbiProfiles[0];
+
+
             RenderProfile();
 
             if (Settings.Default.start_profile_on_start) RunSelectedProfile();
