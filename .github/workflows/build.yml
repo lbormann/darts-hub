@@ -2,10 +2,10 @@ name: "Build"
 
 on:
   push:
-    #tags:
-    #- 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
-    branches:
-        - main
+    tags:
+    - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+    # branches:
+    #     - main
 
 permissions:
   contents: write
@@ -191,6 +191,7 @@ jobs:
 
 
 
+
       # Release Management
       - name: Delete release drafts
         uses: hugo19941994/delete-draft-releases@v1.0.0
@@ -205,6 +206,7 @@ jobs:
         with:
           draft: true
           tag_name: ${{ github.ref }}
+          name: Release v${{ github.ref }}
           generate_release_notes: true
           files: |
             # autodarts-desktop-windows-X86.zip

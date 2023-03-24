@@ -18,6 +18,10 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using System.Threading.Tasks;
+using System.IO.Compression;
+using SharpCompress.Common;
+using SharpCompress.Readers;
+using System.IO;
 
 namespace autodarts_desktop
 {

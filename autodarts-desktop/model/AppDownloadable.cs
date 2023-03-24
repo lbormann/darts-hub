@@ -5,6 +5,8 @@ using System.IO.Compression;
 using System.IO;
 using System.Net;
 using System.Diagnostics;
+using SharpCompress.Common;
+using SharpCompress.Readers;
 
 namespace autodarts_desktop.model
 {
@@ -125,9 +127,29 @@ namespace autodarts_desktop.model
                 if (e.Error != null) throw e.Error;
 
                 // Extract download if zip-file
-                if (Path.GetExtension(downloadPathFile).ToLower() == ".zip")
+                var ext = Path.GetExtension(downloadPathFile).ToLower();
+                if (ext == ".zip")
                 {
                     ZipFile.ExtractToDirectory(downloadPathFile, downloadPath);
+                }
+                else if (ext == ".gz")
+                {
+                    using (FileStream stream = File.OpenRead(downloadPathFile))
+                    using (var reader = ReaderFactory.Open(stream))
+                    {
+                        while (reader.MoveToNextEntry())
+                        {
+                            if (!reader.Entry.IsDirectory)
+                            {
+                                reader.WriteEntryToDirectory(downloadPath,
+                                    new ExtractionOptions()
+                                    {
+                                        ExtractFullPath = true,
+                                        Overwrite = true
+                                    });
+                            }
+                        }
+                    }
                 }
                 OnDownloadFinished(new AppEventArgs(this, "success"));
                 if(IsReadyToRun()) Run(runtimeArguments);
