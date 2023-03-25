@@ -19,7 +19,7 @@ namespace autodarts_desktop.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v0.7.8";
+        public static readonly string version = "v0.7.9";
 
         
         public static event EventHandler<ReleaseEventArgs>? NewReleaseFound;
@@ -253,8 +253,8 @@ namespace autodarts_desktop.control
                 {
                     StartInfo = new ProcessStartInfo
                     {
-                        FileName = "/bin/bash",
-                        Arguments = $"-c chmod +x \"{scriptPath}\"",
+                        FileName = "chmod",
+                        Arguments = $"+x \"{scriptPath}\"",
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
                         UseShellExecute = false,
