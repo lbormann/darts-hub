@@ -1,16 +1,15 @@
-﻿#!/bin/bash
+#!/bin/bash
 
-# Wechsel in das aktuelle Verzeichnis
-cd "$(dirname "$0")"
 
-# Warte 2 Sekunden
+# Äquivalent zu "timeout 2 /nobreak"
 sleep 2
 
-# Kopiere alle Dateien und Verzeichnisse aus dem Ordner Updates in das aktuelle Verzeichnis
-cp -r Updates/* .
+# Äquivalent zu "xcopy /s/e/v/y/z .\Updates\ ."
+cp -R -p -n -v ./Updates/* .
 
-# Lösche den Ordner Updates
-rm -rf Updates
+# Äquivalent zu "rmdir /s /q .\Updates"
+rm -rf ./Updates
 
-# Starte die Anwendung "autodarts-desktop"
+# Äquivalent zu "start "Autodarts-Desktop" /max autodarts-desktop.exe"
+# Anpassen, falls der Pfad oder der Dateiname auf Linux/macOS unterschiedlich ist
 ./autodarts-desktop

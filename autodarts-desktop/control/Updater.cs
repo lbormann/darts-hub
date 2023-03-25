@@ -254,7 +254,7 @@ namespace autodarts_desktop.control
                     StartInfo = new ProcessStartInfo
                     {
                         FileName = "/bin/bash",
-                        Arguments = $"-c \"chmod +x {scriptPath}\"",
+                        Arguments = $"-c chmod +x \"{scriptPath}\"",
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
                         UseShellExecute = false,
