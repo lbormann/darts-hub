@@ -19,7 +19,7 @@ namespace autodarts_desktop.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v0.7.12";
+        public static readonly string version = "v0.7.14";
 
         
         public static event EventHandler<ReleaseEventArgs>? NewReleaseFound;
@@ -296,13 +296,13 @@ namespace autodarts_desktop.control
                         var updateFile = GetUpdateFileByOs();
                         if (String.IsNullOrEmpty(updateFile)) throw new Exception("There is no update-script for your specific OS.");
 
-                        EnsureExecutablePermissions(destinationPath, updateFile);
+                        //nsureExecutablePermissions(destinationPath, updateFile);
 
                         process.StartInfo.WorkingDirectory = destinationPath;
                         process.StartInfo.FileName = updateFile;
                         process.StartInfo.RedirectStandardOutput = false;
                         process.StartInfo.RedirectStandardError = false;
-                        process.StartInfo.UseShellExecute = true;
+                        process.StartInfo.UseShellExecute = false;
                         process.Start();
                     }
                     catch (Exception ex)
