@@ -143,6 +143,13 @@ jobs:
       - name: Build linux-x64
         run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r linux-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
 
+      - name: Convert line endings in update.sh in output directory
+        run: |
+          $outputPath = "autodarts-desktop/bin/Release/net6.0/linux-x64/publish/update.sh"
+          $content = Get-Content -Path $outputPath -Raw
+          $content -replace "`r`n", "`n" | Set-Content -Path $outputPath -NoNewline -Encoding UTF8
+
+
       - name: Zip linux-x64 build
         uses: vimtor/action-zip@v1
         with:
@@ -154,6 +161,9 @@ jobs:
         with:
           name: autodarts-desktop-linux-x64
           path: ${{ github.workspace }}/autodarts-desktop-linux-X64.zip
+
+
+        
 
 
       # # linux-arm
