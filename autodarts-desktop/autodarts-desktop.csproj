@@ -8,7 +8,8 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
 	<ApplicationIcon>Assets\favicon.ico</ApplicationIcon>
 	<BundleIcon>Assets\favicon.icns</BundleIcon>
-	<AssemblyName></AssemblyName>
+	<AssemblyName>autodarts-desktop</AssemblyName>
+	<RootNamespace>autodarts_desktop</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <None Remove=".gitignore" />

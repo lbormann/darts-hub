@@ -1,0 +1,8 @@
+root = true
+
+[*]
+# Standard-Konfiguration für alle Dateien
+
+[*.sh]
+end_of_line = lf
+insert_final_newline = true
