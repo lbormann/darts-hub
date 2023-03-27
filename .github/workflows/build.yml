@@ -54,21 +54,21 @@ jobs:
       #     path: ${{ github.workspace }}/autodarts-desktop-windows-X86.zip
 
 
-      # win-x64
-      - name: Build win-x64
-        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r win-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+      # # win-x64
+      # - name: Build win-x64
+      #   run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r win-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
 
-      - name: Zip win-x64 build
-        uses: vimtor/action-zip@v1
-        with:
-          files: autodarts-desktop/bin/Release/net6.0/win-x64/publish/
-          dest: autodarts-desktop-windows-X64.zip
+      # - name: Zip win-x64 build
+      #   uses: vimtor/action-zip@v1
+      #   with:
+      #     files: autodarts-desktop/bin/Release/net6.0/win-x64/publish/
+      #     dest: autodarts-desktop-windows-X64.zip
 
-      - name: Collect win-x64 artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: autodarts-desktop-windows-x64
-          path: ${{ github.workspace }}/autodarts-desktop-windows-X64.zip
+      # - name: Collect win-x64 artifacts
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: autodarts-desktop-windows-x64
+      #     path: ${{ github.workspace }}/autodarts-desktop-windows-X64.zip
 
 
       # # win-arm
@@ -210,7 +210,7 @@ jobs:
           generate_release_notes: true
           files: |
             # autodarts-desktop-windows-X86.zip
-            autodarts-desktop-windows-X64.zip
+            # autodarts-desktop-windows-X64.zip
             # autodarts-desktop-windows-ARM.zip
             # autodarts-desktop-windows-ARM64.zip
             # autodarts-desktop-macOS-X64.zip
