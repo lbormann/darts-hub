@@ -19,7 +19,7 @@ namespace autodarts_desktop.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v0.7.14";
+        public static readonly string version = "v0.7.15";
 
         
         public static event EventHandler<ReleaseEventArgs>? NewReleaseFound;
@@ -255,10 +255,9 @@ namespace autodarts_desktop.control
                     {
                         FileName = "chmod",
                         Arguments = $"+x \"{scriptPath}\"",
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
+                        RedirectStandardOutput = false,
+                        RedirectStandardError = false,
+                        UseShellExecute = false
                     }
                 };
 
@@ -296,7 +295,7 @@ namespace autodarts_desktop.control
                         var updateFile = GetUpdateFileByOs();
                         if (String.IsNullOrEmpty(updateFile)) throw new Exception("There is no update-script for your specific OS.");
 
-                        //nsureExecutablePermissions(destinationPath, updateFile);
+                        EnsureExecutablePermissions(destinationPath, updateFile);
 
                         process.StartInfo.WorkingDirectory = destinationPath;
                         process.StartInfo.FileName = updateFile;
