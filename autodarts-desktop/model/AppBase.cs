@@ -2,8 +2,10 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -12,7 +14,7 @@ namespace autodarts_desktop.model
     /// <summary>
     /// Main functions for using an app
     /// </summary>
-    public abstract class AppBase : IApp
+    public abstract class AppBase : IApp, INotifyPropertyChanged
     {
 
         // ATTRIBUTES
@@ -33,6 +35,20 @@ namespace autodarts_desktop.model
         public string AppConsoleStdOutput { get; private set; }
         [JsonIgnore]
         public string AppConsoleStdError { get; private set; }
+        [JsonIgnore]
+        private bool _appRunningState;
+        public bool AppRunningState
+        {
+            get => _appRunningState;
+            private set
+            {
+                if (_appRunningState != value)
+                {
+                    _appRunningState = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         private string? executable;
         private readonly ProcessWindowStyle DefaultStartWindowState = ProcessWindowStyle.Minimized;
@@ -43,7 +59,13 @@ namespace autodarts_desktop.model
         private int processId;
 
 
+        // Implement INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged;
 
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
 
         // METHODS
@@ -67,6 +89,7 @@ namespace autodarts_desktop.model
             Configuration = configuration;
 
             processId = defaultProcessId;
+            AppRunningState = false;
         }
 
 
@@ -91,7 +114,8 @@ namespace autodarts_desktop.model
 
         public bool IsRunning()
         {
-            return process != null && !process.HasExited;
+            return AppRunningState;
+            //return process != null && !process.HasExited;
         }
 
         public void Close()
@@ -113,7 +137,7 @@ namespace autodarts_desktop.model
                     {
                         Helper.KillProcess(executable);
                     }
-
+                    AppRunningState = false;
                 }
                 catch
                 {
@@ -145,78 +169,87 @@ namespace autodarts_desktop.model
                 process = new Process();
                 process.StartInfo.WindowStyle = StartWindowState;
                 process.EnableRaisingEvents = true;
-                process.Exited += process_Exited;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.CreateNoWindow = true;
+                process.StartInfo.UseShellExecute = false;
+                process.Exited += (sender, e) =>
+                {
+                    //Console.WriteLine(
+                    //    $"Exit time    : {process.ExitTime}\n" +
+                    //    $"Exit code    : {process.ExitCode}\n" +
+                    //    $"Elapsed time : {Math.Round((process.ExitTime - process.StartTime).TotalMilliseconds)}");
+                    //Console.WriteLine("Process " + Name + " exited");
+                    processId = defaultProcessId;
+                    AppRunningState = false;
+                    AppConsoleStdOutput += Environment.NewLine + "---------------------------- EXIT ----------------------------" + Environment.NewLine;
+                    eventHandled.TrySetResult(true);
+                };
+                process.OutputDataReceived += (sender, e) =>
+                {
+                    if (e.Data != null)
+                    {
+                        AppConsoleStdOutput += e.Data + Environment.NewLine;
+                        // Console.WriteLine(AppConsoleStdOutput);
+                    }
+                };
+                process.ErrorDataReceived += (sender, e) =>
+                {
+                    if (e.Data != null)
+                    {
+                        AppConsoleStdError += e.Data + Environment.NewLine;
+                        // Console.WriteLine(AppConsoleStdError);
+                    }
+                };
+                process.StartInfo.FileName = executable;
+                process.StartInfo.Arguments = arguments;
 
                 bool isUri = Uri.TryCreate(executable, UriKind.Absolute, out Uri uriResult)
                 && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
-                if (!isUri) process.StartInfo.WorkingDirectory = Path.GetDirectoryName(executable);
-                
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                if (isUri)
                 {
-                    process.StartInfo.UseShellExecute = true;
-                    process.StartInfo.FileName = executable;
-                    process.StartInfo.Arguments = arguments;
                     process.StartInfo.RedirectStandardOutput = false;
                     process.StartInfo.RedirectStandardError = false;
+                    process.StartInfo.UseShellExecute = true;
+                    process.StartInfo.CreateNoWindow = false;
+                }
+                else 
+                {
+                    //process.StartInfo.RedirectStandardOutput = false;
+                    //process.StartInfo.RedirectStandardError = false;
+                    //process.StartInfo.UseShellExecute = true;
+                    //process.StartInfo.CreateNoWindow = false;
+                    process.StartInfo.WorkingDirectory = Path.GetDirectoryName(executable);
+                }
+                
+
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    //process.StartInfo.RedirectStandardOutput = false;
+                    //process.StartInfo.RedirectStandardError = false;
                     if (RunAsAdmin) process.StartInfo.Verb = "runas";
-                    process.Start();
-                    processId = process.Id;
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
                     EnsureExecutablePermissions(executable);
-                    
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.StartInfo.RedirectStandardError = true;
-                    process.StartInfo.CreateNoWindow = true;
-                    process.StartInfo.FileName = executable;
-                    process.StartInfo.Arguments = arguments;
-                    process.OutputDataReceived += (sender, e) =>
-                    {
-                        if (e.Data != null)
-                        {
-                            AppConsoleStdOutput += e.Data + Environment.NewLine;
-                            // Console.WriteLine(AppConsoleStdOutput);
-                        }
-                    };
-                    process.ErrorDataReceived += (sender, e) =>
-                    {
-                        if (e.Data != null)
-                        {
-                            AppConsoleStdError += e.Data + Environment.NewLine;
-                            // Console.WriteLine(AppConsoleStdError);
-                        }
-                    };
-                     
-                    process.Start();
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
-                    processId = process.Id;
-                        
-                    // process.StartInfo.Arguments = $"-- \"{Path.Combine(process.StartInfo.WorkingDirectory, executable)}\" {arguments}";
-                    // foreach (var terminalEmulator in new[] { "konsole", "xterm", "lxterminal", "xfce4-terminal", "gnome-terminal"})
-                    // {
-                    //     try
-                    //     {
-                    //         process.StartInfo.FileName = terminalEmulator;
-                    //         process.Start();
-                    //         processId = process.Id;
-                    //         break;
-                    //     }
-                    //     catch
-                    //     {
-                    //     }
-                    // }
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
                     EnsureExecutablePermissions(executable);
-                    process.StartInfo.UseShellExecute = false;
-                    TryStartMacTerminalEmulator(executable, arguments);
                 }
 
+                process.Start();
+                if(process.StartInfo.RedirectStandardOutput == true)
+                {
+                    process.BeginOutputReadLine();
+                }
+                if (process.StartInfo.RedirectStandardError == true)
+                {
+                    process.BeginErrorReadLine();
+                }
+                processId = process.Id;
+                AppRunningState = true;
             }
             catch (Exception ex)
             {
@@ -231,7 +264,6 @@ namespace autodarts_desktop.model
 
         private void EnsureExecutablePermissions(string scriptPath)
         {
-            // var scriptPath = Path.Combine(path, executableFile);
             var chmodProcess = new Process
             {
                 StartInfo = new ProcessStartInfo
@@ -243,7 +275,6 @@ namespace autodarts_desktop.model
                     UseShellExecute = false
                 }
             };
-
             chmodProcess.Start();
             chmodProcess.WaitForExit();
 
@@ -252,44 +283,6 @@ namespace autodarts_desktop.model
                 throw new Exception($"Failed to set executable permissions for {scriptPath}. Exit code: {chmodProcess.ExitCode}");
             }
         
-        }
-
-        private void TryStartLinuxTerminalEmulator(string[] terminalEmulators, string executable, string arguments)
-        {
-
-        }
-        
-        private void TryStartMacTerminalEmulator(string executable, string arguments)
-        {
-            try
-            {
-                process.StartInfo.FileName = "open";
-                process.StartInfo.Arguments = $"-a Terminal \"{Path.Combine(process.StartInfo.WorkingDirectory, executable)}\" {arguments}";
-                process.Start();
-                processId = process.Id;
-                return;
-            }
-            catch
-            {
-
-            }
-
-            process.StartInfo.FileName = executable;
-            process.StartInfo.Arguments = arguments;
-            process.Start();
-            processId = process.Id;
-        }
-
-
-        private void process_Exited(object sender, EventArgs e)
-        {
-            //Console.WriteLine(
-            //    $"Exit time    : {process.ExitTime}\n" +
-            //    $"Exit code    : {process.ExitCode}\n" +
-            //    $"Elapsed time : {Math.Round((process.ExitTime - process.StartTime).TotalMilliseconds)}");
-            //Console.WriteLine("Process " + Name + " exited");
-            processId = defaultProcessId;
-            eventHandled.TrySetResult(true);
         }
 
         protected virtual bool IsRunnable()

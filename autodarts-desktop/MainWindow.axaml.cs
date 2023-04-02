@@ -29,7 +29,7 @@ namespace autodarts_desktop
 
         private ProfileManager profileManager;
         private Profile? selectedProfile;
-        private List<Control> selectedProfileElements;
+        private System.Collections.ObjectModel.ObservableCollection<Control> selectedProfileElements;
 
         private double fontSize;
         private int elementWidth;
@@ -380,15 +380,46 @@ namespace autodarts_desktop
                 selectedProfile.Apps.TryGetValue(app.Key, out ProfileState? appProfile);
                 var nextMargin = new Thickness(startMargin.Left, startMargin.Top + marginTop, startMargin.Right, startMargin.Bottom);
 
-                
+                var imageRunState = new Image();
+                imageRunState.ZIndex = 99;
+                imageRunState.HorizontalAlignment = HorizontalAlignment.Left;
+                imageRunState.Width = 30;
+                imageRunState.Height = 30;
+                imageRunState.Source = new Bitmap(assets.Open(new Uri("avares://autodarts-desktop/Assets/exit.png")));
+                imageRunState.DataContext = app.Value.App;
+                imageRunState.Bind(Image.IsVisibleProperty, new Binding("AppRunningState"));
+
+                var buttonRunState = new Button();
+                buttonRunState.ZIndex = 99;
+                buttonRunState.Margin = new Thickness(nextMargin.Left + 348, nextMargin.Top + 1, nextMargin.Right, nextMargin.Bottom);
+                buttonRunState.Content = imageRunState;
+                buttonRunState.HorizontalAlignment = HorizontalAlignment.Left;
+                buttonRunState.VerticalAlignment = VerticalAlignment.Top;
+                buttonRunState.VerticalContentAlignment = VerticalAlignment.Center;
+                buttonRunState.FontSize = fontSize;
+                buttonRunState.Background = Brushes.Transparent;
+                buttonRunState.BorderThickness = new Thickness(0);
+                buttonRunState.Click += async (s, e) =>
+                {
+                    app.Value.App.Close();
+                };
+                GridMain.Children.Add(buttonRunState);
+                selectedProfileElements.Add(buttonRunState);
+
+
+
                 var imageConsole = new Image();
+                imageConsole.ZIndex = 99;
                 imageConsole.HorizontalAlignment = HorizontalAlignment.Left;
                 imageConsole.Width = 24;
                 imageConsole.Height = 24;
                 imageConsole.Source = new Bitmap(assets.Open(new Uri("avares://autodarts-desktop/Assets/terminal.png")));
+                imageConsole.DataContext = app.Value.App;
+                imageConsole.Bind(Image.IsVisibleProperty, new Binding("AppRunningState"));
 
                 var buttonConsole= new Button();
-                buttonConsole.Margin = new Thickness(nextMargin.Left + 300, nextMargin.Top + 5, nextMargin.Right, nextMargin.Bottom);
+                buttonConsole.ZIndex = 99;
+                buttonConsole.Margin = new Thickness(nextMargin.Left + 315, nextMargin.Top + 5, nextMargin.Right, nextMargin.Bottom);
                 buttonConsole.Content = imageConsole;
                 buttonConsole.HorizontalAlignment = HorizontalAlignment.Left;
                 buttonConsole.VerticalAlignment = VerticalAlignment.Top;
@@ -396,11 +427,6 @@ namespace autodarts_desktop
                 buttonConsole.FontSize = fontSize;
                 buttonConsole.Background = Brushes.Transparent;
                 buttonConsole.BorderThickness = new Thickness(0);
-                buttonConsole.DataContext = app.Value.App;
-                // appProfile.App.IsRunning()
-                // buttonConsole.Bind(Button.IsEnabledProperty, new Binding("IsRunning()"));
-                // buttonConsole.IsEnabled = true;
-
                 buttonConsole.Click += async (s, e) =>
                 {
                     await RenderMessageBox($"Console for {app.Value.App.Name}", 
@@ -416,12 +442,14 @@ namespace autodarts_desktop
                 
                 
                 var imageConfiguration = new Image();
+                imageConfiguration.ZIndex = 99;
                 imageConfiguration.HorizontalAlignment = HorizontalAlignment.Left;
                 imageConfiguration.Width = 24;
                 imageConfiguration.Height = 24;
                 imageConfiguration.Source = new Bitmap(assets.Open(new Uri("avares://autodarts-desktop/Assets/configuration.png")));
 
                 var buttonConfiguration = new Button();
+                buttonConfiguration.ZIndex = 99;
                 buttonConfiguration.Margin = new Thickness(nextMargin.Left, nextMargin.Top + 5, nextMargin.Right, nextMargin.Bottom);
                 buttonConfiguration.Content = imageConfiguration;
                 buttonConfiguration.HorizontalAlignment = HorizontalAlignment.Left;

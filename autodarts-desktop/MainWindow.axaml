@@ -38,7 +38,7 @@
 
 			<ComboBox x:Name="Comboboxportal" HorizontalAlignment="Left" Margin="17,71,0,0" VerticalAlignment="Top" Width="360" SelectionChanged="Comboboxportal_SelectionChanged" SelectedIndex="0" />
 
-			<Button x:Name="Buttonstart" HorizontalAlignment="Right" Margin="0,60,0,0" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Click="Buttonstart_Click" >
+			<Button x:Name="Buttonstart" HorizontalAlignment="Right" Margin="0,40,0,0" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Click="Buttonstart_Click" >
 				<Image x:Name="darts_png" Width="60" Height="60" Source="/Assets/darts.png" Stretch="Fill"/>
 			</Button>
 
