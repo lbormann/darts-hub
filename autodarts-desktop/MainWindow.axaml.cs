@@ -58,6 +58,12 @@ namespace autodarts_desktop
             CheckBoxStartProfileOnProgramStart.IsChecked = Settings.Default.start_profile_on_start;
             CheckBoxStartProfileOnProgramStart.FontSize = fontSize - 6;
 
+            Opened += MainWindow_Opened;
+        }
+
+
+        private async void MainWindow_Opened(object sender, EventArgs e)
+        {
             try
             {
                 profileManager = new ProfileManager();
@@ -87,13 +93,10 @@ namespace autodarts_desktop
             }
             catch (Exception ex)
             {
-                RenderMessageBox("", "Something went wrong: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
+                await RenderMessageBox("", "Something went wrong: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
                 Environment.Exit(1);
             }
         }
-
-      
-
 
         private void Buttonstart_Click(object sender, RoutedEventArgs e)
         {
@@ -193,7 +196,6 @@ namespace autodarts_desktop
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 var result = await RenderMessageBox("", $"New Version '{e.Version}' available! Do you want to update?", MessageBox.Avalonia.Enums.Icon.Warning, ButtonEnum.YesNo);
-
                 if (result == ButtonResult.Yes)
                 {
                     try

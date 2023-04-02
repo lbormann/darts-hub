@@ -19,7 +19,7 @@ namespace autodarts_desktop.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v0.7.15";
+        public static readonly string version = "v0.7.16";
 
         
         public static event EventHandler<ReleaseEventArgs>? NewReleaseFound;
@@ -75,7 +75,6 @@ namespace autodarts_desktop.control
         {
             if (!string.IsNullOrEmpty(latestRepoVersion))
             {
-
                 try
                 {
                     var appSourceFile = GetAppFileByOS();
