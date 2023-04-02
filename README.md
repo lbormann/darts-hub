@@ -67,7 +67,7 @@ It may be buggy. I've just coded it for fast fun with https://autodarts.io. You 
 ## Ressources
 
 Icon by <a href="https://freeicons.io/profile/8178">Ognjen Vukomanov</a> on <a href="https://freeicons.io">freeicons.io</a>
-                                
+Icon by <a href="https://freeicons.io/profile/823">Muhammad Haq</a> on <a href="https://freeicons.io">freeicons.io</a>                             
 
 ## LAST WORDS
 Thanks to Timo for awesome https://autodarts.io.
