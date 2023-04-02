@@ -29,7 +29,10 @@ namespace autodarts_desktop.model
 
         [JsonIgnore]
         public Argument? ArgumentRequired { get; private set; }
-
+        [JsonIgnore]
+        public string AppConsoleStdOutput { get; private set; }
+        [JsonIgnore]
+        public string AppConsoleStdError { get; private set; }
 
         private string? executable;
         private readonly ProcessWindowStyle DefaultStartWindowState = ProcessWindowStyle.Minimized;
@@ -96,23 +99,25 @@ namespace autodarts_desktop.model
             if(!IsRunning()) return;
             if (IsRunnable())
             {
-                //Console.WriteLine(Name + " tries to exit");
-                process.CloseMainWindow();
-                process.Close();
-
-                if (processId != defaultProcessId)
+                try
                 {
-                    try
+                    //Console.WriteLine(Name + " tries to exit");
+                    process.CloseMainWindow();
+                    process.Close();
+
+                    if (processId != defaultProcessId)
                     {
                         Helper.KillProcess(processId);
                     }
-                    catch
+                    if (executable != null)
                     {
+                        Helper.KillProcess(executable);
                     }
+
                 }
-                if (executable != null)
+                catch
                 {
-                    Helper.KillProcess(executable);
+                    Console.WriteLine($"Can't close {executable}");
                 }
             }
         }
@@ -146,8 +151,7 @@ namespace autodarts_desktop.model
                 && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
                 if (!isUri) process.StartInfo.WorkingDirectory = Path.GetDirectoryName(executable);
-
-
+                
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     process.StartInfo.UseShellExecute = true;
@@ -161,13 +165,56 @@ namespace autodarts_desktop.model
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
+                    EnsureExecutablePermissions(executable);
+                    
                     process.StartInfo.UseShellExecute = false;
-                    TryStartLinuxTerminalEmulator(process, new[] { "konsole", "xterm", "lxterminal", "xfce4-terminal", "gnome-terminal"}, executable, arguments);
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.RedirectStandardError = true;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.StartInfo.FileName = executable;
+                    process.StartInfo.Arguments = arguments;
+                    process.OutputDataReceived += (sender, e) =>
+                    {
+                        if (e.Data != null)
+                        {
+                            AppConsoleStdOutput += e.Data + Environment.NewLine;
+                            // Console.WriteLine(AppConsoleStdOutput);
+                        }
+                    };
+                    process.ErrorDataReceived += (sender, e) =>
+                    {
+                        if (e.Data != null)
+                        {
+                            AppConsoleStdError += e.Data + Environment.NewLine;
+                            // Console.WriteLine(AppConsoleStdError);
+                        }
+                    };
+                     
+                    process.Start();
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+                    processId = process.Id;
+                        
+                    // process.StartInfo.Arguments = $"-- \"{Path.Combine(process.StartInfo.WorkingDirectory, executable)}\" {arguments}";
+                    // foreach (var terminalEmulator in new[] { "konsole", "xterm", "lxterminal", "xfce4-terminal", "gnome-terminal"})
+                    // {
+                    //     try
+                    //     {
+                    //         process.StartInfo.FileName = terminalEmulator;
+                    //         process.Start();
+                    //         processId = process.Id;
+                    //         break;
+                    //     }
+                    //     catch
+                    //     {
+                    //     }
+                    // }
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
+                    EnsureExecutablePermissions(executable);
                     process.StartInfo.UseShellExecute = false;
-                    TryStartMacTerminalEmulator(process, executable, arguments);
+                    TryStartMacTerminalEmulator(executable, arguments);
                 }
 
             }
@@ -182,36 +229,44 @@ namespace autodarts_desktop.model
             
         }
 
-
-
-        private void TryStartLinuxTerminalEmulator(Process process, string[] terminalEmulators, string executable, string arguments)
+        private void EnsureExecutablePermissions(string scriptPath)
         {
-            foreach (string terminalEmulator in terminalEmulators)
+            // var scriptPath = Path.Combine(path, executableFile);
+            var chmodProcess = new Process
             {
-                try
+                StartInfo = new ProcessStartInfo
                 {
-                    process.StartInfo.FileName = terminalEmulator;
-                    process.StartInfo.Arguments = $"-e \"{Path.Combine(process.StartInfo.WorkingDirectory, executable)}\" {arguments}";
-                    process.Start();
-                    return;
+                    FileName = "chmod",
+                    Arguments = $"+x {scriptPath}",
+                    RedirectStandardOutput = false,
+                    RedirectStandardError = false,
+                    UseShellExecute = false
                 }
-                catch
-                {
-                }
-            }
+            };
 
-            process.StartInfo.FileName = executable;
-            process.StartInfo.Arguments = arguments;
-            process.Start();
+            chmodProcess.Start();
+            chmodProcess.WaitForExit();
+
+            if (chmodProcess.ExitCode != 0)
+            {
+                throw new Exception($"Failed to set executable permissions for {scriptPath}. Exit code: {chmodProcess.ExitCode}");
+            }
+        
         }
 
-        private void TryStartMacTerminalEmulator(Process process, string executable, string arguments)
+        private void TryStartLinuxTerminalEmulator(string[] terminalEmulators, string executable, string arguments)
+        {
+
+        }
+        
+        private void TryStartMacTerminalEmulator(string executable, string arguments)
         {
             try
             {
                 process.StartInfo.FileName = "open";
                 process.StartInfo.Arguments = $"-a Terminal \"{Path.Combine(process.StartInfo.WorkingDirectory, executable)}\" {arguments}";
                 process.Start();
+                processId = process.Id;
                 return;
             }
             catch
@@ -222,6 +277,7 @@ namespace autodarts_desktop.model
             process.StartInfo.FileName = executable;
             process.StartInfo.Arguments = arguments;
             process.Start();
+            processId = process.Id;
         }
 
 

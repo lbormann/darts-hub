@@ -168,23 +168,36 @@ namespace autodarts_desktop
         }
 
 
-        private Task<ButtonResult> RenderMessageBox(string title, string message, Icon icon, ButtonEnum buttons = ButtonEnum.Ok)
+        private Task<ButtonResult> RenderMessageBox(string title = "", 
+                                                    string message = "",
+                                                    Icon icon = MessageBox.Avalonia.Enums.Icon.None, 
+                                                    ButtonEnum buttons = ButtonEnum.Ok,
+                                                    double width = -1,
+                                                    double height = -1)
         {
+            if (width < 0)
+            {
+                width = Width / 1.3;
+            }
+            if (height < 0)
+            {
+                height = Height / 1.3;
+            }
+           
             return MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
             {
                 Icon = icon,
                 WindowIcon = Icon,
-                Width = Width / 1.3,
-                Height = Height / 1.3,
-                MaxWidth = MaxWidth / 1.3,
-                MaxHeight = MaxHeight / 1.3,
+                Width = width,
+                Height = height,
+                MaxWidth = width,
+                MaxHeight = height,
                 CanResize = false,
                 EscDefaultButton = ClickEnum.No,
                 EnterDefaultButton = ClickEnum.Yes,
                 SystemDecorations = SystemDecorations.Full,
                 WindowStartupLocation = WindowStartupLocation,
                 ButtonDefinitions = buttons,
-
                 ContentTitle = title,
                 ContentMessage = message
             }).Show(this);
@@ -356,8 +369,8 @@ namespace autodarts_desktop
             selectedProfileElements.Clear();
 
             var startMargin = Comboboxportal.Margin;
-            int top = 30;
-            int counter = 1;
+            var top = 30;
+            var counter = 1;
             var assets = AvaloniaLocator.Current.GetService<IAssetLoader>();
             
 
@@ -367,6 +380,41 @@ namespace autodarts_desktop
                 selectedProfile.Apps.TryGetValue(app.Key, out ProfileState? appProfile);
                 var nextMargin = new Thickness(startMargin.Left, startMargin.Top + marginTop, startMargin.Right, startMargin.Bottom);
 
+                
+                var imageConsole = new Image();
+                imageConsole.HorizontalAlignment = HorizontalAlignment.Left;
+                imageConsole.Width = 24;
+                imageConsole.Height = 24;
+                imageConsole.Source = new Bitmap(assets.Open(new Uri("avares://autodarts-desktop/Assets/terminal.png")));
+
+                var buttonConsole= new Button();
+                buttonConsole.Margin = new Thickness(nextMargin.Left + 300, nextMargin.Top + 5, nextMargin.Right, nextMargin.Bottom);
+                buttonConsole.Content = imageConsole;
+                buttonConsole.HorizontalAlignment = HorizontalAlignment.Left;
+                buttonConsole.VerticalAlignment = VerticalAlignment.Top;
+                buttonConsole.VerticalContentAlignment = VerticalAlignment.Center;
+                buttonConsole.FontSize = fontSize;
+                buttonConsole.Background = Brushes.Transparent;
+                buttonConsole.BorderThickness = new Thickness(0);
+                buttonConsole.DataContext = app.Value.App;
+                // appProfile.App.IsRunning()
+                // buttonConsole.Bind(Button.IsEnabledProperty, new Binding("IsRunning()"));
+                // buttonConsole.IsEnabled = true;
+
+                buttonConsole.Click += async (s, e) =>
+                {
+                    await RenderMessageBox($"Console for {app.Value.App.Name}", 
+                        app.Value.App.AppConsoleStdOutput + app.Value.App.AppConsoleStdError,
+                        MessageBox.Avalonia.Enums.Icon.None,
+                        ButtonEnum.Ok,
+                        Width,
+                        Height
+                        );
+                };
+                GridMain.Children.Add(buttonConsole);
+                selectedProfileElements.Add(buttonConsole);
+                
+                
                 var imageConfiguration = new Image();
                 imageConfiguration.HorizontalAlignment = HorizontalAlignment.Left;
                 imageConfiguration.Width = 24;

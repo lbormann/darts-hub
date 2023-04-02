@@ -42,7 +42,7 @@
 				<Image x:Name="darts_png" Width="60" Height="60" Source="/Assets/darts.png" Stretch="Fill"/>
 			</Button>
 
-			<CheckBox x:Name="CheckBoxStartProfileOnProgramStart" Content="Start with App" HorizontalAlignment="Left" Margin="283,103,0,0" VerticalAlignment="Top" Foreground="White"/>
+			<CheckBox x:Name="CheckBoxStartProfileOnProgramStart" Content="Start with App" HorizontalAlignment="Left" Margin="285,40,0,0" VerticalAlignment="Top" Foreground="White"/>
 
 
 			<TextBlock x:Name="WaitingText"
