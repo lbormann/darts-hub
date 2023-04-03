@@ -477,7 +477,7 @@ namespace autodarts_desktop.control
                             new(name: "BAV", type: "float[0.0..1.0]", required: false, nameHuman: "background-audio-volume", section: "Calls"),
                             new(name: "HP", type: "int", required: false, nameHuman: "host-port", section: "Service"),
                             new(name: "DEB", type: "bool", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "CC", type: "cert-check", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"})
+                            new(name: "CC", type: "bool", required: false, nameHuman: "cert-check", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"})
                             })
                         );
                 apps.Add(autodartsCaller);
