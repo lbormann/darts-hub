@@ -130,7 +130,7 @@ jobs:
       - name: Zip osx-x64 build
         uses: vimtor/action-zip@v1
         with:
-          files: autodarts-desktop/bin/Release/net6.0/osx-x64/publish/
+          files: autodarts-desktop/bin/Release/net6.0/osx-x64/publish
           dest: autodarts-desktop-macOS-X64.zip
 
       - name: Collect osx-x64 artifacts
