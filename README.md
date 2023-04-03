@@ -34,9 +34,8 @@ It may be buggy. I've just coded it for fast fun with https://autodarts.io. You 
 
 
 ## TODOs
-- update when autostart is activated
-- Update without question!
-- Fix arguments-type-float without range!
+
+
 
 ### Done
 - refactor setup-areas for using AppManager
@@ -63,6 +62,8 @@ It may be buggy. I've just coded it for fast fun with https://autodarts.io. You 
 - Try to start app after user filled required argument
 - cross-platform
 - update images / text in Readme
+- update when autostart is activated
+- Fix arguments-type-float without range!
 
 
 ## Ressources

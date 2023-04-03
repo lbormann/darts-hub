@@ -81,6 +81,7 @@ namespace autodarts_desktop
                 RenderProfiles();
 
                 Updater.NewReleaseFound += Updater_NewReleaseFound;
+                Updater.NoNewReleaseFound += Updater_NoNewReleaseFound;
                 Updater.ReleaseInstallInitialized += Updater_ReleaseInstallInitialized;
                 Updater.ReleaseDownloadStarted += Updater_ReleaseDownloadStarted;
                 Updater.ReleaseDownloadFailed += Updater_ReleaseDownloadFailed;
@@ -203,6 +204,15 @@ namespace autodarts_desktop
             }).Show(this);
         }
 
+
+
+        private async void Updater_NoNewReleaseFound(object? sender, ReleaseEventArgs e)
+        {
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                if (Settings.Default.start_profile_on_start) RunSelectedProfile(); 
+            });
+        }
 
         private async void Updater_NewReleaseFound(object? sender, ReleaseEventArgs e)
         {
@@ -355,10 +365,7 @@ namespace autodarts_desktop
             Comboboxportal.Items = cbiProfiles;
             Comboboxportal.SelectedItem = lastItemTaggedForStart != null ? lastItemTaggedForStart : cbiProfiles[0];
 
-
             RenderProfile();
-
-            if (Settings.Default.start_profile_on_start) RunSelectedProfile();
         }
 
         private void RenderProfile()

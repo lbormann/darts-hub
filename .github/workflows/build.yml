@@ -112,17 +112,21 @@ jobs:
 
       # osx-x64
       - name: Build osx-x64
-        # -p:IncludeAllContentForSelfExtract=true 
-        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r osx-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+        # -p:IncludeNativeLibrariesForSelfExtract=true
+        # run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r osx-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeAllContentForSelfExtract=true --self-contained true
+        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r osx-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeAllContentForSelfExtract=true --self-contained true
 
+      - name: Copy update-script manually
+        run: cp autodarts-desktop/update.sh autodarts-desktop/bin/Release/net6.0/osx-x64/publish/update.sh
 
       - name: Convert line endings in update.sh
         run: dos2unix autodarts-desktop/bin/Release/net6.0/osx-x64/publish/update.sh
 
-      - name: Set execute permission for update.sh in output directory
+      - name: Set execute permissions
         shell: bash
         run: |
           chmod +x autodarts-desktop/bin/Release/net6.0/osx-x64/publish/update.sh
+          chmod +x autodarts-desktop/bin/Release/net6.0/osx-x64/publish/autodarts-desktop
 
       - name: Zip osx-x64 build
         uses: vimtor/action-zip@v1

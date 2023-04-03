@@ -19,9 +19,9 @@ namespace autodarts_desktop.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v0.7.26";
+        public static readonly string version = "v0.7.27";
 
-        
+        public static event EventHandler<ReleaseEventArgs>? NoNewReleaseFound;
         public static event EventHandler<ReleaseEventArgs>? NewReleaseFound;
         public static event EventHandler<ReleaseEventArgs>? ReleaseInstallInitialized;
         public static event EventHandler<ReleaseEventArgs>? ReleaseDownloadStarted;
@@ -63,6 +63,10 @@ namespace autodarts_desktop.control
                 {
                     latestRepoVersion = latestGithubVersion;
                     OnNewReleaseFound(new ReleaseEventArgs(latestRepoVersion, string.Empty));
+                }
+                else
+                {
+                    OnNoNewReleaseFound(new ReleaseEventArgs(latestGithubVersion, string.Empty));
                 }
             }
             catch (Exception ex)
@@ -318,6 +322,13 @@ namespace autodarts_desktop.control
         }
 
 
+
+        
+
+        private static void OnNoNewReleaseFound(ReleaseEventArgs e)
+        {
+            NoNewReleaseFound?.Invoke(typeof(Updater), e);
+        }
 
         private static void OnNewReleaseFound(ReleaseEventArgs e)
         {
