@@ -194,6 +194,7 @@ namespace autodarts_desktop.model
 
         public void ValidateType()
         {
+            
             try
             {
                 if (Type.StartsWith(TypeString))
@@ -297,7 +298,7 @@ namespace autodarts_desktop.model
             try
             {
                 float.Parse(Value);
-                ValidateValue(TypeFloat);
+                if (Type.Length > TypeFloat.Length) ValidateValue(TypeFloat);
             }
             catch (Exception ex)
             {
@@ -310,7 +311,7 @@ namespace autodarts_desktop.model
             try
             {
                 int.Parse(Value);
-                ValidateValue(TypeInt);
+                if (Type.Length > TypeInt.Length) ValidateValue(TypeInt);
             }
             catch (Exception ex)
             {

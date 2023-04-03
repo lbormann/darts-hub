@@ -112,32 +112,53 @@ jobs:
 
       # osx-x64
       - name: Build osx-x64
-        run: |
-          dotnet restore -r osx-x64
-          dotnet msbuild -t:BundleApp -p:RuntimeIdentifier=osx-x64 -property:Configuration=Release -p:CFBundleShortVersionString=0.7.21 -p:UseAppHost=true
-        #run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r osx-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true
-        # run: dotnet publish -c Release -r osx-x64 -o $RUNNER_TEMP/MyApp.app/Contents/MacOS MyApp.csproj
+        # -p:IncludeAllContentForSelfExtract=true 
+        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r osx-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+
 
       - name: Convert line endings in update.sh
-        run: dos2unix autodarts-desktop/bin/Release/net6.0/osx-x64/publish/autodarts-desktop.app/Contents/MacOS/update.sh
+        run: dos2unix autodarts-desktop/bin/Release/net6.0/osx-x64/publish/update.sh
 
-      - name: Set execute permissions
+      - name: Set execute permission for update.sh in output directory
         shell: bash
-        run: |                         
-          chmod +x autodarts-desktop/bin/Release/net6.0/osx-x64/publish/autodarts-desktop.app/Contents/MacOS/update.sh
-          chmod +x autodarts-desktop/bin/Release/net6.0/osx-x64/publish/autodarts-desktop.app/Contents/MacOS/autodarts-desktop
+        run: |
+          chmod +x autodarts-desktop/bin/Release/net6.0/osx-x64/publish/update.sh
 
       - name: Zip osx-x64 build
         uses: vimtor/action-zip@v1
         with:
-          files: autodarts-desktop/bin/Release/net6.0/osx-x64/publish
+          files: autodarts-desktop/bin/Release/net6.0/osx-x64/publish/
           dest: autodarts-desktop-macOS-X64.zip
 
-      - name: Collect osx-x64 artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: autodarts-desktop-macOS-x64
-          path: ${{ github.workspace }}/autodarts-desktop-macOS-X64.zip
+      # - name: Build osx-x64
+      #   run: |
+      #     dotnet restore -r osx-x64
+      #     dotnet msbuild -t:BundleApp -p:RuntimeIdentifier=osx-x64 -property:Configuration=Release -p:CFBundleShortVersionString=0.7.21 -p:UseAppHost=true
+      #   #run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r osx-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true
+      #   # run: dotnet publish -c Release -r osx-x64 -o $RUNNER_TEMP/MyApp.app/Contents/MacOS MyApp.csproj
+
+      # - name: Convert line endings in update.sh
+      #   run: dos2unix autodarts-desktop/bin/Release/net6.0/osx-x64/publish/autodarts-desktop.app/Contents/MacOS/update.sh
+
+      # - name: Set execute permissions
+      #   shell: bash
+      #   run: |                         
+      #     chmod +x autodarts-desktop/bin/Release/net6.0/osx-x64/publish/autodarts-desktop.app/Contents/MacOS/update.sh
+      #     chmod +x autodarts-desktop/bin/Release/net6.0/osx-x64/publish/autodarts-desktop.app/Contents/MacOS/autodarts-desktop
+
+      # - name: Zip osx-x64 build
+      #   uses: vimtor/action-zip@v1
+      #   with:
+      #     files: autodarts-desktop/bin/Release/net6.0/osx-x64/publish
+      #     dest: autodarts-desktop-macOS-X64.zip
+
+      # - name: Collect osx-x64 artifacts
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: autodarts-desktop-macOS-x64
+      #     path: ${{ github.workspace }}/autodarts-desktop-macOS-X64.zip
+
+
 
 
       # # osx-arm64

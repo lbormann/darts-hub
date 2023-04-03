@@ -36,6 +36,7 @@ It may be buggy. I've just coded it for fast fun with https://autodarts.io. You 
 ## TODOs
 - update when autostart is activated
 - Update without question!
+- Fix arguments-type-float without range!
 
 ### Done
 - refactor setup-areas for using AppManager

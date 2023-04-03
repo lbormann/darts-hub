@@ -780,11 +780,19 @@ namespace autodarts_desktop.control
                 {
                     autodartsCaller.Configuration.Arguments.Add(new(name: "DEB", type: "bool", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
                 }
-                autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "DLL");
+
+                
                 var dll2 = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "DLL");
+                var ddl2Value = String.Empty;
+                if (dll2 != null)
+                {
+                    ddl2Value = dll2.Value;
+                }
+                autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "DLL");
+                dll2 = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "DLL");
                 if (dll2 == null)
                 {
-                    autodartsCaller.Configuration.Arguments.Add(new(name: "DLL", type: "int", required: false, nameHuman: "downloads-limit", section: "Downloads"));
+                    autodartsCaller.Configuration.Arguments.Add(new(name: "DLL", type: "int", required: false, nameHuman: "downloads-limit", section: "Downloads", value: ddl2Value));
                 }
                 autodartsCaller.DownloadUrl = "https://github.com/lbormann/autodarts-caller/releases/download/v2.0.9/autodarts-caller.exe";
 
@@ -1039,7 +1047,7 @@ namespace autodarts_desktop.control
             autodartsCallerDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller.exe";
             autodartsCallerDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.1.4");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.1.5");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern.exe";
@@ -1051,7 +1059,7 @@ namespace autodarts_desktop.control
             autodartsWledDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-wled/releases/download/***VERSION***/autodarts-wled.exe";
             autodartsWledDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-wled/releases/download/***VERSION***/autodarts-wled";
             autodartsWledDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-wled/releases/download/***VERSION***/autodarts-wled-mac";
-            var autodartsWledDownloadUrl = autodartsWledDownloadMap.GetDownloadUrlByOs("v1.4.6");
+            var autodartsWledDownloadUrl = autodartsWledDownloadMap.GetDownloadUrlByOs("v1.4.7");
 
             var virtualDartsZoomDownloadMap = new DownloadMap();
             virtualDartsZoomDownloadMap.WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip";

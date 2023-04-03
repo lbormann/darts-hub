@@ -57,15 +57,7 @@ namespace autodarts_desktop.model
         private Process process;
         private const int defaultProcessId = 0;
         private int processId;
-
-
-        // Implement INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
 
 
         // METHODS
@@ -166,6 +158,9 @@ namespace autodarts_desktop.model
 
             try
             {
+                AppConsoleStdOutput = String.Empty;
+                AppConsoleStdError = String.Empty;
+
                 process = new Process();
                 process.StartInfo.WindowStyle = StartWindowState;
                 process.EnableRaisingEvents = true;
@@ -182,23 +177,21 @@ namespace autodarts_desktop.model
                     //Console.WriteLine("Process " + Name + " exited");
                     processId = defaultProcessId;
                     AppRunningState = false;
-                    AppConsoleStdOutput += Environment.NewLine + "---------------------------- EXIT ----------------------------" + Environment.NewLine;
+                    //AppConsoleStdOutput += Environment.NewLine + "---------------------------- EXIT ----------------------------" + Environment.NewLine;
                     eventHandled.TrySetResult(true);
                 };
                 process.OutputDataReceived += (sender, e) =>
                 {
-                    if (e.Data != null)
+                    if (!String.IsNullOrEmpty(e.Data))
                     {
                         AppConsoleStdOutput += e.Data + Environment.NewLine;
-                        // Console.WriteLine(AppConsoleStdOutput);
                     }
                 };
                 process.ErrorDataReceived += (sender, e) =>
                 {
-                    if (e.Data != null)
+                    if (!String.IsNullOrEmpty(e.Data))
                     {
                         AppConsoleStdError += e.Data + Environment.NewLine;
-                        // Console.WriteLine(AppConsoleStdError);
                     }
                 };
                 process.StartInfo.FileName = executable;
@@ -314,6 +307,13 @@ namespace autodarts_desktop.model
         protected virtual void OnAppConfigurationRequired(AppEventArgs e)
         {
             AppConfigurationRequired?.Invoke(this, e);
+        }
+
+
+
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
     }
