@@ -121,15 +121,16 @@ jobs:
       - name: Convert line endings in update.sh
         run: dos2unix autodarts-desktop/bin/Release/net6.0/osx-x64/publish/autodarts-desktop.app/Contents/MacOS/update.sh
 
-      - name: Set execute permission for update.sh in output directory
+      - name: Set execute permissions
         shell: bash
-        run: |
+        run: |                         
           chmod +x autodarts-desktop/bin/Release/net6.0/osx-x64/publish/autodarts-desktop.app/Contents/MacOS/update.sh
+          chmod +x autodarts-desktop/bin/Release/net6.0/osx-x64/publish/autodarts-desktop.app/Contents/MacOS/autodarts-desktop
 
       - name: Zip osx-x64 build
         uses: vimtor/action-zip@v1
         with:
-          files: autodarts-desktop/bin/Release/net6.0/osx-x64/publish/autodarts-desktop.app
+          files: autodarts-desktop/bin/Release/net6.0/osx-x64/publish/
           dest: autodarts-desktop-macOS-X64.zip
 
       - name: Collect osx-x64 artifacts
