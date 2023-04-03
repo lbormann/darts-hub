@@ -112,8 +112,11 @@ jobs:
 
       # osx-x64
       - name: Build osx-x64
-        run: dotnet msbuild -t:BundleApp -p:RuntimeIdentifier=osx-x64 -property:Configuration=Release -p:CFBundleShortVersionString=0.7.21 -p:UseAppHost=true
+        run: |
+          dotnet restore -r osx-x64
+          dotnet msbuild -t:BundleApp -p:RuntimeIdentifier=osx-x64 -property:Configuration=Release -p:CFBundleShortVersionString=0.7.21 -p:UseAppHost=true
         #run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r osx-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true
+        # run: dotnet publish -c Release -r osx-x64 -o $RUNNER_TEMP/MyApp.app/Contents/MacOS MyApp.csproj
 
       - name: Convert line endings in update.sh
         run: dos2unix autodarts-desktop/bin/Release/net6.0/osx-x64/publish/autodarts-desktop.app/Contents/MacOS/update.sh
