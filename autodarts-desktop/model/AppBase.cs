@@ -202,10 +202,14 @@ namespace autodarts_desktop.model
 
                 if (isUri)
                 {
+                    // if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    // {
+                    //     
+                    // }
+                    process.StartInfo.UseShellExecute = true;
                     process.StartInfo.RedirectStandardOutput = false;
                     process.StartInfo.RedirectStandardError = false;
-                    process.StartInfo.UseShellExecute = true;
-                    process.StartInfo.CreateNoWindow = false;
+                    // process.StartInfo.CreateNoWindow = false;
                 }
                 else 
                 {
@@ -217,11 +221,11 @@ namespace autodarts_desktop.model
                 {
                     if (RunAsAdmin) process.StartInfo.Verb = "runas";
                 }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && !isUri)
                 {
                     EnsureExecutablePermissions(executable);
                 }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && !isUri)
                 {
                     EnsureExecutablePermissions(executable);
                 }
