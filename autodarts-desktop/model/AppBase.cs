@@ -202,14 +202,9 @@ namespace autodarts_desktop.model
 
                 if (isUri)
                 {
-                    // if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    // {
-                    //     
-                    // }
                     process.StartInfo.UseShellExecute = true;
                     process.StartInfo.RedirectStandardOutput = false;
                     process.StartInfo.RedirectStandardError = false;
-                    // process.StartInfo.CreateNoWindow = false;
                 }
                 else 
                 {

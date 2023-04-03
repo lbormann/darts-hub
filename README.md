@@ -1,8 +1,7 @@
 # AUTODARTS-DESKTOP
 
 Autodarts-desktop manages several apps for https://autodarts.io.
-It handles automatic download/updates, configuration and starting of apps.
-It uses pre-configured profiles for every scenario.
+It handles automatic download/updates, offers a configuration-gui and starting of apps by a list of curated profiles.
 
 
 ## IMPORTANT!!
