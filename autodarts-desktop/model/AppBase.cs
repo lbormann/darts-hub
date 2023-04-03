@@ -216,18 +216,12 @@ namespace autodarts_desktop.model
                 }
                 else 
                 {
-                    //process.StartInfo.RedirectStandardOutput = false;
-                    //process.StartInfo.RedirectStandardError = false;
-                    //process.StartInfo.UseShellExecute = true;
-                    //process.StartInfo.CreateNoWindow = false;
                     process.StartInfo.WorkingDirectory = Path.GetDirectoryName(executable);
                 }
                 
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    //process.StartInfo.RedirectStandardOutput = false;
-                    //process.StartInfo.RedirectStandardError = false;
                     if (RunAsAdmin) process.StartInfo.Verb = "runas";
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))

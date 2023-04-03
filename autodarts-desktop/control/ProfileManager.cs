@@ -1194,7 +1194,6 @@ namespace autodarts_desktop.control
                 Profiles.Add(new Profile(p2Name, p2Apps));
             }
 
-
             if (autodartsCaller && autodartsExtern)
             {
                 var p3Name = "autodarts-extern: nakka.com/n01/online";
@@ -1257,6 +1256,8 @@ namespace autodarts_desktop.control
             // 15. Mig (Add autodarts-wled)
             foreach (var p in Profiles)
             {
+                if (p.Name == "autodarts-client") continue;
+
                 if (!p.Apps.ContainsKey("autodarts-wled"))
                 {
                     p.Apps.Add("autodarts-wled", new());
