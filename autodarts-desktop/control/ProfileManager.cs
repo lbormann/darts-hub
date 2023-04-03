@@ -299,8 +299,15 @@ namespace autodarts_desktop.control
                     descriptionShort: "Opens autodart`s web-platform",
                     defaultValue: "https://autodarts.io"
                     );
+            AppOpen autodartsBoardManager =
+                new(
+                    name: "autodarts-boardmanager",
+                    descriptionShort: "Opens autodart`s board-manager",
+                    defaultValue: "http://127.0.0.1:3180"
+                    );
 
             apps.Add(autodartsWeb);
+            apps.Add(autodartsBoardManager);
 
             AppsOpen.AddRange(apps);
             AppsAll.AddRange(apps);
@@ -1179,19 +1186,21 @@ namespace autodarts_desktop.control
                 var p1Apps = new Dictionary<string, ProfileState>();
                 if (autodartsClient) p1Apps.Add("autodarts-client", new ProfileState());
                 p1Apps.Add("autodarts.io", new ProfileState());
+                p1Apps.Add("autodarts-boardmanager", new ProfileState());
                 if (autodartsCaller) p1Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p1Apps.Add("autodarts-wled", new ProfileState());
                 if (custom) p1Apps.Add("custom", new ProfileState());
                 Profiles.Add(new Profile(p1Name, p1Apps));
             }
             
-            if(autodartsCaller && autodartsExtern)
+            if (autodartsCaller && autodartsExtern)
             {
                 var p2Name = "autodarts-extern: lidarts.org";
                 var p2Args = new Dictionary<string, string> { { "extern_platform", "lidarts" } };
                 var p2Apps = new Dictionary<string, ProfileState>();
                 if (autodartsClient) p2Apps.Add("autodarts-client", new ProfileState());
                 p2Apps.Add("autodarts.io", new ProfileState());
+                p2Apps.Add("autodarts-boardmanager", new ProfileState());
                 if (autodartsCaller) p2Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p2Apps.Add("autodarts-wled", new ProfileState());
                 if (autodartsExtern) p2Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p2Args));
@@ -1209,6 +1218,7 @@ namespace autodarts_desktop.control
                 var p3Apps = new Dictionary<string, ProfileState>();
                 if (autodartsClient) p3Apps.Add("autodarts-client", new ProfileState());
                 p3Apps.Add("autodarts.io", new ProfileState());
+                p3Apps.Add("autodarts-boardmanager", new ProfileState());
                 if (autodartsCaller) p3Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p3Apps.Add("autodarts-wled", new ProfileState());
                 if (autodartsExtern) p3Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p3Args));
@@ -1226,6 +1236,7 @@ namespace autodarts_desktop.control
                 var p4Apps = new Dictionary<string, ProfileState>();
                 if (autodartsClient) p4Apps.Add("autodarts-client", new ProfileState());
                 p4Apps.Add("autodarts.io", new ProfileState());
+                p4Apps.Add("autodarts-boardmanager", new ProfileState());
                 if (autodartsCaller) p4Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p4Apps.Add("autodarts-wled", new ProfileState());
                 if (autodartsExtern) p4Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p4Args));
@@ -1237,12 +1248,13 @@ namespace autodarts_desktop.control
                 Profiles.Add(new Profile(p4Name, p4Apps));
             }
 
-            if(autodartsClient)
+            if (autodartsClient)
             {
                 var p5Name = "autodarts-client";
                 var p5Apps = new Dictionary<string, ProfileState>();
                 if (autodartsClient) p5Apps.Add("autodarts-client", new ProfileState(true));
                 p5Apps.Add("autodarts.io", new ProfileState());
+                p5Apps.Add("autodarts-boardmanager", new ProfileState());
                 if (virtualDartsZoom) p5Apps.Add("virtual-darts-zoom", new ProfileState());
                 if (droidCam) p5Apps.Add("droid-cam", new ProfileState());
                 if (epocCam) p5Apps.Add("epoc-cam", new ProfileState());
