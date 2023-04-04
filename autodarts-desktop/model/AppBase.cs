@@ -60,8 +60,10 @@ namespace autodarts_desktop.model
         public event PropertyChangedEventHandler PropertyChanged;
 
 
-        // METHODS
 
+
+
+        // METHODS
 
         public AppBase(string name,
                         string? helpUrl,
@@ -177,7 +179,6 @@ namespace autodarts_desktop.model
                     //Console.WriteLine("Process " + Name + " exited");
                     processId = defaultProcessId;
                     AppRunningState = false;
-                    //AppConsoleStdOutput += Environment.NewLine + "---------------------------- EXIT ----------------------------" + Environment.NewLine;
                     eventHandled.TrySetResult(true);
                 };
                 process.OutputDataReceived += (sender, e) =>

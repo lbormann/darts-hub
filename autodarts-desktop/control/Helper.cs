@@ -1,13 +1,10 @@
-﻿using SharpCompress.Archives.Tar;
-using SharpCompress.Archives;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
-
-
+using System.Reflection;
 
 namespace autodarts_desktop.control
 {
@@ -44,6 +41,13 @@ namespace autodarts_desktop.control
 
         public static string GetAppBasePath()
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                string assemblyLocation = Assembly.GetExecutingAssembly().Location;
+                var basePath = Path.GetDirectoryName(assemblyLocation);
+                
+                return basePath;
+            }
             return Path.GetDirectoryName(AppContext.BaseDirectory);
         }
 

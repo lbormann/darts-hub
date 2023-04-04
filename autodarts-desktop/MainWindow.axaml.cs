@@ -42,6 +42,8 @@ namespace autodarts_desktop
         public MainWindow()
         {
             InitializeComponent();
+
+
             WindowHelper.CenterWindowOnScreen(this);
 
             fontSize = 18.0;
@@ -87,9 +89,11 @@ namespace autodarts_desktop
                 Updater.ReleaseDownloadFailed += Updater_ReleaseDownloadFailed;
                 Updater.ReleaseDownloadProgressed += Updater_ReleaseDownloadProgressed;
                 Updater.CheckNewVersion();
+                SetWait(true, "Checking for update ..");
             }
             catch (ConfigurationException ex)
             {
+                SetWait(false);
                 ShowCorruptedConfigHandlingBox(ex);
             }
             catch (Exception ex)
@@ -191,9 +195,9 @@ namespace autodarts_desktop
                 WindowIcon = Icon,
                 Width = width,
                 Height = height,
-                MaxWidth = width,
-                MaxHeight = height,
-                CanResize = false,
+                //MaxWidth = width,
+                //MaxHeight = height,
+                CanResize = (width == -1) ? false : true,
                 EscDefaultButton = ClickEnum.No,
                 EnterDefaultButton = ClickEnum.Yes,
                 SystemDecorations = SystemDecorations.Full,
@@ -210,6 +214,7 @@ namespace autodarts_desktop
         {
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
             {
+                SetWait(false);
                 if (Settings.Default.start_profile_on_start) RunSelectedProfile(); 
             });
         }
@@ -230,6 +235,7 @@ namespace autodarts_desktop
                         await RenderMessageBox("", "Update to new version failed: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
                     }
                 }
+                SetWait(false);
             });
         }
 
@@ -441,7 +447,7 @@ namespace autodarts_desktop
                         MessageBox.Avalonia.Enums.Icon.None,
                         ButtonEnum.Ok,
                         Width,
-                        Height
+                        Height - 300
                         );
                 };
                 GridMain.Children.Add(buttonConsole);
