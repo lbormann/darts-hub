@@ -4,11 +4,6 @@ Autodarts-desktop manages several apps for https://autodarts.io.
 It handles automatic download/updates, offers a configuration-gui and starting of apps by a list of curated profiles.
 
 
-## IMPORTANT!!
-
-USE! https://github.com/Semtexmagix/autodarts-desktop until this repository is ready for cross-platform!
-
-
 ## COMPATIBILITY
 
 Autodarts-desktop supports all major platforms:
@@ -27,14 +22,14 @@ Autodarts-desktop is built with Avalonia. check it out: https://docs.avaloniaui.
 
 
 
+
+
 ## BUGS
 
 It may be buggy. I've just coded it for fast fun with https://autodarts.io. You can give me feedback in Discord > wusaaa
 
 
 ## TODOs
-
-
 
 ### Done
 - refactor setup-areas for using AppManager
@@ -70,8 +65,3 @@ It may be buggy. I've just coded it for fast fun with https://autodarts.io. You 
 Icon by <a href="https://freeicons.io/profile/8178">Ognjen Vukomanov</a> on <a href="https://freeicons.io">freeicons.io</a>
 Icon by <a href="https://freeicons.io/profile/823">Muhammad Haq</a> on <a href="https://freeicons.io">freeicons.io</a>                             
 Icon by <a href="https://freeicons.io/profile/85671">Mubdee Ashrafi</a> on <a href="https://freeicons.io">freeicons.io</a>                             
-
-
-
-## LAST WORDS
-Thanks to Timo for awesome https://autodarts.io.
