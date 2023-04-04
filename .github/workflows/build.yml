@@ -278,12 +278,12 @@ jobs:
           release_name: Release ${{ github.ref }}
           generate_release_notes: true
           files: |
-            autodarts-desktop-macOS-X64.zip
-            autodarts-desktop-macOS-ARM64.zip
-            autodarts-desktop-windows-X86.zip
-            autodarts-desktop-windows-X64.zip
-            autodarts-desktop-windows-ARM.zip
-            autodarts-desktop-windows-ARM64.zip
-            autodarts-desktop-linux-X64.zip
-            autodarts-desktop-linux-ARM.zip
-            autodarts-desktop-linux-ARM64.zip
+            autodarts-desktop-macOS-x64/autodarts-desktop-macOS-X64.zip
+            autodarts-desktop-macOS-arm64/autodarts-desktop-macOS-ARM64.zip
+            autodarts-desktop-windows-x64/autodarts-desktop-windows-X64.zip
+            autodarts-desktop-windows-x86/autodarts-desktop-windows-X86.zip
+            autodarts-desktop-windows-arm/autodarts-desktop-windows-ARM.zip
+            autodarts-desktop-windows-arm64/autodarts-desktop-windows-ARM64.zip
+            autodarts-desktop-linux-x64/autodarts-desktop-linux-X64.zip
+            autodarts-desktop-linux-arm/autodarts-desktop-linux-ARM.zip
+            autodarts-desktop-linux-arm64/autodarts-desktop-linux-ARM64.zip
