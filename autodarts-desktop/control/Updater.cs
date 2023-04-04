@@ -19,7 +19,7 @@ namespace autodarts_desktop.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v0.7.29";
+        public static readonly string version = "v0.8.0";
         
 
 
@@ -241,14 +241,6 @@ namespace autodarts_desktop.control
             return appFile;
         }
 
-
-        private static void WebClient_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
-        {
-            OnReleaseDownloadProgressed(e);
-        }
-
-
-
         private static void EnsureExecutablePermissions(string updateFile)
         {
             var scriptPath = Path.Combine(destinationPath, updateFile);
@@ -274,6 +266,11 @@ namespace autodarts_desktop.control
                     throw new Exception($"Failed to set executable permissions for {scriptPath}. Exit code: {chmodProcess.ExitCode}");
                 }
             }
+        }
+
+        private static void WebClient_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
+        {
+            OnReleaseDownloadProgressed(e);
         }
 
         private static void WebClient_DownloadCompleted(object? sender, AsyncCompletedEventArgs e)

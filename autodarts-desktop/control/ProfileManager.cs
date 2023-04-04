@@ -1,12 +1,9 @@
 ﻿using autodarts_desktop.model;
-using Avalonia.Controls;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Runtime.InteropServices;
-using static System.Net.WebRequestMethods;
 using File = System.IO.File;
 using Path = System.IO.Path;
 
