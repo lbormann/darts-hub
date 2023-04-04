@@ -313,6 +313,19 @@ namespace autodarts_desktop.control
 
         private void MigrateAppsOpen()
         {
+            var autodartsBoardManager = AppsOpen.FindIndex(a => a.Name == "autodarts-boardmanager");
+            if (autodartsBoardManager == -1)
+            {
+                AppOpen autodartsBoardManagerCreate =
+                                               new(
+                                                   name: "autodarts-boardmanager",
+                                                   descriptionShort: "Opens autodart`s board-manager",
+                                                   defaultValue: "http://127.0.0.1:3180"
+                                                   );
+
+                AppsOpen.Add(autodartsBoardManagerCreate);
+            }
+
 
             // Add more migs..
         }
@@ -1329,11 +1342,23 @@ namespace autodarts_desktop.control
                     var p5Apps = new Dictionary<string, ProfileState>();
                     if (autodartsClient) p5Apps.Add("autodarts-client", new ProfileState(true));
                     p5Apps.Add("autodarts.io", new ProfileState());
+                    p5Apps.Add("autodarts-boardmanager", new ProfileState());
                     if (virtualDartsZoom) p5Apps.Add("virtual-darts-zoom", new ProfileState());
                     if (droidCam) p5Apps.Add("droid-cam", new ProfileState());
                     if (epocCam) p5Apps.Add("epoc-cam", new ProfileState());
                     if (custom) p5Apps.Add("custom", new ProfileState());
                     Profiles.Add(new Profile(p5Name, p5Apps));
+                }
+            }
+
+            // Adds boardmanager to all profiles
+            foreach (var p in Profiles)
+            {
+                if (p.Name == "autodarts-client") continue;
+
+                if (!p.Apps.ContainsKey("autodarts-boardmanager"))
+                {
+                    p.Apps.Add("autodarts-boardmanager", new());
                 }
             }
 
