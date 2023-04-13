@@ -1,4 +1,5 @@
 # AUTODARTS-DESKTOP
+[![Downloads](https://img.shields.io/github/downloads/lbormann/autodarts-desktop/total.svg)](https://github.com/lbormann/autodarts-desktop/releases/latest)
 
 Autodarts-desktop manages several apps for https://autodarts.io.
 It handles automatic download/updates, offers a configuration-gui and starting of apps by a list of curated profiles.
