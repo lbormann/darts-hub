@@ -332,8 +332,6 @@ namespace autodarts_desktop.control
 
         private void CreateDummyAppsInstallable()
         {
-            // TODO define os urls
-
             // Define Download-Maps for Apps with os
             var dartboardsClientDownloadMap = new DownloadMap();
             dartboardsClientDownloadMap.WindowsX64 = "https://dartboards.online/dboclient_***VERSION***.exe";
@@ -408,7 +406,6 @@ namespace autodarts_desktop.control
 
         private void MigrateAppsInstallable()
         {
-
             // Add more migs..
         }
 
@@ -446,11 +443,11 @@ namespace autodarts_desktop.control
             virtualDartsZoomDownloadMap.WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip";
             var virtualDartsZoomDownloadUrl = virtualDartsZoomDownloadMap.GetDownloadUrlByOs();
 
-            // var autodartsGifDownloadMap = new DownloadMap();
-            // autodartsGifDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif.exe";
-            // autodartsGifDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif";
-            // autodartsGifDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif-mac";
-            // var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("v1.0.0");
+            var autodartsGifDownloadMap = new DownloadMap();
+            autodartsGifDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif.exe";
+            autodartsGifDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif";
+            autodartsGifDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif-mac";
+            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("v1.0.0");
 
             List<AppDownloadable> apps = new();
 
@@ -596,46 +593,46 @@ namespace autodarts_desktop.control
                 apps.Add(virtualDartsZoom);
             }
 
-            // if (!String.IsNullOrEmpty(autodartsGifDownloadUrl))
-            // {
-            //     var autodartsGifArguments = new List<Argument> {
-            //             new(name: "MP", type: "path", required: true, nameHuman: "path-to-image-files", section: "Media"),
-            //             new(name: "CON", type: "string", required: false, nameHuman: "Connection", section: "Service"),
-            //             new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "highfinish-on", section: "Autodarts"),
-            //             new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "high-finish-images", section: "Images"),
-            //             new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "game-won-images", section: "Images"),
-            //             new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "match-won-images", section: "Images"),
-            //             new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "busted-images", section: "Images"),
-            //             new(name: "WEB", type: "int[0..2]", required: false, nameHuman: "web-gifs", section: "Service"),
-            //             new(name: "DEB", type: "bool", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
+            if (!String.IsNullOrEmpty(autodartsGifDownloadUrl))
+            {
+                var autodartsGifArguments = new List<Argument> {
+                         new(name: "MP", type: "path", required: false, nameHuman: "path-to-image-files", section: "Media"),
+                         new(name: "CON", type: "string", required: false, nameHuman: "Connection", section: "Service"),
+                         new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "highfinish-on", section: "Autodarts"),
+                         new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "high-finish-images", section: "Images"),
+                         new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "game-won-images", section: "Images"),
+                         new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "match-won-images", section: "Images"),
+                         new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "busted-images", section: "Images"),
+                         new(name: "WEB", type: "int[0..2]", required: false, nameHuman: "web-gifs", section: "Service"),
+                         new(name: "DEB", type: "bool", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
 
-            //         };
-            //     for (int i = 0; i <= 180; i++)
-            //     {
-            //         var score = i.ToString();
-            //         Argument scoreArgument = new(name: "S" + score, type: "string", required: false, isMulti: true, nameHuman: "score " + score, section: "Images");
-            //         autodartsGifArguments.Add(scoreArgument);
-            //     }
-            //     for (int i = 1; i <= 12; i++)
-            //     {
-            //         var areaNumber = i.ToString();
-            //         Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "area-" + areaNumber, section: "Images");
-            //         autodartsGifArguments.Add(areaArgument);
-            //     }
+                     };
+                for (int i = 0; i <= 180; i++)
+                {
+                    var score = i.ToString();
+                    Argument scoreArgument = new(name: "S" + score, type: "string", required: false, isMulti: true, nameHuman: "score " + score, section: "Images");
+                    autodartsGifArguments.Add(scoreArgument);
+                }
+                for (int i = 1; i <= 12; i++)
+                {
+                    var areaNumber = i.ToString();
+                    Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "area-" + areaNumber, section: "Images");
+                    autodartsGifArguments.Add(areaArgument);
+                }
 
-            //     AppDownloadable autodartsGif =
-            //     new(
-            //         downloadUrl: autodartsGifDownloadUrl,
-            //         name: "autodarts-gif",
-            //         helpUrl: "https://github.com/lbormann/autodarts-gif",
-            //         descriptionShort: "displays your favorite gifs",
-            //         configuration: new(
-            //             prefix: "-",
-            //             delimitter: " ",
-            //             arguments: autodartsGifArguments)
-            //         );
-            //     apps.Add(autodartsGif);
-            // }
+                AppDownloadable autodartsGif =
+                new(
+                    downloadUrl: autodartsGifDownloadUrl,
+                    name: "autodarts-gif",
+                    helpUrl: "https://github.com/lbormann/autodarts-gif",
+                    descriptionShort: "displays your favorite gifs",
+                    configuration: new(
+                        prefix: "-",
+                        delimitter: " ",
+                        arguments: autodartsGifArguments)
+                    );
+                apps.Add(autodartsGif);
+            }
 
 
             AppsDownloadable.AddRange(apps);
@@ -1131,11 +1128,13 @@ namespace autodarts_desktop.control
             virtualDartsZoomDownloadMap.WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip";
             var virtualDartsZoomDownloadUrl = virtualDartsZoomDownloadMap.GetDownloadUrlByOs();
 
-            // var autodartsGifDownloadMap = new DownloadMap();
-            // autodartsGifDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif.exe";
-            // autodartsGifDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif";
-            // autodartsGifDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif-mac";
-            // var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("v1.0.0");
+            var autodartsGifDownloadMap = new DownloadMap();
+            autodartsGifDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif.exe";
+            autodartsGifDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif";
+            autodartsGifDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif-mac";
+            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("v1.0.0");
+
+
 
 
             // 1. Mig (Update download version)
@@ -1230,60 +1229,60 @@ namespace autodarts_desktop.control
                 }
             }
 
-            // var autodartsGif = AppsDownloadable.Find(a => a.Name == "autodarts-gif");
-            // if (autodartsGif != null)
-            // {
-            //     if (autodartsGifDownloadUrl != null)
-            //     {
-            //         autodartsGif.DownloadUrl = autodartsGifDownloadUrl;
-            //     }
-            //     else
-            //     {
-            //         var autodartsGifIndex = AppsDownloadable.FindIndex(a => a.Name == "autodarts-gif");
-            //         if (autodartsGifIndex != -1)
-            //         {
-            //             AppsDownloadable.RemoveAt(autodartsGifIndex);
-            //         }
-            //     }
-            // }
-            // else if(autodartsGifDownloadUrl != null)
-            // {
-            //     var autodartsGifArguments = new List<Argument> {
-            //             new(name: "MP", type: "path", required: true, nameHuman: "path-to-image-files", section: "Media"),
-            //             new(name: "CON", type: "string", required: false, nameHuman: "Connection", section: "Service"),
-            //             new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "highfinish-on", section: "Autodarts"),
-            //             new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "high-finish-images", section: "Images"),
-            //             new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "game-won-images", section: "Images"),
-            //             new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "match-won-images", section: "Images"),
-            //             new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "busted-images", section: "Images"),
-            //             new(name: "WEB", type: "int[0..2]", required: false, nameHuman: "web-gifs", section: "Service"),
-            //             new(name: "DEB", type: "bool", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
-            //         };
-            //     for (int i = 0; i <= 180; i++)
-            //     {
-            //         var score = i.ToString();
-            //         Argument scoreArgument = new(name: "S" + score, type: "string", required: false, isMulti: true, nameHuman: "score " + score, section: "Images");
-            //         autodartsGifArguments.Add(scoreArgument);
-            //     }
-            //     for (int i = 1; i <= 12; i++)
-            //     {
-            //         var areaNumber = i.ToString();
-            //         Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "area-" + areaNumber, section: "Images");
-            //         autodartsGifArguments.Add(areaArgument);
-            //     }
-            //     autodartsGif =
-            //         new(
-            //             downloadUrl: autodartsGifDownloadUrl,
-            //             name: "autodarts-gif",
-            //             helpUrl: "https://github.com/lbormann/autodarts-gif",
-            //             descriptionShort: "displays your favorite gifs",
-            //             configuration: new(
-            //                 prefix: "-",
-            //                 delimitter: " ",
-            //                 arguments: autodartsGifArguments)
-            //             );
-            //     AppsDownloadable.Add(autodartsGif);
-            // }
+            var autodartsGif = AppsDownloadable.Find(a => a.Name == "autodarts-gif");
+            if (autodartsGif != null)
+            {
+                if (autodartsGifDownloadUrl != null)
+                {
+                    autodartsGif.DownloadUrl = autodartsGifDownloadUrl;
+                }
+                else
+                {
+                    var autodartsGifIndex = AppsDownloadable.FindIndex(a => a.Name == "autodarts-gif");
+                    if (autodartsGifIndex != -1)
+                    {
+                        AppsDownloadable.RemoveAt(autodartsGifIndex);
+                    }
+                }
+            }
+            else if (autodartsGifDownloadUrl != null)
+            {
+                var autodartsGifArguments = new List<Argument> {
+                         new(name: "MP", type: "path", required: false, nameHuman: "path-to-image-files", section: "Media"),
+                         new(name: "CON", type: "string", required: false, nameHuman: "Connection", section: "Service"),
+                         new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "highfinish-on", section: "Autodarts"),
+                         new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "high-finish-images", section: "Images"),
+                         new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "game-won-images", section: "Images"),
+                         new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "match-won-images", section: "Images"),
+                         new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "busted-images", section: "Images"),
+                         new(name: "WEB", type: "int[0..2]", required: false, nameHuman: "web-gifs", section: "Service"),
+                         new(name: "DEB", type: "bool", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
+                     };
+                for (int i = 0; i <= 180; i++)
+                {
+                    var score = i.ToString();
+                    Argument scoreArgument = new(name: "S" + score, type: "string", required: false, isMulti: true, nameHuman: "score " + score, section: "Images");
+                    autodartsGifArguments.Add(scoreArgument);
+                }
+                for (int i = 1; i <= 12; i++)
+                {
+                    var areaNumber = i.ToString();
+                    Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "area-" + areaNumber, section: "Images");
+                    autodartsGifArguments.Add(areaArgument);
+                }
+                autodartsGif =
+                    new(
+                        downloadUrl: autodartsGifDownloadUrl,
+                        name: "autodarts-gif",
+                        helpUrl: "https://github.com/lbormann/autodarts-gif",
+                        descriptionShort: "displays your favorite gifs",
+                        configuration: new(
+                            prefix: "-",
+                            delimitter: " ",
+                            arguments: autodartsGifArguments)
+                        );
+                AppsDownloadable.Add(autodartsGif);
+            }
 
             // Add more migs..
         }
@@ -1297,7 +1296,7 @@ namespace autodarts_desktop.control
             var autodartsCaller = AppsDownloadable.Find(a => a.Name == "autodarts-caller") != null;
             var autodartsExtern = AppsDownloadable.Find(a => a.Name == "autodarts-extern") != null;
             var autodartsWled = AppsDownloadable.Find(a => a.Name == "autodarts-wled") != null;
-            // var autodartsGif = AppsDownloadable.Find(a => a.Name == "autodarts-gif") != null;
+            var autodartsGif = AppsDownloadable.Find(a => a.Name == "autodarts-gif") != null;
             var virtualDartsZoom = AppsDownloadable.Find(a => a.Name == "virtual-darts-zoom") != null;
             var droidCam = AppsInstallable.Find(a => a.Name == "droid-cam") != null;
             var epocCam = AppsInstallable.Find(a => a.Name == "epoc-cam") != null;
@@ -1314,7 +1313,7 @@ namespace autodarts_desktop.control
                 p1Apps.Add("autodarts-boardmanager", new ProfileState());
                 if (autodartsCaller) p1Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p1Apps.Add("autodarts-wled", new ProfileState());
-                // if (autodartsGif) p1Apps.Add("autodarts-gif", new ProfileState());
+                if (autodartsGif) p1Apps.Add("autodarts-gif", new ProfileState());
                 if (custom) p1Apps.Add("custom", new ProfileState());
                 Profiles.Add(new Profile(p1Name, p1Apps));
             }
@@ -1329,7 +1328,7 @@ namespace autodarts_desktop.control
                 p2Apps.Add("autodarts-boardmanager", new ProfileState());
                 if (autodartsCaller) p2Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p2Apps.Add("autodarts-wled", new ProfileState());
-                // if (autodartsGif) p2Apps.Add("autodarts-gif", new ProfileState());
+                if (autodartsGif) p2Apps.Add("autodarts-gif", new ProfileState());
                 if (autodartsExtern) p2Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p2Args));
                 if (virtualDartsZoom) p2Apps.Add("virtual-darts-zoom", new ProfileState());
                 if (droidCam) p2Apps.Add("droid-cam", new ProfileState());
@@ -1348,7 +1347,7 @@ namespace autodarts_desktop.control
                 p3Apps.Add("autodarts-boardmanager", new ProfileState());
                 if (autodartsCaller) p3Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p3Apps.Add("autodarts-wled", new ProfileState());
-                // if (autodartsGif) p3Apps.Add("autodarts-gif", new ProfileState());
+                if (autodartsGif) p3Apps.Add("autodarts-gif", new ProfileState());
                 if (autodartsExtern) p3Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p3Args));
                 if (virtualDartsZoom) p3Apps.Add("virtual-darts-zoom", new ProfileState());
                 if (droidCam) p3Apps.Add("droid-cam", new ProfileState());
@@ -1367,7 +1366,7 @@ namespace autodarts_desktop.control
                 p4Apps.Add("autodarts-boardmanager", new ProfileState());
                 if (autodartsCaller) p4Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p4Apps.Add("autodarts-wled", new ProfileState());
-                // if (autodartsGif) p4Apps.Add("autodarts-gif", new ProfileState());
+                if (autodartsGif) p4Apps.Add("autodarts-gif", new ProfileState());
                 if (autodartsExtern) p4Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p4Args));
                 if (virtualDartsZoom) p4Apps.Add("virtual-darts-zoom", new ProfileState());
                 if (dartboardsClient) p4Apps.Add("dartboards-client", new ProfileState());
@@ -1481,16 +1480,24 @@ namespace autodarts_desktop.control
                 }
             }
 
-            // // Adds autodarts-gif to all profiles except autodarts-client
-            // foreach (var p in Profiles)
-            // {
-            //     if (p.Name == "autodarts-client") continue;
+            // Adds autodarts-gif to all profiles except autodarts-client and removes pointless apps from autodarts-client
+            foreach (var p in Profiles)
+            {
+                if (p.Name == "autodarts-client")
+                {
+                    p.Apps.Remove("virtual-darts-zoom");
+                    p.Apps.Remove("droid-cam");
+                    p.Apps.Remove("epoc-cam");
+                    continue;
+                }
 
-            //     if (!p.Apps.ContainsKey("autodarts-gif"))
-            //     {
-            //         p.Apps.Add("autodarts-gif", new());
-            //     }
-            // }
+                if (!p.Apps.ContainsKey("autodarts-gif"))
+                {
+                    p.Apps.Add("autodarts-gif", new());
+                }
+            }
+
+           
 
             // Add more migs..
         }
