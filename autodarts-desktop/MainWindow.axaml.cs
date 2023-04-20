@@ -1,6 +1,5 @@
 using autodarts_desktop.control;
 using autodarts_desktop.model;
-using autodarts_desktop.Properties;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
@@ -22,6 +21,7 @@ using System.Threading.Tasks;
 
 namespace autodarts_desktop
 {
+
     public partial class MainWindow : Window
     {
 
@@ -35,6 +35,9 @@ namespace autodarts_desktop
         private int elementWidth;
         private HorizontalAlignment elementHoAl;
 
+        private AppConfiguration appConfiguration;
+        private Configurator configurator;
+        
 
 
         // METHODES
@@ -42,7 +45,6 @@ namespace autodarts_desktop
         public MainWindow()
         {
             InitializeComponent();
-
 
             WindowHelper.CenterWindowOnScreen(this);
 
@@ -55,9 +57,7 @@ namespace autodarts_desktop
             Comboboxportal.HorizontalAlignment = elementHoAl;
 
             SelectProfile.FontSize = fontSize - 4;
-
-            selectedProfileElements = new();
-            CheckBoxStartProfileOnProgramStart.IsChecked = Settings.Default.start_profile_on_start;
+            selectedProfileElements = new(); 
             CheckBoxStartProfileOnProgramStart.FontSize = fontSize - 6;
 
             Opened += MainWindow_Opened;
@@ -68,6 +68,10 @@ namespace autodarts_desktop
         {
             try
             {
+                configurator = new("config.json");
+                appConfiguration = configurator.LoadSettings();
+                CheckBoxStartProfileOnProgramStart.IsChecked = appConfiguration.StartProfileOnStart;
+
                 profileManager = new ProfileManager();
                 profileManager.AppDownloadStarted += ProfileManager_AppDownloadStarted;
                 profileManager.AppDownloadFinished += ProfileManager_AppDownloadFinished;
@@ -126,8 +130,8 @@ namespace autodarts_desktop
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            Settings.Default.start_profile_on_start = (bool)CheckBoxStartProfileOnProgramStart.IsChecked;
-            Settings.Default.Save();
+            appConfiguration.StartProfileOnStart = (bool)CheckBoxStartProfileOnProgramStart.IsChecked;
+            configurator.SaveSettings(appConfiguration);
 
             try
             {
@@ -215,7 +219,7 @@ namespace autodarts_desktop
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 SetWait(false);
-                if (Settings.Default.start_profile_on_start) RunSelectedProfile(); 
+                if (appConfiguration.StartProfileOnStart) RunSelectedProfile(); 
             });
         }
 
@@ -420,38 +424,31 @@ namespace autodarts_desktop
                 selectedProfileElements.Add(buttonRunState);
 
 
+                var imageMonitor = new Image();
+                imageMonitor.ZIndex = 99;
+                imageMonitor.HorizontalAlignment = HorizontalAlignment.Left;
+                imageMonitor.Width = 24;
+                imageMonitor.Height = 24;
+                imageMonitor.Source = new Bitmap(assets.Open(new Uri("avares://autodarts-desktop/Assets/terminal.png")));
+                imageMonitor.DataContext = app.Value.App;
+                imageMonitor.Bind(Image.IsVisibleProperty, new Binding("AppMonitorAvailable"));
 
-                var imageConsole = new Image();
-                imageConsole.ZIndex = 99;
-                imageConsole.HorizontalAlignment = HorizontalAlignment.Left;
-                imageConsole.Width = 24;
-                imageConsole.Height = 24;
-                imageConsole.Source = new Bitmap(assets.Open(new Uri("avares://autodarts-desktop/Assets/terminal.png")));
-                imageConsole.DataContext = app.Value.App;
-                imageConsole.Bind(Image.IsVisibleProperty, new Binding("AppRunningState"));
-
-                var buttonConsole= new Button();
-                buttonConsole.ZIndex = 99;
-                buttonConsole.Margin = new Thickness(nextMargin.Left + 315, nextMargin.Top + 5, nextMargin.Right, nextMargin.Bottom);
-                buttonConsole.Content = imageConsole;
-                buttonConsole.HorizontalAlignment = HorizontalAlignment.Left;
-                buttonConsole.VerticalAlignment = VerticalAlignment.Top;
-                buttonConsole.VerticalContentAlignment = VerticalAlignment.Center;
-                buttonConsole.FontSize = fontSize;
-                buttonConsole.Background = Brushes.Transparent;
-                buttonConsole.BorderThickness = new Thickness(0);
-                buttonConsole.Click += async (s, e) =>
+                var buttonMonitor= new Button();
+                buttonMonitor.ZIndex = 99;
+                buttonMonitor.Margin = new Thickness(nextMargin.Left + 315, nextMargin.Top + 5, nextMargin.Right, nextMargin.Bottom);
+                buttonMonitor.Content = imageMonitor;
+                buttonMonitor.HorizontalAlignment = HorizontalAlignment.Left;
+                buttonMonitor.VerticalAlignment = VerticalAlignment.Top;
+                buttonMonitor.VerticalContentAlignment = VerticalAlignment.Center;
+                buttonMonitor.FontSize = fontSize;
+                buttonMonitor.Background = Brushes.Transparent;
+                buttonMonitor.BorderThickness = new Thickness(0);
+                buttonMonitor.Click += async (s, e) =>
                 {
-                    await RenderMessageBox($"Console for {app.Value.App.Name}", 
-                        app.Value.App.AppConsoleStdOutput + app.Value.App.AppConsoleStdError,
-                        MessageBox.Avalonia.Enums.Icon.None,
-                        ButtonEnum.Ok,
-                        Width,
-                        Height - 300
-                        );
+                    await new MonitorWindow(app.Value.App).ShowDialog(this);
                 };
-                GridMain.Children.Add(buttonConsole);
-                selectedProfileElements.Add(buttonConsole);
+                GridMain.Children.Add(buttonMonitor);
+                selectedProfileElements.Add(buttonMonitor);
                 
                 
                 var imageConfiguration = new Image();

@@ -31,10 +31,13 @@ namespace autodarts_desktop.model
 
         [JsonIgnore]
         public Argument? ArgumentRequired { get; private set; }
+
         [JsonIgnore]
         public string AppConsoleStdOutput { get; private set; }
+
         [JsonIgnore]
         public string AppConsoleStdError { get; private set; }
+
         [JsonIgnore]
         private bool _appRunningState;
         public bool AppRunningState
@@ -45,6 +48,37 @@ namespace autodarts_desktop.model
                 if (_appRunningState != value)
                 {
                     _appRunningState = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        [JsonIgnore]
+        private string _appMonitor;
+        public string AppMonitor
+        {
+            get => _appMonitor;
+            private set
+            {
+                if (_appMonitor != value)
+                {
+                    _appMonitor = value;
+                    AppMonitorAvailable = _appMonitor != String.Empty ? true : false;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        [JsonIgnore]
+        private bool _appMonitorAvailable;
+        public bool AppMonitorAvailable
+        {
+            get => _appMonitorAvailable;
+            private set
+            {
+                if (_appMonitorAvailable != value)
+                {
+                    _appMonitorAvailable = value;
                     OnPropertyChanged();
                 }
             }
@@ -162,6 +196,7 @@ namespace autodarts_desktop.model
             {
                 AppConsoleStdOutput = String.Empty;
                 AppConsoleStdError = String.Empty;
+                AppMonitor = String.Empty;
 
                 process = new Process();
                 process.StartInfo.WindowStyle = StartWindowState;
@@ -186,6 +221,7 @@ namespace autodarts_desktop.model
                     if (!String.IsNullOrEmpty(e.Data))
                     {
                         AppConsoleStdOutput += e.Data + Environment.NewLine;
+                        AppMonitor = AppConsoleStdOutput + Environment.NewLine + Environment.NewLine + AppConsoleStdError;
                     }
                 };
                 process.ErrorDataReceived += (sender, e) =>
@@ -193,6 +229,7 @@ namespace autodarts_desktop.model
                     if (!String.IsNullOrEmpty(e.Data))
                     {
                         AppConsoleStdError += e.Data + Environment.NewLine;
+                        AppMonitor = AppConsoleStdOutput + Environment.NewLine + Environment.NewLine + AppConsoleStdError;
                     }
                 };
                 process.StartInfo.FileName = executable;

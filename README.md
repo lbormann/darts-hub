@@ -47,6 +47,7 @@ It may be buggy. I've just coded it for fast fun with https://autodarts.io. You 
 - Kill app-process on macOS
 - Fix Updater on macOS
 
+
 ### Done
 - refactor setup-areas for using AppManager
 - stop starting custom app multiple times

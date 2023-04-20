@@ -108,6 +108,7 @@ namespace autodarts_desktop.control
         {
             return processId != -1 && Process.GetProcessById(processId) != null;
         }
+        
         public static bool IsProcessRunning(string? processName)
         {
             return Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.ToLower().Contains(processName.ToLower())) != null;
@@ -170,6 +171,7 @@ namespace autodarts_desktop.control
                 process.Kill();
             }
         }
+        
         public static void KillProcess(string processName)
         {
             processName = Path.GetFileNameWithoutExtension(processName);
