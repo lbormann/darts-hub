@@ -60,7 +60,7 @@ jobs:
 
       # osx-arm64
       - name: Build osx-arm64
-        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r osx-x64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
+        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r osx-arm64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
 
       - name: Copy update-script manually
         run: cp autodarts-desktop/update.sh autodarts-desktop/bin/Release/net6.0/osx-arm64/publish/update.sh
