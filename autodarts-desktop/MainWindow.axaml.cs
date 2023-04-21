@@ -26,6 +26,7 @@ namespace autodarts_desktop
     {
 
         // ATTRIBUTES
+        private const string ConfigPath = "config.json";
 
         private ProfileManager profileManager;
         private Profile? selectedProfile;
@@ -68,7 +69,7 @@ namespace autodarts_desktop
         {
             try
             {
-                configurator = new("config.json");
+                configurator = new(ConfigPath);
                 appConfiguration = configurator.LoadSettings();
                 CheckBoxStartProfileOnProgramStart.IsChecked = appConfiguration.StartProfileOnStart;
 
