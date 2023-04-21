@@ -19,11 +19,11 @@ namespace autodarts_desktop.control
 
         // ATTRIBUTES
 
-        public const string appsDownloadableFile = "apps-downloadable.json";
-        public const string appsInstallableFile = "apps-installable.json";
-        public const string appsLocalFile = "apps-local.json";
-        public const string appsOpenFile = "apps-open.json";
-        public const string profilesFile = "profiles.json";
+        private readonly string appsDownloadableFile = "apps-downloadable.json";
+        private readonly string appsInstallableFile = "apps-installable.json";
+        private readonly string appsLocalFile = "apps-local.json";
+        private readonly string appsOpenFile = "apps-open.json";
+        private readonly string profilesFile = "profiles.json";
 
         public event EventHandler<AppEventArgs>? AppDownloadStarted;
         public event EventHandler<AppEventArgs>? AppDownloadFinished;
@@ -50,7 +50,12 @@ namespace autodarts_desktop.control
 
         public ProfileManager()
         {
-           
+            var basePath = Helper.GetAppBasePath();
+            appsDownloadableFile = Path.Combine(basePath, appsDownloadableFile);
+            appsInstallableFile = Path.Combine(basePath, appsInstallableFile);
+            appsLocalFile = Path.Combine(basePath, appsLocalFile);
+            appsOpenFile = Path.Combine(basePath, appsOpenFile);
+            profilesFile = Path.Combine(basePath, profilesFile);
         }
 
 

@@ -23,7 +23,7 @@ namespace autodarts_desktop.control
 
         public Configurator(string configFileName) 
         {
-            ConfigFilePath = Path.Combine(Helper.GetAppBasePath(), "config.json");
+            ConfigFilePath = Path.Combine(Helper.GetAppBasePath(), configFileName);
         }
 
 

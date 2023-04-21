@@ -43,10 +43,8 @@ namespace autodarts_desktop.control
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                string assemblyLocation = Assembly.GetExecutingAssembly().Location;
-                var basePath = Path.GetDirectoryName(assemblyLocation);
-                
-                return basePath;
+                var executablePath = Process.GetCurrentProcess().MainModule.FileName;
+                return Path.GetDirectoryName(executablePath);
             }
             return Path.GetDirectoryName(AppContext.BaseDirectory);
         }
