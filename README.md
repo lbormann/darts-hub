@@ -4,8 +4,6 @@
 Autodarts-desktop manages several apps for https://autodarts.io.
 It handles automatic download/updates, offers a configuration-gui and starting of apps by a list of curated profiles.
 
-WIP: MacOS isn't fully working yet!
-
 
 ## COMPATIBILITY
 
@@ -43,10 +41,6 @@ It may be buggy. I've just coded it for fast fun with https://autodarts.io. You 
 
 ## TODOs
 
-- Improve README description
-- Kill app-process on macOS
-- Fix Updater on macOS
-
 
 ### Done
 - refactor setup-areas for using AppManager
@@ -75,6 +69,9 @@ It may be buggy. I've just coded it for fast fun with https://autodarts.io. You 
 - update images / text in Readme
 - update when autostart is activated
 - Fix arguments-type-float without range!
+- Improve README description
+- Kill app-process on macOS
+- Fix Updater on macOS
 
 
 ## Resources
