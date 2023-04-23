@@ -1298,6 +1298,7 @@ namespace autodarts_desktop.control
                     Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "area-" + areaNumber, section: "Images");
                     autodartsGifArguments.Add(areaArgument);
                 }
+                
                 autodartsGif =
                     new(
                         downloadUrl: autodartsGifDownloadUrl,
@@ -1561,14 +1562,28 @@ namespace autodarts_desktop.control
                 }
             }
 
-            // Adds cam-loader to all profiles
-            foreach (var p in Profiles)
+
+            // Adds or removes cam-loader for all profiles
+            var camLoader = AppsDownloadable.Find(a => a.Name == "cam-loader") != null;
+            if (!camLoader)
             {
-                if (!p.Apps.ContainsKey("cam-loader"))
+                foreach (var p in Profiles)
                 {
-                    p.Apps.Add("cam-loader", new());
+                    p.Apps.Remove("cam-loader");
                 }
             }
+            else
+            {
+                foreach (var p in Profiles)
+                {
+                    if (!p.Apps.ContainsKey("cam-loader"))
+                    {
+                        p.Apps.Add("cam-loader", new());
+                    }
+                }
+            }
+
+
 
 
 
