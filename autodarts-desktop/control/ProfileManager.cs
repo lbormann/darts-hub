@@ -454,6 +454,13 @@ namespace autodarts_desktop.control
             autodartsGifDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif-mac";
             var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("v1.0.2");
 
+            var camLoaderDownloadMap = new DownloadMap();
+            camLoaderDownloadMap.WindowsX86 = "https://github.com/lbormann/cam-loader/releases/download/***VERSION***/cam-loader.zip";
+            camLoaderDownloadMap.WindowsX64 = "https://github.com/lbormann/cam-loader/releases/download/***VERSION***/cam-loader.zip";
+            var camLoaderDownloadUrl = camLoaderDownloadMap.GetDownloadUrlByOs("v1.0.0");
+
+
+
             List<AppDownloadable> apps = new();
 
             if (!String.IsNullOrEmpty(autodartsClientDownloadUrl))
@@ -639,6 +646,17 @@ namespace autodarts_desktop.control
                 apps.Add(autodartsGif);
             }
 
+            if (!String.IsNullOrEmpty(camLoaderDownloadUrl))
+            {
+                AppDownloadable camLoader =
+                new(
+                    downloadUrl: camLoaderDownloadUrl,
+                    name: "cam-loader",
+                    helpUrl: "https://github.com/lbormann/cam-loader",
+                    descriptionShort: "Saves and loads camera settings"
+                    );
+                apps.Add(camLoader);
+            }
 
             AppsDownloadable.AddRange(apps);
             AppsAll.AddRange(apps);
@@ -1137,7 +1155,12 @@ namespace autodarts_desktop.control
             autodartsGifDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif.exe";
             autodartsGifDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif";
             autodartsGifDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif-mac";
-            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("v1.0.2");
+            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("v1.0.3");
+
+            var camLoaderDownloadMap = new DownloadMap();
+            camLoaderDownloadMap.WindowsX86 = "https://github.com/lbormann/cam-loader/releases/download/***VERSION***/cam-loader.zip";
+            camLoaderDownloadMap.WindowsX64 = "https://github.com/lbormann/cam-loader/releases/download/***VERSION***/cam-loader.zip";
+            var camLoaderDownloadUrl = camLoaderDownloadMap.GetDownloadUrlByOs("v1.0.0");
 
 
 
@@ -1289,6 +1312,35 @@ namespace autodarts_desktop.control
                 AppsDownloadable.Add(autodartsGif);
             }
 
+            var camLoader = AppsDownloadable.Find(a => a.Name == "cam-loader");
+            if (camLoader != null)
+            {
+                if (camLoaderDownloadUrl != null)
+                {
+                    camLoader.DownloadUrl = camLoaderDownloadUrl;
+                }
+                else
+                {
+                    var camLoaderIndex = AppsDownloadable.FindIndex(a => a.Name == "cam-loader");
+                    if (camLoaderIndex != -1)
+                    {
+                        AppsDownloadable.RemoveAt(camLoaderIndex);
+                    }
+                }
+            }
+            else if (camLoaderDownloadUrl != null)
+            {
+                camLoader =
+                        new(
+                            downloadUrl: camLoaderDownloadUrl,
+                            name: "cam-loader",
+                            helpUrl: "https://github.com/lbormann/cam-loader",
+                            descriptionShort: "Saves and loads camera settings"
+                            );
+                AppsDownloadable.Add(camLoader);
+            }
+
+
             // Add more migs..
         }
 
@@ -1303,11 +1355,13 @@ namespace autodarts_desktop.control
             var autodartsWled = AppsDownloadable.Find(a => a.Name == "autodarts-wled") != null;
             var autodartsGif = AppsDownloadable.Find(a => a.Name == "autodarts-gif") != null;
             var virtualDartsZoom = AppsDownloadable.Find(a => a.Name == "virtual-darts-zoom") != null;
+            var camLoader = AppsDownloadable.Find(a => a.Name == "cam-loader") != null;
             var droidCam = AppsInstallable.Find(a => a.Name == "droid-cam") != null;
             var epocCam = AppsInstallable.Find(a => a.Name == "epoc-cam") != null;
             var dartboardsClient = AppsInstallable.Find(a => a.Name == "dartboards-client") != null;
             var custom = AppsLocal.Find(a => a.Name == "custom") != null;
-
+            
+            
 
             if (autodartsCaller)
             {
@@ -1319,6 +1373,7 @@ namespace autodarts_desktop.control
                 if (autodartsCaller) p1Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p1Apps.Add("autodarts-wled", new ProfileState());
                 if (autodartsGif) p1Apps.Add("autodarts-gif", new ProfileState());
+                if (camLoader) p1Apps.Add("cam-loader", new ProfileState());
                 if (custom) p1Apps.Add("custom", new ProfileState());
                 Profiles.Add(new Profile(p1Name, p1Apps));
             }
@@ -1336,6 +1391,7 @@ namespace autodarts_desktop.control
                 if (autodartsGif) p2Apps.Add("autodarts-gif", new ProfileState());
                 if (autodartsExtern) p2Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p2Args));
                 if (virtualDartsZoom) p2Apps.Add("virtual-darts-zoom", new ProfileState());
+                if (camLoader) p2Apps.Add("cam-loader", new ProfileState());
                 if (droidCam) p2Apps.Add("droid-cam", new ProfileState());
                 if (epocCam) p2Apps.Add("epoc-cam", new ProfileState());
                 if (custom) p2Apps.Add("custom", new ProfileState());
@@ -1355,6 +1411,7 @@ namespace autodarts_desktop.control
                 if (autodartsGif) p3Apps.Add("autodarts-gif", new ProfileState());
                 if (autodartsExtern) p3Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p3Args));
                 if (virtualDartsZoom) p3Apps.Add("virtual-darts-zoom", new ProfileState());
+                if (camLoader) p3Apps.Add("cam-loader", new ProfileState());
                 if (droidCam) p3Apps.Add("droid-cam", new ProfileState());
                 if (epocCam) p3Apps.Add("epoc-cam", new ProfileState());
                 if (custom) p3Apps.Add("custom", new ProfileState());
@@ -1374,6 +1431,7 @@ namespace autodarts_desktop.control
                 if (autodartsGif) p4Apps.Add("autodarts-gif", new ProfileState());
                 if (autodartsExtern) p4Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p4Args));
                 if (virtualDartsZoom) p4Apps.Add("virtual-darts-zoom", new ProfileState());
+                if (camLoader) p4Apps.Add("cam-loader", new ProfileState());
                 if (dartboardsClient) p4Apps.Add("dartboards-client", new ProfileState());
                 if (droidCam) p4Apps.Add("droid-cam", new ProfileState());
                 if (epocCam) p4Apps.Add("epoc-cam", new ProfileState());
@@ -1389,6 +1447,7 @@ namespace autodarts_desktop.control
                 p5Apps.Add("autodarts.io", new ProfileState());
                 p5Apps.Add("autodarts-boardmanager", new ProfileState());
                 if (virtualDartsZoom) p5Apps.Add("virtual-darts-zoom", new ProfileState());
+                if (camLoader) p5Apps.Add("cam-loader", new ProfileState());
                 if (droidCam) p5Apps.Add("droid-cam", new ProfileState());
                 if (epocCam) p5Apps.Add("epoc-cam", new ProfileState());
                 if (custom) p5Apps.Add("custom", new ProfileState());
@@ -1502,7 +1561,18 @@ namespace autodarts_desktop.control
                 }
             }
 
-           
+            // Adds cam-loader to all profiles
+            foreach (var p in Profiles)
+            {
+                if (!p.Apps.ContainsKey("cam-loader"))
+                {
+                    p.Apps.Add("cam-loader", new());
+                }
+            }
+
+
+
+
 
             // Add more migs..
         }
