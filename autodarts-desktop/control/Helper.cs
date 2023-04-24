@@ -106,7 +106,7 @@ namespace autodarts_desktop.control
         {
             return processId != -1 && Process.GetProcessById(processId) != null;
         }
-        
+
         public static bool IsProcessRunning(string? processName)
         {
             return Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.ToLower().Contains(processName.ToLower())) != null;
@@ -127,7 +127,7 @@ namespace autodarts_desktop.control
             }
             return pathToExecutable;
         }
-        
+
         public static string? SearchExecutable(string path)
         {
             if (!Directory.Exists(path)) return null;
@@ -164,7 +164,7 @@ namespace autodarts_desktop.control
             process = Process.GetProcessById(processId);
             KillProcessAndChildren(process);
         }
-        
+
         public static void KillProcess(string processName)
         {
             processName = Path.GetFileNameWithoutExtension(processName);
@@ -204,6 +204,7 @@ namespace autodarts_desktop.control
         public static Process Parent(this Process process)
         {
             int parentPid = -1;
+
             var procInfo = new ProcTaskAllInfo();
             int bufferSize = Marshal.SizeOf(procInfo);
             int status = proc_pidinfo(process.Id, ProcInfoFlavor.PROC_PIDTASKALLINFO, 0, ref procInfo, bufferSize);
@@ -224,12 +225,13 @@ namespace autodarts_desktop.control
                     // Parent process not found or an error occurred
                 }
             }
+
             return null;
         }
 
         // macOS specific P/Invoke
         [DllImport("libproc", SetLastError = true)]
-        private static extern int proc_pidinfo(int pid, ProcInfoFlavor flavor, uint arg, ref ProcTaskAllInfo buffer, int buffersize);
+        private static extern int proc_pidinfo(int pid, ProcInfoFlavor flavor, uint arg, ref ProcTaskAllInfo buffer, int bufferSize);
 
         private enum ProcInfoFlavor : int
         {
@@ -248,16 +250,59 @@ namespace autodarts_desktop.control
         {
             public ulong pti_virtual_size;
             public ulong pti_resident_size;
-            // Other fields are omitted for brevity
+            public ulong pti_total_user;
+            public ulong pti_total_system;
+            public ulong pti_threads_user;
+            public ulong pti_threads_system;
+            public int pti_policy;
+            public int pti_faults;
+            public int pti_pageins;
+            public int pti_cow_faults;
+            public int pti_messages_sent;
+            public int pti_messages_received;
+            public int pti_syscalls_mach;
+            public int pti_syscalls_unix;
+            public int pti_csw;
+            public int pti_threadnum;
+            public int pti_numrunning;
+            public int pti_priority;
+
+
         }
 
-        [StructLayout(LayoutKind.Sequential)]
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         private struct ProcBsdInfo
         {
+            public int pbi_status;
+            public int pbi_xstatus;
+            public int pbi_pid;
             public int pbi_ppid;
-            // Other fields are omitted for brevity
+            public int pbi_pgid;
+            public int pbi_sid;
+            public uint pbi_uid;
+            public uint pbi_gid;
+            public uint pbi_ruid;
+            public uint pbi_rgid;
+            public uint pbi_svuid;
+            public uint pbi_svgid;
+            public uint pbi_nice;
+            public ulong pbi_start_tvsec;
+            public ulong pbi_start_tvusec;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 17)]
+            public string pbi_comm;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
+            public string pbi_name;
+            public uint pbi_wqthread;
+            public int pbi_priflags;
+            public int pbi_nfiles;
+            public int pbi_msgrcv;
+            public int pbi_msgsnd;
+            public int pbi_syscalls;
+            public int pbi_csw;
+            public int pbi_threadnum;
+            public int pbi_numrunning;
+            public int pbi_priority;
         }
 
-
+        }
     }
-}
