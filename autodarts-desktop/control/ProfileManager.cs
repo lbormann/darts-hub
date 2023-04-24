@@ -424,7 +424,7 @@ namespace autodarts_desktop.control
             autodartsClientDownloadMap.LinuxArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-arm64.tar.gz";
             autodartsClientDownloadMap.LinuxArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-armv7l.tar.gz";
             autodartsClientDownloadMap.WindowsX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.windows-amd64.zip";
-            var autodartsClientDownloadUrl = autodartsClientDownloadMap.GetDownloadUrlByOs("0.18.2");
+            var autodartsClientDownloadUrl = autodartsClientDownloadMap.GetDownloadUrlByOs("0.19.0");
 
             var autodartsCallerDownloadMap = new DownloadMap();
             autodartsCallerDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller.exe";
@@ -452,7 +452,7 @@ namespace autodarts_desktop.control
             autodartsGifDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif.exe";
             autodartsGifDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif";
             autodartsGifDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif-mac";
-            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("v1.0.2");
+            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("v1.0.3");
 
             var camLoaderDownloadMap = new DownloadMap();
             camLoaderDownloadMap.WindowsX86 = "https://github.com/lbormann/cam-loader/releases/download/***VERSION***/cam-loader.zip";

@@ -159,15 +159,10 @@ namespace autodarts_desktop.control
             if (processId == -1) return;
 
             var process = Process.GetProcessById(processId);
-            if (process != null)
-            {
-                process.Kill();
-            }
+            KillProcessAndChildren(process);
+
             process = Process.GetProcessById(processId);
-            if (process != null)
-            {
-                process.Kill();
-            }
+            KillProcessAndChildren(process);
         }
         
         public static void KillProcess(string processName)
@@ -175,15 +170,123 @@ namespace autodarts_desktop.control
             processName = Path.GetFileNameWithoutExtension(processName);
 
             var process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
-            if (process != null)
-            {
-                process.Kill();
-            }
+            KillProcessAndChildren(process);
+
             process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
-            if (process != null)
+            KillProcessAndChildren(process);
+        }
+
+
+
+        private static void KillProcessAndChildren(Process process)
+        {
+            if (process == null) return;
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 process.Kill();
+                return;
             }
+
+            // Get child processes
+            var childProcesses = Process.GetProcesses().Where(p => p.Parent().Id == process.Id);
+
+            // Kill child processes
+            foreach (var childProcess in childProcesses)
+            {
+                KillProcessAndChildren(childProcess);
+            }
+
+            // Kill the main process
+            process.Kill();
+        }
+
+
+        public static Process Parent(this Process process)
+        {
+            int parentPid = -1;
+            var rusageInfo = new RUsageInfoV2();
+            int bufferSize = Marshal.SizeOf(rusageInfo);
+            int status = proc_pid_rusage(process.Id, RUsageWho.RUSAGE_INFO_V2, ref rusageInfo, bufferSize);
+
+            if (status == 0)
+            {
+                parentPid = rusageInfo.ri_parent_pid;
+            }
+
+            if (parentPid != -1)
+            {
+                try
+                {
+                    return Process.GetProcessById(parentPid);
+                }
+                catch
+                {
+                    // Parent process not found or an error occurred
+                }
+            }
+            return null;
+        }
+
+        // macOS specific P/Invoke
+        [DllImport("libproc", SetLastError = true)]
+        private static extern int proc_pid_rusage(int pid, RUsageWho who, ref RUsageInfoV2 rinfo, int rinfo_size);
+
+
+
+        private enum RUsageWho : int
+        {
+            RUSAGE_SELF = 0,
+            RUSAGE_CHILDREN = -1,
+            RUSAGE_THREAD = 1,
+            RUSAGE_INFO_V2 = 2
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RUsageInfoV2
+        {
+            public int ri_uuid;
+            public int ri_user_time;
+            public int ri_system_time;
+            public int ri_pkg_idle_wkups;
+            public int ri_interrupt_wkups;
+            public int ri_pageins;
+            public int ri_wired_size;
+            public int ri_resident_size;
+            public int ri_phys_footprint;
+            public int ri_proc_start_abstime;
+            public int ri_proc_exit_abstime;
+            public int ri_child_user_time;
+            public int ri_child_system_time;
+            public int ri_child_pkg_idle_wkups;
+            public int ri_child_interrupt_wkups;
+            public int ri_child_pageins;
+            public int ri_child_elapsed_abstime;
+            public int ri_diskio_bytesread;
+            public int ri_diskio_byteswritten;
+            public int ri_cpu_time_qos_default;
+            public int ri_cpu_time_qos_maintenance;
+            public int ri_cpu_time_qos_background;
+            public int ri_cpu_time_qos_utility;
+            public int ri_cpu_time_qos_legacy;
+            public int ri_cpu_time_qos_user_initiated;
+            public int ri_cpu_time_qos_user_interactive;
+            public int ri_billed_system_time;
+            public int ri_serviced_system_time;
+            public int ri_logical_writes;
+            public int ri_lifetime_max_phys_footprint;
+            public int ri_instructions;
+            public int ri_cycles;
+            public int ri_billed_energy;
+            public int ri_serviced_energy;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 15)]
+            public int[] ri_unused;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 7)]
+            public int[] ri_reserved;
+            public int ri_pid;
+            public int ri_index;
+            public int ri_parent_pid;
+            public int ri_name;
+            public int ri_parent_name;
         }
 
 
