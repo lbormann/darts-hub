@@ -167,9 +167,9 @@ namespace autodarts_desktop.model
                     }
                     AppRunningState = false;
                 }
-                catch
+                catch(Exception ex)
                 {
-                    Console.WriteLine($"Can't close {executable}");
+                    Console.WriteLine($"Can't close {executable}: {ex.Message}");
                 }
             }
         }
