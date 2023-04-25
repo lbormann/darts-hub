@@ -161,102 +161,86 @@ namespace autodarts_desktop.control
             var process = Process.GetProcessById(processId);
             KillProcessAndChildren(process);
 
-            process = Process.GetProcessById(processId);
-            KillProcessAndChildren(process);
+            //process = Process.GetProcessById(processId);
+            //KillProcessAndChildren(process);
         }
 
         public static void KillProcess(string processName)
         {
             processName = Path.GetFileNameWithoutExtension(processName);
 
-            //.FirstOrDefault(p => p.ProcessName.Contains(processName));
-            var processes = Process.GetProcessesByName(processName);
-            foreach(var p in processes)
-            {
-                KillProcessAndChildren(p);
-            }
+            var process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
+            KillProcessAndChildren(process);
 
-            //.FirstOrDefault(p => p.ProcessName.Contains(processName));
-            processes = Process.GetProcessesByName(processName);
-            foreach (var p in processes)
-            {
-                KillProcessAndChildren(p);
-            }
-
-
-            //process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
-            //KillProcessAndChildren(process);
+            process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
+            KillProcessAndChildren(process);
         }
+
+
 
         private static void KillProcessAndChildren(Process process)
         {
             if (process == null) return;
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                process.Kill();
+                return;
+            }
+
+            // Get child processes
+            var childProcesses = Process.GetProcesses().Where(p => p.Parent().Id == process.Id);
+
+            // Kill child processes
+            foreach (var childProcess in childProcesses)
+            {
+                KillProcessAndChildren(childProcess);
+            }
+
+            // Kill the main process
             process.Kill();
         }
 
-        //private static void KillProcessAndChildren(Process process)
-        //{
-        //    if (process == null) return;
-        //    if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        //    {
-        //        process.Kill();
-        //        return;
-        //    }
+        public static Process Parent(this Process process)
+        {
+            int parentPid = -1;
 
-        //    // Get child processes
-        //    var childProcesses = Process.GetProcesses().Where(p => p.Parent().Id == process.Id);
+            try
+            {
+                var output = ExecuteCommand($"ps -o ppid= -p {process.Id}");
+                if (int.TryParse(output.Trim(), out parentPid) && parentPid != -1)
+                {
+                    return Process.GetProcessById(parentPid);
+                }
+            }
+            catch
+            {
+                // Parent process not found or an error occurred
+            }
 
-        //    // Kill child processes
-        //    foreach (var childProcess in childProcesses)
-        //    {
-        //        KillProcessAndChildren(childProcess);
-        //    }
+            return null;
+        }
 
-        //    // Kill the main process
-        //    process.Kill();
-        //}
+        private static string ExecuteCommand(string command)
+        {
+            var escapedArgs = command.Replace("\"", "\\\"");
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "/bin/bash",
+                    Arguments = $"-c \"{escapedArgs}\"",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                }
+            };
 
-        //public static Process Parent(this Process process)
-        //{
-        //    int parentPid = -1;
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
 
-        //    try
-        //    {
-        //        var output = ExecuteCommand($"ps -o ppid= -p {process.Id}");
-        //        if (int.TryParse(output.Trim(), out parentPid) && parentPid != -1)
-        //        {
-        //            return Process.GetProcessById(parentPid);
-        //        }
-        //    }
-        //    catch
-        //    {
-        //        // Parent process not found or an error occurred
-        //    }
-
-        //    return null;
-        //}
-
-        //private static string ExecuteCommand(string command)
-        //{
-        //    var escapedArgs = command.Replace("\"", "\\\"");
-        //    var process = new Process
-        //    {
-        //        StartInfo = new ProcessStartInfo
-        //        {
-        //            FileName = "/bin/bash",
-        //            Arguments = $"-c \"{escapedArgs}\"",
-        //            RedirectStandardOutput = true,
-        //            UseShellExecute = false,
-        //            CreateNoWindow = true,
-        //        }
-        //    };
-
-        //    process.Start();
-        //    string output = process.StandardOutput.ReadToEnd();
-        //    process.WaitForExit();
-
-        //    return output;
-        //}
+            return output;
+        }
 
 
         //public static Process Parent(this Process process)
