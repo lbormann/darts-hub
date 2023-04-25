@@ -157,14 +157,14 @@ namespace autodarts_desktop.model
                     //process.CloseMainWindow();
                     //process.Close();
 
-                    if (processId != defaultProcessId)
-                    {
-                        Helper.KillProcess(processId);
-                    }
-                    //if (executable != null)
+                    //if (processId != defaultProcessId)
                     //{
-                    //    Helper.KillProcess(executable);
+                    //    Helper.KillProcess(processId);
                     //}
+                    if (executable != null)
+                    {
+                        Helper.KillProcess(executable);
+                    }
                     AppRunningState = false;
                 }
                 catch(Exception ex)
