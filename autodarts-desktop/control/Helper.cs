@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
-using System.Reflection;
+
 
 namespace autodarts_desktop.control
 {
@@ -169,11 +169,20 @@ namespace autodarts_desktop.control
         {
             processName = Path.GetFileNameWithoutExtension(processName);
 
-            var process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
-            KillProcessAndChildren(process);
+            Console.WriteLine($"shorted name: {processName}");
 
-            process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
-            KillProcessAndChildren(process);
+            // .FirstOrDefault(p => p.ProcessName.Contains(processName));
+            var process = Process.GetProcessesByName(processName);
+
+            foreach(var p in process)
+            {
+                Console.WriteLine($"P: {p.Id}");
+            }
+
+            //KillProcessAndChildren(process);
+
+            //process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
+            //KillProcessAndChildren(process);
         }
 
 
