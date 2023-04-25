@@ -159,10 +159,10 @@ namespace autodarts_desktop.control
             if (processId == -1) return;
 
             var process = Process.GetProcessById(processId);
-            KillProcessAndChildren(process);
+            process.Kill();
 
-            //process = Process.GetProcessById(processId);
-            //KillProcessAndChildren(process);
+            process = Process.GetProcessById(processId);
+            process.Kill();
         }
 
         public static void KillProcess(string processName)
@@ -173,7 +173,10 @@ namespace autodarts_desktop.control
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 var process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
-                if (process != null) { process.Kill(); }
+                process.Kill();
+
+                process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
+                process.Kill();
                 return;
             }
 
