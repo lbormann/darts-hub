@@ -168,8 +168,6 @@ namespace autodarts_desktop.control
         public static void KillProcess(string processName)
         {
             processName = Path.GetFileNameWithoutExtension(processName);
-            Console.WriteLine($"shorted name: {processName}");
-
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 var process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
@@ -179,11 +177,13 @@ namespace autodarts_desktop.control
                 process.Kill();
                 return;
             }
-
             KillProcessesByNameOsX(processName);
         }
 
-        public static void KillProcessesByNameOsX(string processName)
+
+
+
+        private static void KillProcessesByNameOsX(string processName)
         {
             var processIds = FindProcessesByNameOsx(processName).Reverse();
             foreach (var processId in processIds)
@@ -200,11 +200,6 @@ namespace autodarts_desktop.control
                                    .ToArray();
             return processIds;
         }
-
-        //private static void KillProcess(int processId)
-        //{
-        //    ExecuteCommand($"kill {processId}");
-        //}
 
         private static string ExecuteCommand(string command)
         {
@@ -228,175 +223,5 @@ namespace autodarts_desktop.control
             return output;
         }
 
-
-
-        //private static void KillProcessAndChildren(Process process)
-        //{
-        //    if (process == null) return;
-        //    if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        //    {
-        //        process.Kill();
-        //        return;
-        //    }
-
-        //    // Get child processes
-        //    var childProcesses = Process.GetProcesses().Where(p => p.Parent().Id == process.Id);
-
-        //    // Kill child processes
-        //    foreach (var childProcess in childProcesses)
-        //    {
-        //        KillProcessAndChildren(childProcess);
-        //    }
-
-        //    // Kill the main process
-        //    process.Kill();
-        //}
-
-        //public static Process Parent(this Process process)
-        //{
-        //    int parentPid = -1;
-
-        //    try
-        //    {
-        //        var output = ExecuteCommand($"ps -o ppid= -p {process.Id}");
-        //        if (int.TryParse(output.Trim(), out parentPid) && parentPid != -1)
-        //        {
-        //            return Process.GetProcessById(parentPid);
-        //        }
-        //    }
-        //    catch
-        //    {
-        //        // Parent process not found or an error occurred
-        //    }
-
-        //    return null;
-        //}
-
-        //private static string ExecuteCommand(string command)
-        //{
-        //    var escapedArgs = command.Replace("\"", "\\\"");
-        //    var process = new Process
-        //    {
-        //        StartInfo = new ProcessStartInfo
-        //        {
-        //            FileName = "/bin/bash",
-        //            Arguments = $"-c \"{escapedArgs}\"",
-        //            RedirectStandardOutput = true,
-        //            UseShellExecute = false,
-        //            CreateNoWindow = true,
-        //        }
-        //    };
-
-        //    process.Start();
-        //    string output = process.StandardOutput.ReadToEnd();
-        //    process.WaitForExit();
-
-        //    return output;
-        //}
-
-
-        //public static Process Parent(this Process process)
-        //{
-        //    int parentPid = -1;
-
-        //    var procInfo = new ProcTaskAllInfo();
-        //    int bufferSize = Marshal.SizeOf(procInfo);
-        //    int status = proc_pidinfo(process.Id, ProcInfoFlavor.PROC_PIDTASKALLINFO, 0, ref procInfo, bufferSize);
-
-        //    if (status == bufferSize)
-        //    {
-        //        parentPid = procInfo.pbsd.pbi_ppid;
-        //    }
-
-        //    if (parentPid != -1)
-        //    {
-        //        try
-        //        {
-        //            return Process.GetProcessById(parentPid);
-        //        }
-        //        catch
-        //        {
-        //            // Parent process not found or an error occurred
-        //        }
-        //    }
-
-        //    return null;
-        //}
-
-        //// macOS specific P/Invoke
-        //[DllImport("libproc", SetLastError = true)]
-        //private static extern int proc_pidinfo(int pid, ProcInfoFlavor flavor, uint arg, ref ProcTaskAllInfo buffer, int bufferSize);
-
-        //private enum ProcInfoFlavor : int
-        //{
-        //    PROC_PIDTASKALLINFO = 4
-        //}
-
-        //[StructLayout(LayoutKind.Sequential)]
-        //private struct ProcTaskAllInfo
-        //{
-        //    public ProcTaskInfo ptinfo;
-        //    public ProcBsdInfo pbsd;
-        //}
-
-        //[StructLayout(LayoutKind.Sequential)]
-        //private struct ProcTaskInfo
-        //{
-        //    public ulong pti_virtual_size;
-        //    public ulong pti_resident_size;
-        //    public ulong pti_total_user;
-        //    public ulong pti_total_system;
-        //    public ulong pti_threads_user;
-        //    public ulong pti_threads_system;
-        //    public int pti_policy;
-        //    public int pti_faults;
-        //    public int pti_pageins;
-        //    public int pti_cow_faults;
-        //    public int pti_messages_sent;
-        //    public int pti_messages_received;
-        //    public int pti_syscalls_mach;
-        //    public int pti_syscalls_unix;
-        //    public int pti_csw;
-        //    public int pti_threadnum;
-        //    public int pti_numrunning;
-        //    public int pti_priority;
-
-
-        //}
-
-        //[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        //private struct ProcBsdInfo
-        //{
-        //    public int pbi_status;
-        //    public int pbi_xstatus;
-        //    public int pbi_pid;
-        //    public int pbi_ppid;
-        //    public int pbi_pgid;
-        //    public int pbi_sid;
-        //    public uint pbi_uid;
-        //    public uint pbi_gid;
-        //    public uint pbi_ruid;
-        //    public uint pbi_rgid;
-        //    public uint pbi_svuid;
-        //    public uint pbi_svgid;
-        //    public uint pbi_nice;
-        //    public ulong pbi_start_tvsec;
-        //    public ulong pbi_start_tvusec;
-        //    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 17)]
-        //    public string pbi_comm;
-        //    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
-        //    public string pbi_name;
-        //    public uint pbi_wqthread;
-        //    public int pbi_priflags;
-        //    public int pbi_nfiles;
-        //    public int pbi_msgrcv;
-        //    public int pbi_msgsnd;
-        //    public int pbi_syscalls;
-        //    public int pbi_csw;
-        //    public int pbi_threadnum;
-        //    public int pbi_numrunning;
-        //    public int pbi_priority;
-        //}
-
     }
-    }
+}

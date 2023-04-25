@@ -2,7 +2,7 @@
 [![Downloads](https://img.shields.io/github/downloads/lbormann/autodarts-desktop/total.svg)](https://github.com/lbormann/autodarts-desktop/releases/latest)
 
 Autodarts-desktop manages several apps for https://autodarts.io.
-It handles automatic download/updates, offers a configuration-gui and starting of apps by a list of curated profiles.
+It automatically manages downloads and updates, provides a configuration interface, and allows for the launching of applications through a curated list of profiles.
 
 
 ## COMPATIBILITY
