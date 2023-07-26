@@ -432,6 +432,7 @@ namespace autodarts_desktop.control
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller-mac";
             var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.2.8");
 
+
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern.exe";
             autodartsExternDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern";
