@@ -430,7 +430,7 @@ namespace autodarts_desktop.control
             autodartsCallerDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller.exe";
             autodartsCallerDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.2.10");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.3.0");
 
 
             var autodartsExternDownloadMap = new DownloadMap();
@@ -497,6 +497,8 @@ namespace autodarts_desktop.control
                             new(name: "C", type: "string", required: false, nameHuman: "specific-caller", section: "Calls"),
                             new(name: "R", type: "bool", required: false, nameHuman: "random-caller", section: "Random", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "L", type: "bool", required: false, nameHuman: "random-caller-each-leg", section: "Random", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "RL", type: "int[0..5]", required: false, nameHuman: "random-caller-language", section: "Random"),
+                            new(name: "RG", type: "int[0..2]", required: false, nameHuman: "random-caller-gender", section: "Random"),
                             new(name: "CCP", type: "bool", required: false, nameHuman: "call-current-player", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "E", type: "bool", required: false, nameHuman: "call-every-dart", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "ESF", type: "bool", required: false, nameHuman: "call-every-dart-single-files", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
@@ -1135,7 +1137,7 @@ namespace autodarts_desktop.control
             autodartsCallerDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller.exe";
             autodartsCallerDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.2.10");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.3.0");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern.exe";
@@ -1202,6 +1204,17 @@ namespace autodarts_desktop.control
                     {
                         autodartsCaller.Configuration.Arguments.Add(new(name: "WEBP", type: "int", required: false, nameHuman: "web-caller-port", section: "Service"));
                     }
+                    var randomCallerLanguage = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "RL");
+                    if (randomCallerLanguage == null)
+                    {
+                        autodartsCaller.Configuration.Arguments.Add(new(name: "RL", type: "int[0..5]", required: false, nameHuman: "random-caller-language", section: "Random"));
+                    }
+                    var randomCallerGender = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "RG");
+                    if (randomCallerGender == null)
+                    {
+                        autodartsCaller.Configuration.Arguments.Add(new(name: "RG", type: "int[0..2]", required: false, nameHuman: "random-caller-gender", section: "Random"));
+                    }
+
                 }
                 else
                 {
