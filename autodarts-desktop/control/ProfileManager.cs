@@ -497,7 +497,7 @@ namespace autodarts_desktop.control
                             new(name: "C", type: "string", required: false, nameHuman: "specific-caller", section: "Calls"),
                             new(name: "R", type: "bool", required: false, nameHuman: "random-caller", section: "Random", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "L", type: "bool", required: false, nameHuman: "random-caller-each-leg", section: "Random", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "RL", type: "int[0..5]", required: false, nameHuman: "random-caller-language", section: "Random"),
+                            new(name: "RL", type: "int[0..6]", required: false, nameHuman: "random-caller-language", section: "Random"),
                             new(name: "RG", type: "int[0..2]", required: false, nameHuman: "random-caller-gender", section: "Random"),
                             new(name: "CCP", type: "bool", required: false, nameHuman: "call-current-player", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "E", type: "bool", required: false, nameHuman: "call-every-dart", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
@@ -1207,7 +1207,7 @@ namespace autodarts_desktop.control
                     var randomCallerLanguage = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "RL");
                     if (randomCallerLanguage == null)
                     {
-                        autodartsCaller.Configuration.Arguments.Add(new(name: "RL", type: "int[0..5]", required: false, nameHuman: "random-caller-language", section: "Random"));
+                        autodartsCaller.Configuration.Arguments.Add(new(name: "RL", type: "int[0..6]", required: false, nameHuman: "random-caller-language", section: "Random"));
                     }
                     var randomCallerGender = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "RG");
                     if (randomCallerGender == null)
