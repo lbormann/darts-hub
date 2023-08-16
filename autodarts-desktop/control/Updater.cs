@@ -19,7 +19,7 @@ namespace autodarts_desktop.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v0.8.32";
+        public static readonly string version = "v0.8.33";
         
 
 
