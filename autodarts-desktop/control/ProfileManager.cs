@@ -430,7 +430,7 @@ namespace autodarts_desktop.control
             autodartsCallerDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller.exe";
             autodartsCallerDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.3.6");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.3.7");
 
 
             var autodartsExternDownloadMap = new DownloadMap();
@@ -507,6 +507,7 @@ namespace autodarts_desktop.control
                             new(name: "A", type: "float[0.0..1.0]", required: false, nameHuman: "ambient-sounds", section: "Calls"),
                             new(name: "AAC", type: "bool", required: false, nameHuman: "ambient-sounds-after-calls", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "DL", type: "bool", required: false, nameHuman: "downloads", section: "Downloads", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "DLLA", type: "int[0..6]", required: false, nameHuman: "downloads-language", section: "Downloads"),
                             new(name: "DLL", type: "int", required: false, nameHuman: "downloads-limit", section: "Downloads"),
                             new(name: "DLP", type: "path", required: false, nameHuman: "downloads-path", section: "Downloads"),
                             new(name: "BAV", type: "float[0.0..1.0]", required: false, nameHuman: "background-audio-volume", section: "Calls"),
@@ -1137,7 +1138,7 @@ namespace autodarts_desktop.control
             autodartsCallerDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller.exe";
             autodartsCallerDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.3.6");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.3.7");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern.exe";
@@ -1213,6 +1214,11 @@ namespace autodarts_desktop.control
                     if (randomCallerGender == null)
                     {
                         autodartsCaller.Configuration.Arguments.Add(new(name: "RG", type: "int[0..2]", required: false, nameHuman: "random-caller-gender", section: "Random"));
+                    }
+                    var downloadsLanguage = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "DLLA");
+                    if (downloadsLanguage == null)
+                    {
+                        autodartsCaller.Configuration.Arguments.Add(new(name: "DLLA", type: "int[0..6]", required: false, nameHuman: "downloads-language", section: "Downloads"));
                     }
 
                 }

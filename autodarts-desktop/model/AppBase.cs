@@ -293,7 +293,7 @@ namespace autodarts_desktop.model
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "chmod",
-                    Arguments = $"+x {scriptPath}",
+                    Arguments = $"+x \"{scriptPath}\"",
                     RedirectStandardOutput = false,
                     RedirectStandardError = false,
                     UseShellExecute = false
