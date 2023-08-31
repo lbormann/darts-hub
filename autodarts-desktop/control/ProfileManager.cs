@@ -416,7 +416,7 @@ namespace autodarts_desktop.control
 
         private void CreateDummyAppsDownloadable()
         {
-            // Define Download-Maps for Apps with os
+            // Define os-specific download-Maps for each app
             var autodartsClientDownloadMap = new DownloadMap();
             autodartsClientDownloadMap.MacX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-amd64.opencv4.7.0.tar.gz";
             autodartsClientDownloadMap.MacArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-arm64.opencv4.7.0.tar.gz";
@@ -424,14 +424,13 @@ namespace autodarts_desktop.control
             autodartsClientDownloadMap.LinuxArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-arm64.tar.gz";
             autodartsClientDownloadMap.LinuxArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-armv7l.tar.gz";
             autodartsClientDownloadMap.WindowsX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.windows-amd64.zip";
-            var autodartsClientDownloadUrl = autodartsClientDownloadMap.GetDownloadUrlByOs("0.21.1");
+            var autodartsClientDownloadUrl = autodartsClientDownloadMap.GetDownloadUrlByOs("0.21.5");
 
             var autodartsCallerDownloadMap = new DownloadMap();
             autodartsCallerDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller.exe";
             autodartsCallerDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.3.7");
-
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.4.1");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern.exe";
@@ -455,10 +454,17 @@ namespace autodarts_desktop.control
             autodartsGifDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-gif/releases/download/***VERSION***/autodarts-gif-mac";
             var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("v1.0.3");
 
+            var autodartsVoiceDownloadMap = new DownloadMap();
+            autodartsVoiceDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-voice/releases/download/***VERSION***/autodarts-voice.exe";
+            autodartsVoiceDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-voice/releases/download/***VERSION***/autodarts-voice";
+            autodartsVoiceDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-voice/releases/download/***VERSION***/autodarts-voice-mac";
+            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("v1.0.0");
+
             var camLoaderDownloadMap = new DownloadMap();
             camLoaderDownloadMap.WindowsX86 = "https://github.com/lbormann/cam-loader/releases/download/***VERSION***/cam-loader.zip";
             camLoaderDownloadMap.WindowsX64 = "https://github.com/lbormann/cam-loader/releases/download/***VERSION***/cam-loader.zip";
             var camLoaderDownloadUrl = camLoaderDownloadMap.GetDownloadUrlByOs("v1.0.0");
+
 
 
 
@@ -502,8 +508,9 @@ namespace autodarts_desktop.control
                             new(name: "CCP", type: "bool", required: false, nameHuman: "call-current-player", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "E", type: "bool", required: false, nameHuman: "call-every-dart", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "ESF", type: "bool", required: false, nameHuman: "call-every-dart-single-files", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "PCC", type: "bool", required: false, nameHuman: "possible-checkout-call", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "PCC", type: "int", required: false, nameHuman: "possible-checkout-call", section: "Calls"),
                             new(name: "PCCSF", type: "bool", required: false, nameHuman: "possible-checkout-call-single-files", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "PCCYO", type: "bool", required: false, nameHuman: "possible-checkout-call-only-yourself", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "A", type: "float[0.0..1.0]", required: false, nameHuman: "ambient-sounds", section: "Calls"),
                             new(name: "AAC", type: "bool", required: false, nameHuman: "ambient-sounds-after-calls", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "DL", type: "bool", required: false, nameHuman: "downloads", section: "Downloads", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
@@ -651,6 +658,61 @@ namespace autodarts_desktop.control
                 apps.Add(autodartsGif);
             }
 
+            if (!String.IsNullOrEmpty(autodartsVoiceDownloadUrl))
+            {
+                var autodartsVoiceArguments = new List<Argument> {
+                        new(name: "CON", type: "string", required: false, nameHuman: "Connection", section: "Service"),
+                        new(name: "MP", type: "path", required: true, nameHuman: "path-to-speech-model", section: "Voice-Recognition"),
+                        new(name: "L", type: "int[0..2]", required: false, nameHuman: "language", section: "Voice-Recognition"),
+                        new(name: "KN", type: "string", required: false, isMulti: true, nameHuman: "keywords-next", section: "Voice-Recognition"),
+                        new(name: "KU", type: "string", required: false, isMulti: true, nameHuman: "keywords-undo", section: "Voice-Recognition"),
+                        new(name: "KFD", type: "string", required: false, isMulti: true, nameHuman: "keywords-first-dart", section: "Voice-Recognition"),
+                        new(name: "KSD", type: "string", required: false, isMulti: true, nameHuman: "keywords-second-dart", section: "Voice-Recognition"),
+                        new(name: "KTD", type: "string", required: false, isMulti: true, nameHuman: "keywords-third-dart", section: "Voice-Recognition"),
+                        new(name: "KS", type: "string", required: false, isMulti: true, nameHuman: "keywords-single", section: "Voice-Recognition"),
+                        new(name: "KD", type: "string", required: false, isMulti: true, nameHuman: "keywords-double", section: "Voice-Recognition"),
+                        new(name: "KT", type: "string", required: false, isMulti: true, nameHuman: "keywords-triple", section: "Voice-Recognition"),
+                        new(name: "KZERO", type: "string", required: false, isMulti: true, nameHuman: "keywords-zero", section: "Voice-Recognition"),
+                        new(name: "KONE", type: "string", required: false, isMulti: true, nameHuman: "keywords-one", section: "Voice-Recognition"),
+                        new(name: "KTWO", type: "string", required: false, isMulti: true, nameHuman: "keywords-two", section: "Voice-Recognition"),
+                        new(name: "KTHREE", type: "string", required: false, isMulti: true, nameHuman: "keywords-three", section: "Voice-Recognition"),
+                        new(name: "KFOUR", type: "string", required: false, isMulti: true, nameHuman: "keywords-four", section: "Voice-Recognition"),
+                        new(name: "KFIVE", type: "string", required: false, isMulti: true, nameHuman: "keywords-five", section: "Voice-Recognition"),
+                        new(name: "KSIX", type: "string", required: false, isMulti: true, nameHuman: "keywords-six", section: "Voice-Recognition"),
+                        new(name: "KSEVEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-seven", section: "Voice-Recognition"),
+                        new(name: "KEIGHT", type: "string", required: false, isMulti: true, nameHuman: "keywords-eight", section: "Voice-Recognition"),
+                        new(name: "KNINE", type: "string", required: false, isMulti: true, nameHuman: "keywords-nine", section: "Voice-Recognition"),
+                        new(name: "KTEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-ten", section: "Voice-Recognition"),
+                        new(name: "KELEVEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-eleven", section: "Voice-Recognition"),
+                        new(name: "KTWELVE", type: "string", required: false, isMulti: true, nameHuman: "keywords-twelve", section: "Voice-Recognition"),
+                        new(name: "KTHIRTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-thirteen", section: "Voice-Recognition"),
+                        new(name: "KFOURTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-fourteen", section: "Voice-Recognition"),
+                        new(name: "KFIFTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-fifteen", section: "Voice-Recognition"),
+                        new(name: "KSIXTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-sixteen", section: "Voice-Recognition"),
+                        new(name: "KSEVENTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-seventeen", section: "Voice-Recognition"),
+                        new(name: "KEIGHTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-eighteen", section: "Voice-Recognition"),
+                        new(name: "KNINETEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-nineteen", section: "Voice-Recognition"),
+                        new(name: "KTWENTY", type: "string", required: false, isMulti: true, nameHuman: "keywords-twenty", section: "Voice-Recognition"),
+                        new(name: "KTWENTYFIVE", type: "string", required: false, isMulti: true, nameHuman: "keywords-twenty-five", section: "Voice-Recognition"),
+                        new(name: "KFIFTY", type: "string", required: false, isMulti: true, nameHuman: "keywords-fifty", section: "Voice-Recognition"),
+                        new(name: "DEB", type: "bool", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
+                    };
+
+
+                AppDownloadable autodartsVoice =
+                new(
+                    downloadUrl: autodartsVoiceDownloadUrl,
+                    name: "autodarts-voice",
+                    helpUrl: "https://github.com/lbormann/autodarts-voice",
+                    descriptionShort: "control autodarts by voice",
+                    configuration: new(
+                        prefix: "-",
+                        delimitter: " ",
+                        arguments: autodartsVoiceArguments)
+                    );
+                apps.Add(autodartsVoice);
+            }
+
             if (!String.IsNullOrEmpty(camLoaderDownloadUrl))
             {
                 AppDownloadable camLoader =
@@ -662,6 +724,8 @@ namespace autodarts_desktop.control
                     );
                 apps.Add(camLoader);
             }
+
+
 
             AppsDownloadable.AddRange(apps);
             AppsAll.AddRange(apps);
@@ -1124,7 +1188,7 @@ namespace autodarts_desktop.control
 
         private void MigrateAppsDownloadableSinceCrossPlatform()
         {
-            // Define Download-Maps for Apps with os
+            // Define os-specific download-Maps for each app
             var autodartsClientDownloadMap = new DownloadMap();
             autodartsClientDownloadMap.MacX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-amd64.opencv4.7.0.tar.gz";
             autodartsClientDownloadMap.MacArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-arm64.opencv4.7.0.tar.gz";
@@ -1132,13 +1196,13 @@ namespace autodarts_desktop.control
             autodartsClientDownloadMap.LinuxArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-arm64.tar.gz";
             autodartsClientDownloadMap.LinuxArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-armv7l.tar.gz";
             autodartsClientDownloadMap.WindowsX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.windows-amd64.zip";
-            var autodartsClientDownloadUrl = autodartsClientDownloadMap.GetDownloadUrlByOs("0.21.1");
+            var autodartsClientDownloadUrl = autodartsClientDownloadMap.GetDownloadUrlByOs("0.21.5");
 
             var autodartsCallerDownloadMap = new DownloadMap();
             autodartsCallerDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller.exe";
             autodartsCallerDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.3.7");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.4.1");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern.exe";
@@ -1166,6 +1230,12 @@ namespace autodarts_desktop.control
             camLoaderDownloadMap.WindowsX86 = "https://github.com/lbormann/cam-loader/releases/download/***VERSION***/cam-loader.zip";
             camLoaderDownloadMap.WindowsX64 = "https://github.com/lbormann/cam-loader/releases/download/***VERSION***/cam-loader.zip";
             var camLoaderDownloadUrl = camLoaderDownloadMap.GetDownloadUrlByOs("v1.0.0");
+
+            var autodartsVoiceDownloadMap = new DownloadMap();
+            autodartsVoiceDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-voice/releases/download/***VERSION***/autodarts-voice.exe";
+            autodartsVoiceDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-voice/releases/download/***VERSION***/autodarts-voice";
+            autodartsVoiceDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-voice/releases/download/***VERSION***/autodarts-voice-mac";
+            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("v1.0.0");
 
 
 
@@ -1219,6 +1289,22 @@ namespace autodarts_desktop.control
                     if (downloadsLanguage == null)
                     {
                         autodartsCaller.Configuration.Arguments.Add(new(name: "DLLA", type: "int[0..6]", required: false, nameHuman: "downloads-language", section: "Downloads"));
+                    }
+
+                    var possibleCheckoutCall = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "PCC");
+                    if (possibleCheckoutCall != null)
+                    {
+                        if (possibleCheckoutCall.Value == "True")
+                        {
+                            possibleCheckoutCall.Value = "1";
+                        }
+                        else if (possibleCheckoutCall.Value == "False")
+                        {
+                            possibleCheckoutCall.Value = "0";
+                        }
+                        possibleCheckoutCall.Type = "int";
+                        possibleCheckoutCall.ValueMapping = null;
+                        possibleCheckoutCall.ValidateType();
                     }
 
                 }
@@ -1367,6 +1453,78 @@ namespace autodarts_desktop.control
                 AppsDownloadable.Add(camLoader);
             }
 
+            var autodartsVoice = AppsDownloadable.Find(a => a.Name == "autodarts-voice");
+            if (autodartsVoice != null)
+            {
+                if (autodartsVoiceDownloadUrl != null)
+                {
+                    autodartsVoice.DownloadUrl = autodartsVoiceDownloadUrl;
+                }
+                else
+                {
+                    var autodartsVoiceIndex = AppsDownloadable.FindIndex(a => a.Name == "autodarts-voice");
+                    if (autodartsVoiceIndex != -1)
+                    {
+                        AppsDownloadable.RemoveAt(autodartsVoiceIndex);
+                    }
+                }
+            }
+            else if (autodartsVoiceDownloadUrl != null)
+            {
+                var autodartsVoiceArguments = new List<Argument> {
+                        new(name: "CON", type: "string", required: false, nameHuman: "Connection", section: "Service"),
+                        new(name: "MP", type: "path", required: true, nameHuman: "path-to-speech-model", section: "Voice-Recognition"),
+                        new(name: "L", type: "int[0..2]", required: false, nameHuman: "language", section: "Voice-Recognition"),
+                        new(name: "KN", type: "string", required: false, isMulti: true, nameHuman: "keywords-next", section: "Voice-Recognition"),
+                        new(name: "KU", type: "string", required: false, isMulti: true, nameHuman: "keywords-undo", section: "Voice-Recognition"),
+                        new(name: "KFD", type: "string", required: false, isMulti: true, nameHuman: "keywords-first-dart", section: "Voice-Recognition"),
+                        new(name: "KSD", type: "string", required: false, isMulti: true, nameHuman: "keywords-second-dart", section: "Voice-Recognition"),
+                        new(name: "KTD", type: "string", required: false, isMulti: true, nameHuman: "keywords-third-dart", section: "Voice-Recognition"),
+                        new(name: "KS", type: "string", required: false, isMulti: true, nameHuman: "keywords-single", section: "Voice-Recognition"),
+                        new(name: "KD", type: "string", required: false, isMulti: true, nameHuman: "keywords-double", section: "Voice-Recognition"),
+                        new(name: "KT", type: "string", required: false, isMulti: true, nameHuman: "keywords-triple", section: "Voice-Recognition"),
+                        new(name: "KZERO", type: "string", required: false, isMulti: true, nameHuman: "keywords-zero", section: "Voice-Recognition"),
+                        new(name: "KONE", type: "string", required: false, isMulti: true, nameHuman: "keywords-one", section: "Voice-Recognition"),
+                        new(name: "KTWO", type: "string", required: false, isMulti: true, nameHuman: "keywords-two", section: "Voice-Recognition"),
+                        new(name: "KTHREE", type: "string", required: false, isMulti: true, nameHuman: "keywords-three", section: "Voice-Recognition"),
+                        new(name: "KFOUR", type: "string", required: false, isMulti: true, nameHuman: "keywords-four", section: "Voice-Recognition"),
+                        new(name: "KFIVE", type: "string", required: false, isMulti: true, nameHuman: "keywords-five", section: "Voice-Recognition"),
+                        new(name: "KSIX", type: "string", required: false, isMulti: true, nameHuman: "keywords-six", section: "Voice-Recognition"),
+                        new(name: "KSEVEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-seven", section: "Voice-Recognition"),
+                        new(name: "KEIGHT", type: "string", required: false, isMulti: true, nameHuman: "keywords-eight", section: "Voice-Recognition"),
+                        new(name: "KNINE", type: "string", required: false, isMulti: true, nameHuman: "keywords-nine", section: "Voice-Recognition"),
+                        new(name: "KTEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-ten", section: "Voice-Recognition"),
+                        new(name: "KELEVEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-eleven", section: "Voice-Recognition"),
+                        new(name: "KTWELVE", type: "string", required: false, isMulti: true, nameHuman: "keywords-twelve", section: "Voice-Recognition"),
+                        new(name: "KTHIRTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-thirteen", section: "Voice-Recognition"),
+                        new(name: "KFOURTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-fourteen", section: "Voice-Recognition"),
+                        new(name: "KFIFTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-fifteen", section: "Voice-Recognition"),
+                        new(name: "KSIXTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-sixteen", section: "Voice-Recognition"),
+                        new(name: "KSEVENTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-seventeen", section: "Voice-Recognition"),
+                        new(name: "KEIGHTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-eighteen", section: "Voice-Recognition"),
+                        new(name: "KNINETEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-nineteen", section: "Voice-Recognition"),
+                        new(name: "KTWENTY", type: "string", required: false, isMulti: true, nameHuman: "keywords-twenty", section: "Voice-Recognition"),
+                        new(name: "KTWENTYFIVE", type: "string", required: false, isMulti: true, nameHuman: "keywords-twenty-five", section: "Voice-Recognition"),
+                        new(name: "KFIFTY", type: "string", required: false, isMulti: true, nameHuman: "keywords-fifty", section: "Voice-Recognition"),
+                        new(name: "DEB", type: "bool", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
+                    };
+
+
+                autodartsVoice =
+                    new(
+                        downloadUrl: autodartsVoiceDownloadUrl,
+                        name: "autodarts-voice",
+                        helpUrl: "https://github.com/lbormann/autodarts-voice",
+                        descriptionShort: "control autodarts by voice",
+                        configuration: new(
+                            prefix: "-",
+                            delimitter: " ",
+                            arguments: autodartsVoiceArguments)
+                        );
+                AppsDownloadable.Add(autodartsVoice);
+
+            }
+
 
             // Add more migs..
         }
@@ -1381,6 +1539,7 @@ namespace autodarts_desktop.control
             var autodartsExtern = AppsDownloadable.Find(a => a.Name == "autodarts-extern") != null;
             var autodartsWled = AppsDownloadable.Find(a => a.Name == "autodarts-wled") != null;
             var autodartsGif = AppsDownloadable.Find(a => a.Name == "autodarts-gif") != null;
+            var autodartsVoice = AppsDownloadable.Find(a => a.Name == "autodarts-voice") != null;
             var virtualDartsZoom = AppsDownloadable.Find(a => a.Name == "virtual-darts-zoom") != null;
             var camLoader = AppsDownloadable.Find(a => a.Name == "cam-loader") != null;
             var droidCam = AppsInstallable.Find(a => a.Name == "droid-cam") != null;
@@ -1400,6 +1559,7 @@ namespace autodarts_desktop.control
                 if (autodartsCaller) p1Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p1Apps.Add("autodarts-wled", new ProfileState());
                 if (autodartsGif) p1Apps.Add("autodarts-gif", new ProfileState());
+                if (autodartsVoice) p1Apps.Add("autodarts-voice", new ProfileState());
                 if (camLoader) p1Apps.Add("cam-loader", new ProfileState());
                 if (custom) p1Apps.Add("custom", new ProfileState());
                 Profiles.Add(new Profile(p1Name, p1Apps));
@@ -1416,6 +1576,7 @@ namespace autodarts_desktop.control
                 if (autodartsCaller) p2Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p2Apps.Add("autodarts-wled", new ProfileState());
                 if (autodartsGif) p2Apps.Add("autodarts-gif", new ProfileState());
+                if (autodartsVoice) p2Apps.Add("autodarts-voice", new ProfileState());
                 if (autodartsExtern) p2Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p2Args));
                 if (virtualDartsZoom) p2Apps.Add("virtual-darts-zoom", new ProfileState());
                 if (camLoader) p2Apps.Add("cam-loader", new ProfileState());
@@ -1436,6 +1597,7 @@ namespace autodarts_desktop.control
                 if (autodartsCaller) p3Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p3Apps.Add("autodarts-wled", new ProfileState());
                 if (autodartsGif) p3Apps.Add("autodarts-gif", new ProfileState());
+                if (autodartsVoice) p3Apps.Add("autodarts-voice", new ProfileState());
                 if (autodartsExtern) p3Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p3Args));
                 if (virtualDartsZoom) p3Apps.Add("virtual-darts-zoom", new ProfileState());
                 if (camLoader) p3Apps.Add("cam-loader", new ProfileState());
@@ -1456,6 +1618,7 @@ namespace autodarts_desktop.control
                 if (autodartsCaller) p4Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p4Apps.Add("autodarts-wled", new ProfileState());
                 if (autodartsGif) p4Apps.Add("autodarts-gif", new ProfileState());
+                if (autodartsVoice) p4Apps.Add("autodarts-voice", new ProfileState());
                 if (autodartsExtern) p4Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p4Args));
                 if (virtualDartsZoom) p4Apps.Add("virtual-darts-zoom", new ProfileState());
                 if (camLoader) p4Apps.Add("cam-loader", new ProfileState());
@@ -1609,7 +1772,27 @@ namespace autodarts_desktop.control
                 }
             }
 
+            // Adds or removes autodarts-voice for all profiles except autodarts-client
+            var autodartsVoice = AppsDownloadable.Find(a => a.Name == "autodarts-voice") != null;
+            if (!autodartsVoice)
+            {
+                foreach (var p in Profiles)
+                {
+                    p.Apps.Remove("autodarts-voice");
+                }
+            }
+            else
+            {
+                foreach (var p in Profiles)
+                {
+                    if (p.Name == "autodarts-client") continue;
 
+                    if (!p.Apps.ContainsKey("autodarts-voice"))
+                    {
+                        p.Apps.Add("autodarts-voice", new());
+                    }
+                }
+            }
 
 
 
