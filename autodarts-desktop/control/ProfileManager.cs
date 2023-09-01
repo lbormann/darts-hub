@@ -1471,7 +1471,7 @@ namespace autodarts_desktop.control
                     var keywordsNextGame = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KNG");
                     if (keywordsNextGame == null)
                     {
-                        autodartsCaller.Configuration.Arguments.Add(new(name: "KNG", type: "string", required: false, isMulti: true, nameHuman: "keywords-next-game", section: "Voice-Recognition"));
+                        autodartsVoice.Configuration.Arguments.Add(new(name: "KNG", type: "string", required: false, isMulti: true, nameHuman: "keywords-next-game", section: "Voice-Recognition"));
                     }
                 }
                 else
