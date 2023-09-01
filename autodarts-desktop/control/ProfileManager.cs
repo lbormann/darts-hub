@@ -430,7 +430,7 @@ namespace autodarts_desktop.control
             autodartsCallerDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller.exe";
             autodartsCallerDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.4.1");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.4.2");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern.exe";
@@ -458,7 +458,7 @@ namespace autodarts_desktop.control
             autodartsVoiceDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-voice/releases/download/***VERSION***/autodarts-voice.exe";
             autodartsVoiceDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-voice/releases/download/***VERSION***/autodarts-voice";
             autodartsVoiceDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-voice/releases/download/***VERSION***/autodarts-voice-mac";
-            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("v1.0.0");
+            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("v1.0.1");
 
             var camLoaderDownloadMap = new DownloadMap();
             camLoaderDownloadMap.WindowsX86 = "https://github.com/lbormann/cam-loader/releases/download/***VERSION***/cam-loader.zip";
@@ -664,6 +664,7 @@ namespace autodarts_desktop.control
                         new(name: "CON", type: "string", required: false, nameHuman: "Connection", section: "Service"),
                         new(name: "MP", type: "path", required: true, nameHuman: "path-to-speech-model", section: "Voice-Recognition"),
                         new(name: "L", type: "int[0..2]", required: false, nameHuman: "language", section: "Voice-Recognition"),
+                        new(name: "KNG", type: "string", required: false, isMulti: true, nameHuman: "keywords-next-game", section: "Voice-Recognition"),
                         new(name: "KN", type: "string", required: false, isMulti: true, nameHuman: "keywords-next", section: "Voice-Recognition"),
                         new(name: "KU", type: "string", required: false, isMulti: true, nameHuman: "keywords-undo", section: "Voice-Recognition"),
                         new(name: "KFD", type: "string", required: false, isMulti: true, nameHuman: "keywords-first-dart", section: "Voice-Recognition"),
@@ -1202,7 +1203,7 @@ namespace autodarts_desktop.control
             autodartsCallerDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller.exe";
             autodartsCallerDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.4.1");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("v2.4.2");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/***VERSION***/autodarts-extern.exe";
@@ -1235,7 +1236,7 @@ namespace autodarts_desktop.control
             autodartsVoiceDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-voice/releases/download/***VERSION***/autodarts-voice.exe";
             autodartsVoiceDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-voice/releases/download/***VERSION***/autodarts-voice";
             autodartsVoiceDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-voice/releases/download/***VERSION***/autodarts-voice-mac";
-            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("v1.0.0");
+            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("v1.0.1");
 
 
 
@@ -1306,6 +1307,13 @@ namespace autodarts_desktop.control
                         possibleCheckoutCall.ValueMapping = null;
                         possibleCheckoutCall.ValidateType();
                     }
+
+                    var possibleCheckoutCallOnlyYourself = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "PCCYO");
+                    if (possibleCheckoutCallOnlyYourself == null)
+                    {
+                        autodartsCaller.Configuration.Arguments.Add(new(name: "PCCYO", type: "bool", required: false, nameHuman: "possible-checkout-call-only-yourself", section: "Calls", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
+                    }
+                    
 
                 }
                 else
@@ -1459,6 +1467,12 @@ namespace autodarts_desktop.control
                 if (autodartsVoiceDownloadUrl != null)
                 {
                     autodartsVoice.DownloadUrl = autodartsVoiceDownloadUrl;
+
+                    var keywordsNextGame = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KNG");
+                    if (keywordsNextGame == null)
+                    {
+                        autodartsCaller.Configuration.Arguments.Add(new(name: "KNG", type: "string", required: false, isMulti: true, nameHuman: "keywords-next-game", section: "Voice-Recognition"));
+                    }
                 }
                 else
                 {
