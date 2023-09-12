@@ -490,7 +490,7 @@ namespace autodarts_desktop
                 checkBoxTagger.DataContext = appProfile;
                 checkBoxTagger.FontSize = fontSize;
                 checkBoxTagger.Bind(CheckBox.IsCheckedProperty, new Binding("TaggedForStart"));
-                checkBoxTagger.IsEnabled = !appProfile.IsRequired;
+                //checkBoxTagger.IsEnabled = !appProfile.IsRequired;
                 checkBoxTagger.Foreground = appProfile.TaggedForStart ? Brushes.White : Brushes.Gray;
                 checkBoxTagger.FontWeight = appProfile.TaggedForStart ? FontWeight.Bold : FontWeight.Normal;
                 checkBoxTagger.Checked += (s, e) =>
@@ -500,8 +500,15 @@ namespace autodarts_desktop
                 };
                 checkBoxTagger.Unchecked += (s, e) =>
                 {
-                    checkBoxTagger.Foreground = Brushes.Gray;
-                    checkBoxTagger.FontWeight = FontWeight.Normal;
+                    if (!appProfile.IsRequired)
+                    {
+                        checkBoxTagger.Foreground = Brushes.Gray;
+                        checkBoxTagger.FontWeight = FontWeight.Normal;
+                    }
+                    else
+                    {
+                        checkBoxTagger.IsChecked = true;
+                    }
                 };
                     
                 // TODO
