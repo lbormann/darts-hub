@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -92,8 +93,17 @@ namespace autodarts_desktop.control
         }
 
         public static double GetDoubleByString(string input)
-        {
-            return Double.Parse(input.Replace(".", ","));
+        {   
+            var decimalSeparator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+            if (decimalSeparator == ",")
+            {
+                input = input.Replace('.', ',');
+            }
+            else if (decimalSeparator == ".")
+            {
+                input = input.Replace(',', '.');
+            }
+            return Double.Parse(input);
         }
 
         public static string GetFileNameByUrl(string url)

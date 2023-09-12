@@ -154,6 +154,7 @@ namespace autodarts_desktop.model
                 try
                 {
                     //Console.WriteLine(Name + " tries to exit");
+                    AppRunningState = false;
                     process.CloseMainWindow();
                     process.Close();
 
@@ -165,7 +166,6 @@ namespace autodarts_desktop.model
                     {
                         Helper.KillProcess(executable);
                     }
-                    AppRunningState = false;
                 }
                 catch(Exception ex)
                 {
