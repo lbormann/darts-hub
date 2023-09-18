@@ -52,7 +52,7 @@ To start a selected profile use the dart-symbol next to profile selection. On pr
 To close a running app use the ecks-symbol. To see an apps output click the monitor-symbol that should appear after a short time since app-start. It shows full details of app events in realtime. 
 
 #### App-configuration
-Some Apps have mandatory configuration fields to work properly. Those fields are highlighted by a red colored frame. Also you can spot a mandatory field by an asterik (*) at the end of the particular field-name. To reset a field-value click on the rubber-symbol.
+Some Apps have mandatory configuration fields to work properly. Those fields are highlighted by a red colored frame. You can also spot a mandatory field by asterik character (*) at the end of the particular field-name. To reset a field-value click on the rubber-symbol.
 For an extensive App explaintion and its configuration click the question mark-symbol in the upper-right corner.
 If your done filling out configuration fields just close the dialog window to save configuration. In case your app is still running, you need to close it first to apply current configuration. 
 
