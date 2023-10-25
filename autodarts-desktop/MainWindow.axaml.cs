@@ -36,7 +36,7 @@ namespace autodarts_desktop
         private int elementWidth;
         private HorizontalAlignment elementHoAl;
 
-        private AppConfiguration appConfiguration;
+        
         private Configurator configurator;
         
 
@@ -70,8 +70,8 @@ namespace autodarts_desktop
             try
             {
                 configurator = new(ConfigPath);
-                appConfiguration = configurator.LoadSettings();
-                CheckBoxStartProfileOnProgramStart.IsChecked = appConfiguration.StartProfileOnStart;
+                //configurator.LoadSettings();
+                CheckBoxStartProfileOnProgramStart.IsChecked = configurator.Settings.StartProfileOnStart;
 
                 profileManager = new ProfileManager();
                 profileManager.AppDownloadStarted += ProfileManager_AppDownloadStarted;
@@ -116,7 +116,7 @@ namespace autodarts_desktop
         private async void Buttonabout_Click(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Minimized;
-            await new About().ShowDialog(this);
+            await new AboutWindow(configurator).ShowDialog(this);
             WindowState = WindowState.Normal;
         }
 
@@ -131,8 +131,8 @@ namespace autodarts_desktop
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            appConfiguration.StartProfileOnStart = (bool)CheckBoxStartProfileOnProgramStart.IsChecked;
-            configurator.SaveSettings(appConfiguration);
+            configurator.Settings.StartProfileOnStart = (bool)CheckBoxStartProfileOnProgramStart.IsChecked;
+            configurator.SaveSettings();
 
             try
             {
@@ -220,7 +220,7 @@ namespace autodarts_desktop
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 SetWait(false);
-                if (appConfiguration.StartProfileOnStart) RunSelectedProfile(); 
+                if (configurator.Settings.StartProfileOnStart) RunSelectedProfile(); 
             });
         }
 
@@ -228,8 +228,13 @@ namespace autodarts_desktop
         {
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
             {
-                var result = await RenderMessageBox("", $"New Version '{e.Version}' available! Do you want to update?", MessageBox.Avalonia.Enums.Icon.Warning, ButtonEnum.YesNo);
-                if (result == ButtonResult.Yes)
+                var update = ButtonResult.No;
+                if (!configurator.Settings.SkipUpdateConfirmation)
+                    update = await RenderMessageBox("", $"New Version '{e.Version}' available! Do you want to update?", MessageBox.Avalonia.Enums.Icon.Warning, ButtonEnum.YesNo);
+                else
+                    update = ButtonResult.Yes;
+
+                if (update == ButtonResult.Yes)
                 {
                     try
                     {

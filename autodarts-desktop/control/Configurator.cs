@@ -7,46 +7,47 @@ namespace autodarts_desktop.control
     public class AppConfiguration
     {
         public bool StartProfileOnStart { get; set; }
+        public bool SkipUpdateConfirmation { get; set; }
     }
 
 
 
     public class Configurator
     {
-
         // ATTRIBUTES
         private readonly string ConfigFilePath;
+        public AppConfiguration Settings;
 
 
 
         // METHODS
-
         public Configurator(string configFileName) 
         {
             ConfigFilePath = Path.Combine(Helper.GetAppBasePath(), configFileName);
+            LoadSettings();
+        }
+
+        public void SaveSettings()
+        {
+            var json = JsonConvert.SerializeObject(Settings, Formatting.Indented);
+            File.WriteAllText(ConfigFilePath, json);
         }
 
 
-        public AppConfiguration LoadSettings()
+        private void LoadSettings()
         {
             if (!File.Exists(ConfigFilePath))
             {
-                var defaultConfiguration = new AppConfiguration
+                Settings = new AppConfiguration
                 {
-                    StartProfileOnStart = false
+                    StartProfileOnStart = false,
+                    SkipUpdateConfirmation = false
                 };
-                SaveSettings(defaultConfiguration);
-                return defaultConfiguration;
+                SaveSettings();
             }
 
             var json = File.ReadAllText(ConfigFilePath);
-            return JsonConvert.DeserializeObject<AppConfiguration>(json);
-        }
-
-        public void SaveSettings(AppConfiguration settings)
-        {
-            var json = JsonConvert.SerializeObject(settings, Formatting.Indented);
-            File.WriteAllText(ConfigFilePath, json);
+            Settings = JsonConvert.DeserializeObject<AppConfiguration>(json);
         }
     }
 }

@@ -44,7 +44,6 @@
 
 			<CheckBox x:Name="CheckBoxStartProfileOnProgramStart" Content="Start with App" HorizontalAlignment="Left" Margin="285,40,0,0" VerticalAlignment="Top" Foreground="White"/>
 
-
 			<TextBlock x:Name="WaitingText"
                         Text="Please wait.."
 						TextAlignment="Center"

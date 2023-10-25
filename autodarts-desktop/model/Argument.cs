@@ -297,7 +297,7 @@ namespace autodarts_desktop.model
         {
             try
             {
-                float.Parse(Value);
+                float.Parse(Value, CultureInfo.InvariantCulture);
                 if (Type.Length > TypeFloat.Length) ValidateValue(TypeFloat);
             }
             catch (Exception ex)

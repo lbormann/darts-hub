@@ -38,8 +38,9 @@ namespace autodarts_desktop.model
         [JsonIgnore]
         public string AppConsoleStdError { get; private set; }
 
-        [JsonIgnore]
+        
         private bool _appRunningState;
+        [JsonIgnore]
         public bool AppRunningState
         {
             get => _appRunningState;
@@ -53,8 +54,9 @@ namespace autodarts_desktop.model
             }
         }
 
-        [JsonIgnore]
+        
         private string _appMonitor;
+        [JsonIgnore]
         public string AppMonitor
         {
             get => _appMonitor;
@@ -69,8 +71,9 @@ namespace autodarts_desktop.model
             }
         }
 
-        [JsonIgnore]
+        
         private bool _appMonitorAvailable;
+        [JsonIgnore]
         public bool AppMonitorAvailable
         {
             get => _appMonitorAvailable;

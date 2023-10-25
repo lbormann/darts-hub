@@ -10,18 +10,39 @@ using MessageBox.Avalonia.Enums;
 
 namespace autodarts_desktop
 {
-    public partial class About : Window
+    public partial class AboutWindow : Window
     {
+        // ATTRIBUTES
         private const string donationAdress = "bc1qr7wsvmmgaj6dle8gae2dl0dcxu5yh8vqlv34x4";
+        private Configurator configurator;
 
 
-
-
-        public About()
+        // METHODES
+        public AboutWindow()
+        {
+            InitializeComponent();
+            WindowHelper.CenterWindowOnScreen(this);;
+        }
+        
+        public AboutWindow(Configurator configurator)
         {
             InitializeComponent();
             WindowHelper.CenterWindowOnScreen(this);
+            this.configurator = configurator;
             appVersion.Content = Updater.version;
+
+            Opened += AboutWindow_Opened;
+        }
+
+        private async void AboutWindow_Opened(object sender, EventArgs e)
+        {
+            CheckBoxSkipUpdateConfirmation.IsChecked = configurator.Settings.SkipUpdateConfirmation;
+        }
+
+        private void AboutWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            configurator.Settings.SkipUpdateConfirmation = (bool)CheckBoxSkipUpdateConfirmation.IsChecked;
+            configurator.SaveSettings();
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
