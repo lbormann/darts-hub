@@ -19,7 +19,7 @@ namespace autodarts_desktop.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v0.9.17";
+        public static readonly string version = "v0.9.18";
         
 
 
@@ -251,7 +251,7 @@ namespace autodarts_desktop.control
                     StartInfo = new ProcessStartInfo
                     {
                         FileName = "chmod",
-                        Arguments = $"+x {scriptPath}",
+                        Arguments = $"+x \"{scriptPath}\"",
                         RedirectStandardOutput = false,
                         RedirectStandardError = false,
                         UseShellExecute = false
