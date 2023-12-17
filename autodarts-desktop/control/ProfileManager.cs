@@ -443,8 +443,8 @@ namespace autodarts_desktop.control
         {
             // Define os-specific download-Maps for each app
             var autodartsClientDownloadMap = new DownloadMap();
-            autodartsClientDownloadMap.MacX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-amd64.opencv4.7.0.tar.gz";
-            autodartsClientDownloadMap.MacArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-arm64.opencv4.7.0.tar.gz";
+            autodartsClientDownloadMap.MacX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-amd64.tar.gz";
+            autodartsClientDownloadMap.MacArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-arm64.tar.gz";
             autodartsClientDownloadMap.LinuxX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-amd64.tar.gz";
             autodartsClientDownloadMap.LinuxArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-arm64.tar.gz";
             autodartsClientDownloadMap.LinuxArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-armv7l.tar.gz";
@@ -1222,8 +1222,8 @@ namespace autodarts_desktop.control
         {
             // Define os-specific download-Maps for each app
             var autodartsClientDownloadMap = new DownloadMap();
-            autodartsClientDownloadMap.MacX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-amd64.opencv4.7.0.tar.gz";
-            autodartsClientDownloadMap.MacArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-arm64.opencv4.7.0.tar.gz";
+            autodartsClientDownloadMap.MacX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-amd64.tar.gz";
+            autodartsClientDownloadMap.MacArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-arm64.tar.gz";
             autodartsClientDownloadMap.LinuxX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-amd64.tar.gz";
             autodartsClientDownloadMap.LinuxArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-arm64.tar.gz";
             autodartsClientDownloadMap.LinuxArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-armv7l.tar.gz";
