@@ -462,7 +462,7 @@ namespace autodarts_desktop.control
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern.exe";
             autodartsExternDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern";
-            autodartsExternDownloadMap.LinuxArm64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-arm64";
+            //autodartsExternDownloadMap.LinuxArm64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-arm64";
             //autodartsExternDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-arm";
             autodartsExternDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-mac";
             var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("1.5.7");
@@ -1252,7 +1252,7 @@ namespace autodarts_desktop.control
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern.exe";
             autodartsExternDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern";
-            autodartsExternDownloadMap.LinuxArm64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-arm64";
+            //autodartsExternDownloadMap.LinuxArm64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-arm64";
             //autodartsExternDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-arm";
             autodartsExternDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-mac";
             var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("1.5.7");
