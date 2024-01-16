@@ -27,19 +27,20 @@ Autodarts-desktop is built with Avalonia. check it out: https://docs.avaloniaui.
 
 ### Windows - Linux - MacOS
 
-Download the appropiate file for your os in the release section.
-On Linux / MacOS you probably need to make it executable:
+1) Create a new folder in your user/home directory
+2) Download the appropiate zip-file in the release section.
+3) Extract the zip-file to the new folder
+4) On Linux / MacOS you need to make it executable:
 
     chmod +x autodarts-desktop
 
 MacOS: By the time you need to disable os-app-verification:
 
     sudo spctl --master-disable 
-
-
 Unfortunately I couldn't find a proper way without doing this.
-
 Moreover make sure you do initial installation-steps for macos in case you want to use autodarts-client (https://docs.autodarts.io/getting-started/installation/)
+5) Open autodarts-desktop by double-click
+
 
 
 ### Usage
