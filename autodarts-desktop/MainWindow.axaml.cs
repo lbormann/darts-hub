@@ -70,7 +70,6 @@ namespace autodarts_desktop
             try
             {
                 configurator = new(ConfigPath);
-                //configurator.LoadSettings();
                 CheckBoxStartProfileOnProgramStart.IsChecked = configurator.Settings.StartProfileOnStart;
 
                 profileManager = new ProfileManager();

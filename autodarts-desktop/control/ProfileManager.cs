@@ -779,8 +779,7 @@ namespace autodarts_desktop.control
         private void MigrateAppsDownloadable()
         {
             // !!! DO NOT TOUCH THIS ANYMORE !!!!
-
-            var autodartsCaller = AppsDownloadable.Single(a => a.Name == "autodarts-caller");
+            var autodartsCaller = AppsDownloadable.Find(a => a.Name == "autodarts-caller");
             if (autodartsCaller != null)
             {
                 // 2. Mig (Add ValueMapping for bool)
@@ -1010,7 +1009,7 @@ namespace autodarts_desktop.control
                 autodartsCaller.DownloadUrl = "https://github.com/lbormann/autodarts-caller/releases/download/v2.0.14/autodarts-caller.exe";
             }
 
-            var autodartsExtern = AppsDownloadable.Single(a => a.Name == "autodarts-extern");
+            var autodartsExtern = AppsDownloadable.Find(a => a.Name == "autodarts-extern");
             if (autodartsExtern != null)
             {
                 // 1. Mig (Update download version)
@@ -1109,7 +1108,7 @@ namespace autodarts_desktop.control
             }
 
 
-            var autodartsWled = AppsDownloadable.Single(a => a.Name == "autodarts-wled");
+            var autodartsWled = AppsDownloadable.Find(a => a.Name == "autodarts-wled");
             if (autodartsWled != null)
             {
                 // 21. Remove HSO, HS -- Add A1-A12, BRI
@@ -1207,7 +1206,7 @@ namespace autodarts_desktop.control
             }
 
             // 55. Mig (Update download version)
-            var autodartsClient = AppsDownloadable.Single(a => a.Name == "autodarts-client");
+            var autodartsClient = AppsDownloadable.Find(a => a.Name == "autodarts-client");
             if (autodartsClient != null)
             {
                 autodartsClient.DownloadUrl = "https://github.com/autodarts/releases/releases/download/v0.18.0-rc1/autodarts0.18.0-rc1.windows-amd64.zip";
