@@ -30,9 +30,10 @@ Autodarts-desktop is built with Avalonia. check it out: https://docs.avaloniaui.
 1) Create a new folder in your user/home directory
 2) Download the appropiate zip-file in the release section.
 3) Extract the zip-file to the new folder
-4) On Linux / MacOS you need to make it executable:
+4) Make it executable (ONLY Linux / MacOS):
+    Open a terminal and type:
 
-        cd /home/<new-folder>
+        cd /home/<your-user>/<new-folder>
         chmod +x autodarts-desktop
 
     MacOS: By the time you need to disable os-app-verification:
