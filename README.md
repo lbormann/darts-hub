@@ -1,7 +1,7 @@
 # AUTODARTS-DESKTOP
 [![Downloads](https://img.shields.io/github/downloads/lbormann/autodarts-desktop/total.svg)](https://github.com/lbormann/autodarts-desktop/releases/latest)
 
-Autodarts-desktop manages several apps for https://autodarts.io.
+Autodarts-desktop (ADD) manages several apps for https://autodarts.io.
 It automatically manages downloads and updates, provides a configuration interface, and allows for the launching of applications through a curated list of profiles.
 
 
@@ -58,42 +58,6 @@ To close a running app use the ecks-symbol. To see an apps output click the moni
 Some Apps have mandatory configuration fields to work properly. Those fields are highlighted by a red colored frame. You can also spot a mandatory field by asterik character (*) at the end of the particular field-name. To reset a field-value click on the rubber-symbol.
 For an extensive App explaintion and its configuration click the question mark-symbol in the upper-right corner.
 If your done filling out configuration fields just close the dialog window to save configuration. In case your app is still running, you need to close it first to apply current configuration. 
-
-
-
-## TODOs
-
-
-### Done
-- refactor setup-areas for using AppManager
-- stop starting custom app multiple times
-- close custom-app on exit
-- fully reworked project; use custom language to manage apps and profiles and create gui dynamically
-- add reinstall-option as of download can fail (e.g. this app is not available on your os)
-- do not update installed apps after new release when apps are the same size
-- Check at start if there are any profiles, else close app with msg
-- Arguments: required field depends on other field
-- prevent argument-serialization if attribute isRuntimeArgument == true
-- mark required config fields on open dialog
-- start installable apps after download
-- find app`s executable on storage
-- run as admin
-- Add new app: droidcam (android) + epoccam (iOS)
-- Recreate *.json files on error
-- Fixes autodarts-caller bool-arguments
-- Fixes arguments of type 'float'
-- Mark required fields in app-settings
-- Fixes rerun of apps fail
-- Fixes highlighting of required arguments in settings
-- Fix typo on argument required
-- Try to start app after user filled required argument
-- cross-platform
-- update images / text in Readme
-- update when autostart is activated
-- Fix arguments-type-float without range!
-- Improve README description
-- Kill app-process on macOS
-- Fix Updater on macOS
 
 
 ## Resources

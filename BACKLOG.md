@@ -1,0 +1,4 @@
+- adjust all app-arg-names matching their real ones
+- add multi-language
+- add uvc-hack-(ext)
+- improve visuals
