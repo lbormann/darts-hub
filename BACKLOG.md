@@ -1,4 +1,4 @@
-- adjust all app-arg-names matching their real ones
+- ask for os-autostart
 - add multi-language
 - add uvc-hack-(ext)
 - improve visuals

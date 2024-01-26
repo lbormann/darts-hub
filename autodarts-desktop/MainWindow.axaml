@@ -34,7 +34,7 @@
 				<Image Width="24" Height="24" Source="/Assets/about.png"></Image>
 			</Button>
 			
-			<Label x:Name="SelectProfile" Content="Select profile:" HorizontalAlignment="Left" Margin="15,40,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.98,0.757" Foreground="White"/>
+			<Label x:Name="SelectProfile" Content="Select profile:" HorizontalAlignment="Left" Margin="15,44,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.98,0.757" Foreground="White"/>
 
 			<ComboBox x:Name="Comboboxportal" HorizontalAlignment="Left" Margin="17,71,0,0" VerticalAlignment="Top" Width="360" SelectionChanged="Comboboxportal_SelectionChanged" SelectedIndex="0" />
 

@@ -39,6 +39,7 @@ namespace autodarts_desktop.model
 
         public AppDownloadable(string downloadUrl, 
                                 string name,
+                                string? customName = null,
                                 string? helpUrl = null,
                                 string? descriptionShort = null,
                                 string? descriptionLong = null,
@@ -46,6 +47,7 @@ namespace autodarts_desktop.model
                                 ProcessWindowStyle? startWindowState = null,
                                 Configuration? configuration = null) 
             : base(name: name,
+                   customName: customName,
                       helpUrl: helpUrl,
                       descriptionShort: descriptionShort,
                       descriptionLong: descriptionLong,

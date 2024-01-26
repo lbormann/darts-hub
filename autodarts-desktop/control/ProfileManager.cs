@@ -165,7 +165,14 @@ namespace autodarts_desktop.control
                 CreateDummyProfiles();
             }
 
-
+            // Sets apps`s custom-name to app-name if custom-name is empty
+            foreach (var a in AppsAll)
+            {
+                if (String.IsNullOrEmpty(a.CustomName))
+                {
+                    a.CustomName = a.Name;
+                }
+            }
             foreach (var profile in Profiles)
             {
                 foreach(KeyValuePair<string, ProfileState> profileLink in profile.Apps)
@@ -269,13 +276,27 @@ namespace autodarts_desktop.control
         {
             List<AppLocal> apps = new();
 
-            AppLocal custom =
+            AppLocal custom1 =
                new(
-                   name: "custom",
+                   name: "custom-1",
                    descriptionShort: "Starts a program on your file-system"
                    );
 
-            apps.Add(custom);
+            AppLocal custom2 =
+                new(
+                    name: "custom-2",
+                    descriptionShort: "Starts a program on your file-system"
+                    );
+
+            AppLocal custom3 =
+                   new(
+                       name: "custom-3",
+                       descriptionShort: "Starts a program on your file-system"
+                       );
+
+            apps.Add(custom1);
+            apps.Add(custom2);
+            apps.Add(custom3);
 
             AppsLocal.AddRange(apps);
             AppsAll.AddRange(apps);
@@ -297,7 +318,7 @@ namespace autodarts_desktop.control
                 new(
                     name: "autodarts.io",
                     descriptionShort: "Opens autodart`s web-platform",
-                    defaultValue: "https://autodarts.io"
+                    defaultValue: "https://play.autodarts.io"
                     );
             AppOpen autodartsBoardManager =
                 new(
@@ -306,8 +327,29 @@ namespace autodarts_desktop.control
                     defaultValue: "http://127.0.0.1:3180"
                     );
 
+            AppOpen customUrl1 =
+                new(
+                    name: "custom-url-1",
+                    descriptionShort: "Opens an url"
+                    );
+
+            AppOpen customUrl2 =
+                new(
+                    name: "custom-url-2",
+                    descriptionShort: "Opens an url"
+                    );
+
+            AppOpen customUrl3 =
+                    new(
+                        name: "custom-url-3",
+                        descriptionShort: "Opens an url"
+                        );
+
             apps.Add(autodartsWeb);
             apps.Add(autodartsBoardManager);
+            apps.Add(customUrl1);
+            apps.Add(customUrl2);
+            apps.Add(customUrl3);
 
             AppsOpen.AddRange(apps);
             AppsAll.AddRange(apps);
@@ -457,7 +499,7 @@ namespace autodarts_desktop.control
             autodartsCallerDownloadMap.LinuxArm64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm64";
             //autodartsCallerDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.6.2");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.6.3");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern.exe";
@@ -465,7 +507,7 @@ namespace autodarts_desktop.control
             //autodartsExternDownloadMap.LinuxArm64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-arm64";
             //autodartsExternDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-arm";
             autodartsExternDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-mac";
-            var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("1.5.7");
+            var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("1.5.8");
 
             var autodartsWledDownloadMap = new DownloadMap();
             autodartsWledDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled.exe";
@@ -1246,7 +1288,7 @@ namespace autodarts_desktop.control
             autodartsCallerDownloadMap.LinuxArm64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm64";
             //autodartsCallerDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.6.2");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.6.3");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern.exe";
@@ -1254,7 +1296,7 @@ namespace autodarts_desktop.control
             //autodartsExternDownloadMap.LinuxArm64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-arm64";
             //autodartsExternDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-arm";
             autodartsExternDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-mac";
-            var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("1.5.7");
+            var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("1.5.8");
 
             var autodartsWledDownloadMap = new DownloadMap();
             autodartsWledDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled.exe";
@@ -1661,9 +1703,12 @@ namespace autodarts_desktop.control
             var droidCam = AppsInstallable.Find(a => a.Name == "droid-cam") != null;
             var epocCam = AppsInstallable.Find(a => a.Name == "epoc-cam") != null;
             var dartboardsClient = AppsInstallable.Find(a => a.Name == "dartboards-client") != null;
-            var custom = AppsLocal.Find(a => a.Name == "custom") != null;
-            
-            
+            var custom1 = AppsLocal.Find(a => a.Name == "custom-1") != null;
+            var custom2 = AppsLocal.Find(a => a.Name == "custom-2") != null;
+            var custom3 = AppsLocal.Find(a => a.Name == "custom-3") != null;
+            var customUrl1 = AppsOpen.Find(a => a.Name == "custom-url-1") != null;
+            var customUrl2 = AppsOpen.Find(a => a.Name == "custom-url-2") != null;
+            var customUrl3 = AppsOpen.Find(a => a.Name == "custom-url-3") != null;
 
             if (autodartsCaller)
             {
@@ -1677,7 +1722,12 @@ namespace autodarts_desktop.control
                 if (autodartsGif) p1Apps.Add("autodarts-gif", new ProfileState());
                 if (autodartsVoice) p1Apps.Add("autodarts-voice", new ProfileState());
                 if (camLoader) p1Apps.Add("cam-loader", new ProfileState());
-                if (custom) p1Apps.Add("custom", new ProfileState());
+                if (custom1) p1Apps.Add("custom-1", new ProfileState());
+                if (custom2) p1Apps.Add("custom-2", new ProfileState());
+                if (custom3) p1Apps.Add("custom-3", new ProfileState());
+                if (customUrl1) p1Apps.Add("custom-url-1", new ProfileState());
+                if (customUrl2) p1Apps.Add("custom-url-2", new ProfileState());
+                if (customUrl3) p1Apps.Add("custom-url-3", new ProfileState());
                 Profiles.Add(new Profile(p1Name, p1Apps));
             }
             
@@ -1698,7 +1748,7 @@ namespace autodarts_desktop.control
                 if (camLoader) p2Apps.Add("cam-loader", new ProfileState());
                 if (droidCam) p2Apps.Add("droid-cam", new ProfileState());
                 if (epocCam) p2Apps.Add("epoc-cam", new ProfileState());
-                if (custom) p2Apps.Add("custom", new ProfileState());
+                if (custom1) p2Apps.Add("custom-1", new ProfileState());
                 Profiles.Add(new Profile(p2Name, p2Apps));
             }
 
@@ -1719,7 +1769,7 @@ namespace autodarts_desktop.control
                 if (camLoader) p3Apps.Add("cam-loader", new ProfileState());
                 if (droidCam) p3Apps.Add("droid-cam", new ProfileState());
                 if (epocCam) p3Apps.Add("epoc-cam", new ProfileState());
-                if (custom) p3Apps.Add("custom", new ProfileState());
+                if (custom1) p3Apps.Add("custom-1", new ProfileState());
                 Profiles.Add(new Profile(p3Name, p3Apps));
             }
 
@@ -1741,7 +1791,7 @@ namespace autodarts_desktop.control
                 if (dartboardsClient) p4Apps.Add("dartboards-client", new ProfileState());
                 if (droidCam) p4Apps.Add("droid-cam", new ProfileState());
                 if (epocCam) p4Apps.Add("epoc-cam", new ProfileState());
-                if (custom) p4Apps.Add("custom", new ProfileState());
+                if (custom1) p4Apps.Add("custom-1", new ProfileState());
                 Profiles.Add(new Profile(p4Name, p4Apps));
             }
 
@@ -1756,7 +1806,7 @@ namespace autodarts_desktop.control
                 if (camLoader) p5Apps.Add("cam-loader", new ProfileState());
                 if (droidCam) p5Apps.Add("droid-cam", new ProfileState());
                 if (epocCam) p5Apps.Add("epoc-cam", new ProfileState());
-                if (custom) p5Apps.Add("custom", new ProfileState());
+                if (custom1) p5Apps.Add("custom-1", new ProfileState());
                 Profiles.Add(new Profile(p5Name, p5Apps));
             }
 
@@ -1779,7 +1829,7 @@ namespace autodarts_desktop.control
                 if (!p.Apps.ContainsKey("autodarts-wled"))
                 {
                     p.Apps.Add("autodarts-wled", new());
-                }      
+                }
             }
 
             var autodartsClient = AppsDownloadable.Find(a => a.Name == "autodarts-client") != null;
@@ -1909,9 +1959,6 @@ namespace autodarts_desktop.control
                     }
                 }
             }
-
-
-
 
 
             // Add more migs..

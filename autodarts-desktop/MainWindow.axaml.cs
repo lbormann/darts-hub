@@ -119,6 +119,16 @@ namespace autodarts_desktop
             WindowState = WindowState.Normal;
         }
 
+        private void ButtonAddCustomLocal_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ButtonAddCustomOpen_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
         private void Comboboxportal_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (selectedProfile != null) selectedProfile.IsTaggedForStart = false;
@@ -490,12 +500,12 @@ namespace autodarts_desktop
 
                 var checkBoxTagger = new CheckBox();
                 checkBoxTagger.Margin = new Thickness(nextMargin.Left + 39, nextMargin.Top + 6, nextMargin.Right, nextMargin.Bottom);
-                checkBoxTagger.Content = appProfile.App.Name;
                 checkBoxTagger.HorizontalAlignment = HorizontalAlignment.Left;
                 checkBoxTagger.VerticalAlignment = VerticalAlignment.Top;
                 checkBoxTagger.VerticalContentAlignment = VerticalAlignment.Center;
-                checkBoxTagger.DataContext = appProfile;
                 checkBoxTagger.FontSize = fontSize;
+                checkBoxTagger.Content = appProfile.App.CustomName;
+                checkBoxTagger.DataContext = appProfile;
                 checkBoxTagger.Bind(CheckBox.IsCheckedProperty, new Binding("TaggedForStart"));
                 //checkBoxTagger.IsEnabled = !appProfile.IsRequired;
                 checkBoxTagger.Foreground = appProfile.TaggedForStart ? Brushes.White : Brushes.Gray;
@@ -517,17 +527,73 @@ namespace autodarts_desktop
                         checkBoxTagger.IsChecked = true;
                     }
                 };
-                    
-                // TODO
-                //if (!String.IsNullOrEmpty(appProfile.App.DescriptionShort))
-                //{
-                //    var tt = new ToolTip();
-                //    tt.Content = appProfile.App.DescriptionShort;
-                //    tt.DataContext = checkBoxTagger;
-                //}
+                checkBoxTagger.PointerReleased += (s, e) =>
+                {
+                    var renameTextBox = (checkBoxTagger.Tag as TextBox);
+                    GridMain.Children.Add(renameTextBox);
+                    renameTextBox.SelectAll();
+                    renameTextBox.CaretIndex = renameTextBox.Text.Length;
+                    renameTextBox.Focus();
+                    checkBoxTagger.IsVisible = false;
+                };
+
+                var textBox = new TextBox();
+                textBox.Tag = checkBoxTagger;
+                textBox.Margin = new Thickness(nextMargin.Left + 35, nextMargin.Top + 4, nextMargin.Right, nextMargin.Bottom);
+                textBox.HorizontalAlignment = elementHoAl;
+                textBox.Foreground = Brushes.AliceBlue;
+                textBox.VerticalAlignment = VerticalAlignment.Top;
+                textBox.FontSize = fontSize;
+                textBox.Width = elementWidth - 34;
+                textBox.MaxLength = 33;
+                textBox.TextAlignment = TextAlignment.Center;
+                textBox.KeyDown += (s, e) =>
+                {
+                    var parent = (textBox.Tag as CheckBox);
+                    if (e.Key == Key.Enter) {
+                        GridMain.Children.Remove(s as IControl);
+                        if(textBox.Text == String.Empty)
+                        {
+                            textBox.Text = appProfile.App.Name;
+                        }   
+                        appProfile.App.CustomName = textBox.Text;
+                        parent.Content = textBox.Text;
+                        parent.IsVisible = true;
+                    }
+                    else if (e.Key == Key.Escape)
+                    {
+                        GridMain.Children.Remove(s as IControl);
+                        parent.IsVisible = true;
+                    }
+                };
+                textBox.LostFocus += (s, e) =>
+                {
+                    var parent = (textBox.Tag as CheckBox);
+                    GridMain.Children.Remove(s as IControl);
+                    parent.IsVisible = true;
+                };
+                textBox.Text = appProfile.App.CustomName;
+                checkBoxTagger.Tag = textBox;
                 
+
+                // TODO
+                if (!String.IsNullOrEmpty(appProfile.App.DescriptionShort))
+                {
+                    var tt = new ToolTip();
+                    tt.Content = appProfile.App.DescriptionShort;
+                    tt.IsVisible = true;
+                    tt.VerticalAlignment = VerticalAlignment.
+                    //tt.DataContext = checkBoxTagger;
+                    //tt.SetValue(checkBoxTagger);
+                    //tt.IsSet(checkBoxTagger);
+
+                    GridMain.Children.Add(tt);
+                    selectedProfileElements.Add(tt);
+                }
+
                 GridMain.Children.Add(checkBoxTagger);
                 selectedProfileElements.Add(checkBoxTagger);
+                selectedProfileElements.Add(textBox);
 
                 counter += 1;
             }

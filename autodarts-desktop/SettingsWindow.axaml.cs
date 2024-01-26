@@ -95,7 +95,7 @@ namespace autodarts_desktop
             var assets = AvaloniaLocator.Current.GetService<IAssetLoader>();
 
             var labelHeader = new Label();
-            labelHeader.Content = app.Name;
+            labelHeader.Content = app.CustomName;
             labelHeader.HorizontalAlignment = HorizontalAlignment.Center;
             labelHeader.VerticalAlignment = VerticalAlignment.Top;
             labelHeader.FontSize = fontSize;

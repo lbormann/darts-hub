@@ -20,6 +20,7 @@ namespace autodarts_desktop.model
         // ATTRIBUTES
 
         public string Name { get; private set; }
+        public string CustomName { get; set; }
         public string? HelpUrl { get; set; }
         public string? DescriptionShort { get; private set; }
         public string? DescriptionLong { get; private set; }
@@ -103,6 +104,7 @@ namespace autodarts_desktop.model
         // METHODS
 
         public AppBase(string name,
+                        string? customName,
                         string? helpUrl,
                         string? descriptionShort,
                         string? descriptionLong,
@@ -112,6 +114,7 @@ namespace autodarts_desktop.model
             )
         {
             Name = name;
+            CustomName = customName;
             HelpUrl = helpUrl;
             DescriptionShort = descriptionShort;
             DescriptionLong = descriptionLong;

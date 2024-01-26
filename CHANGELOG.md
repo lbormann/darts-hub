@@ -2,6 +2,11 @@
 
 - add CHANGELOG
 - add BACKLOG
+- adapt app versions
+- add app-renaming-feature
+- add more custom-apps options
+- add popup description for apps
+- adjust all app-arg-names matching app ones
 
 
 ## 0.0.0

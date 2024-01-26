@@ -19,6 +19,7 @@ namespace autodarts_desktop.model
         // METHODS
 
         public AppOpen(string name,
+                        string? customName = null,
                         string? helpUrl = null,
                         string? descriptionShort = null,
                         string? descriptionLong = null,
@@ -27,6 +28,7 @@ namespace autodarts_desktop.model
                         Configuration? configuration = null,
                         string? defaultValue = null
             ) : base(name: name,
+                        customName: customName,
                         helpUrl: helpUrl,
                         descriptionShort: descriptionShort,
                         descriptionLong: descriptionLong,

@@ -32,6 +32,7 @@ namespace autodarts_desktop.model
         public AppInstallable(string executable,
                                 string downloadUrl,
                                 string name,
+                                string? customName = null,
                                 string? defaultPathExecutable = null,
                                 bool startsAfterInstallation = false,
                                 bool runAsAdminInstall = false,
@@ -42,8 +43,9 @@ namespace autodarts_desktop.model
                                 bool runAsAdmin = false,
                                 ProcessWindowStyle? startWindowState = null,
                                 Configuration? configuration = null)
-    : base(downloadUrl: downloadUrl, 
+    : base(downloadUrl: downloadUrl,
               name: name,
+              customName: customName,
               helpUrl: helpUrl,
               descriptionShort: descriptionShort,
               descriptionLong: descriptionLong,
