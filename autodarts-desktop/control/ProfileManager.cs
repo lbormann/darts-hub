@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net;
 using File = System.IO.File;
@@ -173,6 +174,8 @@ namespace autodarts_desktop.control
                     a.CustomName = a.Name;
                 }
             }
+            
+            
             foreach (var profile in Profiles)
             {
                 foreach(KeyValuePair<string, ProfileState> profileLink in profile.Apps)
@@ -305,6 +308,37 @@ namespace autodarts_desktop.control
 
         private void MigrateAppsLocal()
         {
+            // 1. Mig (Update customName), adds custom-2, custom-3
+            var custom = AppsLocal.Find(a => a.Name == "custom");
+            if (custom != null)
+            {
+                custom.Name = "custom-1";
+            }
+
+            var custom2 = AppsLocal.FindIndex(a => a.Name == "custom-2");
+            if (custom2 == -1)
+            {
+                AppLocal custom2Create =
+                    new(
+                      name: "custom-2",
+                      descriptionShort: "Starts a program on your file-system"
+                      );
+
+                AppsLocal.Add(custom2Create);
+            }
+
+            var custom3 = AppsLocal.FindIndex(a => a.Name == "custom-3");
+            if (custom3 == -1)
+            {
+                AppLocal custom3Create =
+                    new(
+                      name: "custom-3",
+                      descriptionShort: "Starts a program on your file-system"
+                      );
+
+                AppsLocal.Add(custom3Create);
+            }
+
 
             // Add more migs..
         }
@@ -369,6 +403,43 @@ namespace autodarts_desktop.control
                                                    );
 
                 AppsOpen.Add(autodartsBoardManagerCreate);
+            }
+
+
+            var customUrl1 = AppsOpen.FindIndex(a => a.Name == "custom-url-1");
+            if (customUrl1 == -1)
+            {
+                AppOpen customUrl1Create =
+                                        new(
+                                            name: "custom-url-1",
+                                            descriptionShort: "Opens an url"
+                                            );
+
+                AppsOpen.Add(customUrl1Create);
+            }
+
+            var customUrl2 = AppsOpen.FindIndex(a => a.Name == "custom-url-2");
+            if (customUrl2 == -1)
+            {
+                AppOpen customUrl2Create =
+                                        new(
+                                            name: "custom-url-2",
+                                            descriptionShort: "Opens an url"
+                                            );
+
+                AppsOpen.Add(customUrl2Create);
+            }
+
+            var customUrl3 = AppsOpen.FindIndex(a => a.Name == "custom-url-3");
+            if (customUrl3 == -1)
+            {
+                AppOpen customUrl3Create =
+                                        new(
+                                            name: "custom-url-3",
+                                            descriptionShort: "Opens an url"
+                                            );
+
+                AppsOpen.Add(customUrl3Create);
             }
 
 
@@ -571,36 +642,36 @@ namespace autodarts_desktop.control
                             prefix: "-",
                             delimitter: " ",
                             arguments: new List<Argument> {
-                            new(name: "U", type: "string", required: true, nameHuman: "autodarts-username", section: "Autodarts"),
-                            new(name: "P", type: "password", required: true, nameHuman: "autodarts-password", section: "Autodarts"),
-                            new(name: "B", type: "string", required: true, nameHuman: "autodarts-board-id", section: "Autodarts"),
-                            new(name: "M", type: "path", required: true, nameHuman: "path-to-sound-files", section: "Media"),
-                            new(name: "MS", type: "path", required: false, nameHuman: "path-to-shared-sound-files", section: "Media"),
-                            new(name: "V", type: "float[0.0..1.0]", required: false, nameHuman: "caller-volume", section: "Media"),
-                            new(name: "C", type: "string", required: false, nameHuman: "specific-caller", section: "Calls"),
-                            new(name: "R", type: "bool", required: false, nameHuman: "random-caller", section: "Random", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "L", type: "bool", required: false, nameHuman: "random-caller-each-leg", section: "Random", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "RL", type: "int[0..6]", required: false, nameHuman: "random-caller-language", section: "Random"),
-                            new(name: "RG", type: "int[0..2]", required: false, nameHuman: "random-caller-gender", section: "Random"),
-                            new(name: "CCP", type: "bool", required: false, nameHuman: "call-current-player", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "CCPA", type: "bool", required: false, nameHuman: "call-current-player-always", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "E", type: "bool", required: false, nameHuman: "call-every-dart", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "ESF", type: "bool", required: false, nameHuman: "call-every-dart-single-files", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "PCC", type: "int", required: false, nameHuman: "possible-checkout-call", section: "Calls"),
-                            new(name: "PCCSF", type: "bool", required: false, nameHuman: "possible-checkout-call-single-files", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "PCCYO", type: "bool", required: false, nameHuman: "possible-checkout-call-only-yourself", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "A", type: "float[0.0..1.0]", required: false, nameHuman: "ambient-sounds", section: "Calls"),
-                            new(name: "AAC", type: "bool", required: false, nameHuman: "ambient-sounds-after-calls", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "DL", type: "bool", required: false, nameHuman: "downloads", section: "Downloads", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "DLLA", type: "int[0..6]", required: false, nameHuman: "downloads-language", section: "Downloads"),
-                            new(name: "DLL", type: "int", required: false, nameHuman: "downloads-limit", section: "Downloads"),
-                            new(name: "BAV", type: "float[0.0..1.0]", required: false, nameHuman: "background-audio-volume", section: "Calls"),
-                            new(name: "WEB", type: "int[0..2]", required: false, nameHuman: "web-caller", section: "Service"),
-                            new(name: "WEBSB", type: "bool", required: false, nameHuman: "web-scoreboard", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "WEBP", type: "int", required: false, nameHuman: "web-caller-port", section: "Service"),
-                            new(name: "HP", type: "int", required: false, nameHuman: "host-port", section: "Service"),
-                            new(name: "DEB", type: "bool", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "CC", type: "bool", required: false, nameHuman: "cert-check", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"})
+                            new(name: "U", type: "string", required: true, nameHuman: "-U / --autodarts_email", section: "Autodarts"),
+                            new(name: "P", type: "password", required: true, nameHuman: "-P / --autodarts_password", section: "Autodarts"),
+                            new(name: "B", type: "string", required: true, nameHuman: "-B / --autodarts_board_id", section: "Autodarts"),
+                            new(name: "M", type: "path", required: true, nameHuman: "-M / --media_path", section: "Media"),
+                            new(name: "MS", type: "path", required: false, nameHuman: "-MS / --media_path_shared", section: "Media"),
+                            new(name: "V", type: "float[0.0..1.0]", required: false, nameHuman: "-V / --caller_volume", section: "Media"),
+                            new(name: "C", type: "string", required: false, nameHuman: "-C / --caller", section: "Calls"),
+                            new(name: "R", type: "bool", required: false, nameHuman: "-R / --random_caller", section: "Random", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "L", type: "bool", required: false, nameHuman: "-L / --random_caller_each_leg", section: "Random", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "RL", type: "int[0..6]", required: false, nameHuman: "-RL / --random_caller_language", section: "Random"),
+                            new(name: "RG", type: "int[0..2]", required: false, nameHuman: "-RG / --random_caller_gender", section: "Random"),
+                            new(name: "CCP", type: "bool", required: false, nameHuman: "-CCP / --call_current_player", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "CCPA", type: "bool", required: false, nameHuman: "-CCPA / --call_current_player_always", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "E", type: "bool", required: false, nameHuman: "-E / --call_every_dart", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "ESF", type: "bool", required: false, nameHuman: "-ESF / --call_every_dart_single_files", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "PCC", type: "int", required: false, nameHuman: "-PCC / --possible_checkout_call", section: "Calls"),
+                            new(name: "PCCSF", type: "bool", required: false, nameHuman: "-PCCSF / --possible_checkout_call_single_files", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "PCCYO", type: "bool", required: false, nameHuman: "-PCCYO / --possible_checkout_call_yourself_only", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "A", type: "float[0.0..1.0]", required: false, nameHuman: "-A / --ambient_sounds", section: "Calls"),
+                            new(name: "AAC", type: "bool", required: false, nameHuman: "-AAC / --ambient_sounds_after_calls", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "DL", type: "bool", required: false, nameHuman: "-DL / --downloads", section: "Downloads", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "DLLA", type: "int[0..6]", required: false, nameHuman: "-DLLA / --downloads_language", section: "Downloads"),
+                            new(name: "DLL", type: "int", required: false, nameHuman: "-DLL / --downloads_limit", section: "Downloads"),
+                            new(name: "BAV", type: "float[0.0..1.0]", required: false, nameHuman: "-BAV / --background_audio_volume", section: "Calls"),
+                            new(name: "WEB", type: "int[0..2]", required: false, nameHuman: "-WEB / --web_caller", section: "Service"),
+                            new(name: "WEBSB", type: "bool", required: false, nameHuman: "-WEBSB / --web_caller_scoreboard", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "WEBP", type: "int", required: false, nameHuman: "-WEBP / --web_caller_port", section: "Service"),
+                            new(name: "HP", type: "int", required: false, nameHuman: "-HP / --host_port", section: "Service"),
+                            new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "CC", type: "bool", required: false, nameHuman: "-CC / --cert_check", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"})
                             })
                         );
                 apps.Add(autodartsCaller);
@@ -617,22 +688,23 @@ namespace autodarts_desktop.control
                         prefix: "--",
                         delimitter: " ",
                         arguments: new List<Argument> {
-                            new(name: "connection", type: "string", required: false, nameHuman: "Connection", section: "Service"),
-                            new(name: "browser_path", type: "file", required: true, nameHuman: "Path to browser", section: "", description: "Path to browser. fav. Chrome"),
-                            new(name: "autodarts_user", type: "string", required: true, nameHuman: "Autodarts-Email", section: "Autodarts"),
-                            new(name: "autodarts_password", type: "password", required: true, nameHuman: "Autodarts-Password", section: "Autodarts"),
-                            new(name: "autodarts_board_id", type: "string", required: true, nameHuman: "Autodarts-Board-ID", section: "Autodarts"),
+                            new(name: "connection", type: "string", required: false, nameHuman: "--connection", section: "Service"),
+                            new(name: "browser_path", type: "file", required: true, nameHuman: "--browser_path", section: "", description: "Path to browser. fav. Chrome"),
+                            new(name: "autodarts_user", type: "string", required: true, nameHuman: "--autodarts_user", section: "Autodarts"),
+                            new(name: "autodarts_password", type: "password", required: true, nameHuman: "--autodarts_password", section: "Autodarts"),
+                            new(name: "autodarts_board_id", type: "string", required: true, nameHuman: "--autodarts_board_id", section: "Autodarts"),
                             new(name: "extern_platform", type: "selection[lidarts,nakka,dartboards]", required: true, nameHuman: "", isRuntimeArgument: true),
-                            new(name: "time_before_exit", type: "int[0..150000]", required: false, nameHuman: "Dwel after match end (in milliseconds)", section: "Match"),
-                            new(name: "lidarts_user", type: "string", required: false, nameHuman: "Lidarts-Email", section: "Lidarts", requiredOnArgument: "extern_platform=lidarts"),
-                            new(name: "lidarts_password", type: "password", required: false, nameHuman: "Lidarts-Password", section: "Lidarts", requiredOnArgument: "extern_platform=lidarts"),
-                            new(name: "lidarts_skip_dart_modals", type: "bool", required: false, nameHuman: "Skip dart-modals", section: "Lidarts"),
-                            new(name: "lidarts_chat_message_start", type: "string", required: false, nameHuman: "Chat-message on match-start", section: "Lidarts", value: "Hi, GD! Automated darts-scoring - powered by autodarts.io - Enter the community: https://discord.gg/bY5JYKbmvM"),
-                            new(name: "lidarts_chat_message_end", type: "string", required: false, nameHuman: "Chat-message on match-end", section: "Lidarts", value: "Thanks GG, WP!"),
-                            new(name: "nakka_skip_dart_modals", type: "bool", required: false, nameHuman: "Skip dart-modals", section: "Nakka"),
-                            new(name: "dartboards_user", type: "string", required: false, nameHuman: "Dartboards-Email", section: "Dartboards", requiredOnArgument: "extern_platform=dartboards"),
-                            new(name: "dartboards_password", type: "password", required: false, nameHuman: "Dartboards-Password", section: "Dartboards", requiredOnArgument: "extern_platform=dartboards"),
-                            new(name: "dartboards_skip_dart_modals", type: "bool", required: false, nameHuman: "Skip dart-modals", section: "Dartboards"),
+                            new(name: "time_before_exit", type: "int[0..150000]", required: false, nameHuman: "--time_before_exit", section: "Match"),
+                            new(name: "lidarts_user", type: "string", required: false, nameHuman: "--lidarts_user", section: "Lidarts", requiredOnArgument: "extern_platform=lidarts"),
+                            new(name: "lidarts_password", type: "password", required: false, nameHuman: "--lidarts_password", section: "Lidarts", requiredOnArgument: "extern_platform=lidarts"),
+                            new(name: "lidarts_skip_dart_modals", type: "bool", required: false, nameHuman: "--lidarts_skip_dart_modals", section: "Lidarts"),
+                            new(name: "lidarts_chat_message_start", type: "string", required: false, nameHuman: "--lidarts_chat_message_start", section: "Lidarts", value: "Hi, GD! Automated darts-scoring - powered by autodarts.io - Enter the community: https://discord.gg/bY5JYKbmvM"),
+                            new(name: "lidarts_chat_message_end", type: "string", required: false, nameHuman: "--lidarts_chat_message_end", section: "Lidarts", value: "Thanks GG, WP!"),
+                            new(name: "lidarts_cam_fullscreen", type: "bool", required: false, nameHuman: "--lidarts_cam_fullscreen", section: "Lidarts"),
+                            new(name: "nakka_skip_dart_modals", type: "bool", required: false, nameHuman: "--nakka_skip_dart_modal", section: "Nakka"),
+                            new(name: "dartboards_user", type: "string", required: false, nameHuman: "--dartboards_user", section: "Dartboards", requiredOnArgument: "extern_platform=dartboards"),
+                            new(name: "dartboards_password", type: "password", required: false, nameHuman: "--dartboards_password", section: "Dartboards", requiredOnArgument: "extern_platform=dartboards"),
+                            new(name: "dartboards_skip_dart_modals", type: "bool", required: false, nameHuman: "--dartboards_skip_dart_modals", section: "Dartboards"),
                         })
                 );
                 apps.Add(autodartsExtern);
@@ -641,30 +713,30 @@ namespace autodarts_desktop.control
             if (!String.IsNullOrEmpty(autodartsWledDownloadUrl))
             {
                 var autodartsWledArguments = new List<Argument> {
-                        new(name: "CON", type: "string", required: false, nameHuman: "Connection", section: "Service"),
-                        new(name: "WEPS", type: "string", required: true, isMulti: true, nameHuman: "wled-endpoints", section: "WLED"),
-                        new(name: "DU", type: "int[0..10]", required: false, nameHuman: "effects-duration", section: "WLED"),
-                        new(name: "BSS", type: "float[0.0..10.0]", required: false, nameHuman: "board-start-stop", section: "Autodarts"),
-                        new(name: "BRI", type: "int[1..255]", required: false, nameHuman: "effects-brightness", section: "WLED"),
-                        new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "highfinish-on", section: "Autodarts"),
-                        new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "high-finish-effects", section: "WLED"),
-                        new(name: "IDE", type: "string", required: false, nameHuman: "idle-effect", section: "WLED"),
-                        new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "game-won-effects", section: "WLED"),
-                        new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "match-won-effects", section: "WLED"),
-                        new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "busted-effects", section: "WLED"),
-                        new(name: "DEB", type: "bool", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
+                        new(name: "CON", type: "string", required: false, nameHuman: "-CON / --connection", section: "Service"),
+                        new(name: "WEPS", type: "string", required: true, isMulti: true, nameHuman: "-WEPS / --wled_endpoints", section: "WLED"),
+                        new(name: "DU", type: "int[0..10]", required: false, nameHuman: "-DU / --effect_duration", section: "WLED"),
+                        new(name: "BSS", type: "float[0.0..10.0]", required: false, nameHuman: "-BSS / --board_stop_start", section: "Autodarts"),
+                        new(name: "BRI", type: "int[1..255]", required: false, nameHuman: "-BRI / --effect_brightness", section: "WLED"),
+                        new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "-HFO / --high_finish_on", section: "Autodarts"),
+                        new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "-HF / --high_finish_effects", section: "WLED"),
+                        new(name: "IDE", type: "string", required: false, nameHuman: "-IDE / --idle_effect", section: "WLED"),
+                        new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "-G / --game_won_effects", section: "WLED"),
+                        new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "-M / --match_won_effects", section: "WLED"),
+                        new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "-B / --busted_effects", section: "WLED"),
+                        new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
 
                     };
                 for (int i = 0; i <= 180; i++)
                 {
                     var score = i.ToString();
-                    Argument scoreArgument = new(name: "S" + score, type: "string", required: false, isMulti: true, nameHuman: "score " + score, section: "WLED");
+                    Argument scoreArgument = new(name: "S" + score, type: "string", required: false, isMulti: true, nameHuman: "-S" + score + " / --score_" + score + "_effects", section: "WLED");
                     autodartsWledArguments.Add(scoreArgument);
                 }
                 for (int i = 1; i <= 12; i++)
                 {
                     var areaNumber = i.ToString();
-                    Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "area-" + areaNumber, section: "WLED");
+                    Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "-A" + areaNumber + " / --score_area_" + areaNumber + "_effects", section: "WLED");
                     autodartsWledArguments.Add(areaArgument);
                 }
 
@@ -698,27 +770,27 @@ namespace autodarts_desktop.control
             if (!String.IsNullOrEmpty(autodartsGifDownloadUrl))
             {
                 var autodartsGifArguments = new List<Argument> {
-                         new(name: "MP", type: "path", required: false, nameHuman: "path-to-image-files", section: "Media"),
-                         new(name: "CON", type: "string", required: false, nameHuman: "Connection", section: "Service"),
-                         new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "highfinish-on", section: "Autodarts"),
-                         new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "high-finish-images", section: "Images"),
-                         new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "game-won-images", section: "Images"),
-                         new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "match-won-images", section: "Images"),
-                         new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "busted-images", section: "Images"),
-                         new(name: "WEB", type: "int[0..2]", required: false, nameHuman: "web-gifs", section: "Service"),
-                         new(name: "DEB", type: "bool", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
+                         new(name: "MP", type: "path", required: false, nameHuman: "-MP / --media_path", section: "Media"),
+                         new(name: "CON", type: "string", required: false, nameHuman: "-CON / --connection", section: "Service"),
+                         new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "-HFO / --high_finish_on", section: "Autodarts"),
+                         new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "-HF / --high_finish_images", section: "Images"),
+                         new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "-G / --game_won_images", section: "Images"),
+                         new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "-M / --match_won_images", section: "Images"),
+                         new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "-B / --busted_images", section: "Images"),
+                         new(name: "WEB", type: "int[0..2]", required: false, nameHuman: "-WEB / --web_gif", section: "Service"),
+                         new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
 
                      };
                 for (int i = 0; i <= 180; i++)
                 {
                     var score = i.ToString();
-                    Argument scoreArgument = new(name: "S" + score, type: "string", required: false, isMulti: true, nameHuman: "score " + score, section: "Images");
+                    Argument scoreArgument = new(name: "S" + score, type: "string", required: false, isMulti: true, nameHuman: "-S" + score + " / --score_" + score + "_images", section: "Images");
                     autodartsGifArguments.Add(scoreArgument);
                 }
                 for (int i = 1; i <= 12; i++)
                 {
                     var areaNumber = i.ToString();
-                    Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "area-" + areaNumber, section: "Images");
+                    Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "-A" + areaNumber + " / --score_area_" + areaNumber + "_images", section: "Images");
                     autodartsGifArguments.Add(areaArgument);
                 }
 
@@ -739,48 +811,48 @@ namespace autodarts_desktop.control
             if (!String.IsNullOrEmpty(autodartsVoiceDownloadUrl))
             {
                 var autodartsVoiceArguments = new List<Argument> {
-                        new(name: "CON", type: "string", required: false, nameHuman: "Connection", section: "Service"),
-                        new(name: "MP", type: "path", required: true, nameHuman: "path-to-speech-model", section: "Voice-Recognition"),
-                        new(name: "L", type: "int[0..2]", required: false, nameHuman: "language", section: "Voice-Recognition"),
-                        new(name: "KNG", type: "string", required: false, isMulti: true, nameHuman: "keywords-next-game", section: "Voice-Recognition"),
-                        new(name: "KN", type: "string", required: false, isMulti: true, nameHuman: "keywords-next", section: "Voice-Recognition"),
-                        new(name: "KU", type: "string", required: false, isMulti: true, nameHuman: "keywords-undo", section: "Voice-Recognition"),
-                        new(name: "KBC", type: "string", required: false, isMulti: true, nameHuman: "keywords-ban-caller", section: "Voice-Recognition"),
-                        new(name: "KCC", type: "string", required: false, isMulti: true, nameHuman: "keywords-change-caller", section: "Voice-Recognition"),
-                        new(name: "KSB", type: "string", required: false, isMulti: true, nameHuman: "keywords-start-board", section: "Voice-Recognition"),
-                        new(name: "KSPB", type: "string", required: false, isMulti: true, nameHuman: "keywords-stop-board", section: "Voice-Recognition"),
-                        new(name: "KRB", type: "string", required: false, isMulti: true, nameHuman: "keywords-reset-board", section: "Voice-Recognition"),
-                        new(name: "KCB", type: "string", required: false, isMulti: true, nameHuman: "keywords-calibrate-board", section: "Voice-Recognition"),
-                        new(name: "KFD", type: "string", required: false, isMulti: true, nameHuman: "keywords-first-dart", section: "Voice-Recognition"),
-                        new(name: "KSD", type: "string", required: false, isMulti: true, nameHuman: "keywords-second-dart", section: "Voice-Recognition"),
-                        new(name: "KTD", type: "string", required: false, isMulti: true, nameHuman: "keywords-third-dart", section: "Voice-Recognition"),
-                        new(name: "KS", type: "string", required: false, isMulti: true, nameHuman: "keywords-single", section: "Voice-Recognition"),
-                        new(name: "KD", type: "string", required: false, isMulti: true, nameHuman: "keywords-double", section: "Voice-Recognition"),
-                        new(name: "KT", type: "string", required: false, isMulti: true, nameHuman: "keywords-triple", section: "Voice-Recognition"),
-                        new(name: "KZERO", type: "string", required: false, isMulti: true, nameHuman: "keywords-zero", section: "Voice-Recognition"),
-                        new(name: "KONE", type: "string", required: false, isMulti: true, nameHuman: "keywords-one", section: "Voice-Recognition"),
-                        new(name: "KTWO", type: "string", required: false, isMulti: true, nameHuman: "keywords-two", section: "Voice-Recognition"),
-                        new(name: "KTHREE", type: "string", required: false, isMulti: true, nameHuman: "keywords-three", section: "Voice-Recognition"),
-                        new(name: "KFOUR", type: "string", required: false, isMulti: true, nameHuman: "keywords-four", section: "Voice-Recognition"),
-                        new(name: "KFIVE", type: "string", required: false, isMulti: true, nameHuman: "keywords-five", section: "Voice-Recognition"),
-                        new(name: "KSIX", type: "string", required: false, isMulti: true, nameHuman: "keywords-six", section: "Voice-Recognition"),
-                        new(name: "KSEVEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-seven", section: "Voice-Recognition"),
-                        new(name: "KEIGHT", type: "string", required: false, isMulti: true, nameHuman: "keywords-eight", section: "Voice-Recognition"),
-                        new(name: "KNINE", type: "string", required: false, isMulti: true, nameHuman: "keywords-nine", section: "Voice-Recognition"),
-                        new(name: "KTEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-ten", section: "Voice-Recognition"),
-                        new(name: "KELEVEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-eleven", section: "Voice-Recognition"),
-                        new(name: "KTWELVE", type: "string", required: false, isMulti: true, nameHuman: "keywords-twelve", section: "Voice-Recognition"),
-                        new(name: "KTHIRTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-thirteen", section: "Voice-Recognition"),
-                        new(name: "KFOURTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-fourteen", section: "Voice-Recognition"),
-                        new(name: "KFIFTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-fifteen", section: "Voice-Recognition"),
-                        new(name: "KSIXTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-sixteen", section: "Voice-Recognition"),
-                        new(name: "KSEVENTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-seventeen", section: "Voice-Recognition"),
-                        new(name: "KEIGHTEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-eighteen", section: "Voice-Recognition"),
-                        new(name: "KNINETEEN", type: "string", required: false, isMulti: true, nameHuman: "keywords-nineteen", section: "Voice-Recognition"),
-                        new(name: "KTWENTY", type: "string", required: false, isMulti: true, nameHuman: "keywords-twenty", section: "Voice-Recognition"),
-                        new(name: "KTWENTYFIVE", type: "string", required: false, isMulti: true, nameHuman: "keywords-twenty-five", section: "Voice-Recognition"),
-                        new(name: "KFIFTY", type: "string", required: false, isMulti: true, nameHuman: "keywords-fifty", section: "Voice-Recognition"),
-                        new(name: "DEB", type: "bool", required: false, nameHuman: "debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
+                        new(name: "CON", type: "string", required: false, nameHuman: "-CON / --connection", section: "Service"),
+                        new(name: "MP", type: "path", required: true, nameHuman: "-MP / --model_path", section: "Voice-Recognition"),
+                        new(name: "L", type: "int[0..2]", required: false, nameHuman: "-L / --language", section: "Voice-Recognition"),
+                        new(name: "KNG", type: "string", required: false, isMulti: true, nameHuman: "-KNG / --keywords_next_game", section: "Voice-Recognition"),
+                        new(name: "KN", type: "string", required: false, isMulti: true, nameHuman: "-KN / --keywords_next", section: "Voice-Recognition"),
+                        new(name: "KU", type: "string", required: false, isMulti: true, nameHuman: "-KU / --keywords_undo", section: "Voice-Recognition"),
+                        new(name: "KBC", type: "string", required: false, isMulti: true, nameHuman: "-KBC / --keywords_ban_caller", section: "Voice-Recognition"),
+                        new(name: "KCC", type: "string", required: false, isMulti: true, nameHuman: "-KCC / --keywords_change_caller", section: "Voice-Recognition"),
+                        new(name: "KSB", type: "string", required: false, isMulti: true, nameHuman: "-KSB / --keywords_start_board", section: "Voice-Recognition"),
+                        new(name: "KSPB", type: "string", required: false, isMulti: true, nameHuman: "-KSPB / --keywords_stop_board", section: "Voice-Recognition"),
+                        new(name: "KRB", type: "string", required: false, isMulti: true, nameHuman: "-KRB / --keywords_reset_board", section: "Voice-Recognition"),
+                        new(name: "KCB", type: "string", required: false, isMulti: true, nameHuman: "-KCB / --keywords_calibrate_board", section: "Voice-Recognition"),
+                        new(name: "KFD", type: "string", required: false, isMulti: true, nameHuman: "-KFD / --keywords_first_dart", section: "Voice-Recognition"),
+                        new(name: "KSD", type: "string", required: false, isMulti: true, nameHuman: "-KSD / --keywords_second_dart", section: "Voice-Recognition"),
+                        new(name: "KTD", type: "string", required: false, isMulti: true, nameHuman: "-KTD / --keywords_third_dart", section: "Voice-Recognition"),
+                        new(name: "KS", type: "string", required: false, isMulti: true, nameHuman: "-KS / --keywords_single", section: "Voice-Recognition"),
+                        new(name: "KD", type: "string", required: false, isMulti: true, nameHuman: "-KD / --keywords_double", section: "Voice-Recognition"),
+                        new(name: "KT", type: "string", required: false, isMulti: true, nameHuman: "-KT / --keywords_triple", section: "Voice-Recognition"),
+                        new(name: "KZERO", type: "string", required: false, isMulti: true, nameHuman: "-KZERO / --keywords_zero", section: "Voice-Recognition"),
+                        new(name: "KONE", type: "string", required: false, isMulti: true, nameHuman: "-KONE / --keywords_one", section: "Voice-Recognition"),
+                        new(name: "KTWO", type: "string", required: false, isMulti: true, nameHuman: "-KTWO / --keywords_two", section: "Voice-Recognition"),
+                        new(name: "KTHREE", type: "string", required: false, isMulti: true, nameHuman: "-KTHREE / --keywords_three", section: "Voice-Recognition"),
+                        new(name: "KFOUR", type: "string", required: false, isMulti: true, nameHuman: "-KFOUR / --keywords_four", section: "Voice-Recognition"),
+                        new(name: "KFIVE", type: "string", required: false, isMulti: true, nameHuman: "-KFIVE / --keywords_five", section: "Voice-Recognition"),
+                        new(name: "KSIX", type: "string", required: false, isMulti: true, nameHuman: "-KSIX / --keywords_six", section: "Voice-Recognition"),
+                        new(name: "KSEVEN", type: "string", required: false, isMulti: true, nameHuman: "-KSEVEN / --keywords_seven", section: "Voice-Recognition"),
+                        new(name: "KEIGHT", type: "string", required: false, isMulti: true, nameHuman: "-KEIGHT / --keywords_eight", section: "Voice-Recognition"),
+                        new(name: "KNINE", type: "string", required: false, isMulti: true, nameHuman: "-KNINE / --keywords_nine", section: "Voice-Recognition"),
+                        new(name: "KTEN", type: "string", required: false, isMulti: true, nameHuman: "-KTEN / --keywords_ten", section: "Voice-Recognition"),
+                        new(name: "KELEVEN", type: "string", required: false, isMulti: true, nameHuman: "-KELEVEN / --keywords_eleven", section: "Voice-Recognition"),
+                        new(name: "KTWELVE", type: "string", required: false, isMulti: true, nameHuman: "-KTWELVE / --keywords_twelve", section: "Voice-Recognition"),
+                        new(name: "KTHIRTEEN", type: "string", required: false, isMulti: true, nameHuman: "-KTHIRTEEN / --keywords_thirteen", section: "Voice-Recognition"),
+                        new(name: "KFOURTEEN", type: "string", required: false, isMulti: true, nameHuman: "-KFOURTEEN / --keywords_fourteen", section: "Voice-Recognition"),
+                        new(name: "KFIFTEEN", type: "string", required: false, isMulti: true, nameHuman: "-KFIFTEEN / --keywords_fifteen", section: "Voice-Recognition"),
+                        new(name: "KSIXTEEN", type: "string", required: false, isMulti: true, nameHuman: "-KSIXTEEN / --keywords_sixteen", section: "Voice-Recognition"),
+                        new(name: "KSEVENTEEN", type: "string", required: false, isMulti: true, nameHuman: "-KSEVENTEEN / --keywords_seventeen", section: "Voice-Recognition"),
+                        new(name: "KEIGHTEEN", type: "string", required: false, isMulti: true, nameHuman: "-KEIGHTEEN / --keywords_eighteen", section: "Voice-Recognition"),
+                        new(name: "KNINETEEN", type: "string", required: false, isMulti: true, nameHuman: "-KNINETEEN / --keywords_nineteen", section: "Voice-Recognition"),
+                        new(name: "KTWENTY", type: "string", required: false, isMulti: true, nameHuman: "-KTWENTY / --keywords_twenty", section: "Voice-Recognition"),
+                        new(name: "KTWENTYFIVE", type: "string", required: false, isMulti: true, nameHuman: "-KTWENTY_FIVE / --keywords_twenty_five", section: "Voice-Recognition"),
+                        new(name: "KFIFTY", type: "string", required: false, isMulti: true, nameHuman: "-KFIFTY / --keywords_fifty", section: "Voice-Recognition"),
+                        new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
                     };
 
 
@@ -1438,6 +1510,12 @@ namespace autodarts_desktop.control
                 if (autodartsExternDownloadUrl != null)
                 {
                     autodartsExtern.DownloadUrl = autodartsExternDownloadUrl;
+
+                    var lidartsCamFullscreen = autodartsExtern.Configuration.Arguments.Find(a => a.Name == "lidarts_cam_fullscreen");
+                    if (lidartsCamFullscreen == null)
+                    {
+                        autodartsExtern.Configuration.Arguments.Add(new(name: "lidarts_cam_fullscreen", type: "bool", required: false, nameHuman: "Camera fullscreen", section: "Lidarts"));
+                    }
                 }
                 else
                 {
@@ -1749,6 +1827,11 @@ namespace autodarts_desktop.control
                 if (droidCam) p2Apps.Add("droid-cam", new ProfileState());
                 if (epocCam) p2Apps.Add("epoc-cam", new ProfileState());
                 if (custom1) p2Apps.Add("custom-1", new ProfileState());
+                if (custom2) p2Apps.Add("custom-2", new ProfileState());
+                if (custom3) p2Apps.Add("custom-3", new ProfileState());
+                if (customUrl1) p2Apps.Add("custom-url-1", new ProfileState());
+                if (customUrl2) p2Apps.Add("custom-url-2", new ProfileState());
+                if (customUrl3) p2Apps.Add("custom-url-3", new ProfileState());
                 Profiles.Add(new Profile(p2Name, p2Apps));
             }
 
@@ -1770,6 +1853,11 @@ namespace autodarts_desktop.control
                 if (droidCam) p3Apps.Add("droid-cam", new ProfileState());
                 if (epocCam) p3Apps.Add("epoc-cam", new ProfileState());
                 if (custom1) p3Apps.Add("custom-1", new ProfileState());
+                if (custom2) p3Apps.Add("custom-2", new ProfileState());
+                if (custom3) p3Apps.Add("custom-3", new ProfileState());
+                if (customUrl1) p3Apps.Add("custom-url-1", new ProfileState());
+                if (customUrl2) p3Apps.Add("custom-url-2", new ProfileState());
+                if (customUrl3) p3Apps.Add("custom-url-3", new ProfileState());
                 Profiles.Add(new Profile(p3Name, p3Apps));
             }
 
@@ -1792,6 +1880,11 @@ namespace autodarts_desktop.control
                 if (droidCam) p4Apps.Add("droid-cam", new ProfileState());
                 if (epocCam) p4Apps.Add("epoc-cam", new ProfileState());
                 if (custom1) p4Apps.Add("custom-1", new ProfileState());
+                if (custom2) p4Apps.Add("custom-2", new ProfileState());
+                if (custom3) p4Apps.Add("custom-3", new ProfileState());
+                if (customUrl1) p4Apps.Add("custom-url-1", new ProfileState());
+                if (customUrl2) p4Apps.Add("custom-url-2", new ProfileState());
+                if (customUrl3) p4Apps.Add("custom-url-3", new ProfileState());
                 Profiles.Add(new Profile(p4Name, p4Apps));
             }
 
@@ -1807,6 +1900,11 @@ namespace autodarts_desktop.control
                 if (droidCam) p5Apps.Add("droid-cam", new ProfileState());
                 if (epocCam) p5Apps.Add("epoc-cam", new ProfileState());
                 if (custom1) p5Apps.Add("custom-1", new ProfileState());
+                if (custom2) p5Apps.Add("custom-2", new ProfileState());
+                if (custom3) p5Apps.Add("custom-3", new ProfileState());
+                if (customUrl1) p5Apps.Add("custom-url-1", new ProfileState());
+                if (customUrl2) p5Apps.Add("custom-url-2", new ProfileState());
+                if (customUrl3) p5Apps.Add("custom-url-3", new ProfileState());
                 Profiles.Add(new Profile(p5Name, p5Apps));
             }
 
@@ -1841,7 +1939,6 @@ namespace autodarts_desktop.control
             var epocCam = AppsInstallable.Find(a => a.Name == "epoc-cam") != null;
             var dartboardsClient = AppsInstallable.Find(a => a.Name == "dartboards-client") != null;
             var custom = AppsLocal.Find(a => a.Name == "custom") != null;
-
 
             if (!autodartsCaller)
             {
@@ -1957,6 +2054,63 @@ namespace autodarts_desktop.control
                     {
                         p.Apps.Add("autodarts-voice", new());
                     }
+                }
+            }
+
+            
+            foreach (var p in Profiles)
+            {
+                if (!p.Apps.ContainsKey("autodarts-voice"))
+                {
+                    p.Apps.Add("autodarts-voice", new());
+                }
+            }
+
+
+
+            // Renames custom to custom-1 in all profiles
+            // Adds or removes custom-2+ and custom-url-2+ for all profiles
+            var custom1 = AppsLocal.Find(a => a.Name == "custom-1") != null;
+            var custom2 = AppsLocal.Find(a => a.Name == "custom-2") != null;
+            var custom3 = AppsLocal.Find(a => a.Name == "custom-3") != null;
+            var customUrl1 = AppsOpen.Find(a => a.Name == "custom-url-1") != null;
+            var customUrl2 = AppsOpen.Find(a => a.Name == "custom-url-2") != null;
+            var customUrl3 = AppsOpen.Find(a => a.Name == "custom-url-3") != null;
+
+            foreach (var p in Profiles)
+            {
+                // Remove old custom
+                if (p.Apps.ContainsKey("custom"))
+                {
+                    p.Apps.Remove("custom");
+                }
+
+                // customLocal
+                if (custom1 && !p.Apps.ContainsKey("custom-1"))
+                {
+                    p.Apps.Add("custom-1", new());
+                }
+                if (custom2 && !p.Apps.ContainsKey("custom-2"))
+                {
+                    p.Apps.Add("custom-2", new());
+                }
+                if (custom3 && !p.Apps.ContainsKey("custom-3"))
+                {
+                    p.Apps.Add("custom-3", new());
+                }
+
+                //customOpen (Url)
+                if (customUrl1 && !p.Apps.ContainsKey("custom-url-1"))
+                {
+                    p.Apps.Add("custom-url-1", new());
+                }
+                if (customUrl2 && !p.Apps.ContainsKey("custom-url-2"))
+                {
+                    p.Apps.Add("custom-url-2", new());
+                }
+                if (customUrl3 && !p.Apps.ContainsKey("custom-url-3"))
+                {
+                    p.Apps.Add("custom-url-3", new());
                 }
             }
 

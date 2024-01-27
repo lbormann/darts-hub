@@ -409,7 +409,10 @@ namespace autodarts_desktop
             var assets = AvaloniaLocator.Current.GetService<IAssetLoader>();
             
 
-            foreach (var app in selectedProfile.Apps.OrderByDescending(a => a.Value.TaggedForStart).OrderByDescending(a => a.Value.IsRequired))
+            foreach (var app in selectedProfile.Apps.OrderBy(a => a.Value.App.CustomName)
+                                                    .OrderByDescending(a => a.Value.TaggedForStart)
+                                                    .OrderByDescending(a => a.Value.IsRequired)
+                                                    )
             {
                 var marginTop = counter * top + 10;
                 selectedProfile.Apps.TryGetValue(app.Key, out ProfileState? appProfile);
@@ -531,7 +534,7 @@ namespace autodarts_desktop
                 {
                     var renameTextBox = (checkBoxTagger.Tag as TextBox);
                     GridMain.Children.Add(renameTextBox);
-                    renameTextBox.SelectAll();
+                    //renameTextBox.SelectAll();
                     renameTextBox.CaretIndex = renameTextBox.Text.Length;
                     renameTextBox.Focus();
                     checkBoxTagger.IsVisible = false;
@@ -574,21 +577,22 @@ namespace autodarts_desktop
                 };
                 textBox.Text = appProfile.App.CustomName;
                 checkBoxTagger.Tag = textBox;
-                
+
 
                 // TODO
                 if (!String.IsNullOrEmpty(appProfile.App.DescriptionShort))
                 {
                     var tt = new ToolTip();
                     tt.Content = appProfile.App.DescriptionShort;
-                    tt.IsVisible = true;
-                    tt.VerticalAlignment = VerticalAlignment.
+                    tt.DataContext = checkBoxTagger;
+                    
+
                     //tt.DataContext = checkBoxTagger;
                     //tt.SetValue(checkBoxTagger);
                     //tt.IsSet(checkBoxTagger);
 
-                    GridMain.Children.Add(tt);
-                    selectedProfileElements.Add(tt);
+                    //GridMain.Children.Add(tt);
+                    //selectedProfileElements.Add(tt);
                 }
 
                 GridMain.Children.Add(checkBoxTagger);

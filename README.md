@@ -53,7 +53,7 @@ Profiles representing different play-scenarios, whether you only want to use aut
 Every app in a profile can be marked for start by checking it. Apps that are mandantory for particular profile can't be unchecked.
 To start a selected profile click the button next to profile selection. On profile-start the application will check every included app for existence, installs it or updates it if it isn't up-to-date. If an app needs configuration, autodarts-desktop will display a configuration window to organize that. Configuration is explained in the next section.
 To close a running app use the ecks-symbol. To see an apps output click the monitor-symbol that should appear after a short time since app-start. It shows full details of app events in realtime. 
-You can also rename every app: use a right click for that. You can always return to the default name by leave an empty value.
+You can also rename every app: use a right click for that; you can always return to the default name by entering an empty value.
 
 ### App-configuration
 
@@ -63,7 +63,7 @@ If your done filling out configuration fields just close the dialog window to sa
 
 ### Custom-apps
 
-Imagine you could start your favorite apps. That is what custom-apps are. As an example: configure path to OBS, to stream a autodarts-game. Moreover you could trigger a Home-Assistant hook to turn on your AD-Build or just some lights. 
+Imagine you could start your favorite apps along autodarts-*. That is what custom-apps are made for. As an example: Add OBS, to stream an autodarts-game.. or trigger a Home-Assistant-hook to turn on your AD-Build.. or just some lights. 
 
 
 ## Resources

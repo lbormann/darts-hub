@@ -19,7 +19,7 @@ namespace autodarts_desktop.model
 
         // ATTRIBUTES
 
-        public string Name { get; private set; }
+        public string Name { get; set; }
         public string CustomName { get; set; }
         public string? HelpUrl { get; set; }
         public string? DescriptionShort { get; private set; }
