@@ -4,7 +4,7 @@
 Autodarts-desktop (ADD) manages several apps for https://autodarts.io.
 It automatically downloads and updates apps, provides configuration windows, and allows the launching of apps through a curated list of profiles.
 
-If you are looking for an video explaination, have a look at https://www.youtube.com/watch?v=L5qx0afyXKs
+If you are looking for an video explaination (german), have a look at https://www.youtube.com/watch?v=L5qx0afyXKs
 
 
 ## COMPATIBILITY
