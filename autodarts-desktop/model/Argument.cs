@@ -34,9 +34,28 @@ namespace autodarts_desktop.model
 
         public bool IsMulti { get; set; }
 
-        public string? Value { get; set; }
+        private string? _value;
+        public string? Value
+        {
+            get => _value;
+            set
+            {
+                if (_value != value)
+                {
+                    if (_value != null && value != null)
+                    {
+                        IsValueChanged = true;
+                    }
+                    _value = value;
+                }
+            }
+        }
 
         public Dictionary<string, string>? ValueMapping { get; set; }
+
+
+        [JsonIgnore]
+        public bool IsValueChanged { get; set; }
 
         [JsonIgnore]
         public string RangeBy { get; private set; }
@@ -88,8 +107,8 @@ namespace autodarts_desktop.model
             IsMulti = isMulti;
             Value = value;
             ValueMapping = valueMapping;
-
             ValidateType();
+            IsValueChanged = false;
         }
 
         public string? MappedValue()

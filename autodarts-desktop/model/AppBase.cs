@@ -138,7 +138,12 @@ namespace autodarts_desktop.model
             return true;
         }
 
-        
+        public bool ReRun(Dictionary<string, string>? runtimeArguments = null)
+        {
+            if (!IsRunning()) return false;
+            Close();
+            return Run(runtimeArguments);
+        }
 
         public bool IsInstalled()
         {

@@ -39,7 +39,26 @@ namespace autodarts_desktop.model
         }
 
 
-
+        public bool IsChanged()
+        {
+            bool isChanged = false;
+            foreach (var argument in Arguments)
+            {
+                if (argument.IsValueChanged)
+                {
+                    isChanged = true;
+                    break;
+                }
+            }
+            if (isChanged)
+            {
+                foreach (var argument in Arguments)
+                {
+                    argument.IsValueChanged = false;
+                }
+            }
+            return isChanged;
+        }
 
         public string GenerateArgumentString(AppBase app, Dictionary<string, string>? runtimeArguments = null)
         {

@@ -1,3 +1,9 @@
+## 0.9.24
+
+- adapt app versions
+- restart an app automatically when configuration has changed
+
+
 ## 0.9.23
 
 - add CHANGELOG

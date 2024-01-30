@@ -570,7 +570,7 @@ namespace autodarts_desktop.control
             autodartsCallerDownloadMap.LinuxArm64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm64";
             //autodartsCallerDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.6.3");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.7.0");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern.exe";
@@ -665,6 +665,7 @@ namespace autodarts_desktop.control
                             new(name: "DL", type: "bool", required: false, nameHuman: "-DL / --downloads", section: "Downloads", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "DLLA", type: "int[0..6]", required: false, nameHuman: "-DLLA / --downloads_language", section: "Downloads"),
                             new(name: "DLL", type: "int", required: false, nameHuman: "-DLL / --downloads_limit", section: "Downloads"),
+                            new(name: "BLP", type: "path", required: false, nameHuman: "-BLP / --blacklist_path", section: "Media"),
                             new(name: "BAV", type: "float[0.0..1.0]", required: false, nameHuman: "-BAV / --background_audio_volume", section: "Calls"),
                             new(name: "WEB", type: "int[0..2]", required: false, nameHuman: "-WEB / --web_caller", section: "Service"),
                             new(name: "WEBSB", type: "bool", required: false, nameHuman: "-WEBSB / --web_caller_scoreboard", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
@@ -1360,7 +1361,7 @@ namespace autodarts_desktop.control
             autodartsCallerDownloadMap.LinuxArm64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm64";
             //autodartsCallerDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.6.3");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.7.0");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern.exe";
@@ -1493,6 +1494,12 @@ namespace autodarts_desktop.control
                         autodartsCaller.Configuration.Arguments.Add(new(name: "CCPA", type: "bool", required: false, nameHuman: "call-current-player-always", section: "Calls", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
                     }
 
+                    
+                    var blacklistPath = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "BLP");
+                    if (blacklistPath == null)
+                    {
+                        autodartsCaller.Configuration.Arguments.Add(new(name: "BLP", type: "path", required: false, nameHuman: "-BLP / --blacklist_path", section: "Media"));
+                    }
                 }
                 else
                 {

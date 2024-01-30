@@ -181,10 +181,10 @@ namespace autodarts_desktop.control
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 var process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
-                process.Kill();
-
+                if(process != null) { process.Kill(); }
+                
                 process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
-                process.Kill();
+                if (process != null) { process.Kill(); }
                 return;
             }
             KillProcessesByNameOsX(processName);

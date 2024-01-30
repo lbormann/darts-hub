@@ -71,7 +71,7 @@ namespace autodarts_desktop
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             Focus();
-
+            
             try
             {
                 profileManager.StoreApps();

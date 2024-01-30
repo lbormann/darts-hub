@@ -109,7 +109,7 @@ namespace autodarts_desktop
 
         private void Buttonstart_Click(object sender, RoutedEventArgs e)
         {
-            RunSelectedProfile();
+            RunSelectedProfile(true);
         }
 
         private async void Buttonabout_Click(object sender, RoutedEventArgs e)
@@ -117,16 +117,6 @@ namespace autodarts_desktop
             WindowState = WindowState.Minimized;
             await new AboutWindow(configurator).ShowDialog(this);
             WindowState = WindowState.Normal;
-        }
-
-        private void ButtonAddCustomLocal_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void ButtonAddCustomOpen_Click(object sender, RoutedEventArgs e)
-        {
-
         }
 
         private void Comboboxportal_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -328,13 +318,13 @@ namespace autodarts_desktop
         }
 
 
-        private async void RunSelectedProfile()
+        private async void RunSelectedProfile(bool minimize = true)
         {
             try
             {
                 scroller.ScrollToHome();
                 SetWait(true, "Starting profile ..");
-                if (ProfileManager.RunProfile(selectedProfile)) WindowState = WindowState.Minimized;
+                if (ProfileManager.RunProfile(selectedProfile) && minimize) WindowState = WindowState.Minimized;
             }
             catch (Exception ex)
             {
@@ -495,6 +485,7 @@ namespace autodarts_desktop
                 {
                     WindowState = WindowState.Minimized;
                     await new SettingsWindow(profileManager, app.Value.App).ShowDialog(this);
+                    if (app.Value.App.Configuration.IsChanged()) app.Value.App.ReRun(app.Value.RuntimeArguments);
                     scroller.ScrollToHome();
                     WindowState = WindowState.Normal;
                 };
@@ -550,6 +541,7 @@ namespace autodarts_desktop
                 textBox.Width = elementWidth - 34;
                 textBox.MaxLength = 33;
                 textBox.TextAlignment = TextAlignment.Center;
+                textBox.ZIndex = 9999;
                 textBox.KeyDown += (s, e) =>
                 {
                     var parent = (textBox.Tag as CheckBox);
@@ -580,20 +572,19 @@ namespace autodarts_desktop
 
 
                 // TODO
-                if (!String.IsNullOrEmpty(appProfile.App.DescriptionShort))
-                {
-                    var tt = new ToolTip();
-                    tt.Content = appProfile.App.DescriptionShort;
-                    tt.DataContext = checkBoxTagger;
+                //if (!String.IsNullOrEmpty(appProfile.App.DescriptionShort))
+                //{
+                    //var tt = new ToolTip();
+                    //tt.Content = appProfile.App.DescriptionShort;
+                    //tt.DataContext = checkBoxTagger;
                     
-
                     //tt.DataContext = checkBoxTagger;
                     //tt.SetValue(checkBoxTagger);
                     //tt.IsSet(checkBoxTagger);
 
                     //GridMain.Children.Add(tt);
                     //selectedProfileElements.Add(tt);
-                }
+                //}
 
                 GridMain.Children.Add(checkBoxTagger);
                 selectedProfileElements.Add(checkBoxTagger);
