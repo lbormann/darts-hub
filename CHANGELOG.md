@@ -1,4 +1,9 @@
-## 0.9.24
+## 0.10.1
+
+- adapt app versions
+
+
+## 0.10.0
 
 - adapt app versions
 - restart an app automatically when configuration has changed
