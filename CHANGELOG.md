@@ -1,3 +1,8 @@
+## 0.10.3
+
+- adapt app versions
+
+
 ## 0.10.2
 
 - adapt app versions
