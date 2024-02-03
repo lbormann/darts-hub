@@ -25,6 +25,7 @@ namespace autodarts_desktop.model
         public string? DescriptionShort { get; private set; }
         public string? DescriptionLong { get; private set; }
         public bool RunAsAdmin { get; private set; }
+        public bool Chmod { get; private set; }
         public ProcessWindowStyle StartWindowState { get; private set; }
         public Configuration? Configuration { get; protected set; }
 
@@ -109,6 +110,7 @@ namespace autodarts_desktop.model
                         string? descriptionShort,
                         string? descriptionLong,
                         bool runAsAdmin,
+                        bool chmod,
                         ProcessWindowStyle? startWindowState,
                         Configuration? configuration = null
             )
@@ -119,6 +121,7 @@ namespace autodarts_desktop.model
             DescriptionShort = descriptionShort;
             DescriptionLong = descriptionLong;
             RunAsAdmin = runAsAdmin;
+            Chmod = chmod;
             StartWindowState = (ProcessWindowStyle)(startWindowState == null ? DefaultStartWindowState : startWindowState);
             Configuration = configuration;
 
@@ -265,13 +268,13 @@ namespace autodarts_desktop.model
                 {
                     if (RunAsAdmin) process.StartInfo.Verb = "runas";
                 }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && !isUri)
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
-                    EnsureExecutablePermissions(executable);
+                    if (!isUri && Chmod) EnsureExecutablePermissions(executable);
                 }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && !isUri)
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
-                    EnsureExecutablePermissions(executable);
+                    if (!isUri && Chmod) EnsureExecutablePermissions(executable);
                 }
 
                 process.Start();

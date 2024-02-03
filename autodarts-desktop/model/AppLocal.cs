@@ -24,6 +24,7 @@ namespace autodarts_desktop.model
                         string? descriptionShort = null,
                         string? descriptionLong = null,
                         bool runAsAdmin = false,
+                        bool chmod = false,
                         ProcessWindowStyle? startWindowState = null,
                         Configuration? configuration = null
             ) : base(name: name, 
@@ -32,6 +33,7 @@ namespace autodarts_desktop.model
                         descriptionShort: descriptionShort,       
                         descriptionLong: descriptionLong,
                         runAsAdmin: runAsAdmin,
+                        chmod: chmod,
                         startWindowState: startWindowState,
                         configuration: configuration
                     )

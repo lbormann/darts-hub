@@ -44,17 +44,19 @@ namespace autodarts_desktop.model
                                 string? descriptionShort = null,
                                 string? descriptionLong = null,
                                 bool runAsAdmin = false,
+                                bool chmod = true,
                                 ProcessWindowStyle? startWindowState = null,
                                 Configuration? configuration = null) 
             : base(name: name,
                    customName: customName,
-                      helpUrl: helpUrl,
-                      descriptionShort: descriptionShort,
-                      descriptionLong: descriptionLong,
-                      runAsAdmin: runAsAdmin,
-                      startWindowState: startWindowState,
-                      configuration: configuration
-                      )
+                        helpUrl: helpUrl,
+                        descriptionShort: descriptionShort,
+                        descriptionLong: descriptionLong,
+                        runAsAdmin: runAsAdmin,
+                        chmod: chmod,
+                        startWindowState: startWindowState,
+                        configuration: configuration
+                        )
         {
             DownloadUrl = downloadUrl;
             

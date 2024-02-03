@@ -1,3 +1,10 @@
+## 0.10.4
+
+- adapt app versions
+- fix permission-error on custom-app start
+- start app after an update
+
+
 ## 0.10.3
 
 - adapt app versions
