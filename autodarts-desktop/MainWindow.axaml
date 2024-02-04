@@ -16,7 +16,7 @@
 		>
 
 	<Window.Background>
-		<ImageBrush Opacity="0.2" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background.png" />
+		<ImageBrush Opacity="0.15" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background.png" />
 	</Window.Background>
 
 	

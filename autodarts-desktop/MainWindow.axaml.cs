@@ -282,6 +282,7 @@ namespace autodarts_desktop
         private void ProfileManager_AppDownloadFinished(object? sender, AppEventArgs e)
         {
             SetWait(false);
+            RunSelectedProfile(true);
         }
 
         private void ProfileManager_AppDownloadFailed(object? sender, AppEventArgs e)
@@ -572,19 +573,20 @@ namespace autodarts_desktop
 
 
                 // TODO
-                //if (!String.IsNullOrEmpty(appProfile.App.DescriptionShort))
-                //{
-                    //var tt = new ToolTip();
-                    //tt.Content = appProfile.App.DescriptionShort;
-                    //tt.DataContext = checkBoxTagger;
-                    
-                    //tt.DataContext = checkBoxTagger;
-                    //tt.SetValue(checkBoxTagger);
-                    //tt.IsSet(checkBoxTagger);
-
-                    //GridMain.Children.Add(tt);
-                    //selectedProfileElements.Add(tt);
-                //}
+                if (!String.IsNullOrEmpty(appProfile.App.DescriptionShort))
+                {
+                    var tt = new ToolTip();
+                    tt.Content = appProfile.App.DescriptionShort;
+                    tt.FontSize = fontSize + 4.0;
+                    tt.FontWeight = FontWeight.Bold;
+                    tt.FontStyle = FontStyle.Italic;
+                    tt.Foreground = Brushes.GhostWhite;
+                    tt.BorderBrush = Brushes.White;
+                    tt.Background = Brushes.RoyalBlue;
+                    ToolTip.SetPlacement(checkBoxTagger, PlacementMode.Pointer);
+                    ToolTip.SetTip(checkBoxTagger, tt);
+                    ToolTip.SetShowDelay(checkBoxTagger, 750);
+                }
 
                 GridMain.Children.Add(checkBoxTagger);
                 selectedProfileElements.Add(checkBoxTagger);

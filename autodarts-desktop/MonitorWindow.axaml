@@ -13,9 +13,6 @@
 		WindowStartupLocation="CenterScreen"
 		CanResize="False"
 		>
-	<Window.Background>
-		<ImageBrush Opacity="0.2" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background.png" />
-	</Window.Background>
 
 	<ScrollViewer
 		x:Name="scroller"

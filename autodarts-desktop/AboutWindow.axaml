@@ -17,7 +17,7 @@
 	
 	
 	<Window.Background>
-		<ImageBrush Opacity="0.4" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background_color.png" />
+		<ImageBrush Opacity="0.35" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background_color.png" />
 	</Window.Background>
 	
 	<Grid x:Name="GridMain">

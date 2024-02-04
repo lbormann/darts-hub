@@ -1,9 +1,9 @@
 ## 0.10.4
 
-- adapt app versions
 - fix permission-error on custom-app start
-- fix local app-start for unconfigured argument-string
+- fix start of local-app for unconfigured argument-string
 - run app after an app-update
+- add popup description for apps
 
 
 ## 0.10.3
