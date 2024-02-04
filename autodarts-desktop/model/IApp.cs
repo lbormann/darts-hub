@@ -13,9 +13,13 @@ namespace autodarts_desktop.model
 
         public bool Run(Dictionary<string, string> runtimeArguments);
 
+        public bool ReRun(Dictionary<string, string> runtimeArguments);
+
         public bool IsInstalled();
 
         public bool IsRunning();
+
+        public bool IsConfigurationChanged();
 
         public void Close();
 

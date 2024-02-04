@@ -22,7 +22,7 @@ namespace autodarts_desktop.model
         public string Name { get; set; }
         public string CustomName { get; set; }
         public string? HelpUrl { get; set; }
-        public string? DescriptionShort { get; private set; }
+        public string? DescriptionShort { get; set; }
         public string? DescriptionLong { get; private set; }
         public bool RunAsAdmin { get; private set; }
         public bool Chmod { get; set; }
@@ -158,6 +158,11 @@ namespace autodarts_desktop.model
         {
             return AppRunningState;
             //return process != null && !process.HasExited;
+        }
+
+        public bool IsConfigurationChanged()
+        {
+            return Configuration != null ? Configuration.IsChanged() : false;
         }
 
         public void Close()

@@ -486,7 +486,7 @@ namespace autodarts_desktop
                 {
                     WindowState = WindowState.Minimized;
                     await new SettingsWindow(profileManager, app.Value.App).ShowDialog(this);
-                    if (app.Value.App.Configuration.IsChanged()) app.Value.App.ReRun(app.Value.RuntimeArguments);
+                    if (app.Value.App.IsConfigurationChanged()) app.Value.App.ReRun(app.Value.RuntimeArguments);
                     scroller.ScrollToHome();
                     WindowState = WindowState.Normal;
                 };
@@ -576,8 +576,9 @@ namespace autodarts_desktop
                 if (!String.IsNullOrEmpty(appProfile.App.DescriptionShort))
                 {
                     var tt = new ToolTip();
+                    // + (String.IsNullOrEmpty(appProfile.App.HelpUrl) ? "" : ": " + appProfile.App.HelpUrl)
                     tt.Content = appProfile.App.DescriptionShort;
-                    tt.FontSize = fontSize + 4.0;
+                    tt.FontSize = fontSize + 2.0;
                     tt.FontWeight = FontWeight.Bold;
                     tt.FontStyle = FontStyle.Italic;
                     tt.Foreground = Brushes.GhostWhite;

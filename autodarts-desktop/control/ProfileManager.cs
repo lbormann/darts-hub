@@ -475,7 +475,7 @@ namespace autodarts_desktop.control
                     downloadUrl: dartboardsClientDownloadUrl,
                     name: "dartboards-client",
                     helpUrl: "https://dartboards.online/client",
-                    descriptionShort: "webcam connection client for dartboards.online",
+                    descriptionShort: "Connects webcam to dartboards.online",
                     executable: "dartboardsonlineclient.exe",
                     defaultPathExecutable: Path.Join(Helper.GetUserDirectoryPath(), @"AppData\Local\Programs\dartboardsonlineclient"),
                     startsAfterInstallation: true
@@ -490,7 +490,7 @@ namespace autodarts_desktop.control
                     downloadUrl: droidCamDownloadUrl,
                     name: "droid-cam",
                     helpUrl: "https://www.dev47apps.com",
-                    descriptionShort: "uses your android phone/tablet as local camera",
+                    descriptionShort: "Connects to your android phone- or tablet-camera",
                     defaultPathExecutable: @"C:\Program Files (x86)\DroidCam",
                     executable: "DroidCamApp.exe",
                     runAsAdminInstall: true,
@@ -506,7 +506,7 @@ namespace autodarts_desktop.control
                     downloadUrl: epocCamDownloadUrl,
                     name: "epoc-cam",
                     helpUrl: "https://www.elgato.com/de/epoccam",
-                    descriptionShort: "uses your iOS phone/tablet as local camera",
+                    descriptionShort: "Connects to your iOS phone- or tablet-camera",
                     defaultPathExecutable: @"C:\Program Files (x86)\Elgato\EpocCam",
                     // epoccamtray.exe
                     executable: "EpocCamService.exe",
@@ -530,6 +530,17 @@ namespace autodarts_desktop.control
             //dartboardsClientDownloadMap.MacX64 = "https://dartboards.online/dboclient_***VERSION***.dmg";
             var dartboardsClientDownloadUrl = dartboardsClientDownloadMap.GetDownloadUrlByOs("0.9.2");
 
+            var droidCamDownloadMap = new DownloadMap();
+            droidCamDownloadMap.WindowsX64 = "https://github.com/dev47apps/windows-releases/releases/download/win-***VERSION***/DroidCam.Setup.***VERSION***.exe";
+            var droidCamDownloadUrl = droidCamDownloadMap.GetDownloadUrlByOs("6.5.2");
+
+            var epocCamDownloadMap = new DownloadMap();
+            epocCamDownloadMap.WindowsX64 = "https://edge.elgato.com/egc/windows/epoccam/EpocCam_Installer64_***VERSION***.exe";
+            //epocCamDownloadMap.MacX64 = "https://edge.elgato.com/egc/macos/epoccam/EpocCam_Installer_***VERSION***.pkg";
+            var epocCamDownloadUrl = epocCamDownloadMap.GetDownloadUrlByOs("3_4_0");
+
+
+
 
             var dartboardsClient = AppsInstallable.Find(a => a.Name == "dartboards-client");
             if (dartboardsClient != null)
@@ -537,6 +548,7 @@ namespace autodarts_desktop.control
                 if (dartboardsClientDownloadUrl != null)
                 {
                     dartboardsClient.DownloadUrl = dartboardsClientDownloadUrl;
+                    dartboardsClient.DescriptionShort = "Connects webcam to dartboards.online";
                 }
                 else
                 {
@@ -548,8 +560,45 @@ namespace autodarts_desktop.control
                 }
             }
 
+            var droidCam = AppsInstallable.Find(a => a.Name == "droid-cam");
+            if (droidCam != null)
+            {
+                if (droidCamDownloadUrl != null)
+                {
+                    droidCam.DownloadUrl = droidCamDownloadUrl;
+                    droidCam.DescriptionShort = "Connects to your android phone- or tablet-camera";
+                }
+                else
+                {
+                    var droidCamIndex = AppsInstallable.FindIndex(a => a.Name == "droid-cam");
+                    if (droidCamIndex != -1)
+                    {
+                        AppsInstallable.RemoveAt(droidCamIndex);
+                    }
+                }
+            }
+
+            var epocCam = AppsInstallable.Find(a => a.Name == "epoc-cam");
+            if (epocCam != null)
+            {
+                if (epocCamDownloadUrl != null)
+                {
+                    epocCam.DownloadUrl = epocCamDownloadUrl;
+                    epocCam.DescriptionShort = "Connects to your iOS phone- or tablet-camera";
+                }
+                else
+                {
+                    var epocCamIndex = AppsInstallable.FindIndex(a => a.Name == "epoc-cam");
+                    if (epocCamIndex != -1)
+                    {
+                        AppsInstallable.RemoveAt(epocCamIndex);
+                    }
+                }
+            }
+
             // make all apps chmod-able
             foreach (var a in AppsInstallable) a.Chmod = true;
+
 
             // Add more migs..
         }
@@ -628,7 +677,7 @@ namespace autodarts_desktop.control
                     downloadUrl: autodartsClientDownloadUrl,
                     name: "autodarts-client",
                     helpUrl: "https://docs.autodarts.io/",
-                    descriptionShort: "Client for dart recognition with cameras"
+                    descriptionShort: "Recognizes dart-positions"
                     );
                 apps.Add(autodarts);
             }
@@ -640,7 +689,7 @@ namespace autodarts_desktop.control
                         downloadUrl: autodartsCallerDownloadUrl,
                         name: "autodarts-caller",
                         helpUrl: "https://github.com/lbormann/autodarts-caller",
-                        descriptionShort: "calls out thrown points",
+                        descriptionShort: "Calls out thrown points",
                         configuration: new(
                             prefix: "-",
                             delimitter: " ",
@@ -688,7 +737,7 @@ namespace autodarts_desktop.control
                     downloadUrl: autodartsExternDownloadUrl,
                     name: "autodarts-extern",
                     helpUrl: "https://github.com/lbormann/autodarts-extern",
-                    descriptionShort: "automates dart web platforms with autodarts",
+                    descriptionShort: "Bridges and automates other dart-platforms",
                     configuration: new(
                         prefix: "--",
                         delimitter: " ",
@@ -750,7 +799,7 @@ namespace autodarts_desktop.control
                     downloadUrl: autodartsWledDownloadUrl,
                     name: "autodarts-wled",
                     helpUrl: "https://github.com/lbormann/autodarts-wled",
-                    descriptionShort: "control wled installations",
+                    descriptionShort: "Controls WLED installations by autodarts-events",
                     configuration: new(
                         prefix: "-",
                         delimitter: " ",
@@ -766,7 +815,7 @@ namespace autodarts_desktop.control
                     downloadUrl: virtualDartsZoomDownloadUrl,
                     name: "virtual-darts-zoom",
                     helpUrl: "https://lehmann-bo.de/?p=28",
-                    descriptionShort: "zooms webcam image onto the thrown darts",
+                    descriptionShort: "Zooms webcam-image onto thrown darts",
                     runAsAdmin: true
                     );
                 apps.Add(virtualDartsZoom);
@@ -804,7 +853,7 @@ namespace autodarts_desktop.control
                     downloadUrl: autodartsGifDownloadUrl,
                     name: "autodarts-gif",
                     helpUrl: "https://github.com/lbormann/autodarts-gif",
-                    descriptionShort: "displays your favorite gifs",
+                    descriptionShort: "Displays images according to autodarts-events",
                     configuration: new(
                         prefix: "-",
                         delimitter: " ",
@@ -860,13 +909,12 @@ namespace autodarts_desktop.control
                         new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
                     };
 
-
                 AppDownloadable autodartsVoice =
                 new(
                     downloadUrl: autodartsVoiceDownloadUrl,
                     name: "autodarts-voice",
                     helpUrl: "https://github.com/lbormann/autodarts-voice",
-                    descriptionShort: "control autodarts by voice",
+                    descriptionShort: "Controls autodarts by using your voice",
                     configuration: new(
                         prefix: "-",
                         delimitter: " ",
@@ -882,7 +930,7 @@ namespace autodarts_desktop.control
                     downloadUrl: camLoaderDownloadUrl,
                     name: "cam-loader",
                     helpUrl: "https://github.com/lbormann/cam-loader",
-                    descriptionShort: "Saves and loads camera settings"
+                    descriptionShort: "Saves and loads settings for multiple cameras"
                     );
                 apps.Add(camLoader);
             }
@@ -1418,6 +1466,7 @@ namespace autodarts_desktop.control
                 if (autodartsClientDownloadUrl != null)
                 {
                     autodartsClient.DownloadUrl = autodartsClientDownloadUrl;
+                    autodartsClient.DescriptionShort = "Recognizes dart-positions";
                 }
                 else
                 {
@@ -1509,6 +1558,8 @@ namespace autodarts_desktop.control
                     {
                         autodartsCaller.Configuration.Arguments.Add(new(name: "DLN", type: "string", required: false, nameHuman: "-DLN / --downloads_name", section: "Downloads"));
                     }
+
+                    autodartsCaller.DescriptionShort = "Calls out thrown points";
                 }
                 else
                 {
@@ -1532,6 +1583,8 @@ namespace autodarts_desktop.control
                     {
                         autodartsExtern.Configuration.Arguments.Add(new(name: "lidarts_cam_fullscreen", type: "bool", required: false, nameHuman: "Camera fullscreen", section: "Lidarts"));
                     }
+
+                    autodartsExtern.DescriptionShort = "Bridges and automates other dart-platforms";
                 }
                 else
                 {
@@ -1549,6 +1602,7 @@ namespace autodarts_desktop.control
                 if (autodartsWledDownloadUrl != null)
                 {
                     autodartsWled.DownloadUrl = autodartsWledDownloadUrl;
+                    autodartsWled.DescriptionShort = "Controls WLED installations by autodarts-events";
                 }
                 else
                 {
@@ -1566,6 +1620,7 @@ namespace autodarts_desktop.control
                 if (virtualDartsZoomDownloadUrl != null)
                 {
                     virtualDartsZoom.DownloadUrl = virtualDartsZoomDownloadUrl;
+                    virtualDartsZoom.DescriptionShort = "Zooms webcam-image onto thrown darts";
                 }
                 else
                 {
@@ -1583,6 +1638,7 @@ namespace autodarts_desktop.control
                 if (autodartsGifDownloadUrl != null)
                 {
                     autodartsGif.DownloadUrl = autodartsGifDownloadUrl;
+                    autodartsGif.DescriptionShort = "Displays images according to autodarts-events";
                 }
                 else
                 {
@@ -1639,6 +1695,7 @@ namespace autodarts_desktop.control
                 if (camLoaderDownloadUrl != null)
                 {
                     camLoader.DownloadUrl = camLoaderDownloadUrl;
+                    camLoader.DescriptionShort = "Saves and loads settings for multiple cameras";
                 }
                 else
                 {
@@ -1709,6 +1766,8 @@ namespace autodarts_desktop.control
                     {
                         autodartsVoice.Configuration.Arguments.Add(new(name: "KCB", type: "string", required: false, isMulti: true, nameHuman: "keywords-calibrate-board", section: "Voice-Recognition"));
                     }
+
+                    autodartsVoice.DescriptionShort = "Controls autodarts by using your voice";
 
                 }
                 else

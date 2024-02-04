@@ -1,3 +1,9 @@
+## 0.10.5
+
+- improve app-descriptions
+- fix crash on exit config-window
+
+
 ## 0.10.4
 
 - fix permission-error on custom-app start
