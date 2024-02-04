@@ -548,6 +548,9 @@ namespace autodarts_desktop.control
                 }
             }
 
+            // make all apps chmod-able
+            foreach (var a in AppsInstallable) a.Chmod = true;
+
             // Add more migs..
         }
 
@@ -1774,6 +1777,10 @@ namespace autodarts_desktop.control
                 AppsDownloadable.Add(autodartsVoice);
 
             }
+
+
+            // make all apps chmod-able
+            foreach(var a in AppsDownloadable) a.Chmod = true;
 
 
             // Add more migs..

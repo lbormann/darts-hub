@@ -2,7 +2,7 @@
 
 - adapt app versions
 - fix permission-error on custom-app start
-- start app after an update
+- run app after an app-update
 
 
 ## 0.10.3
