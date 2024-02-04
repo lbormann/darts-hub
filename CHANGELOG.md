@@ -2,6 +2,7 @@
 
 - adapt app versions
 - fix permission-error on custom-app start
+- fix local app-start for unconfigured argument-string
 - run app after an app-update
 
 

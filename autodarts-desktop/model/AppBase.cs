@@ -202,7 +202,7 @@ namespace autodarts_desktop.model
 
             if (String.IsNullOrEmpty(executable)) return;
             var arguments = ComposeArguments(this, runtimeArguments);
-            if (arguments == null) return;
+            //if (arguments == null) return;
 
             eventHandled = new TaskCompletionSource<bool>();
 
@@ -247,7 +247,7 @@ namespace autodarts_desktop.model
                     }
                 };
                 process.StartInfo.FileName = executable;
-                process.StartInfo.Arguments = arguments;
+                process.StartInfo.Arguments = arguments == null ? String.Empty : arguments;
 
                 bool isUri = Uri.TryCreate(executable, UriKind.Absolute, out Uri uriResult)
                 && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
