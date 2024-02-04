@@ -25,7 +25,7 @@ namespace autodarts_desktop.model
         public string? DescriptionShort { get; private set; }
         public string? DescriptionLong { get; private set; }
         public bool RunAsAdmin { get; private set; }
-        public bool Chmod { get; private set; }
+        public bool Chmod { get; set; }
         public ProcessWindowStyle StartWindowState { get; private set; }
         public Configuration? Configuration { get; protected set; }
 
