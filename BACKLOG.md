@@ -4,3 +4,4 @@
 - add multi-language
 - add uvc-hack-(ext)
 - improve visuals
+- check win behavior for drives other than C

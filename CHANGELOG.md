@@ -1,3 +1,9 @@
+## 0.10.6
+
+- fix behaviour for offline-/timeout scenarios
+- run apps, ordered by custom-name
+
+
 ## 0.10.5
 
 - improve app-descriptions

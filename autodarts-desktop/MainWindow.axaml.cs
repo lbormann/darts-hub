@@ -258,7 +258,7 @@ namespace autodarts_desktop
 
         private async void Updater_ReleaseDownloadFailed(object? sender, ReleaseEventArgs e)
         {
-            await RenderMessageBox("", "Checking for new release failed! Please check your internet-connection and try again. " + e.Message, MessageBox.Avalonia.Enums.Icon.Error);
+            await RenderMessageBox("", "Check or update to new version failed: " + e.Message, MessageBox.Avalonia.Enums.Icon.Error);
             SetWait(false);
         }
 

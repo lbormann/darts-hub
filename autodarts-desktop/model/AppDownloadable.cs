@@ -66,7 +66,7 @@ namespace autodarts_desktop.model
 
 
         public override bool Install()
-        {
+        { 
             try
             {
                 var urlFileSize = Helper.GetFileSizeByUrl(DownloadUrl);
@@ -74,7 +74,7 @@ namespace autodarts_desktop.model
 
                 skipRun = localFileSize == -2 ? false : true;
 
-                //Console.WriteLine($"url-file: {urlFileSize}  - local-file: {downloadPathFile}");
+                // Console.WriteLine($"url-file: {urlFileSize}  - local-file: {downloadPathFile}");
                 if (urlFileSize == localFileSize) return false;
 
                 // removes existing app and creates a new directory
@@ -92,8 +92,7 @@ namespace autodarts_desktop.model
             }
             catch (Exception ex)
             {
-                Helper.RemoveDirectory(downloadPath);
-                OnDownloadFailed(new AppEventArgs(this, ex.Message));
+                OnDownloadFailed(new AppEventArgs(this, ex.Message)); 
             }
             return false;
         }

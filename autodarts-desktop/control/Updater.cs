@@ -19,7 +19,7 @@ namespace autodarts_desktop.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v0.10.5";
+        public static readonly string version = "v0.10.6";
         
 
 
@@ -52,6 +52,7 @@ namespace autodarts_desktop.control
             {
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Add("User-Agent", requestUserAgent);
+                client.Timeout = TimeSpan.FromSeconds(4);
                 var result = await client.GetStringAsync(appSourceUrlLatest);
                 int tagNameIndex = result.IndexOf("tag_name");
                 if (tagNameIndex == -1) throw new ArgumentException("github-tagName-Index not found");

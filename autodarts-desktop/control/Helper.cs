@@ -21,6 +21,7 @@ namespace autodarts_desktop.control
 
             var req = WebRequest.Create(url);
             req.Method = "HEAD";
+            req.Timeout = 4000;
             using (WebResponse resp = req.GetResponse())
             {
                 if (long.TryParse(resp.Headers.Get("Content-Length"), out long ContentLength))

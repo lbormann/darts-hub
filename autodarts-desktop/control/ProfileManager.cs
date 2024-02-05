@@ -243,7 +243,7 @@ namespace autodarts_desktop.control
             if (profile == null) return false;
 
             var allAppsRunning = true;
-            var appsTaggedForStart = profile.Apps.Where(x => x.Value.TaggedForStart);
+            var appsTaggedForStart = profile.Apps.Where(x => x.Value.TaggedForStart).OrderBy(x => x.Value.App.CustomName);
             foreach (KeyValuePair<string, ProfileState> app in appsTaggedForStart)
             {
                 // as here is no catch, apps-run stops when there is an error
