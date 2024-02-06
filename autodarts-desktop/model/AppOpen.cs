@@ -47,9 +47,10 @@ namespace autodarts_desktop.model
                                     arguments: new List<Argument>()
                                         {
                                         new (name: "file",
-                                            type: "string",
-                                            required: true,
-                                            value: String.IsNullOrEmpty(defaultValue) ? null : defaultValue)
+                                             nameHuman: "file/url",
+                                             type: "string",
+                                             required: true,
+                                             value: String.IsNullOrEmpty(defaultValue) ? null : defaultValue)
                                         }
                                     );
             }

@@ -1,7 +1,7 @@
 ## 0.10.7
 
-- run url/custom-app only once
-- add changelog on new-version-check
+- open url-based apps only once
+- add changelog on version-check
 - adapt app versions
 
 

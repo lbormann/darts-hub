@@ -23,7 +23,6 @@ namespace autodarts_desktop.control
         public static readonly string version = "v0.10.7";
         
 
-
         public static event EventHandler<ReleaseEventArgs>? NoNewReleaseFound;
         public static event EventHandler<ReleaseEventArgs>? NewReleaseFound;
         public static event EventHandler<ReleaseEventArgs>? ReleaseInstallInitialized;

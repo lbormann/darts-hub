@@ -41,7 +41,7 @@ namespace autodarts_desktop
         
 
 
-        // METHODES
+        // METHODS
 
         public MainWindow()
         {
@@ -588,6 +588,7 @@ namespace autodarts_desktop
                     tt.Foreground = Brushes.GhostWhite;
                     tt.BorderBrush = Brushes.White;
                     tt.Background = Brushes.RoyalBlue;
+                    //tt.Padding = new Thickness(30);
                     ToolTip.SetPlacement(checkBoxTagger, PlacementMode.Pointer);
                     ToolTip.SetTip(checkBoxTagger, tt);
                     ToolTip.SetShowDelay(checkBoxTagger, 750);

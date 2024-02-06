@@ -443,6 +443,17 @@ namespace autodarts_desktop.control
             }
 
 
+            foreach(var a in AppsOpen)
+            {
+                a.DescriptionShort = "Opens a file or url";
+                var file = a.Configuration.Arguments.Find(arg => arg.Name == "file");
+                if(file != null)
+                {
+                    file.NameHuman = "file/url";
+                }
+            }
+
+
             // Add more migs..
         }
 
