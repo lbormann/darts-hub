@@ -1,3 +1,10 @@
+## 0.10.7
+
+- run url/custom-app only once
+- add changelog on new-version-check
+- adapt app versions
+
+
 ## 0.10.6
 
 - fix behaviour for offline-/timeout scenarios

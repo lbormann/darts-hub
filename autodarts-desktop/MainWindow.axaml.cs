@@ -199,8 +199,8 @@ namespace autodarts_desktop
                 WindowIcon = Icon,
                 Width = width,
                 Height = height,
-                //MaxWidth = width,
-                //MaxHeight = height,
+                MaxWidth = width,
+                MaxHeight = height,
                 CanResize = (width == -1) ? false : true,
                 EscDefaultButton = ClickEnum.No,
                 EnterDefaultButton = ClickEnum.Yes,
@@ -230,7 +230,11 @@ namespace autodarts_desktop
                 var update = ButtonResult.No;
                 if (!configurator.Settings.SkipUpdateConfirmation)
                 {
-                    update = await RenderMessageBox("", $"New Version '{e.Version}' available! Do you want to update?", MessageBox.Avalonia.Enums.Icon.Warning, ButtonEnum.YesNo);
+                    update = await RenderMessageBox($"New Version '{e.Version}' available! Do you want to update?", 
+                                                    e.Message, 
+                                                    MessageBox.Avalonia.Enums.Icon.Plus, 
+                                                    ButtonEnum.YesNo, 
+                                                    480.0, 720.0);
                 }
                 else
                 {

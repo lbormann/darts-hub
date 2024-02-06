@@ -217,6 +217,9 @@ namespace autodarts_desktop.model
                 AppConsoleStdError = String.Empty;
                 AppMonitor = String.Empty;
 
+                bool isUri = Uri.TryCreate(executable, UriKind.Absolute, out Uri uriResult)
+                && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+
                 process = new Process();
                 process.StartInfo.WindowStyle = StartWindowState;
                 process.EnableRaisingEvents = true;
@@ -232,7 +235,9 @@ namespace autodarts_desktop.model
                     //    $"Elapsed time : {Math.Round((process.ExitTime - process.StartTime).TotalMilliseconds)}");
                     //Console.WriteLine("Process " + Name + " exited");
                     processId = defaultProcessId;
-                    AppRunningState = false;
+                    if (!isUri) {
+                        AppRunningState = false;
+                    }
                     eventHandled.TrySetResult(true);
                 };
                 process.OutputDataReceived += (sender, e) =>
@@ -254,8 +259,7 @@ namespace autodarts_desktop.model
                 process.StartInfo.FileName = executable;
                 process.StartInfo.Arguments = arguments == null ? String.Empty : arguments;
 
-                bool isUri = Uri.TryCreate(executable, UriKind.Absolute, out Uri uriResult)
-                && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+                
 
                 if (isUri)
                 {

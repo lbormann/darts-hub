@@ -6,6 +6,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using autodarts_desktop.model;
 
 namespace autodarts_desktop.control
@@ -19,7 +20,7 @@ namespace autodarts_desktop.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v0.10.6";
+        public static readonly string version = "v0.10.7";
         
 
 
@@ -33,8 +34,10 @@ namespace autodarts_desktop.control
         private static string latestRepoVersion = string.Empty;
         private const string appSourceUrl = "https://github.com/lbormann/autodarts-desktop/releases/download";
         private const string appSourceUrlLatest = "https://api.github.com/repos/lbormann/autodarts-desktop/releases/latest";
+        private const string appSourceUrlChangelog = "https://raw.githubusercontent.com/lbormann/autodarts-desktop/main/CHANGELOG.md";
         private const string appDestination = "updates";
         private const string requestUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36";
+        private const int requestTimeout = 4;
 
         private static string destinationPath = String.Empty;
         private static string downloadPath = String.Empty;
@@ -52,7 +55,7 @@ namespace autodarts_desktop.control
             {
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Add("User-Agent", requestUserAgent);
-                client.Timeout = TimeSpan.FromSeconds(4);
+                client.Timeout = TimeSpan.FromSeconds(requestTimeout);
                 var result = await client.GetStringAsync(appSourceUrlLatest);
                 int tagNameIndex = result.IndexOf("tag_name");
                 if (tagNameIndex == -1) throw new ArgumentException("github-tagName-Index not found");
@@ -65,7 +68,8 @@ namespace autodarts_desktop.control
                 if (version != latestGithubVersion)
                 {
                     latestRepoVersion = latestGithubVersion;
-                    OnNewReleaseFound(new ReleaseEventArgs(latestRepoVersion, string.Empty));
+                    var changelog = await GetChangelog();
+                    OnNewReleaseFound(new ReleaseEventArgs(latestRepoVersion, changelog));
                 }
                 else
                 {
@@ -115,6 +119,28 @@ namespace autodarts_desktop.control
         }
 
 
+        private static async Task<string> GetChangelog()
+        {
+            try
+            {
+                var changelog = String.Empty;
+                using (var client = new HttpClient())
+                {
+                    client.Timeout = TimeSpan.FromSeconds(requestTimeout);
+                    var response = await client.GetAsync(appSourceUrlChangelog);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        changelog = await response.Content.ReadAsStringAsync();
+                    }
+                }
+                return changelog;
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return string.Empty;
+        }
 
         private static string GetUpdateFileByOs()
         {
@@ -321,9 +347,7 @@ namespace autodarts_desktop.control
             }
         }
 
-
-
-        
+  
 
         private static void OnNoNewReleaseFound(ReleaseEventArgs e)
         {
