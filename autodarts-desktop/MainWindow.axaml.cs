@@ -230,9 +230,9 @@ namespace autodarts_desktop
                 var update = ButtonResult.No;
                 if (!configurator.Settings.SkipUpdateConfirmation)
                 {
-                    update = await RenderMessageBox($"New Version '{e.Version}' available! Do you want to update?", 
-                                                    e.Message, 
-                                                    MessageBox.Avalonia.Enums.Icon.Plus, 
+                    update = await RenderMessageBox($"Update available",
+                                                    $"New Version '{e.Version}' available! Do you want to update?\r\n\r\n\r\n------------------  CHANGELOG  ------------------\r\n\r\n{e.Message}", 
+                                                    MessageBox.Avalonia.Enums.Icon.Success, 
                                                     ButtonEnum.YesNo, 
                                                     480.0, 720.0);
                 }
