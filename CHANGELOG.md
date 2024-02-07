@@ -1,3 +1,8 @@
+## 0.10.8
+
+- adapt app versions
+
+
 ## 0.10.7
 
 - open url-based apps only once
