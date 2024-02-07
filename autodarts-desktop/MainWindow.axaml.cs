@@ -17,6 +17,9 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using System.Threading.Tasks;
+using MessageBox.Avalonia.BaseWindows.Base;
+using MessageBox.Avalonia.ViewModels;
+using MessageBox.Avalonia.Views;
 
 
 namespace autodarts_desktop
@@ -176,13 +179,13 @@ namespace autodarts_desktop
             });
         }
 
-
-        private Task<ButtonResult> RenderMessageBox(string title = "", 
+        private async Task<ButtonResult> RenderMessageBox(string title = "", 
                                                     string message = "",
                                                     Icon icon = MessageBox.Avalonia.Enums.Icon.None, 
                                                     ButtonEnum buttons = ButtonEnum.Ok,
                                                     double width = -1,
-                                                    double height = -1)
+                                                    double height = -1,
+                                                    int autoCloseDelayInSeconds = 0)
         {
             if (width < 0)
             {
@@ -192,8 +195,8 @@ namespace autodarts_desktop
             {
                 height = Height / 1.3;
             }
-           
-            return MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
+
+            var messageBoxParams = new MessageBoxStandardParams
             {
                 Icon = icon,
                 WindowIcon = Icon,
@@ -209,8 +212,22 @@ namespace autodarts_desktop
                 ButtonDefinitions = buttons,
                 ContentTitle = title,
                 ContentMessage = message
-            }).Show(this);
+            };
+
+            var msBoxStandardWindow = new MsBoxStandardWindow();
+            msBoxStandardWindow.DataContext = new MsBoxStandardViewModel(messageBoxParams, msBoxStandardWindow);
+            var msBoxWindowBase = new MsBoxWindowBase<MsBoxStandardWindow, ButtonResult>(msBoxStandardWindow);
+            var task = msBoxWindowBase.Show(this);
+
+            if (autoCloseDelayInSeconds > 0)
+            {
+                await Task.Delay(autoCloseDelayInSeconds * 1000);
+                msBoxStandardWindow.ButtonResult = ButtonResult.No;
+                msBoxStandardWindow.CloseSafe();
+            }
+            return await task;
         }
+        
 
 
 
@@ -231,7 +248,7 @@ namespace autodarts_desktop
                 if (!configurator.Settings.SkipUpdateConfirmation)
                 {
                     update = await RenderMessageBox($"Update available",
-                                                    $"New Version '{e.Version}' available! Do you want to update?\r\n\r\n\r\n------------------  CHANGELOG  ------------------\r\n\r\n{e.Message}", 
+                                                    $"New Version '{e.Version}' available!\r\n\r\nDO YOU WANT TO UPDATE?\r\n\r\n\r\n------------------  CHANGELOG  ------------------\r\n\r\n{e.Message}", 
                                                     MessageBox.Avalonia.Enums.Icon.Success, 
                                                     ButtonEnum.YesNo, 
                                                     480.0, 720.0);
@@ -251,7 +268,14 @@ namespace autodarts_desktop
                         await RenderMessageBox("", "Update to new version failed: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
                     }
                 }
-                SetWait(false);
+                else
+                {
+                    await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+                    {
+                        SetWait(false);
+                        if (configurator.Settings.StartProfileOnStart) RunSelectedProfile();
+                    });
+                }
             });
         }
 
@@ -262,8 +286,12 @@ namespace autodarts_desktop
 
         private async void Updater_ReleaseDownloadFailed(object? sender, ReleaseEventArgs e)
         {
-            await RenderMessageBox("", "Check or update to new version failed: " + e.Message, MessageBox.Avalonia.Enums.Icon.Error);
-            SetWait(false);
+            await RenderMessageBox("", "Check or update to new version failed: " + e.Message, MessageBox.Avalonia.Enums.Icon.Error, autoCloseDelayInSeconds: 5);
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                SetWait(false);
+                if (configurator.Settings.StartProfileOnStart) RunSelectedProfile();
+            });
         }
 
         private void Updater_ReleaseDownloadProgressed(object? sender, DownloadProgressChangedEventArgs e)

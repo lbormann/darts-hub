@@ -2,6 +2,7 @@
 
 - open url-based apps only once
 - add changelog on version-check
+- add expiring messages
 - adapt app versions
 
 
