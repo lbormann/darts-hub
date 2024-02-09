@@ -1,3 +1,9 @@
+## 0.10.9
+
+- add button to view changelog
+- adapt app versions
+
+
 ## 0.10.8
 
 - adapt app versions

@@ -5,6 +5,7 @@ using System;
 using MessageBox.Avalonia;
 using Avalonia;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using MessageBox.Avalonia.DTO;
 using MessageBox.Avalonia.Enums;
 
@@ -15,7 +16,7 @@ namespace autodarts_desktop
         // ATTRIBUTES
         private const string donationAdress = "bc1qr7wsvmmgaj6dle8gae2dl0dcxu5yh8vqlv34x4";
         private Configurator configurator;
-
+        private string changelogText;
 
         // METHODES
         public AboutWindow()
@@ -45,7 +46,7 @@ namespace autodarts_desktop
             configurator.SaveSettings();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private async void Button_Click(object sender, RoutedEventArgs e)
         {
             Button helpButton = sender as Button;
 
@@ -78,6 +79,30 @@ namespace autodarts_desktop
                         ButtonDefinitions = ButtonEnum.Ok,
                         ContentMessage = $"{donationAdress} copied to clipboard - Thank you!"
                     }).ShowDialog(this);
+                    break;
+                case "changelog":
+                    changelogText = await Updater.GetChangelog();
+                    if(String.IsNullOrEmpty(changelogText)) changelogText = "Changelog not available. Please try again later.";
+           
+                    double width = Width + Width / 2;
+                    double height = Height * 2;
+                    MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
+                    {
+                        Icon = MessageBox.Avalonia.Enums.Icon.None,
+                        WindowIcon = Icon,
+                        Width = width,
+                        Height = height,
+                        MaxWidth = width,
+                        MaxHeight = height,
+                        CanResize = false,
+                        EscDefaultButton = ClickEnum.No,
+                        EnterDefaultButton = ClickEnum.Yes,
+                        SystemDecorations = SystemDecorations.Full,
+                        WindowStartupLocation = WindowStartupLocation,
+                        ButtonDefinitions = ButtonEnum.Ok,
+                        ContentMessage = changelogText
+                    }).ShowDialog(this);
+                    
                     break;
             }
         }

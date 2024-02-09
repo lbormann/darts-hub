@@ -20,7 +20,7 @@ namespace autodarts_desktop.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v0.10.8";
+        public static readonly string version = "v0.10.9";
         
 
         public static event EventHandler<ReleaseEventArgs>? NoNewReleaseFound;
@@ -46,7 +46,6 @@ namespace autodarts_desktop.control
 
 
         // METHODS
-
 
         public static async void CheckNewVersion()
         {
@@ -117,8 +116,7 @@ namespace autodarts_desktop.control
             }
         }
 
-
-        private static async Task<string> GetChangelog()
+        public static async Task<string> GetChangelog()
         {
             try
             {
@@ -140,6 +138,8 @@ namespace autodarts_desktop.control
             }
             return string.Empty;
         }
+
+
 
         private static string GetUpdateFileByOs()
         {

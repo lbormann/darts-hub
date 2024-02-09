@@ -24,7 +24,7 @@
 
 		<Label FontSize="24" FontWeight="Bold" Content="Autodarts-Desktop" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.422,0.449" Foreground="White"/>
 		<Label x:Name="appVersion" Content="v0.0.0" HorizontalAlignment="Left" Margin="12,40,0,0" VerticalAlignment="Top" FontSize="12" FontWeight="Bold" Foreground="White"/>
-		<CheckBox x:Name="CheckBoxSkipUpdateConfirmation" Content="Skip update-confirmation" HorizontalAlignment="Left" Margin="12,55,0,0" VerticalAlignment="Top" Foreground="White"/>
+		<CheckBox x:Name="CheckBoxSkipUpdateConfirmation" Content="Skip update-confirmation" HorizontalAlignment="Left" Margin="12,60,0,0" VerticalAlignment="Top" Foreground="White"/>
 
 		<Label Content="Developed and maintained by:" HorizontalAlignment="Left" Margin="10,113,0,0" VerticalAlignment="Top" Foreground="White"/>
 		<Label Content="wusaaa" HorizontalAlignment="Left" Margin="23,140,0,0" VerticalAlignment="Top" FontSize="18" FontWeight="Bold" Foreground="White"/>
@@ -49,6 +49,10 @@
 
 		<Button ToolTip.Tip="Found a bug? Please create an issue on github." x:Name="bug" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left" Margin="305,307,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
 			<Image Width="32" Height="32" Source="/Assets/bug.png"></Image>
+		</Button>
+
+		<Button ToolTip.Tip="Get to know last changes?" x:Name="changelog" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Right" Margin="305,10,10,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
+			<Image Width="32" Height="32" Source="/Assets/changelog.png"></Image>
 		</Button>
 
 		<Separator RenderTransformOrigin="0.5,0.8" Margin="0,-6,0,10" Background="{x:Null}">
