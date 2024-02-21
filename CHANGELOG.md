@@ -1,3 +1,8 @@
+## 0.10.17
+
+- adapt app versions
+
+
 ## 0.10.16
 
 - add possibility to exclude an app for updates by placing an (empty) file with name "my_version_" in respective app dir
