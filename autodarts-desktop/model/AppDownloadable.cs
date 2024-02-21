@@ -66,7 +66,19 @@ namespace autodarts_desktop.model
 
 
         public override bool Install()
-        { 
+        {
+            try
+            {
+                if (Helper.DirectoryOrFileStartsWith(downloadPath, "my_version"))
+                {
+                    return false;
+                }
+            }
+            catch ( Exception ex)
+            {
+                return false;
+            }
+
             try
             {
                 var urlFileSize = Helper.GetFileSizeByUrl(DownloadUrl);

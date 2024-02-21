@@ -14,6 +14,27 @@ namespace autodarts_desktop.control
     /// </summary>
     public static class Helper
     {
+        public static bool DirectoryOrFileStartsWith(string path, string searchString)
+        {
+            if (Directory.Exists(path) && Path.GetFileName(path).StartsWith(searchString))
+            {
+                return true;
+            }
+
+            if (Directory.Exists(path))
+            {
+                string[] files = Directory.GetFiles(path);
+                foreach (string file in files)
+                {
+                    if (Path.GetFileName(file).StartsWith(searchString))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
 
         public static long GetFileSizeByUrl(string url)
         {
