@@ -129,22 +129,13 @@ namespace autodarts_desktop
             if (selectedProfile == null) return;
             selectedProfile.IsTaggedForStart = true;
             RenderProfile();
+            Save();
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void CheckBoxStartProfileOnProgramStartChanged(object sender, RoutedEventArgs e)
         {
             configurator.Settings.StartProfileOnStart = (bool)CheckBoxStartProfileOnProgramStart.IsChecked;
             configurator.SaveSettings();
-
-            try
-            {
-                profileManager.StoreApps();
-                profileManager.CloseApps();
-            }
-            catch (Exception ex)
-            {
-                RenderMessageBox("", "Error occured: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
-            }
         }
 
         private void WaitingText_PointerPressed(object sender, PointerPressedEventArgs e)
@@ -350,6 +341,17 @@ namespace autodarts_desktop
             WindowState = WindowState.Normal;
         }
 
+        private void Save()
+        {
+            try
+            {
+                profileManager.StoreApps();
+            }
+            catch (Exception ex)
+            {
+                RenderMessageBox("", "Error occured: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
+            }
+        }
 
         private async void RunSelectedProfile(bool minimize = true)
         {
@@ -519,8 +521,10 @@ namespace autodarts_desktop
                     WindowState = WindowState.Minimized;
                     await new SettingsWindow(profileManager, app.Value.App).ShowDialog(this);
                     if (app.Value.App.IsConfigurationChanged()) app.Value.App.ReRun(app.Value.RuntimeArguments);
+                    Save();
                     scroller.ScrollToHome();
                     WindowState = WindowState.Normal;
+
                 };
                 GridMain.Children.Add(buttonConfiguration);
                 selectedProfileElements.Add(buttonConfiguration);

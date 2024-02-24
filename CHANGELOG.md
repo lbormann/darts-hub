@@ -1,5 +1,6 @@
 ## 0.10.18
 
+- fix possible config destroying on system shutdown
 - adapt app versions
 
 

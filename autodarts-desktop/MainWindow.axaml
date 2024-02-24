@@ -12,7 +12,6 @@
 		MaxHeight="720"
 		CanResize="False"
 		WindowStartupLocation="CenterScreen"
-		Closing="Window_Closing"
 		>
 
 	<Window.Background>
@@ -42,7 +41,7 @@
 				<Image x:Name="darts_png" Width="60" Height="60" Source="/Assets/darts.png" Stretch="Fill"/>
 			</Button>
 
-			<CheckBox x:Name="CheckBoxStartProfileOnProgramStart" Content="Start with App" HorizontalAlignment="Left" Margin="285,40,0,0" VerticalAlignment="Top" Foreground="White"/>
+			<CheckBox x:Name="CheckBoxStartProfileOnProgramStart" Checked="CheckBoxStartProfileOnProgramStartChanged" Unchecked="CheckBoxStartProfileOnProgramStartChanged" Content="Start with App" HorizontalAlignment="Left" Margin="285,40,0,0" VerticalAlignment="Top" Foreground="White"/>
 
 			<TextBlock x:Name="WaitingText"
                         Text="Please wait.."

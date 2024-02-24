@@ -7,6 +7,25 @@ It automatically downloads and updates apps, provides configuration windows, and
 If you are looking for an video explaination (german), have a look at https://www.youtube.com/watch?v=L5qx0afyXKs
 
 
+List of Apps managed by ADD:
+
+* autodarts-client
+* autodarts-caller
+* autodarts-extern
+* autodarts-wled
+* autodarts-gif
+* autodarts-voice
+* cam-loader
+* droid-cam
+* epoc-cam
+* virtual-darts-zoom
+* dartboards-client
+* custom-web-url-*
+* custom-*
+
+Disclaimer: Some apps won't be visible in your setup. The reason for that is that some apps are not available for your os or particular profile selected.
+
+
 ## COMPATIBILITY
 
 Autodarts-desktop supports all major platforms:
@@ -68,6 +87,10 @@ If your done filling out configuration fields just close the dialog window to sa
 ### Custom-apps
 
 Imagine you could start your favorite apps along autodarts-*. That is what custom-apps are made for. As an example: Add OBS, to stream an autodarts-game.. or trigger a Home-Assistant-hook to turn on your AD-Build.. or just some lights. 
+
+### Specific App-version
+
+If you would like to stay on specific app-version, create an (empty) file called "my_version" in particular app dir. That file will block future app-updates, until you remove the file.
 
 
 ## Resources

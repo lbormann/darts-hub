@@ -12,7 +12,6 @@
 		MaxHeight="360"
 		WindowStartupLocation="CenterScreen"
 		CanResize="False"
-		Closing="AboutWindow_Closing"
 		>
 	
 	
@@ -24,7 +23,7 @@
 
 		<Label FontSize="24" FontWeight="Bold" Content="Autodarts-Desktop" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.422,0.449" Foreground="White"/>
 		<Label x:Name="appVersion" Content="v0.0.0" HorizontalAlignment="Left" Margin="12,40,0,0" VerticalAlignment="Top" FontSize="12" FontWeight="Bold" Foreground="White"/>
-		<CheckBox x:Name="CheckBoxSkipUpdateConfirmation" Content="Skip update-confirmation" HorizontalAlignment="Left" Margin="12,60,0,0" VerticalAlignment="Top" Foreground="White"/>
+		<CheckBox x:Name="CheckBoxSkipUpdateConfirmation" Checked="CheckBoxSkipUpdateConfirmationChanged" Unchecked="CheckBoxSkipUpdateConfirmationChanged" Content="Skip update-confirmation" HorizontalAlignment="Left" Margin="12,60,0,0" VerticalAlignment="Top" Foreground="White"/>
 
 		<Label Content="Developed and maintained by:" HorizontalAlignment="Left" Margin="10,113,0,0" VerticalAlignment="Top" Foreground="White"/>
 		<Label Content="wusaaa" HorizontalAlignment="Left" Margin="23,140,0,0" VerticalAlignment="Top" FontSize="18" FontWeight="Bold" Foreground="White"/>

@@ -40,7 +40,7 @@ namespace autodarts_desktop
             CheckBoxSkipUpdateConfirmation.IsChecked = configurator.Settings.SkipUpdateConfirmation;
         }
 
-        private void AboutWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void CheckBoxSkipUpdateConfirmationChanged(object sender, RoutedEventArgs e)
         {
             configurator.Settings.SkipUpdateConfirmation = (bool)CheckBoxSkipUpdateConfirmation.IsChecked;
             configurator.SaveSettings();
