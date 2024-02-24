@@ -557,6 +557,7 @@ namespace autodarts_desktop
                 {
                     checkBoxTagger.Foreground = Brushes.White;
                     checkBoxTagger.FontWeight = FontWeight.Bold;
+                    Save();
                 };
                 checkBoxTagger.Unchecked += (s, e) =>
                 {

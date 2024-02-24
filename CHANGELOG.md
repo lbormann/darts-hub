@@ -1,3 +1,8 @@
+## 0.10.20
+
+- hotfix: save configuration when needed
+
+
 ## 0.10.19
 
 - hotfix: close apps + save configuration when needed
