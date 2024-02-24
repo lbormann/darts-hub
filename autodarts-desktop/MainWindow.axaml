@@ -12,6 +12,7 @@
 		MaxHeight="720"
 		CanResize="False"
 		WindowStartupLocation="CenterScreen"
+		Closing="Window_Closing"
 		>
 
 	<Window.Background>

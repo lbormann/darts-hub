@@ -1,3 +1,8 @@
+## 0.10.19
+
+- hotfix: close apps + save configuration when needed
+
+
 ## 0.10.18
 
 - fix possible config destroying on system shutdown

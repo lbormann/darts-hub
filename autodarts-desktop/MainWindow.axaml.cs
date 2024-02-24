@@ -110,6 +110,18 @@ namespace autodarts_desktop
             }
         }
 
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            try
+            {
+                profileManager.CloseApps();
+            }
+            catch (Exception ex)
+            {
+                RenderMessageBox("", "Error occured: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
+            }
+        }
+
         private void Buttonstart_Click(object sender, RoutedEventArgs e)
         {
             RunSelectedProfile(true);
@@ -557,6 +569,7 @@ namespace autodarts_desktop
                     {
                         checkBoxTagger.IsChecked = true;
                     }
+                    Save();
                 };
                 checkBoxTagger.PointerReleased += (s, e) =>
                 {
@@ -591,6 +604,7 @@ namespace autodarts_desktop
                         appProfile.App.CustomName = textBox.Text;
                         parent.Content = textBox.Text;
                         parent.IsVisible = true;
+                        Save();
                     }
                     else if (e.Key == Key.Escape)
                     {
