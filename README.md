@@ -9,7 +9,7 @@ If you are looking for an video explaination (german), have a look at https://ww
 
 List of Apps managed by ADD:
 
-* autodarts-client
+* [autodarts-client](https://github.com/autodarts/releases)
 * autodarts-caller
 * autodarts-extern
 * autodarts-wled
