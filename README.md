@@ -97,7 +97,7 @@ If you would like to stay on specific app-version, create an (empty) file called
 
 ### App isn't starting at all
 
-If you're running autodarts-desktop on windows the affected app is probably classified as a virus. The easiest way to verify this is to close autodarts-desktop. After that, add the main folder (extraction folder after download) as an exception for screening. Restart ADD and verfiy if the app is startable.
+If you're running autodarts-desktop on windows the affected app is probably classified as a virus. The easiest way to verify this is to close ADD. After that, add the main folder (extraction folder after download) as an exception for screening. Restart ADD and try to start the app.
 
 
 ## Resources
