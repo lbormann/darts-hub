@@ -10,16 +10,16 @@ If you are looking for an video explaination (german), have a look at https://ww
 List of Apps managed by ADD:
 
 * [autodarts-client](https://github.com/autodarts/releases)
-* autodarts-caller
-* autodarts-extern
-* autodarts-wled
-* autodarts-gif
-* autodarts-voice
-* cam-loader
-* droid-cam
-* epoc-cam
-* virtual-darts-zoom
-* dartboards-client
+* [autodarts-caller](https://github.com/lbormann/autodarts-caller)
+* [autodarts-extern](https://github.com/lbormann/autodarts-extern)
+* [autodarts-wled](https://github.com/lbormann/autodarts-wled)
+* [autodarts-gif](https://github.com/lbormann/autodarts-gif)
+* [autodarts-voice](https://github.com/lbormann/autodarts-voice)
+* [cam-loader](https://github.com/lbormann/cam-loader)
+* [droid-cam](https://www.dev47apps.com)
+* [epoc-cam](https://www.elgato.com/de/epoccam)
+* [virtual-darts-zoom](https://lehmann-bo.de/?p=28)
+* [dartboards-client](https://dartboards.online/client)
 * custom-web-url-*
 * custom-*
 
