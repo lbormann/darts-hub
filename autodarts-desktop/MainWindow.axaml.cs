@@ -557,6 +557,7 @@ namespace autodarts_desktop
                 {
                     checkBoxTagger.Foreground = Brushes.White;
                     checkBoxTagger.FontWeight = FontWeight.Bold;
+                    appProfile.TaggedForStart = true;
                     Save();
                 };
                 checkBoxTagger.Unchecked += (s, e) =>
@@ -565,10 +566,12 @@ namespace autodarts_desktop
                     {
                         checkBoxTagger.Foreground = Brushes.Gray;
                         checkBoxTagger.FontWeight = FontWeight.Normal;
+                        appProfile.TaggedForStart = false;
                     }
                     else
                     {
                         checkBoxTagger.IsChecked = true;
+                        appProfile.TaggedForStart = false;
                     }
                     Save();
                 };

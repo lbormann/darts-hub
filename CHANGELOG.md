@@ -1,3 +1,8 @@
+## 0.10.21
+
+- adapt app versions
+
+
 ## 0.10.20
 
 - hotfix: save configuration when needed

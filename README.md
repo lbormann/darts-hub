@@ -23,7 +23,7 @@ List of Apps managed by ADD:
 * custom-web-url-*
 * custom-*
 
-Disclaimer: Some apps won't be visible in your setup. The reason for that is that some apps are not available for your os or particular profile selected.
+Disclaimer: Some apps could not be visible in your setup. The reason for that is that some apps are not available for your os or selected profile.
 
 
 ## COMPATIBILITY
@@ -91,6 +91,13 @@ Imagine you could start your favorite apps along autodarts-*. That is what custo
 ### Specific App-version
 
 If you would like to stay on specific app-version, create an (empty) file called "my_version" in particular app dir. That file will block future app-updates, until you remove the file.
+
+
+## Troubleshooting
+
+### App isn't starting at all
+
+If you're running autodarts-desktop on windows the affected app is probably classified as a virus. The easiest way to verify this is to close autodarts-desktop. After that, add the main folder (extraction folder after download) as an exception for screening. Restart ADD and verfiy if the app is startable.
 
 
 ## Resources
