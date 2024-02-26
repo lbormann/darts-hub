@@ -101,7 +101,7 @@ Remove the folder called "autodarts-desktop" in your home directory.
 
 
 
-## Usage
+## USAGE
 
 ### Basics
 
@@ -126,19 +126,19 @@ Imagine you could start your favorite apps along autodarts-*. That is what custo
 If you would like to stay on specific app-version, create an (empty) file called "my_version" in particular app dir. That file will block future app-updates, until you remove the file.
 
 
-## Troubleshooting
+## TROUBLESHOOTING
 
 ### App isn't starting at all
 
 If you're running autodarts-desktop on windows the affected app is probably classified as a virus. The easiest way to verify this is to close ADD. After that, add the main folder (extraction folder after download) as an exception for screening. Restart ADD and try to start the app.
 
-## Contributing
+## CONTRIBUTING
 
 If you're a developer and you just finished your new extension, but wonder how can it be integrated in ADD - just send me a message on discord ;)
 
 
 
-## Resources
+## RESOURCES
 
 - Icon by <a href="https://freeicons.io/profile/8178">Ognjen Vukomanov</a> on <a href="https://freeicons.io">freeicons.io</a>
 - Icon by <a href="https://freeicons.io/profile/823">Muhammad Haq</a> on <a href="https://freeicons.io">freeicons.io</a>                             
