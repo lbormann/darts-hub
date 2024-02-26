@@ -72,7 +72,7 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
     systemctl disable autodarts.service
     ```
 
-    MacOS: By the time you also need to disable os-app-verification:
+    MacOS: disable os-app-verification:
 
     ```bash
     sudo spctl --master-disable
@@ -100,9 +100,18 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
 
 ### Step-by-step (Linux, macOS, Windows)
 
-Remove the folder called "autodarts-desktop" in your home directory.
+1. Remove the folder called "autodarts-desktop" in your home directory.
+2. Execute the following commands in a terminal, line by line (ONLY for Linux and MacOS):
 
+   ```bash
+   systemctl enable autodarts.service
+   ```
 
+   MacOS: enable os-app-verification:
+
+   ```bash
+   sudo spctl --master-enable
+   ```
 
 
 ## USAGE
