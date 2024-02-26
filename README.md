@@ -46,7 +46,7 @@ Autodarts-desktop is built with Avalonia. check it out: https://docs.avaloniaui.
 
 ## HOW TO RUN
 
-### Single-Comand (Linux, MacOS)
+### Single-Command (Linux, MacOS)
 
 You can install autodarts-desktop on a Linux system by using this single command.
 It will automatically download the latest version.
@@ -143,7 +143,7 @@ If you would like to stay on specific app-version, create an (empty) file called
 
 ### App isn't starting at all
 
-If you're running autodarts-desktop on windows the affected app is probably classified as a virus. The easiest way to verify this is to close ADD. After that, add the main folder (extraction folder after download) as an exception for screening. Restart ADD and try to start the app.
+If you're running autodarts-desktop on windows the affected app is probably classified as a virus. The easiest way to verify this is to close ADD. After that, add the main folder (autodarts-desktop) as an exception for screening. Restart ADD and try to start the app.
 
 ## CONTRIBUTING
 
