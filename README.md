@@ -68,6 +68,8 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
         
     ```bash
     chmod +x ~/autodarts-desktop/autodarts-desktop
+    ```
+    ```bash
     systemctl disable autodarts.service
     ```
 
