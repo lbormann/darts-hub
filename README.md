@@ -49,7 +49,7 @@ Autodarts-desktop is built with Avalonia. check it out: https://docs.avaloniaui.
 ### Single-Command (Linux, MacOS)
 
 You can install autodarts-desktop on a Linux system by using this single command.
-It will automatically download the latest version.
+It will automatically download the latest version and configures it for autostart.
 You might have to install `curl` on your machine beforehand.
 You can do so with `sudo apt install curl`.
 
