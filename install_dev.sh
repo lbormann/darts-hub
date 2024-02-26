@@ -1,13 +1,11 @@
 #!/bin/bash
 
 add_to_autostart() {
-    echo "Trying to add Autodarts-desktop to autostart."
-
-    echo "Disable autodarts.service."
+    echo "Trying to disable autodarts.service."
     systemctl disable autodarts.service
 
+    echo "Trying to add Autodarts-desktop to autostart."
     SCRIPT_DIR="~/autodarts-desktop"
-
     case "$PLATFORM" in
         "linux")
             if [[ -d "$HOME/.config/autostart" ]]; then
@@ -32,10 +30,10 @@ add_to_autostart() {
 }
 
 remove_from_autostart() {
-    echo "Trying to remove Autodarts-desktop from autostart."
-
+    echo "Trying to enable autodarts.service."
     systemctl enable autodarts.service
 
+    echo "Trying to remove Autodarts-desktop from autostart."
     case "$PLATFORM" in
         "linux")
             if [[ -f "$HOME/.config/autostart/autodarts-desktop.desktop" ]]; then
