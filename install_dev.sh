@@ -5,28 +5,28 @@ add_to_autostart() {
     systemctl disable autodarts.service
 
     echo "Trying to add Autodarts-desktop to autostart."
-    SCRIPT_DIR="~/autodarts-desktop"
     case "$PLATFORM" in
         "linux")
-            if [[ -d "$HOME/.config/autostart" ]]; then
+            mkdir -p ~/.config/autostart
+            sudo nano ~/.config/autostart/autodartscaller.desktop
+            if [[ -d "~/.config/autostart" ]]; then
                 echo "[Desktop Entry]
                 Type=Application
                 Name=Autodarts-desktop
-                Exec=$SCRIPT_DIR/autodarts-desktop
+                Exec=~/autodarts-desktop/autodarts-desktop
                 Terminal=false
-                X-GNOME-Autostart-enabled=true" > "$HOME/.config/autostart/autodarts-desktop.desktop"
+                X-GNOME-Autostart-enabled=true" > "~/.config/autostart/autodarts-desktop.desktop"
             else
                 echo "Error: Autostart directory not found. Cannot add Autodarts-desktop to autostart."
             fi
             ;;
         "macOS")
-            osascript -e "tell application \"System Events\" to make new login item at end with properties {path:\"$SCRIPT_DIR/autodarts-desktop\", hidden:false}" > /dev/null
+            osascript -e "tell application \"System Events\" to make new login item at end with properties {path:\"~/autodarts-desktop/autodarts-desktop\", hidden:false}" > /dev/null
             ;;
         *)
             echo "Platform is not 'linux' or 'macOS', and hence autostart configuration is not supported by this script."
             ;;
     esac
-    echo "Autodarts-desktop added to autostart."
 }
 
 remove_from_autostart() {
@@ -36,20 +36,19 @@ remove_from_autostart() {
     echo "Trying to remove Autodarts-desktop from autostart."
     case "$PLATFORM" in
         "linux")
-            if [[ -f "$HOME/.config/autostart/autodarts-desktop.desktop" ]]; then
-                rm "$HOME/.config/autostart/autodarts-desktop.desktop"
+            if [[ -f "~/.config/autostart/autodarts-desktop.desktop" ]]; then
+                rm "~/.config/autostart/autodarts-desktop.desktop"
             else
                 echo "Autodarts-desktop is not in autostart. Nothing to remove."
             fi
             ;;
         "macOS")
-            osascript -e "tell application \"System Events\" to delete login item \"autodarts-desktop\"" > /dev/null
+            osascript -e "tell application \"System Events\" to delete login item \"~/autodarts-desktop/autodarts-desktop\"" > /dev/null
             ;;
         *)
             echo "Platform is not 'linux' or 'macOS', and hence autostart configuration is not supported by this script."
             ;;
     esac
-    echo "Autodarts-desktop removed from autostart."
 }
 
 
