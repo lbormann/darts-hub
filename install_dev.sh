@@ -14,6 +14,7 @@ add_to_autostart() {
             Name=Autodarts-desktop
             Exec="${HOME}/autodarts-desktop/autodarts-desktop"
             Terminal=false
+            Hidden=false
             NoDisplay=false
             X-GNOME-Autostart-enabled=true
             X-GNOME-Autostart-Delay=8" > "${HOME}/.config/autostart/autodarts-desktop.desktop"
