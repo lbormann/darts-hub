@@ -8,7 +8,6 @@ add_to_autostart() {
     case "$PLATFORM" in
         "linux")
             mkdir -p ~/.config/autostart
-            sudo nano ~/.config/autostart/autodartscaller.desktop
             if [[ -d "~/.config/autostart" ]]; then
                 echo "[Desktop Entry]
                 Type=Application
