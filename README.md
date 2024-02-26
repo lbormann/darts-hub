@@ -119,15 +119,15 @@ You can also rename every app: use a right click for that; you can always return
 
 Some Apps have mandatory configuration fields to work properly. Those fields are highlighted by a red colored frame. You can also spot a mandatory field by asterik character (*) at the end of the particular field-name. To reset a field-value click on the rubber-symbol.
 For an extensive App explaintion and its configuration click the question mark-symbol in the upper-right corner.
-If your done filling out configuration fields just close the dialog window to save configuration. In case your app is still running, you need to close it first to apply current configuration. 
+If your done filling out configuration fields just close the dialog window to save configuration. In case the app is still running, ADD will automatically restart it to apply current configuration. 
 
 ### Custom-apps
 
-Imagine you could start your favorite apps along autodarts-*. That is what custom-apps are made for. As an example: Add OBS, to stream an autodarts-game.. or trigger a Home-Assistant-hook to turn on your AD-Build.. or just some lights. 
+Imagine you could start your favorite apps along autodarts-*. That is what custom-apps are made for. As an example: You could start OBS, to stream an autodarts-game.. or trigger a Home-Assistant-hook to turn on your AD-Build.. or just some lights. 
 
 ### Specific App-version
 
-If you would like to stay on specific app-version, create an (empty) file called "my_version" in particular app dir. That file will block future app-updates, until you remove the file.
+If you would like to stay on specific app-version, create an (empty) file called "my_version" in particular app dir. That file will stop future app-updates, until you remove the file.
 
 
 ## TROUBLESHOOTING
