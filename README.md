@@ -63,8 +63,7 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
 1) Create a new folder called "autodarts-desktop" in your home directory.
 2) Download the appropiate zip-file. You can find it in the release section.
 3) Extract the zip-file to the new folder "autodarts-desktop".
-4) Execute the following commands, line by line (ONLY for Linux and MacOS):
-    Open a terminal and type:
+4) Execute the following commands in a terminal, line by line (ONLY for Linux and MacOS):
         
     ```bash
     chmod +x ~/autodarts-desktop/autodarts-desktop
