@@ -65,13 +65,17 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
 3) Extract the zip-file to the new folder "autodarts-desktop".
 4) Execute the following commands, line by line (ONLY for Linux and MacOS):
     Open a terminal and type:
-
-        chmod +x ~/autodarts-desktop/autodarts-desktop
-        systemctl disable autodarts.service
+        
+    ```bash
+    chmod +x ~/autodarts-desktop/autodarts-desktop
+    systemctl disable autodarts.service
+    ```
 
     MacOS: By the time you also need to disable os-app-verification:
 
-        sudo spctl --master-disable 
+    ```bash
+    sudo spctl --master-disable
+    ```
 
     Unfortunately I couldn't find a proper way without doing this.
     Moreover make sure you do initial installation-steps for macos in case you want to use autodarts-client (https://docs.autodarts.io/getting-started/installation/)
