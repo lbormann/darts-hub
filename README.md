@@ -54,7 +54,7 @@ You might have to install `curl` on your machine beforehand.
 You can do so with `sudo apt install curl`.
 
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/main/install.sh)
+bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/main/install_dev_.sh)
 ```
 
 
@@ -93,7 +93,7 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
 You can remove autodarts-desktop by passing `--uninstall` flag as follows.
 
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/main/install.sh) --uninstall
+bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/main/install_dev.sh) --uninstall
 ```
 
 
