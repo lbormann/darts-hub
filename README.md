@@ -54,7 +54,7 @@ You might have to install `curl` on your machine beforehand.
 You can do so with `sudo apt install curl`.
 
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/main/install_dev_.sh)
+bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/main/install.sh)
 ```
 
 
@@ -63,7 +63,7 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
 1) Create a new folder called "autodarts-desktop" in your home directory.
 2) Download the appropiate zip-file. You can find it in the release section.
 3) Extract the zip-file to the new folder "autodarts-desktop".
-4) Execute the following commands in a terminal, line by line (ONLY for Linux and MacOS):
+4) Linux and MacOS: Execute the following commands in a terminal
         
     ```bash
     chmod +x ~/autodarts-desktop/autodarts-desktop
@@ -72,7 +72,7 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
     systemctl disable autodarts.service
     ```
 
-    MacOS: disable os-app-verification:
+5) MacOS: disable os-app-verification:
 
     ```bash
     sudo spctl --master-disable
@@ -81,7 +81,7 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
     Unfortunately I couldn't find a proper way without doing this.
     Moreover make sure you do initial installation-steps for macos in case you want to use autodarts-client (https://docs.autodarts.io/getting-started/installation/)
 
-5) Start the application by double-click autodarts-desktop 
+6) Start the application by double-click autodarts-desktop 
 
 
 
@@ -93,7 +93,7 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
 You can remove autodarts-desktop by passing `--uninstall` flag as follows.
 
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/main/install_dev.sh) --uninstall
+bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/main/install.sh) --uninstall
 ```
 
 
@@ -101,13 +101,13 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
 ### Step-by-step (Linux, macOS, Windows)
 
 1. Remove the folder called "autodarts-desktop" in your home directory.
-2. Execute the following commands in a terminal, line by line (ONLY for Linux and MacOS):
+2. Linux and MacOS: Execute the following commands in a terminal:
 
    ```bash
    systemctl enable autodarts.service
    ```
 
-   MacOS: enable os-app-verification:
+3. MacOS: enable os-app-verification:
 
    ```bash
    sudo spctl --master-enable
