@@ -44,7 +44,21 @@ Autodarts-desktop is built with Avalonia. check it out: https://docs.avaloniaui.
 
 
 
-## INSTALL INSTRUCTION
+## HOW TO RUN
+
+### Single-Comand (Linux only)
+
+You can install autodarts-desktop on a Linux system by using this single command.
+It will automatically download the latest version.
+You might have to install `curl` on your machine beforehand.
+You can do so with `sudo apt install curl`.
+
+```bash
+bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/main/install.sh)
+```
+
+
+### Step-by-step (Linux, macOS, Windows)
 
 1) Create a new folder called "autodarts-desktop" in your home directory.
 2) Download the appropiate zip-file. You can find it in the release section.
@@ -52,7 +66,6 @@ Autodarts-desktop is built with Avalonia. check it out: https://docs.avaloniaui.
 4) Execute the following commands, line by line (ONLY for Linux and MacOS):
     Open a terminal and type:
 
-        chmod -R 777 /home/<YOUR-USER>/autodarts-desktop
         cd /home/<YOUR-USER>/autodarts-desktop
         chmod +x autodarts-desktop
         systemctl disable autodarts.service
@@ -65,6 +78,26 @@ Autodarts-desktop is built with Avalonia. check it out: https://docs.avaloniaui.
     Moreover make sure you do initial installation-steps for macos in case you want to use autodarts-client (https://docs.autodarts.io/getting-started/installation/)
 
 5) Open autodarts-desktop by double-click
+
+
+
+
+## HOW-TO-REMOVE
+
+### Single-Command (Linux only)
+
+You can remove autodarts-desktop by passing `--uninstall` flag as follows.
+
+```bash
+bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/main/install.sh) --uninstall
+```
+
+
+
+### Step-by-step (Linux, macOS, Windows)
+
+Remove the folder called "autodarts-desktop" in your home directory.
+
 
 
 

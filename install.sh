@@ -1,22 +1,23 @@
 #!/bin/bash
 
 
+echo "Trying to close Autodarts-desktop"
+PID=$(pgrep -f "autodarts-desktop")
+if [ -z "$PID" ]; then
+    echo "Autodarts-desktop doesn't run."
+else
+    echo "Close Autodarts-desktop ${PID}'."
+    kill $PID
+    sleep 1
+    if ps -p $PID > /dev/null; then
+        kill -9 $PID
+    fi
+fi
+
 if [[ $1 == "--uninstall" ]]; then
     echo "Trying to remove Autodarts-desktop"
-    
-    PID=$(pgrep -f "autodarts-desktop")
-    if [ -z "$PID" ]; then
-        echo "Autodarts-desktop doesn't run."
-    else
-        echo "Close Autodarts-desktop ${PID}'."
-        kill $PID
-        sleep 1
-        if ps -p $PID > /dev/null; then
-            kill -9 $PID
-        fi
-    fi
-
     rm ~/autodarts-desktop
+    systemctl enable autodarts.service
     exit
 fi
 
