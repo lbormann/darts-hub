@@ -5,18 +5,19 @@ add_to_autostart() {
     systemctl disable autodarts.service
 
     echo "Trying to add Autodarts-desktop to autostart."
+
     case "$PLATFORM" in
         "linux")
-            mkdir -p ~/.config/autostart
+            mkdir -p "${HOME}/.config/autostart"
             echo "[Desktop Entry]
             Type=Application
             Name=Autodarts-desktop
-            Exec=~/autodarts-desktop/autodarts-desktop
+            Exec="${HOME}/autodarts-desktop/autodarts-desktop"
             Terminal=false
-            X-GNOME-Autostart-enabled=true" > ~/.config/autostart/autodarts-desktop.desktop
+            X-GNOME-Autostart-enabled=true" > "${HOME}/.config/autostart/autodarts-desktop.desktop"
             ;;
         "macOS")
-            osascript -e "tell application \"System Events\" to make new login item at end with properties {path:\"~/autodarts-desktop/autodarts-desktop\", hidden:false}" > /dev/null
+            osascript -e "tell application \"System Events\" to make new login item at end with properties {path:\"${HOME}/autodarts-desktop/autodarts-desktop\", hidden:false}" > /dev/null
             ;;
         *)
             echo "Platform is not 'linux' or 'macOS', and hence autostart configuration is not supported by this script."
