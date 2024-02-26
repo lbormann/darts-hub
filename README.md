@@ -138,7 +138,7 @@ If you're running autodarts-desktop on windows the affected app is probably clas
 
 ## CONTRIBUTING
 
-If you're a developer and you just finished your new extension, but wonder how can it be integrated in ADD - just send me a message on discord ;)
+You just finished your new extension and wonder how to integrate it in ADD -> just send me a message on discord ;)
 
 
 
