@@ -8,10 +8,11 @@ if [ -z "$PID" ]; then
 else
     echo "Close Autodarts-desktop ${PID}'."
     kill $PID
-    sleep 1
+    sleep 2
     if ps -p $PID > /dev/null; then
         kill -9 $PID
     fi
+    sleep 2
 fi
 
 if [[ $1 == "--uninstall" ]]; then
