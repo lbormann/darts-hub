@@ -66,8 +66,7 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
 4) Execute the following commands, line by line (ONLY for Linux and MacOS):
     Open a terminal and type:
 
-        cd /home/<YOUR-USER>/autodarts-desktop
-        chmod +x autodarts-desktop
+        chmod +x ~/autodarts-desktop/autodarts-desktop
         systemctl disable autodarts.service
 
     MacOS: By the time you also need to disable os-app-verification:
@@ -77,7 +76,7 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
     Unfortunately I couldn't find a proper way without doing this.
     Moreover make sure you do initial installation-steps for macos in case you want to use autodarts-client (https://docs.autodarts.io/getting-started/installation/)
 
-5) Open autodarts-desktop by double-click
+5) Open by double-click autodarts-desktop 
 
 
 
