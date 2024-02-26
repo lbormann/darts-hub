@@ -17,7 +17,7 @@ add_to_autostart() {
             Hidden=false
             NoDisplay=false
             X-GNOME-Autostart-enabled=true
-            X-GNOME-Autostart-Delay=8" > "${HOME}/.config/autostart/autodarts-desktop.desktop"
+            X-GNOME-Autostart-Delay=10" > "${HOME}/.config/autostart/autodarts-desktop.desktop"
             ;;
         "macOS")
             osascript -e "tell application \"System Events\" to make new login item at end with properties {path:\"${HOME}/autodarts-desktop/autodarts-desktop\", hidden:false}" > /dev/null
