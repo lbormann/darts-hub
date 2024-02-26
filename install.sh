@@ -16,7 +16,7 @@ fi
 
 if [[ $1 == "--uninstall" ]]; then
     echo "Trying to remove Autodarts-desktop"
-    rm -rf ~/autodarts-desktop
+    sudo rm -rf ~/autodarts-desktop
     systemctl enable autodarts.service
     exit
 fi
