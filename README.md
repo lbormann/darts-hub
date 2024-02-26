@@ -81,7 +81,7 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
     Unfortunately I couldn't find a proper way without doing this.
     Moreover make sure you do initial installation-steps for macos in case you want to use autodarts-client (https://docs.autodarts.io/getting-started/installation/)
 
-5) Open by double-click autodarts-desktop 
+5) Start the application by double-click autodarts-desktop 
 
 
 
