@@ -52,5 +52,5 @@ chmod +x ~/autodarts-desktop/autodarts-desktop
 echo "Disable autodarts.service."
 systemctl disable autodarts.service
 echo "Starting autodarts-desktop."
-~/autodarts-desktop/autodarts-desktop
+~/autodarts-desktop/autodarts-desktop &
 
