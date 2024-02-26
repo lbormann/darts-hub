@@ -8,16 +8,12 @@ add_to_autostart() {
     case "$PLATFORM" in
         "linux")
             mkdir -p ~/.config/autostart
-            if [[ -d "~/.config/autostart" ]]; then
-                echo "[Desktop Entry]
-                Type=Application
-                Name=Autodarts-desktop
-                Exec=~/autodarts-desktop/autodarts-desktop
-                Terminal=false
-                X-GNOME-Autostart-enabled=true" > "~/.config/autostart/autodarts-desktop.desktop"
-            else
-                echo "Error: Autostart directory not found. Cannot add Autodarts-desktop to autostart."
-            fi
+            echo "[Desktop Entry]
+            Type=Application
+            Name=Autodarts-desktop
+            Exec=~/autodarts-desktop/autodarts-desktop
+            Terminal=false
+            X-GNOME-Autostart-enabled=true" > "~/.config/autostart/autodarts-desktop.desktop"
             ;;
         "macOS")
             osascript -e "tell application \"System Events\" to make new login item at end with properties {path:\"~/autodarts-desktop/autodarts-desktop\", hidden:false}" > /dev/null
