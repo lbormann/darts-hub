@@ -11,12 +11,12 @@ add_to_autostart() {
             echo "[Desktop Entry]
             Type=Application
             Name=Autodarts-desktop
-            Exec=~/autodarts-desktop/autodarts-desktop
+            Exec=$HOME/autodarts-desktop/autodarts-desktop
             Terminal=false
-            X-GNOME-Autostart-enabled=true" > "~/.config/autostart/autodarts-desktop.desktop"
+            X-GNOME-Autostart-enabled=true" > "$HOME/.config/autostart/autodarts-desktop.desktop"
             ;;
         "macOS")
-            osascript -e "tell application \"System Events\" to make new login item at end with properties {path:\"~/autodarts-desktop/autodarts-desktop\", hidden:false}" > /dev/null
+            osascript -e "tell application \"System Events\" to make new login item at end with properties {path:\"$HOME/autodarts-desktop/autodarts-desktop\", hidden:false}" > /dev/null
             ;;
         *)
             echo "Platform is not 'linux' or 'macOS', and hence autostart configuration is not supported by this script."
@@ -31,14 +31,14 @@ remove_from_autostart() {
     echo "Trying to remove Autodarts-desktop from autostart."
     case "$PLATFORM" in
         "linux")
-            if [[ -f "~/.config/autostart/autodarts-desktop.desktop" ]]; then
-                rm "~/.config/autostart/autodarts-desktop.desktop"
+            if [[ -f "$HOME/.config/autostart/autodarts-desktop.desktop" ]]; then
+                rm "$HOME/.config/autostart/autodarts-desktop.desktop"
             else
                 echo "Autodarts-desktop is not in autostart. Nothing to remove."
             fi
             ;;
         "macOS")
-            osascript -e "tell application \"System Events\" to delete login item \"~/autodarts-desktop/autodarts-desktop\"" > /dev/null
+            osascript -e "tell application \"System Events\" to delete login item \"$HOME/autodarts-desktop/autodarts-desktop\"" > /dev/null
             ;;
         *)
             echo "Platform is not 'linux' or 'macOS', and hence autostart configuration is not supported by this script."
