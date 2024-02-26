@@ -46,7 +46,7 @@ Autodarts-desktop is built with Avalonia. check it out: https://docs.avaloniaui.
 
 ## HOW TO RUN
 
-### Single-Comand (Linux only)
+### Single-Comand (Linux, MacOS)
 
 You can install autodarts-desktop on a Linux system by using this single command.
 It will automatically download the latest version.
@@ -84,7 +84,7 @@ bash <(curl -sL https://raw.githubusercontent.com/lbormann/autodarts-desktop/mai
 
 ## HOW-TO-REMOVE
 
-### Single-Command (Linux only)
+### Single-Command (Linux, MacOS)
 
 You can remove autodarts-desktop by passing `--uninstall` flag as follows.
 
