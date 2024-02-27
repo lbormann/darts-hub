@@ -7,11 +7,12 @@ using System;
 using System.Linq;
 
 
+
 namespace autodarts_desktop
 {
     public partial class App : Application
     {
-
+        /*
         private void App_Startup(object sender, object e)
         {
             var current_process = Process.GetCurrentProcess();
@@ -27,6 +28,45 @@ namespace autodarts_desktop
                 //Shutdown();
             }
         }
+        */
+        
+
+        
+        private const string UniqueEventName = "{AUTODARTS-DESKTOP-STATE-RUNNING}";
+
+        private void App_Startup(object sender, object e)
+        {
+            bool isNewInstance = false;
+
+            // Überprüfen, ob die Anwendung bereits ausgeführt wird
+            using (var mutex = new System.Threading.Mutex(true, UniqueEventName, out isNewInstance))
+            {
+                if (!isNewInstance)
+                {
+                    // Wenn die Anwendung bereits ausgeführt wird, beenden
+                    //Shutdown();
+                    Environment.Exit(0);
+                    return;
+                }
+
+                // Ansonsten, wenn dies die erste Instanz ist, normale Initialisierung durchführen
+                var current_process = Process.GetCurrentProcess();
+                var other_process = Process.GetProcessesByName(current_process.ProcessName).FirstOrDefault(p => p.Id != current_process.Id);
+
+                if (other_process != null && other_process.MainWindowHandle != IntPtr.Zero)
+                {
+                    if (IsIconic(other_process.MainWindowHandle))
+                    {
+                        ShowWindow(other_process.MainWindowHandle, SW_RESTORE);
+                    }
+                    SetForegroundWindow(other_process.MainWindowHandle);
+                    //Shutdown();
+                    Environment.Exit(0);
+                }
+            }
+        }
+        
+
 
         [DllImport("user32")]
         static extern bool IsIconic(IntPtr hWnd);
