@@ -661,7 +661,7 @@ namespace autodarts_desktop.control
             autodartsGifDownloadMap.LinuxArm64 = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-arm64";
             //autodartsGifDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-arm";
             autodartsGifDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-mac";
-            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("1.0.15");
+            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("1.0.14");
 
             var autodartsVoiceDownloadMap = new DownloadMap();
             autodartsVoiceDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice.exe";
@@ -1455,7 +1455,7 @@ namespace autodarts_desktop.control
             autodartsGifDownloadMap.LinuxArm64 = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-arm64";
             //autodartsGifDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-arm";
             autodartsGifDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-mac";
-            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("1.0.15");
+            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("1.0.14");
 
             var autodartsVoiceDownloadMap = new DownloadMap();
             autodartsVoiceDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice.exe";

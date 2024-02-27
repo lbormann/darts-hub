@@ -30,7 +30,6 @@ namespace autodarts_desktop
         }
         */
         
-
         
         private const string UniqueEventName = "{AUTODARTS-DESKTOP-STATE-RUNNING}";
 
@@ -38,18 +37,15 @@ namespace autodarts_desktop
         {
             bool isNewInstance = false;
 
-            // Überprüfen, ob die Anwendung bereits ausgeführt wird
             using (var mutex = new System.Threading.Mutex(true, UniqueEventName, out isNewInstance))
             {
                 if (!isNewInstance)
                 {
-                    // Wenn die Anwendung bereits ausgeführt wird, beenden
                     //Shutdown();
                     Environment.Exit(0);
                     return;
                 }
 
-                // Ansonsten, wenn dies die erste Instanz ist, normale Initialisierung durchführen
                 var current_process = Process.GetCurrentProcess();
                 var other_process = Process.GetProcessesByName(current_process.ProcessName).FirstOrDefault(p => p.Id != current_process.Id);
 
