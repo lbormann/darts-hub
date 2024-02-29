@@ -136,7 +136,7 @@ Imagine you could start your favorite apps along autodarts-*. That is what custo
 
 ### Specific App-version
 
-If you would like to stay on specific app-version, create an (empty) file called "my_version" in particular app dir. That file will stop future app-updates, until you remove the file.
+If you would like to stay on specific app-version, create an empty file called "my_version.txt" in particular app dir. That file will stop future app-updates, until you remove the file.
 
 
 ## TROUBLESHOOTING
