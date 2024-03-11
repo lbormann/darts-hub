@@ -12,7 +12,7 @@ namespace autodarts_desktop
 {
     public partial class App : Application
     {
-        /*
+        
         private void App_Startup(object sender, object e)
         {
             var current_process = Process.GetCurrentProcess();
@@ -28,9 +28,9 @@ namespace autodarts_desktop
                 //Shutdown();
             }
         }
-        */
         
         
+        /*
         private const string UniqueEventName = "{AUTODARTS-DESKTOP-STATE-RUNNING}";
 
         private void App_Startup(object sender, object e)
@@ -61,6 +61,7 @@ namespace autodarts_desktop
                 }
             }
         }
+        */
         
 
 
