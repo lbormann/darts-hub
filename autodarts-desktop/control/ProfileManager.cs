@@ -654,6 +654,15 @@ namespace autodarts_desktop.control
             //autodartsWledDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled-mac";
             var autodartsWledDownloadUrl = autodartsWledDownloadMap.GetDownloadUrlByOs("1.4.12");
 
+            var autodartsPixelitDownloadMap = new DownloadMap();
+            autodartsPixelitDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit.exe";
+            autodartsPixelitDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit";
+            autodartsPixelitDownloadMap.LinuxArm64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-arm64";
+            //autodartsPixelitDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-arm";
+            autodartsPixelitDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
+            //autodartsPixelitDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
+            var autodartsPixelitDownloadUrl = autodartsPixelitDownloadMap.GetDownloadUrlByOs("1.0.0");
+
             var virtualDartsZoomDownloadMap = new DownloadMap();
             virtualDartsZoomDownloadMap.WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip";
             var virtualDartsZoomDownloadUrl = virtualDartsZoomDownloadMap.GetDownloadUrlByOs();
@@ -824,6 +833,50 @@ namespace autodarts_desktop.control
                         arguments: autodartsWledArguments)
                     );
                 apps.Add(autodartsWled);
+            }
+
+            if (!String.IsNullOrEmpty(autodartsPixelitDownloadUrl))
+            {
+                var autodartsPixelitArguments = new List<Argument> {
+                        new(name: "CON", type: "string", required: false, nameHuman: "-CON / --connection", section: "Service"),
+                        new(name: "PEPS", type: "string", required: true, isMulti: true, nameHuman: "-PEPS / --pixelit_endpoints", section: "PIXELIT"),
+                        new(name: "BRI", type: "int[1..255]", required: false, nameHuman: "-BRI / --effect_brightness", section: "PIXELIT"),
+                        new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "-HFO / --high_finish_on", section: "Autodarts"),
+                        new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "-HF / --high_finish_effects", section: "PIXELIT"),
+                        new(name: "AS", type: "string", required: false, isMulti: true, nameHuman: "-AS / --app_start_effects", section: "PIXELIT"),
+                        new(name: "IDE", type: "string", required: false, nameHuman: "-IDE / --idle_effect", section: "PIXELIT"),
+                        new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "-G / --game_won_effects", section: "PIXELIT"),
+                        new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "-M / --match_won_effects", section: "PIXELIT"),
+                        new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "-B / --busted_effects", section: "PIXELIT"),
+                        new(name: "PJ", type: "string", required: false, isMulti : true, nameHuman: "-PJ / --player_joined_effects", section: "PIXELIT"),
+                        new(name: "PL", type: "string", required: false, isMulti : true, nameHuman: "-PL / --player_left_effects", section: "PIXELIT"),
+                        new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
+                    };
+                for (int i = 0; i <= 180; i++)
+                {
+                    var score = i.ToString();
+                    Argument scoreArgument = new(name: "S" + score, type: "string", required: false, isMulti: true, nameHuman: "-S" + score + " / --score_" + score + "_effects", section: "PIXELIT");
+                    autodartsPixelitArguments.Add(scoreArgument);
+                }
+                for (int i = 1; i <= 12; i++)
+                {
+                    var areaNumber = i.ToString();
+                    Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "-A" + areaNumber + " / --score_area_" + areaNumber + "_effects", section: "PIXELIT");
+                    autodartsPixelitArguments.Add(areaArgument);
+                }
+
+                AppDownloadable autodartsPixelit =
+                new(
+                    downloadUrl: autodartsPixelitDownloadUrl,
+                    name: "autodarts-pixelit",
+                    helpUrl: "https://github.com/lbormann/autodarts-pixelit",
+                    descriptionShort: "Controls PIXELIT installations by autodarts-events",
+                    configuration: new(
+                        prefix: "-",
+                        delimitter: " ",
+                        arguments: autodartsPixelitArguments)
+                    );
+                apps.Add(autodartsPixelit);
             }
 
             if (!String.IsNullOrEmpty(virtualDartsZoomDownloadUrl))
@@ -1453,6 +1506,15 @@ namespace autodarts_desktop.control
             //autodartsWledDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled-mac";
             var autodartsWledDownloadUrl = autodartsWledDownloadMap.GetDownloadUrlByOs("1.4.12");
 
+            var autodartsPixelitDownloadMap = new DownloadMap();
+            autodartsPixelitDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit.exe";
+            autodartsPixelitDownloadMap.LinuxX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit";
+            autodartsPixelitDownloadMap.LinuxArm64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-arm64";
+            //autodartsPixelitDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-arm";
+            autodartsPixelitDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
+            //autodartsPixelitDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
+            var autodartsPixelitDownloadUrl = autodartsPixelitDownloadMap.GetDownloadUrlByOs("1.0.0");
+
             var virtualDartsZoomDownloadMap = new DownloadMap();
             virtualDartsZoomDownloadMap.WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip";
             var virtualDartsZoomDownloadUrl = virtualDartsZoomDownloadMap.GetDownloadUrlByOs();
@@ -1879,12 +1941,124 @@ namespace autodarts_desktop.control
 
             }
 
+            var autodartsPixelit = AppsDownloadable.Find(a => a.Name == "autodarts-pixelit");
+            if (autodartsPixelit != null)
+            {
+                if (autodartsPixelitDownloadUrl != null)
+                {
+                    autodartsPixelit.DownloadUrl = autodartsPixelitDownloadUrl;
 
-            // make all apps chmod-able
-            foreach(var a in AppsDownloadable) a.Chmod = true;
+                    /*
+                    var keywordsNextGame = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KNG");
+                    if (keywordsNextGame == null)
+                    {
+                        autodartsVoice.Configuration.Arguments.Add(new(name: "KNG", type: "string", required: false, isMulti: true, nameHuman: "keywords-next-game", section: "Voice-Recognition"));
+                    }
+
+                    var keywordsBanCaller = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KBC");
+                    if (keywordsBanCaller == null)
+                    {
+                        autodartsVoice.Configuration.Arguments.Add(new(name: "KBC", type: "string", required: false, isMulti: true, nameHuman: "keywords-ban-caller", section: "Voice-Recognition"));
+                    }
+
+                    var keywordsChangeCaller = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KCC");
+                    if (keywordsChangeCaller == null)
+                    {
+                        autodartsVoice.Configuration.Arguments.Add(new(name: "KCC", type: "string", required: false, isMulti: true, nameHuman: "keywords-change-caller", section: "Voice-Recognition"));
+                    }
+
+                    var keywordsStartBoard = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KSB");
+                    if (keywordsStartBoard == null)
+                    {
+                        autodartsVoice.Configuration.Arguments.Add(new(name: "KSB", type: "string", required: false, isMulti: true, nameHuman: "keywords-start-board", section: "Voice-Recognition"));
+                    }
+
+                    var keywordsStopBoard = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KSPB");
+                    if (keywordsStopBoard == null)
+                    {
+                        autodartsVoice.Configuration.Arguments.Add(new(name: "KSPB", type: "string", required: false, isMulti: true, nameHuman: "keywords-stop-board", section: "Voice-Recognition"));
+                    }
+
+                    var keywordsResetBoard = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KRB");
+                    if (keywordsResetBoard == null)
+                    {
+                        autodartsVoice.Configuration.Arguments.Add(new(name: "KRB", type: "string", required: false, isMulti: true, nameHuman: "keywords-reset-board", section: "Voice-Recognition"));
+                    }
+
+                    var keywordsCalibrateBoard = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KCB");
+                    if (keywordsCalibrateBoard == null)
+                    {
+                        autodartsVoice.Configuration.Arguments.Add(new(name: "KCB", type: "string", required: false, isMulti: true, nameHuman: "keywords-calibrate-board", section: "Voice-Recognition"));
+                    }
+                    */
+
+                    autodartsVoice.DescriptionShort = "Controls autodarts by using your voice";
+
+                }
+                else
+                {
+                    var autodartsPixelitIndex = AppsDownloadable.FindIndex(a => a.Name == "autodarts-pixelit");
+                    if (autodartsPixelitIndex != -1)
+                    {
+                        AppsDownloadable.RemoveAt(autodartsPixelitIndex);
+                    }
+                }
+            }
+            else if (autodartsPixelitDownloadUrl != null)
+            {
+                var autodartsPixelitArguments = new List<Argument> {
+                        new(name: "CON", type: "string", required: false, nameHuman: "-CON / --connection", section: "Service"),
+                        new(name: "PEPS", type: "string", required: true, isMulti: true, nameHuman: "-PEPS / --pixelit_endpoints", section: "PIXELIT"),
+                        new(name: "BRI", type: "int[1..255]", required: false, nameHuman: "-BRI / --effect_brightness", section: "PIXELIT"),
+                        new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "-HFO / --high_finish_on", section: "Autodarts"),
+                        new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "-HF / --high_finish_effects", section: "PIXELIT"),
+                        new(name: "AS", type: "string", required: false, isMulti: true, nameHuman: "-AS / --app_start_effects", section: "PIXELIT"),
+                        new(name: "IDE", type: "string", required: false, nameHuman: "-IDE / --idle_effect", section: "PIXELIT"),
+                        new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "-G / --game_won_effects", section: "PIXELIT"),
+                        new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "-M / --match_won_effects", section: "PIXELIT"),
+                        new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "-B / --busted_effects", section: "PIXELIT"),
+                        new(name: "PJ", type: "string", required: false, isMulti : true, nameHuman: "-PJ / --player_joined_effects", section: "PIXELIT"),
+                        new(name: "PL", type: "string", required: false, isMulti : true, nameHuman: "-PL / --player_left_effects", section: "PIXELIT"),
+                        new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
+                    };
+                for (int i = 0; i <= 180; i++)
+                {
+                    var score = i.ToString();
+                    Argument scoreArgument = new(name: "S" + score, type: "string", required: false, isMulti: true, nameHuman: "-S" + score + " / --score_" + score + "_effects", section: "PIXELIT");
+                    autodartsPixelitArguments.Add(scoreArgument);
+                }
+                for (int i = 1; i <= 12; i++)
+                {
+                    var areaNumber = i.ToString();
+                    Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "-A" + areaNumber + " / --score_area_" + areaNumber + "_effects", section: "PIXELIT");
+                    autodartsPixelitArguments.Add(areaArgument);
+                }
+
+                autodartsPixelit =
+                new(
+                    downloadUrl: autodartsPixelitDownloadUrl,
+                    name: "autodarts-pixelit",
+                    helpUrl: "https://github.com/lbormann/autodarts-pixelit",
+                    descriptionShort: "Controls PIXELIT installations by autodarts-events",
+                    configuration: new(
+                        prefix: "-",
+                        delimitter: " ",
+                        arguments: autodartsPixelitArguments)
+                    );
+                AppsDownloadable.Add(autodartsPixelit);
+
+
+
+            }
 
 
             // Add more migs..
+
+
+
+
+            // make all apps chmod-able
+            foreach (var a in AppsDownloadable) a.Chmod = true;
         }
 
 
@@ -1895,6 +2069,7 @@ namespace autodarts_desktop.control
             var autodartsCaller = AppsDownloadable.Find(a => a.Name == "autodarts-caller") != null;
             var autodartsExtern = AppsDownloadable.Find(a => a.Name == "autodarts-extern") != null;
             var autodartsWled = AppsDownloadable.Find(a => a.Name == "autodarts-wled") != null;
+            var autodartsPixelit = AppsDownloadable.Find(a => a.Name == "autodarts-pixelit") != null;
             var autodartsGif = AppsDownloadable.Find(a => a.Name == "autodarts-gif") != null;
             var autodartsVoice = AppsDownloadable.Find(a => a.Name == "autodarts-voice") != null;
             var virtualDartsZoom = AppsDownloadable.Find(a => a.Name == "virtual-darts-zoom") != null;
@@ -1918,6 +2093,7 @@ namespace autodarts_desktop.control
                 p1Apps.Add("autodarts-boardmanager", new ProfileState());
                 if (autodartsCaller) p1Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p1Apps.Add("autodarts-wled", new ProfileState());
+                if (autodartsPixelit) p1Apps.Add("autodarts-pixelit", new ProfileState());
                 if (autodartsGif) p1Apps.Add("autodarts-gif", new ProfileState());
                 if (autodartsVoice) p1Apps.Add("autodarts-voice", new ProfileState());
                 if (camLoader) p1Apps.Add("cam-loader", new ProfileState());
@@ -1940,6 +2116,7 @@ namespace autodarts_desktop.control
                 p2Apps.Add("autodarts-boardmanager", new ProfileState());
                 if (autodartsCaller) p2Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p2Apps.Add("autodarts-wled", new ProfileState());
+                if (autodartsPixelit) p2Apps.Add("autodarts-pixelit", new ProfileState());
                 if (autodartsGif) p2Apps.Add("autodarts-gif", new ProfileState());
                 if (autodartsVoice) p2Apps.Add("autodarts-voice", new ProfileState());
                 if (autodartsExtern) p2Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p2Args));
@@ -1966,6 +2143,7 @@ namespace autodarts_desktop.control
                 p3Apps.Add("autodarts-boardmanager", new ProfileState());
                 if (autodartsCaller) p3Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p3Apps.Add("autodarts-wled", new ProfileState());
+                if (autodartsPixelit) p3Apps.Add("autodarts-pixelit", new ProfileState());
                 if (autodartsGif) p3Apps.Add("autodarts-gif", new ProfileState());
                 if (autodartsVoice) p3Apps.Add("autodarts-voice", new ProfileState());
                 if (autodartsExtern) p3Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p3Args));
@@ -1992,6 +2170,7 @@ namespace autodarts_desktop.control
                 p4Apps.Add("autodarts-boardmanager", new ProfileState());
                 if (autodartsCaller) p4Apps.Add("autodarts-caller", new ProfileState(true));
                 if (autodartsWled) p4Apps.Add("autodarts-wled", new ProfileState());
+                if (autodartsPixelit) p4Apps.Add("autodarts-pixelit", new ProfileState());
                 if (autodartsGif) p4Apps.Add("autodarts-gif", new ProfileState());
                 if (autodartsVoice) p4Apps.Add("autodarts-voice", new ProfileState());
                 if (autodartsExtern) p4Apps.Add("autodarts-extern", new ProfileState(true, runtimeArguments: p4Args));
@@ -2045,6 +2224,10 @@ namespace autodarts_desktop.control
                 if (!p.Apps.ContainsKey("autodarts-wled"))
                 {
                     p.Apps.Add("autodarts-wled", new());
+                }
+                if (!p.Apps.ContainsKey("autodarts-pixelit"))
+                {
+                    p.Apps.Add("autodarts-pixelit", new());
                 }
             }
 
@@ -2155,8 +2338,6 @@ namespace autodarts_desktop.control
 
             // Adds or removes autodarts-voice for all profiles except autodarts-client
             var autodartsVoice = AppsDownloadable.Find(a => a.Name == "autodarts-voice") != null;
-
-            
             if (!autodartsVoice)
             {
                 foreach (var p in Profiles)
@@ -2186,7 +2367,6 @@ namespace autodarts_desktop.control
                 }
             }
             */
-
 
 
             // Renames custom to custom-1 in all profiles
@@ -2232,6 +2412,29 @@ namespace autodarts_desktop.control
                 if (customUrl3 && !p.Apps.ContainsKey("custom-url-3"))
                 {
                     p.Apps.Add("custom-url-3", new());
+                }
+            }
+
+
+            // Adds or removes autodarts-voice for all profiles except autodarts-client
+            var autodartsPixelit = AppsDownloadable.Find(a => a.Name == "autodarts-pixelit") != null;
+            if (!autodartsPixelit)
+            {
+                foreach (var p in Profiles)
+                {
+                    p.Apps.Remove("autodarts-pixelit");
+                }
+            }
+            else
+            {
+                foreach (var p in Profiles)
+                {
+                    if (p.Name == "autodarts-client") continue;
+
+                    if (!p.Apps.ContainsKey("autodarts-pixelit"))
+                    {
+                        p.Apps.Add("autodarts-pixelit", new());
+                    }
                 }
             }
 

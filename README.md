@@ -13,6 +13,7 @@ List of Apps managed by ADD:
 * [autodarts-caller](https://github.com/lbormann/autodarts-caller)
 * [autodarts-extern](https://github.com/lbormann/autodarts-extern)
 * [autodarts-wled](https://github.com/lbormann/autodarts-wled)
+* [autodarts-pixelit](https://github.com/lbormann/autodarts-pixelit)
 * [autodarts-gif](https://github.com/lbormann/autodarts-gif)
 * [autodarts-voice](https://github.com/lbormann/autodarts-voice)
 * [cam-loader](https://github.com/lbormann/cam-loader)
