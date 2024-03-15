@@ -634,7 +634,7 @@ namespace autodarts_desktop.control
             //autodartsCallerDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
             //autodartsCallerDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.10.3");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.11.0");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern.exe";
@@ -643,7 +643,7 @@ namespace autodarts_desktop.control
             //autodartsExternDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-arm";
             autodartsExternDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-mac";
             //autodartsExternDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-mac";
-            var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("1.5.8");
+            var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("1.5.9");
 
             var autodartsWledDownloadMap = new DownloadMap();
             autodartsWledDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled.exe";
@@ -652,7 +652,7 @@ namespace autodarts_desktop.control
             //autodartsWledDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled-arm";
             autodartsWledDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled-mac";
             //autodartsWledDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled-mac";
-            var autodartsWledDownloadUrl = autodartsWledDownloadMap.GetDownloadUrlByOs("1.4.12");
+            var autodartsWledDownloadUrl = autodartsWledDownloadMap.GetDownloadUrlByOs("1.4.13");
 
             var autodartsPixelitDownloadMap = new DownloadMap();
             autodartsPixelitDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit.exe";
@@ -674,7 +674,7 @@ namespace autodarts_desktop.control
             //autodartsGifDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-arm";
             autodartsGifDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-mac";
             //autodartsGifDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-mac";
-            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("1.0.14");
+            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("1.0.15");
 
             var autodartsVoiceDownloadMap = new DownloadMap();
             autodartsVoiceDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice.exe";
@@ -683,7 +683,7 @@ namespace autodarts_desktop.control
             //autodartsVoiceDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-arm";
             autodartsVoiceDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-mac";
             //autodartsVoiceDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-mac";
-            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("1.0.8");
+            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("1.0.9");
 
             var camLoaderDownloadMap = new DownloadMap();
             camLoaderDownloadMap.WindowsX86 = "https://github.com/lbormann/cam-loader/releases/download/v***VERSION***/cam-loader.zip";
@@ -844,7 +844,7 @@ namespace autodarts_desktop.control
                         new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "-HFO / --high_finish_on", section: "Autodarts"),
                         new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "-HF / --high_finish_effects", section: "PIXELIT"),
                         new(name: "AS", type: "string", required: false, isMulti: true, nameHuman: "-AS / --app_start_effects", section: "PIXELIT"),
-                        new(name: "IDE", type: "string", required: false, nameHuman: "-IDE / --idle_effect", section: "PIXELIT"),
+                        new(name: "IDE", type: "string", required: false, isMulti: true, nameHuman: "-IDE / --idle_effects", section: "PIXELIT"),
                         new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "-G / --game_won_effects", section: "PIXELIT"),
                         new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "-M / --match_won_effects", section: "PIXELIT"),
                         new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "-B / --busted_effects", section: "PIXELIT"),
@@ -1486,7 +1486,7 @@ namespace autodarts_desktop.control
             //autodartsCallerDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
             //autodartsCallerDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.10.3");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.11.0");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern.exe";
@@ -1495,7 +1495,7 @@ namespace autodarts_desktop.control
             //autodartsExternDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-arm";
             autodartsExternDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-mac";
             //autodartsExternDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-mac";
-            var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("1.5.8");
+            var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("1.5.9");
 
             var autodartsWledDownloadMap = new DownloadMap();
             autodartsWledDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled.exe";
@@ -1504,7 +1504,7 @@ namespace autodarts_desktop.control
             //autodartsWledDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled-arm";
             autodartsWledDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled-mac";
             //autodartsWledDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled-mac";
-            var autodartsWledDownloadUrl = autodartsWledDownloadMap.GetDownloadUrlByOs("1.4.12");
+            var autodartsWledDownloadUrl = autodartsWledDownloadMap.GetDownloadUrlByOs("1.4.13");
 
             var autodartsPixelitDownloadMap = new DownloadMap();
             autodartsPixelitDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit.exe";
@@ -1526,7 +1526,7 @@ namespace autodarts_desktop.control
             //autodartsGifDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-arm";
             autodartsGifDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-mac";
             //autodartsGifDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-mac";
-            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("1.0.14");
+            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("1.0.15");
 
             var autodartsVoiceDownloadMap = new DownloadMap();
             autodartsVoiceDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice.exe";
@@ -1535,7 +1535,7 @@ namespace autodarts_desktop.control
             //autodartsVoiceDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-arm";
             autodartsVoiceDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-mac";
             //autodartsVoiceDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-mac";
-            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("1.0.8");
+            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("1.0.9");
 
             var camLoaderDownloadMap = new DownloadMap();
             camLoaderDownloadMap.WindowsX86 = "https://github.com/lbormann/cam-loader/releases/download/v***VERSION***/cam-loader.zip";
@@ -2013,7 +2013,7 @@ namespace autodarts_desktop.control
                         new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "-HFO / --high_finish_on", section: "Autodarts"),
                         new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "-HF / --high_finish_effects", section: "PIXELIT"),
                         new(name: "AS", type: "string", required: false, isMulti: true, nameHuman: "-AS / --app_start_effects", section: "PIXELIT"),
-                        new(name: "IDE", type: "string", required: false, nameHuman: "-IDE / --idle_effect", section: "PIXELIT"),
+                        new(name: "IDE", type: "string", required: false, isMulti: true, nameHuman: "-IDE / --idle_effects", section: "PIXELIT"),
                         new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "-G / --game_won_effects", section: "PIXELIT"),
                         new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "-M / --match_won_effects", section: "PIXELIT"),
                         new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "-B / --busted_effects", section: "PIXELIT"),
