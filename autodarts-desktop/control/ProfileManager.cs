@@ -1947,53 +1947,7 @@ namespace autodarts_desktop.control
                 if (autodartsPixelitDownloadUrl != null)
                 {
                     autodartsPixelit.DownloadUrl = autodartsPixelitDownloadUrl;
-
-                    /*
-                    var keywordsNextGame = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KNG");
-                    if (keywordsNextGame == null)
-                    {
-                        autodartsVoice.Configuration.Arguments.Add(new(name: "KNG", type: "string", required: false, isMulti: true, nameHuman: "keywords-next-game", section: "Voice-Recognition"));
-                    }
-
-                    var keywordsBanCaller = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KBC");
-                    if (keywordsBanCaller == null)
-                    {
-                        autodartsVoice.Configuration.Arguments.Add(new(name: "KBC", type: "string", required: false, isMulti: true, nameHuman: "keywords-ban-caller", section: "Voice-Recognition"));
-                    }
-
-                    var keywordsChangeCaller = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KCC");
-                    if (keywordsChangeCaller == null)
-                    {
-                        autodartsVoice.Configuration.Arguments.Add(new(name: "KCC", type: "string", required: false, isMulti: true, nameHuman: "keywords-change-caller", section: "Voice-Recognition"));
-                    }
-
-                    var keywordsStartBoard = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KSB");
-                    if (keywordsStartBoard == null)
-                    {
-                        autodartsVoice.Configuration.Arguments.Add(new(name: "KSB", type: "string", required: false, isMulti: true, nameHuman: "keywords-start-board", section: "Voice-Recognition"));
-                    }
-
-                    var keywordsStopBoard = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KSPB");
-                    if (keywordsStopBoard == null)
-                    {
-                        autodartsVoice.Configuration.Arguments.Add(new(name: "KSPB", type: "string", required: false, isMulti: true, nameHuman: "keywords-stop-board", section: "Voice-Recognition"));
-                    }
-
-                    var keywordsResetBoard = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KRB");
-                    if (keywordsResetBoard == null)
-                    {
-                        autodartsVoice.Configuration.Arguments.Add(new(name: "KRB", type: "string", required: false, isMulti: true, nameHuman: "keywords-reset-board", section: "Voice-Recognition"));
-                    }
-
-                    var keywordsCalibrateBoard = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KCB");
-                    if (keywordsCalibrateBoard == null)
-                    {
-                        autodartsVoice.Configuration.Arguments.Add(new(name: "KCB", type: "string", required: false, isMulti: true, nameHuman: "keywords-calibrate-board", section: "Voice-Recognition"));
-                    }
-                    */
-
                     autodartsVoice.DescriptionShort = "Controls autodarts by using your voice";
-
                 }
                 else
                 {
