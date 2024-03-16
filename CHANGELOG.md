@@ -1,5 +1,6 @@
 ## 0.10.32
 
+- add extension autodarts-pixelit
 - adapt app versions
 
 
