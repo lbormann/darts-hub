@@ -683,7 +683,7 @@ namespace autodarts_desktop.control
             //autodartsVoiceDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-arm";
             autodartsVoiceDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-mac";
             autodartsVoiceDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-mac";
-            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("1.0.9");
+            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("1.0.10");
 
             var camLoaderDownloadMap = new DownloadMap();
             camLoaderDownloadMap.WindowsX86 = "https://github.com/lbormann/cam-loader/releases/download/v***VERSION***/cam-loader.zip";
@@ -1537,7 +1537,7 @@ namespace autodarts_desktop.control
             //autodartsVoiceDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-arm";
             autodartsVoiceDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-mac";
             autodartsVoiceDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-mac";
-            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("1.0.9");
+            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("1.0.10");
 
             var camLoaderDownloadMap = new DownloadMap();
             camLoaderDownloadMap.WindowsX86 = "https://github.com/lbormann/cam-loader/releases/download/v***VERSION***/cam-loader.zip";
