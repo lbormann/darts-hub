@@ -661,7 +661,7 @@ namespace autodarts_desktop.control
             //autodartsPixelitDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-arm";
             autodartsPixelitDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
             autodartsPixelitDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
-            var autodartsPixelitDownloadUrl = autodartsPixelitDownloadMap.GetDownloadUrlByOs("1.0.0");
+            var autodartsPixelitDownloadUrl = autodartsPixelitDownloadMap.GetDownloadUrlByOs("1.1.0");
 
             var virtualDartsZoomDownloadMap = new DownloadMap();
             virtualDartsZoomDownloadMap.WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip";
@@ -847,6 +847,8 @@ namespace autodarts_desktop.control
                         new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "-HF / --high_finish_effects", section: "PIXELIT"),
                         new(name: "AS", type: "string", required: false, isMulti: true, nameHuman: "-AS / --app_start_effects", section: "PIXELIT"),
                         new(name: "IDE", type: "string", required: false, isMulti: true, nameHuman: "-IDE / --idle_effects", section: "PIXELIT"),
+                        new(name: "GS", type: "string", required: false, isMulti: true, nameHuman: "-GS / --game_start_effects", section: "PIXELIT"),
+                        new(name: "MS", type: "string", required: false, isMulti: true, nameHuman: "-MS / --match_start_effects", section: "PIXELIT"),
                         new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "-G / --game_won_effects", section: "PIXELIT"),
                         new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "-M / --match_won_effects", section: "PIXELIT"),
                         new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "-B / --busted_effects", section: "PIXELIT"),
@@ -1515,7 +1517,7 @@ namespace autodarts_desktop.control
             //autodartsPixelitDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-arm";
             autodartsPixelitDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
             autodartsPixelitDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
-            var autodartsPixelitDownloadUrl = autodartsPixelitDownloadMap.GetDownloadUrlByOs("1.0.0");
+            var autodartsPixelitDownloadUrl = autodartsPixelitDownloadMap.GetDownloadUrlByOs("1.1.0");
 
             var virtualDartsZoomDownloadMap = new DownloadMap();
             virtualDartsZoomDownloadMap.WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip";
@@ -1956,7 +1958,19 @@ namespace autodarts_desktop.control
                 if (autodartsPixelitDownloadUrl != null)
                 {
                     autodartsPixelit.DownloadUrl = autodartsPixelitDownloadUrl;
-                    autodartsVoice.DescriptionShort = "Controls autodarts by using your voice";
+                    autodartsPixelit.DescriptionShort = "Controls PIXELIT installations by autodarts-events";
+
+                    var gameStartEffects = autodartsPixelit.Configuration.Arguments.Find(a => a.Name == "GS");
+                    if (gameStartEffects == null)
+                    {
+                        autodartsPixelit.Configuration.Arguments.Add(new(name: "GS", type: "string", required: false, isMulti: true, nameHuman: "-GS / --game_start_effects", section: "PIXELIT"));
+                    }
+
+                    var matchStartEffects = autodartsPixelit.Configuration.Arguments.Find(a => a.Name == "MS");
+                    if (matchStartEffects == null)
+                    {
+                        autodartsPixelit.Configuration.Arguments.Add(new(name: "MS", type: "string", required: false, isMulti: true, nameHuman: "-MS / --match_start_effects", section: "PIXELIT"));
+                    }
                 }
                 else
                 {
@@ -1978,6 +1992,8 @@ namespace autodarts_desktop.control
                         new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "-HF / --high_finish_effects", section: "PIXELIT"),
                         new(name: "AS", type: "string", required: false, isMulti: true, nameHuman: "-AS / --app_start_effects", section: "PIXELIT"),
                         new(name: "IDE", type: "string", required: false, isMulti: true, nameHuman: "-IDE / --idle_effects", section: "PIXELIT"),
+                        new(name: "GS", type: "string", required: false, isMulti: true, nameHuman: "-GS / --game_start_effects", section: "PIXELIT"),
+                        new(name: "MS", type: "string", required: false, isMulti: true, nameHuman: "-MS / --match_start_effects", section: "PIXELIT"),
                         new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "-G / --game_won_effects", section: "PIXELIT"),
                         new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "-M / --match_won_effects", section: "PIXELIT"),
                         new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "-B / --busted_effects", section: "PIXELIT"),
