@@ -56,7 +56,28 @@ namespace autodarts_desktop.model
             }
         }
 
-        
+        [JsonIgnore]
+        public int AppMonitorEntries { get; private set; }
+
+        /*
+        private int _appMonitorEntries;
+        [JsonIgnore]
+        public int AppMonitorEntries
+        {
+            get => _appMonitorEntries;
+            private set
+            {
+                if (_appMonitorEntries != value)
+                {
+                    _appMonitorEntries = value;
+                    AppMonitorAvailable = _appMonitor != String.Empty ? true : false;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        */
+
+
         private string _appMonitor;
         [JsonIgnore]
         public string AppMonitor
@@ -72,6 +93,8 @@ namespace autodarts_desktop.model
                 }
             }
         }
+
+
 
         
         private bool _appMonitorAvailable;
@@ -200,6 +223,14 @@ namespace autodarts_desktop.model
         public abstract bool IsInstallable();
 
 
+        private void CleanUpMonitor()
+        {
+            if(AppMonitorEntries >= 500)
+            {
+                AppMonitor = String.Empty;
+                AppMonitorEntries = 0;
+            }
+        }
 
         private async Task RunProcess(Dictionary<string, string>? runtimeArguments = null)
         {
@@ -241,19 +272,23 @@ namespace autodarts_desktop.model
                     eventHandled.TrySetResult(true);
                 };
                 process.OutputDataReceived += (sender, e) =>
-                {
+                {   
                     if (!String.IsNullOrEmpty(e.Data))
                     {
+                        CleanUpMonitor();
                         AppConsoleStdOutput += e.Data + Environment.NewLine;
                         AppMonitor = AppConsoleStdOutput + Environment.NewLine + Environment.NewLine + AppConsoleStdError;
+                        AppMonitorEntries++;
                     }
                 };
                 process.ErrorDataReceived += (sender, e) =>
                 {
                     if (!String.IsNullOrEmpty(e.Data))
                     {
+                        CleanUpMonitor();
                         AppConsoleStdError += e.Data + Environment.NewLine;
                         AppMonitor = AppConsoleStdOutput + Environment.NewLine + Environment.NewLine + AppConsoleStdError;
+                        AppMonitorEntries++;
                     }
                 };
                 process.StartInfo.FileName = executable;

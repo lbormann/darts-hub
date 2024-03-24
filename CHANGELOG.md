@@ -1,3 +1,9 @@
+## 0.10.35
+
+- adapt app versions
+- clear monitor logs
+
+
 ## 0.10.34
 
 - adapt app versions
