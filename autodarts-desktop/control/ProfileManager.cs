@@ -661,7 +661,7 @@ namespace autodarts_desktop.control
             //autodartsPixelitDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-arm";
             autodartsPixelitDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
             autodartsPixelitDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
-            var autodartsPixelitDownloadUrl = autodartsPixelitDownloadMap.GetDownloadUrlByOs("1.1.1");
+            var autodartsPixelitDownloadUrl = autodartsPixelitDownloadMap.GetDownloadUrlByOs("1.1.2");
 
             var virtualDartsZoomDownloadMap = new DownloadMap();
             virtualDartsZoomDownloadMap.WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip";
@@ -1517,7 +1517,7 @@ namespace autodarts_desktop.control
             //autodartsPixelitDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-arm";
             autodartsPixelitDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
             autodartsPixelitDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
-            var autodartsPixelitDownloadUrl = autodartsPixelitDownloadMap.GetDownloadUrlByOs("1.1.1");
+            var autodartsPixelitDownloadUrl = autodartsPixelitDownloadMap.GetDownloadUrlByOs("1.1.2");
 
             var virtualDartsZoomDownloadMap = new DownloadMap();
             virtualDartsZoomDownloadMap.WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip";
