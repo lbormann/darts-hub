@@ -18,6 +18,7 @@ namespace autodarts_desktop.model
     {
 
         // ATTRIBUTES
+        public const int MaxAppMonitorEntries = 300;
 
         public string Name { get; set; }
         public string CustomName { get; set; }
@@ -58,24 +59,6 @@ namespace autodarts_desktop.model
 
         [JsonIgnore]
         public int AppMonitorEntries { get; private set; }
-
-        /*
-        private int _appMonitorEntries;
-        [JsonIgnore]
-        public int AppMonitorEntries
-        {
-            get => _appMonitorEntries;
-            private set
-            {
-                if (_appMonitorEntries != value)
-                {
-                    _appMonitorEntries = value;
-                    AppMonitorAvailable = _appMonitor != String.Empty ? true : false;
-                    OnPropertyChanged();
-                }
-            }
-        }
-        */
 
 
         private string _appMonitor;
@@ -223,15 +206,6 @@ namespace autodarts_desktop.model
         public abstract bool IsInstallable();
 
 
-        private void CleanUpMonitor()
-        {
-            if(AppMonitorEntries >= 500)
-            {
-                AppMonitor = String.Empty;
-                AppMonitorEntries = 0;
-            }
-        }
-
         private async Task RunProcess(Dictionary<string, string>? runtimeArguments = null)
         {
             if (!IsRunnable()) return;
@@ -275,7 +249,12 @@ namespace autodarts_desktop.model
                 {   
                     if (!String.IsNullOrEmpty(e.Data))
                     {
-                        CleanUpMonitor();
+                        if (AppMonitorEntries >= MaxAppMonitorEntries)
+                        {
+                            AppConsoleStdOutput = String.Empty;
+                            AppConsoleStdError = String.Empty;
+                            AppMonitorEntries = 0;
+                        }
                         AppConsoleStdOutput += e.Data + Environment.NewLine;
                         AppMonitor = AppConsoleStdOutput + Environment.NewLine + Environment.NewLine + AppConsoleStdError;
                         AppMonitorEntries++;
@@ -285,7 +264,12 @@ namespace autodarts_desktop.model
                 {
                     if (!String.IsNullOrEmpty(e.Data))
                     {
-                        CleanUpMonitor();
+                        if (AppMonitorEntries >= MaxAppMonitorEntries)
+                        {
+                            AppConsoleStdError = String.Empty;
+                            AppConsoleStdOutput = String.Empty;
+                            AppMonitorEntries = 0;
+                        }
                         AppConsoleStdError += e.Data + Environment.NewLine;
                         AppMonitor = AppConsoleStdOutput + Environment.NewLine + Environment.NewLine + AppConsoleStdError;
                         AppMonitorEntries++;

@@ -1,3 +1,9 @@
+## 0.10.37
+
+- adapt app versions
+- fix monitor clean-up
+
+
 ## 0.10.36
 
 - adapt app versions

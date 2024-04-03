@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using File = System.IO.File;
 using Path = System.IO.Path;
 
@@ -634,7 +635,7 @@ namespace autodarts_desktop.control
             //autodartsCallerDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
             autodartsCallerDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.11.1");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.12.0");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern.exe";
@@ -643,7 +644,7 @@ namespace autodarts_desktop.control
             //autodartsExternDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-arm";
             autodartsExternDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-mac";
             autodartsExternDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-mac";
-            var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("1.5.9");
+            var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("1.5.10");
 
             var autodartsWledDownloadMap = new DownloadMap();
             autodartsWledDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled.exe";
@@ -652,7 +653,7 @@ namespace autodarts_desktop.control
             //autodartsWledDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled-arm";
             autodartsWledDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled-mac";
             autodartsWledDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled-mac";
-            var autodartsWledDownloadUrl = autodartsWledDownloadMap.GetDownloadUrlByOs("1.4.14");
+            var autodartsWledDownloadUrl = autodartsWledDownloadMap.GetDownloadUrlByOs("1.4.15");
 
             var autodartsPixelitDownloadMap = new DownloadMap();
             autodartsPixelitDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit.exe";
@@ -661,7 +662,7 @@ namespace autodarts_desktop.control
             //autodartsPixelitDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-arm";
             autodartsPixelitDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
             autodartsPixelitDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
-            var autodartsPixelitDownloadUrl = autodartsPixelitDownloadMap.GetDownloadUrlByOs("1.1.2");
+            var autodartsPixelitDownloadUrl = autodartsPixelitDownloadMap.GetDownloadUrlByOs("1.1.3");
 
             var virtualDartsZoomDownloadMap = new DownloadMap();
             virtualDartsZoomDownloadMap.WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip";
@@ -674,7 +675,7 @@ namespace autodarts_desktop.control
             //autodartsGifDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-arm";
             autodartsGifDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-mac";
             autodartsGifDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-mac";
-            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("1.0.16");
+            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("1.0.17");
 
             var autodartsVoiceDownloadMap = new DownloadMap();
             autodartsVoiceDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice.exe";
@@ -683,7 +684,7 @@ namespace autodarts_desktop.control
             //autodartsVoiceDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-arm";
             autodartsVoiceDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-mac";
             autodartsVoiceDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-mac";
-            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("1.0.10");
+            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("1.0.11");
 
             var camLoaderDownloadMap = new DownloadMap();
             camLoaderDownloadMap.WindowsX86 = "https://github.com/lbormann/cam-loader/releases/download/v***VERSION***/cam-loader.zip";
@@ -726,14 +727,11 @@ namespace autodarts_desktop.control
                             new(name: "MS", type: "path", required: false, nameHuman: "-MS / --media_path_shared", section: "Media"),
                             new(name: "V", type: "float[0.0..1.0]", required: false, nameHuman: "-V / --caller_volume", section: "Media"),
                             new(name: "C", type: "string", required: false, nameHuman: "-C / --caller", section: "Calls"),
-                            new(name: "R", type: "bool", required: false, nameHuman: "-R / --random_caller", section: "Random", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "L", type: "bool", required: false, nameHuman: "-L / --random_caller_each_leg", section: "Random", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "R", type: "int[0..2]", required: false, nameHuman: "-R / --random_caller", section: "Random"),
                             new(name: "RL", type: "int[0..6]", required: false, nameHuman: "-RL / --random_caller_language", section: "Random"),
                             new(name: "RG", type: "int[0..2]", required: false, nameHuman: "-RG / --random_caller_gender", section: "Random"),
-                            new(name: "CCP", type: "bool", required: false, nameHuman: "-CCP / --call_current_player", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "CCPA", type: "bool", required: false, nameHuman: "-CCPA / --call_current_player_always", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "E", type: "bool", required: false, nameHuman: "-E / --call_every_dart", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "ESF", type: "bool", required: false, nameHuman: "-ESF / --call_every_dart_single_files", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "CCP", type: "int[0..2]", required: false, nameHuman: "-CCP / --call_current_player", section: "Calls"),
+                            new(name: "E", type: "int[0..2]", required: false, nameHuman: "-E / --call_every_dart", section: "Calls"),
                             new(name: "PCC", type: "int", required: false, nameHuman: "-PCC / --possible_checkout_call", section: "Calls"),
                             new(name: "PCCSF", type: "bool", required: false, nameHuman: "-PCCSF / --possible_checkout_call_single_files", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "PCCYO", type: "bool", required: false, nameHuman: "-PCCYO / --possible_checkout_call_yourself_only", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
@@ -745,9 +743,7 @@ namespace autodarts_desktop.control
                             new(name: "DLN", type: "string", required: false, nameHuman: "-DLN / --downloads_name", section: "Downloads"),
                             new(name: "BLP", type: "path", required: false, nameHuman: "-BLP / --blacklist_path", section: "Media"),
                             new(name: "BAV", type: "float[0.0..1.0]", required: false, nameHuman: "-BAV / --background_audio_volume", section: "Calls"),
-                            new(name: "WEB", type: "int[0..2]", required: false, nameHuman: "-WEB / --web_caller", section: "Service"),
-                            new(name: "WEBSB", type: "bool", required: false, nameHuman: "-WEBSB / --web_caller_scoreboard", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "WEBP", type: "int", required: false, nameHuman: "-WEBP / --web_caller_port", section: "Service"),
+                            new(name: "LPB", type: "bool", required: false, nameHuman: "-LPB / --local_playback", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "WEBDH", type: "bool", required: false, nameHuman: "-WEBDH / --web_caller_disable_https", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "HP", type: "int", required: false, nameHuman: "-HP / --host_port", section: "Service"),
                             new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
@@ -1490,7 +1486,7 @@ namespace autodarts_desktop.control
             //autodartsCallerDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
             autodartsCallerDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.11.1");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.12.0");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern.exe";
@@ -1499,7 +1495,7 @@ namespace autodarts_desktop.control
             //autodartsExternDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-arm";
             autodartsExternDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-mac";
             autodartsExternDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern-mac";
-            var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("1.5.9");
+            var autodartsExternDownloadUrl = autodartsExternDownloadMap.GetDownloadUrlByOs("1.5.10");
 
             var autodartsWledDownloadMap = new DownloadMap();
             autodartsWledDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled.exe";
@@ -1508,7 +1504,7 @@ namespace autodarts_desktop.control
             //autodartsWledDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled-arm";
             autodartsWledDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled-mac";
             autodartsWledDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-wled/releases/download/v***VERSION***/autodarts-wled-mac";
-            var autodartsWledDownloadUrl = autodartsWledDownloadMap.GetDownloadUrlByOs("1.4.14");
+            var autodartsWledDownloadUrl = autodartsWledDownloadMap.GetDownloadUrlByOs("1.4.15");
 
             var autodartsPixelitDownloadMap = new DownloadMap();
             autodartsPixelitDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit.exe";
@@ -1517,7 +1513,7 @@ namespace autodarts_desktop.control
             //autodartsPixelitDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-arm";
             autodartsPixelitDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
             autodartsPixelitDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-pixelit/releases/download/v***VERSION***/autodarts-pixelit-mac";
-            var autodartsPixelitDownloadUrl = autodartsPixelitDownloadMap.GetDownloadUrlByOs("1.1.2");
+            var autodartsPixelitDownloadUrl = autodartsPixelitDownloadMap.GetDownloadUrlByOs("1.1.3");
 
             var virtualDartsZoomDownloadMap = new DownloadMap();
             virtualDartsZoomDownloadMap.WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip";
@@ -1530,7 +1526,7 @@ namespace autodarts_desktop.control
             //autodartsGifDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-arm";
             autodartsGifDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-mac";
             autodartsGifDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-gif/releases/download/v***VERSION***/autodarts-gif-mac";
-            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("1.0.16");
+            var autodartsGifDownloadUrl = autodartsGifDownloadMap.GetDownloadUrlByOs("1.0.17");
 
             var autodartsVoiceDownloadMap = new DownloadMap();
             autodartsVoiceDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice.exe";
@@ -1539,7 +1535,7 @@ namespace autodarts_desktop.control
             //autodartsVoiceDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-arm";
             autodartsVoiceDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-mac";
             autodartsVoiceDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-voice/releases/download/v***VERSION***/autodarts-voice-mac";
-            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("1.0.10");
+            var autodartsVoiceDownloadUrl = autodartsVoiceDownloadMap.GetDownloadUrlByOs("1.0.11");
 
             var camLoaderDownloadMap = new DownloadMap();
             camLoaderDownloadMap.WindowsX86 = "https://github.com/lbormann/cam-loader/releases/download/v***VERSION***/cam-loader.zip";
@@ -1574,6 +1570,7 @@ namespace autodarts_desktop.control
                 if (autodartsCallerDownloadUrl != null)
                 {
                     autodartsCaller.DownloadUrl = autodartsCallerDownloadUrl;
+                    autodartsCaller.DescriptionShort = "Calls out thrown points";
 
                     var web = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "WEB");
                     if (web == null)
@@ -1655,8 +1652,46 @@ namespace autodarts_desktop.control
                         autodartsCaller.Configuration.Arguments.Add(new(name: "WEBDH", type: "bool", required: false, nameHuman: "-WEBDH / --web_caller_disable_https", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
                     }
 
+
                     
-                    autodartsCaller.DescriptionShort = "Calls out thrown points";
+                    var webDel = autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "WEB");
+                    autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "WEBSB");
+                    autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "WEBP");
+                    autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "L");
+                    autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "CCPA");
+
+                    if(webDel > 0)
+                    {
+                        autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "R");
+                        autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "CCP");
+                        autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "E");
+
+                        autodartsCaller.Configuration.Arguments.Add(new(name: "R", type: "int[0..2]", required: false, nameHuman: "-R / --random_caller", section: "Random"));
+                        autodartsCaller.Configuration.Arguments.Add(new(name: "CCP", type: "int[0..2]", required: false, nameHuman: "-CCP / --call_current_player", section: "Calls"));
+                        autodartsCaller.Configuration.Arguments.Add(new(name: "E", type: "int[0..2]", required: false, nameHuman: "-E / --call_every_dart", section: "Calls"));
+                    }
+
+                    var localPlayback = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "LPB");
+                    if(localPlayback == null)
+                    {
+                        autodartsCaller.Configuration.Arguments.Add(new(name: "LPB", type: "bool", required: false, nameHuman: "-LPB / --local_playback", section: "Calls", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
+                    }
+
+                    
+                    var caller = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "C");
+                    if(caller != null && !String.IsNullOrEmpty(caller.Value))
+                    {
+                        string pattern = @"-v\d+$";
+                        if (Regex.IsMatch(caller.Value, pattern))
+                        {
+                            caller.Value = Regex.Replace(caller.Value, pattern, "");
+                        }
+                    }
+                    
+
+
+
+
                 }
                 else
                 {
