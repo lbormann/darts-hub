@@ -214,6 +214,8 @@ namespace autodarts_desktop.model
             var arguments = ComposeArguments(this, runtimeArguments);
             //if (arguments == null) return;
 
+
+
             eventHandled = new TaskCompletionSource<bool>();
 
             try
@@ -221,6 +223,9 @@ namespace autodarts_desktop.model
                 AppConsoleStdOutput = String.Empty;
                 AppConsoleStdError = String.Empty;
                 AppMonitor = String.Empty;
+
+                // For testing purposes
+                //AppConsoleStdOutput = arguments;
 
                 bool isUri = Uri.TryCreate(executable, UriKind.Absolute, out Uri uriResult)
                 && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);

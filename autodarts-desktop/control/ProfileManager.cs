@@ -1659,8 +1659,9 @@ namespace autodarts_desktop.control
                     autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "WEBP");
                     autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "L");
                     autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "CCPA");
+                    autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "ESF");
 
-                    if(webDel > 0)
+                    if (webDel > 0)
                     {
                         autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "R");
                         autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "CCP");
