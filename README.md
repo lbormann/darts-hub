@@ -141,7 +141,7 @@ Imagine you could start your favorite apps along autodarts-*. That is what custo
 
 If you would like to stay on specific app-version, create an empty file called "my_version.txt" in particular app dir. That file will stop future app-updates, until you remove the file.
 
-Disclaimer: If you use a specific version of an app that has configuration-fields, like the for example caller and the current autodarts-desktop-version knows more or less configuration-fields for the app, it could be that the app is not startable. 
+Disclaimer: If you're using a specific version of an app with setup options, like for example the caller feature, and the current Autodarts Desktop version knows different setup options for the app, there's a chance the app might not start properly.
 
 ## TROUBLESHOOTING
 
