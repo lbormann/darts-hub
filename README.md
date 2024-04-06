@@ -131,6 +131,8 @@ Some Apps have mandatory configuration fields to work properly. Those fields are
 For an extensive App explaintion and its configuration click the question mark-symbol in the upper-right corner.
 If your done filling out configuration fields just close the dialog window to save configuration. In case the app is still running, ADD will automatically restart it to apply current configuration. 
 
+Side note: a grayed out configuration field means, that it uses the default value of the app itself. The value doesn't match the app`s default-value necessarily. If you would like to know which default value will be used, have a look at specific app README.
+
 ### Custom-apps
 
 Imagine you could start your favorite apps along autodarts-*. That is what custom-apps are made for. As an example: You could start OBS, to stream an autodarts-game.. or trigger a Home-Assistant-hook to turn on your AD-Build.. or just some lights. 
@@ -139,6 +141,7 @@ Imagine you could start your favorite apps along autodarts-*. That is what custo
 
 If you would like to stay on specific app-version, create an empty file called "my_version.txt" in particular app dir. That file will stop future app-updates, until you remove the file.
 
+Disclaimer: If you use a specific version of an app that has configuration-fields, like the for example caller and the current autodarts-desktop-version knows more or less configuration-fields for the app, it could be that the app is not startable. 
 
 ## TROUBLESHOOTING
 

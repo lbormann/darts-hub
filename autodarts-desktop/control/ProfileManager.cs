@@ -635,7 +635,7 @@ namespace autodarts_desktop.control
             //autodartsCallerDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
             autodartsCallerDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.12.0");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.12.1");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern.exe";
@@ -732,6 +732,7 @@ namespace autodarts_desktop.control
                             new(name: "RG", type: "int[0..2]", required: false, nameHuman: "-RG / --random_caller_gender", section: "Random"),
                             new(name: "CCP", type: "int[0..2]", required: false, nameHuman: "-CCP / --call_current_player", section: "Calls"),
                             new(name: "E", type: "int[0..2]", required: false, nameHuman: "-E / --call_every_dart", section: "Calls"),
+                            new(name: "ETS", type: "bool", required: false, nameHuman: "-ETS / --call_every_dart_total_score", section: "Calls", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
                             new(name: "PCC", type: "int", required: false, nameHuman: "-PCC / --possible_checkout_call", section: "Calls"),
                             new(name: "PCCSF", type: "bool", required: false, nameHuman: "-PCCSF / --possible_checkout_call_single_files", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "PCCYO", type: "bool", required: false, nameHuman: "-PCCYO / --possible_checkout_call_yourself_only", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
@@ -1486,7 +1487,7 @@ namespace autodarts_desktop.control
             //autodartsCallerDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
             autodartsCallerDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.12.0");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.12.1");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern.exe";
@@ -1572,11 +1573,13 @@ namespace autodarts_desktop.control
                     autodartsCaller.DownloadUrl = autodartsCallerDownloadUrl;
                     autodartsCaller.DescriptionShort = "Calls out thrown points";
 
+                    /*
                     var web = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "WEB");
                     if (web == null)
                     {
                         autodartsCaller.Configuration.Arguments.Add(new(name: "WEB", type: "int[0..2]", required: false, nameHuman: "web-caller", section: "Service"));
                     }
+                    */
                     var webPort = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "WEBP");
                     if (webPort == null)
                     {
@@ -1688,7 +1691,13 @@ namespace autodarts_desktop.control
                             caller.Value = Regex.Replace(caller.Value, pattern, "");
                         }
                     }
-                    
+
+                    var callEveryDartTotalScore = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "ETS");
+                    if (callEveryDartTotalScore == null)
+                    {
+                        autodartsCaller.Configuration.Arguments.Add(new(name: "ETS", type: "bool", required: false, nameHuman: "-ETS / --call_every_dart_total_score", section: "Calls", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
+                    }
+
 
 
 
