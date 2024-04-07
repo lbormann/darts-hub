@@ -1,3 +1,8 @@
+## 0.10.40
+
+- adapt app versions
+
+
 ## 0.10.39
 
 - adapt app versions
