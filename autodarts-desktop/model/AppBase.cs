@@ -173,16 +173,20 @@ namespace autodarts_desktop.model
 
         public void Close()
         {
-            if(!IsRunning()) return;
+            executable = SetRunExecutable();
+
+            //if(!IsRunning()) return;
             if (IsRunnable())
             {
                 try
                 {
                     //Console.WriteLine(Name + " tries to exit");
-                    AppRunningState = false;
-                    process.CloseMainWindow();
-                    process.Close();
-
+                    
+                    if(process != null)
+                    {
+                        process.CloseMainWindow();
+                        process.Close();
+                    }
                     if (processId != defaultProcessId)
                     {
                         Helper.KillProcess(processId);
@@ -191,6 +195,7 @@ namespace autodarts_desktop.model
                     {
                         Helper.KillProcess(executable);
                     }
+                    AppRunningState = false;
                 }
                 catch(Exception ex)
                 {

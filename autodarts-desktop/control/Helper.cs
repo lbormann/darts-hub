@@ -134,16 +134,6 @@ namespace autodarts_desktop.control
             return urlSplitted[urlSplitted.Length - 1];
         }
 
-        public static bool IsProcessRunning(int processId)
-        {
-            return processId != -1 && Process.GetProcessById(processId) != null;
-        }
-
-        public static bool IsProcessRunning(string? processName)
-        {
-            return Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.ToLower().Contains(processName.ToLower())) != null;
-        }
-
         public static string? SearchExecutableOnDrives(string filename)
         {
             string[] drives = Directory.GetLogicalDrives();
@@ -186,15 +176,25 @@ namespace autodarts_desktop.control
             return executable;
         }
 
+        public static bool IsProcessRunning(int processId)
+        {
+            return processId != -1 && Process.GetProcessById(processId) != null;
+        }
+
+        public static bool IsProcessRunning(string? processName)
+        {
+            return Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.ToLower().Contains(processName.ToLower())) != null;
+        }
+
         public static void KillProcess(int processId)
         {
             if (processId == -1) return;
 
             var process = Process.GetProcessById(processId);
-            process.Kill();
+            process.Kill(false);
 
             process = Process.GetProcessById(processId);
-            process.Kill();
+            process.Kill(false);
         }
 
         public static void KillProcess(string processName)
@@ -203,17 +203,14 @@ namespace autodarts_desktop.control
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 var process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
-                if(process != null) { process.Kill(); }
-                
+                if(process != null) { process.Kill(false); }
+
                 process = Process.GetProcessesByName(processName).FirstOrDefault(p => p.ProcessName.Contains(processName));
-                if (process != null) { process.Kill(); }
+                if (process != null) { process.Kill(false); }
                 return;
             }
             KillProcessesByNameOsX(processName);
         }
-
-
-
 
         private static void KillProcessesByNameOsX(string processName)
         {

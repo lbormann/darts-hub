@@ -1,3 +1,9 @@
+## 0.10.41
+
+- adapt app versions
+- closing all apps on start
+
+
 ## 0.10.40
 
 - adapt app versions

@@ -87,6 +87,15 @@ namespace autodarts_desktop
 
                 profileManager.LoadAppsAndProfiles();
 
+                try
+                {
+                    profileManager.CloseApps();
+                }
+                catch (Exception ex)
+                {
+                    RenderMessageBox("", "Error occured: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
+                }
+
                 RenderProfiles();
 
                 Updater.NewReleaseFound += Updater_NewReleaseFound;
