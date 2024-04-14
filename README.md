@@ -59,7 +59,9 @@ bash <(curl -sL get-add.arnes-design.de)
 ```
 
 
-### Step-by-step (Linux, macOS, Windows)
+### Step-by-step (Windows, Linux, MacOS)
+
+Alternatively you can install autodarts-desktop step by step.
 
 1) Create a new folder called "autodarts-desktop" in your home directory.
 2) Download the appropiate zip-file. You can find it in the release section.
@@ -99,7 +101,9 @@ bash <(curl -sL get-add.arnes-design.de) --uninstall
 
 
 
-### Step-by-step (Linux, macOS, Windows)
+### Step-by-step (Windows, Linux, MacOS)
+
+Alternatively you can uninstall autodarts-desktop step by step.
 
 1. Remove the folder called "autodarts-desktop" in your home directory.
 2. Linux and MacOS: Execute the following commands in a terminal:
