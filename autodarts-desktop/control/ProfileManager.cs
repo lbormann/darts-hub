@@ -738,7 +738,7 @@ namespace autodarts_desktop.control
                             new(name: "PCCYO", type: "bool", required: false, nameHuman: "-PCCYO / --possible_checkout_call_yourself_only", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "A", type: "float[0.0..1.0]", required: false, nameHuman: "-A / --ambient_sounds", section: "Calls"),
                             new(name: "AAC", type: "bool", required: false, nameHuman: "-AAC / --ambient_sounds_after_calls", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "DL", type: "int[0..100]", required: false, nameHuman: "downloads", section: "Downloads"),
+                            new(name: "DL", type: "int[0..100]", required: false, nameHuman: "-DL / --downloads", section: "Downloads"),
                             new(name: "DLLA", type: "int[0..6]", required: false, nameHuman: "-DLLA / --downloads_language", section: "Downloads"),
                             new(name: "DLN", type: "string", required: false, nameHuman: "-DLN / --downloads_name", section: "Downloads"),
                             new(name: "BLP", type: "path", required: false, nameHuman: "-BLP / --blacklist_path", section: "Media"),
@@ -1710,7 +1710,7 @@ namespace autodarts_desktop.control
                         {   
                             autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "DLL");
                             autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "DL");
-                            autodartsCaller.Configuration.Arguments.Add(new(name: "DL", type: "int[0..100]", required: false, nameHuman: "downloads", section: "Downloads"));
+                            autodartsCaller.Configuration.Arguments.Add(new(name: "DL", type: "int[0..100]", required: false, nameHuman: "-DL / --downloads", section: "Downloads"));
                         }
                     }
 
