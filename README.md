@@ -135,7 +135,7 @@ Some Apps have mandatory configuration fields to work properly. Those fields are
 For an extensive App explaintion and its configuration click the question mark-symbol in the upper-right corner.
 If your done filling out configuration fields just close the dialog window to save configuration. In case the app is still running, ADD will automatically restart it to apply current configuration. 
 
-Side note: a grayed out configuration field means, that it uses the default value of the app itself. The value doesn't match the app`s default-value necessarily. If you would like to know which default value will be used, have a look at specific app README.
+Side note: a grayed out configuration field means, that it uses the default value of the app itself. The displayed value doesn't match the app`s default value necessarily. If you would like to know which default value will be used, have a look at specific app README.
 
 ### Custom-apps
 

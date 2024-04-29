@@ -78,7 +78,7 @@ namespace autodarts_desktop.control
                 {
                     var appsDownloadable = JsonConvert.DeserializeObject<List<AppDownloadable>>(File.ReadAllText(appsDownloadableFile));
                     AppsDownloadable.AddRange(appsDownloadable);
-                    MigrateAppsDownloadable();
+                    MigrateAppsDownloadableSinceCrossPlatform();
                     AppsAll.AddRange(AppsDownloadable);
                 }
                 catch (Exception ex)
@@ -635,7 +635,7 @@ namespace autodarts_desktop.control
             //autodartsCallerDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
             autodartsCallerDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.12.4");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.12.5");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern.exe";
@@ -693,7 +693,6 @@ namespace autodarts_desktop.control
 
 
 
-
             List<AppDownloadable> apps = new();
 
             if (!String.IsNullOrEmpty(autodartsClientDownloadUrl))
@@ -701,6 +700,7 @@ namespace autodarts_desktop.control
                 AppDownloadable autodarts =
                 new(
                     downloadUrl: autodartsClientDownloadUrl,
+                    changelogUrl: "https://raw.githubusercontent.com/autodarts/releases/main/CHANGELOG.md",
                     name: "autodarts-client",
                     helpUrl: "https://docs.autodarts.io/",
                     descriptionShort: "Recognizes dart-positions"
@@ -713,6 +713,7 @@ namespace autodarts_desktop.control
                 AppDownloadable autodartsCaller =
                     new(
                         downloadUrl: autodartsCallerDownloadUrl,
+                        changelogUrl: "https://raw.githubusercontent.com/lbormann/autodarts-caller/master/CHANGELOG.md",
                         name: "autodarts-caller",
                         helpUrl: "https://github.com/lbormann/autodarts-caller",
                         descriptionShort: "Calls out thrown points",
@@ -734,13 +735,11 @@ namespace autodarts_desktop.control
                             new(name: "E", type: "int[0..2]", required: false, nameHuman: "-E / --call_every_dart", section: "Calls"),
                             new(name: "ETS", type: "bool", required: false, nameHuman: "-ETS / --call_every_dart_total_score", section: "Calls", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
                             new(name: "PCC", type: "int", required: false, nameHuman: "-PCC / --possible_checkout_call", section: "Calls"),
-                            new(name: "PCCSF", type: "bool", required: false, nameHuman: "-PCCSF / --possible_checkout_call_single_files", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "PCCYO", type: "bool", required: false, nameHuman: "-PCCYO / --possible_checkout_call_yourself_only", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "A", type: "float[0.0..1.0]", required: false, nameHuman: "-A / --ambient_sounds", section: "Calls"),
                             new(name: "AAC", type: "bool", required: false, nameHuman: "-AAC / --ambient_sounds_after_calls", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "DL", type: "bool", required: false, nameHuman: "-DL / --downloads", section: "Downloads", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "DL", type: "int[0..100]", required: false, nameHuman: "downloads", section: "Downloads"),
                             new(name: "DLLA", type: "int[0..6]", required: false, nameHuman: "-DLLA / --downloads_language", section: "Downloads"),
-                            new(name: "DLL", type: "int", required: false, nameHuman: "-DLL / --downloads_limit", section: "Downloads"),
                             new(name: "DLN", type: "string", required: false, nameHuman: "-DLN / --downloads_name", section: "Downloads"),
                             new(name: "BLP", type: "path", required: false, nameHuman: "-BLP / --blacklist_path", section: "Media"),
                             new(name: "BAV", type: "float[0.0..1.0]", required: false, nameHuman: "-BAV / --background_audio_volume", section: "Calls"),
@@ -758,6 +757,7 @@ namespace autodarts_desktop.control
                 AppDownloadable autodartsExtern =
                 new(
                     downloadUrl: autodartsExternDownloadUrl,
+                    changelogUrl: "https://raw.githubusercontent.com/lbormann/autodarts-extern/master/CHANGELOG.md",
                     name: "autodarts-extern",
                     helpUrl: "https://github.com/lbormann/autodarts-extern",
                     descriptionShort: "Bridges and automates other dart-platforms",
@@ -822,6 +822,7 @@ namespace autodarts_desktop.control
                 AppDownloadable autodartsWled =
                 new(
                     downloadUrl: autodartsWledDownloadUrl,
+                    changelogUrl: "https://raw.githubusercontent.com/lbormann/autodarts-wled/master/CHANGELOG.md",
                     name: "autodarts-wled",
                     helpUrl: "https://github.com/lbormann/autodarts-wled",
                     descriptionShort: "Controls WLED installations by autodarts-events",
@@ -869,6 +870,7 @@ namespace autodarts_desktop.control
                 AppDownloadable autodartsPixelit =
                 new(
                     downloadUrl: autodartsPixelitDownloadUrl,
+                    changelogUrl: "https://raw.githubusercontent.com/lbormann/autodarts-pixelit/main/CHANGELOG.md",
                     name: "autodarts-pixelit",
                     helpUrl: "https://github.com/lbormann/autodarts-pixelit",
                     descriptionShort: "Controls PIXELIT installations by autodarts-events",
@@ -924,6 +926,7 @@ namespace autodarts_desktop.control
                 AppDownloadable autodartsGif =
                 new(
                     downloadUrl: autodartsGifDownloadUrl,
+                    changelogUrl: "https://raw.githubusercontent.com/lbormann/autodarts-gif/main/CHANGELOG.md",
                     name: "autodarts-gif",
                     helpUrl: "https://github.com/lbormann/autodarts-gif",
                     descriptionShort: "Displays images according to autodarts-events",
@@ -985,6 +988,7 @@ namespace autodarts_desktop.control
                 AppDownloadable autodartsVoice =
                 new(
                     downloadUrl: autodartsVoiceDownloadUrl,
+                    changelogUrl: "https://raw.githubusercontent.com/lbormann/autodarts-voice/main/CHANGELOG.md",
                     name: "autodarts-voice",
                     helpUrl: "https://github.com/lbormann/autodarts-voice",
                     descriptionShort: "Controls autodarts by using your voice",
@@ -1001,6 +1005,7 @@ namespace autodarts_desktop.control
                 AppDownloadable camLoader =
                 new(
                     downloadUrl: camLoaderDownloadUrl,
+                    changelogUrl: "https://raw.githubusercontent.com/lbormann/cam-loader/master/CHANGELOG.md",
                     name: "cam-loader",
                     helpUrl: "https://github.com/lbormann/cam-loader",
                     descriptionShort: "Saves and loads settings for multiple cameras"
@@ -1487,7 +1492,7 @@ namespace autodarts_desktop.control
             //autodartsCallerDownloadMap.LinuxArm = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-arm";
             autodartsCallerDownloadMap.MacX64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
             autodartsCallerDownloadMap.MacArm64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller-mac";
-            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.12.4");
+            var autodartsCallerDownloadUrl = autodartsCallerDownloadMap.GetDownloadUrlByOs("2.12.5");
 
             var autodartsExternDownloadMap = new DownloadMap();
             autodartsExternDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-extern/releases/download/v***VERSION***/autodarts-extern.exe";
@@ -1544,7 +1549,8 @@ namespace autodarts_desktop.control
             var camLoaderDownloadUrl = camLoaderDownloadMap.GetDownloadUrlByOs("1.0.0");
 
 
-
+            
+            
 
             // 1. Mig (Update download version)
             var autodartsClient = AppsDownloadable.Find(a => a.Name == "autodarts-client");
@@ -1553,6 +1559,7 @@ namespace autodarts_desktop.control
                 if (autodartsClientDownloadUrl != null)
                 {
                     autodartsClient.DownloadUrl = autodartsClientDownloadUrl;
+                    autodartsClient.ChangelogUrl = "https://raw.githubusercontent.com/autodarts/releases/main/CHANGELOG.md";
                     autodartsClient.DescriptionShort = "Recognizes dart-positions";
                 }
                 else
@@ -1571,6 +1578,7 @@ namespace autodarts_desktop.control
                 if (autodartsCallerDownloadUrl != null)
                 {
                     autodartsCaller.DownloadUrl = autodartsCallerDownloadUrl;
+                    autodartsCaller.ChangelogUrl = "https://raw.githubusercontent.com/lbormann/autodarts-caller/master/CHANGELOG.md";
                     autodartsCaller.DescriptionShort = "Calls out thrown points";
 
                     /*
@@ -1692,6 +1700,22 @@ namespace autodarts_desktop.control
 
 
 
+                    autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "PCCSF");
+
+                    var downloads = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "DL");
+                    if (downloads != null)
+                    {
+                        var downloadsLimit = autodartsCaller.Configuration.Arguments.Find(a => a.Name == "DLL");
+                        if (downloadsLimit != null)
+                        {   
+                            autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "DLL");
+                            autodartsCaller.Configuration.Arguments.RemoveAll(a => a.Name == "DL");
+                            autodartsCaller.Configuration.Arguments.Add(new(name: "DL", type: "int[0..100]", required: false, nameHuman: "downloads", section: "Downloads"));
+                        }
+                    }
+
+
+
 
                 }
                 else
@@ -1710,6 +1734,7 @@ namespace autodarts_desktop.control
                 if (autodartsExternDownloadUrl != null)
                 {
                     autodartsExtern.DownloadUrl = autodartsExternDownloadUrl;
+                    autodartsExtern.ChangelogUrl = "https://raw.githubusercontent.com/lbormann/autodarts-extern/master/CHANGELOG.md";
 
                     var lidartsCamFullscreen = autodartsExtern.Configuration.Arguments.Find(a => a.Name == "lidarts_cam_fullscreen");
                     if (lidartsCamFullscreen == null)
@@ -1735,6 +1760,7 @@ namespace autodarts_desktop.control
                 if (autodartsWledDownloadUrl != null)
                 {
                     autodartsWled.DownloadUrl = autodartsWledDownloadUrl;
+                    autodartsWled.ChangelogUrl = "https://raw.githubusercontent.com/lbormann/autodarts-wled/master/CHANGELOG.md";
                     autodartsWled.DescriptionShort = "Controls WLED installations by autodarts-events";
 
                     var playerJoined = autodartsWled.Configuration.Arguments.Find(a => a.Name == "PJ");
@@ -1783,6 +1809,7 @@ namespace autodarts_desktop.control
                 if (autodartsGifDownloadUrl != null)
                 {
                     autodartsGif.DownloadUrl = autodartsGifDownloadUrl;
+                    autodartsGif.ChangelogUrl = "https://raw.githubusercontent.com/lbormann/autodarts-gif/main/CHANGELOG.md";
                     autodartsGif.DescriptionShort = "Displays images according to autodarts-events";
 
                     var webGifPort = autodartsGif.Configuration.Arguments.Find(a => a.Name == "WEBP");
@@ -1829,6 +1856,7 @@ namespace autodarts_desktop.control
                 autodartsGif =
                     new(
                         downloadUrl: autodartsGifDownloadUrl,
+                        changelogUrl: "https://raw.githubusercontent.com/lbormann/autodarts-gif/main/CHANGELOG.md",
                         name: "autodarts-gif",
                         helpUrl: "https://github.com/lbormann/autodarts-gif",
                         descriptionShort: "Displays images according to autodarts-events",
@@ -1846,6 +1874,7 @@ namespace autodarts_desktop.control
                 if (camLoaderDownloadUrl != null)
                 {
                     camLoader.DownloadUrl = camLoaderDownloadUrl;
+                    camLoader.ChangelogUrl = "https://raw.githubusercontent.com/lbormann/cam-loader/master/CHANGELOG.md";
                     camLoader.DescriptionShort = "Saves and loads settings for multiple cameras";
                 }
                 else
@@ -1862,6 +1891,7 @@ namespace autodarts_desktop.control
                 camLoader =
                         new(
                             downloadUrl: camLoaderDownloadUrl,
+                            changelogUrl: "https://raw.githubusercontent.com/lbormann/cam-loader/master/CHANGELOG.md",
                             name: "cam-loader",
                             helpUrl: "https://github.com/lbormann/cam-loader",
                             descriptionShort: "Saves and loads settings for multiple cameras"
@@ -1875,6 +1905,7 @@ namespace autodarts_desktop.control
                 if (autodartsVoiceDownloadUrl != null)
                 {
                     autodartsVoice.DownloadUrl = autodartsVoiceDownloadUrl;
+                    autodartsVoice.ChangelogUrl = "https://raw.githubusercontent.com/lbormann/autodarts-voice/main/CHANGELOG.md";
 
                     var keywordsNextGame = autodartsVoice.Configuration.Arguments.Find(a => a.Name == "KNG");
                     if (keywordsNextGame == null)
@@ -1976,6 +2007,7 @@ namespace autodarts_desktop.control
                 autodartsVoice =
                     new(
                         downloadUrl: autodartsVoiceDownloadUrl,
+                        changelogUrl: "https://raw.githubusercontent.com/lbormann/autodarts-voice/main/CHANGELOG.md",
                         name: "autodarts-voice",
                         helpUrl: "https://github.com/lbormann/autodarts-voice",
                         descriptionShort: "Controls autodarts by using your voice",
@@ -1994,6 +2026,7 @@ namespace autodarts_desktop.control
                 if (autodartsPixelitDownloadUrl != null)
                 {
                     autodartsPixelit.DownloadUrl = autodartsPixelitDownloadUrl;
+                    autodartsPixelit.ChangelogUrl = "https://raw.githubusercontent.com/lbormann/autodarts-pixelit/main/CHANGELOG.md";
                     autodartsPixelit.DescriptionShort = "Controls PIXELIT installations by autodarts-events";
 
                     var gameStartEffects = autodartsPixelit.Configuration.Arguments.Find(a => a.Name == "GS");
@@ -2053,6 +2086,7 @@ namespace autodarts_desktop.control
                 autodartsPixelit =
                 new(
                     downloadUrl: autodartsPixelitDownloadUrl,
+                    changelogUrl: "https://raw.githubusercontent.com/lbormann/autodarts-pixelit/main/CHANGELOG.md",
                     name: "autodarts-pixelit",
                     helpUrl: "https://github.com/lbormann/autodarts-pixelit",
                     descriptionShort: "Controls PIXELIT installations by autodarts-events",

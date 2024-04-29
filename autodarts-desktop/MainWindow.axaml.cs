@@ -576,6 +576,7 @@ namespace autodarts_desktop
                         checkBoxTagger.Foreground = Brushes.Gray;
                         checkBoxTagger.FontWeight = FontWeight.Normal;
                         appProfile.TaggedForStart = false;
+                        app.Value.App.Close();
                     }
                     else
                     {
@@ -635,11 +636,9 @@ namespace autodarts_desktop
                 checkBoxTagger.Tag = textBox;
 
 
-                // TODO
                 if (!String.IsNullOrEmpty(appProfile.App.DescriptionShort))
                 {
                     var tt = new ToolTip();
-                    // + (String.IsNullOrEmpty(appProfile.App.HelpUrl) ? "" : ": " + appProfile.App.HelpUrl)
                     tt.Content = appProfile.App.DescriptionShort;
                     tt.FontSize = fontSize + 2.0;
                     tt.FontWeight = FontWeight.Bold;
@@ -647,7 +646,6 @@ namespace autodarts_desktop
                     tt.Foreground = Brushes.GhostWhite;
                     tt.BorderBrush = Brushes.White;
                     tt.Background = Brushes.RoyalBlue;
-                    //tt.Padding = new Thickness(30);
                     ToolTip.SetPlacement(checkBoxTagger, PlacementMode.Pointer);
                     ToolTip.SetTip(checkBoxTagger, tt);
                     ToolTip.SetShowDelay(checkBoxTagger, 750);

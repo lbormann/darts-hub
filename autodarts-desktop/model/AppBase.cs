@@ -23,6 +23,7 @@ namespace autodarts_desktop.model
         public string Name { get; set; }
         public string CustomName { get; set; }
         public string? HelpUrl { get; set; }
+        public string? ChangelogUrl { get; set; }
         public string? DescriptionShort { get; set; }
         public string? DescriptionLong { get; private set; }
         public bool RunAsAdmin { get; private set; }
@@ -113,6 +114,7 @@ namespace autodarts_desktop.model
         public AppBase(string name,
                         string? customName,
                         string? helpUrl,
+                        string? changelogUrl,
                         string? descriptionShort,
                         string? descriptionLong,
                         bool runAsAdmin,
@@ -124,6 +126,7 @@ namespace autodarts_desktop.model
             Name = name;
             CustomName = customName;
             HelpUrl = helpUrl;
+            ChangelogUrl = changelogUrl;
             DescriptionShort = descriptionShort;
             DescriptionLong = descriptionLong;
             RunAsAdmin = runAsAdmin;

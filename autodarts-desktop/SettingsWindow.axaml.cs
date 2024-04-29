@@ -14,6 +14,8 @@ using Avalonia.Media.Imaging;
 using System.Globalization;
 using model;
 using Avalonia.Interactivity;
+using MessageBox.Avalonia.DTO;
+using MessageBox.Avalonia.Enums;
 
 namespace autodarts_desktop
 {
@@ -104,15 +106,62 @@ namespace autodarts_desktop
             labelHeader.Foreground = fontColor;
             GridMain.Children.Add(labelHeader);
 
+            if (!String.IsNullOrEmpty(app.ChangelogUrl))
+            {
+                var imageChangelog = new Image();
+                imageChangelog.Width = 32;
+                imageChangelog.Height = 32;
+                imageChangelog.Source = new Bitmap(assets.Open(new Uri("avares://autodarts-desktop/Assets/changelog.png")));
+
+                var buttonChangelog = new Button();
+                buttonChangelog.Margin = new Thickness(0, 20, 20, 0);
+                buttonChangelog.Content = imageChangelog;
+                buttonChangelog.HorizontalAlignment = HorizontalAlignment.Right;
+                buttonChangelog.VerticalAlignment = VerticalAlignment.Top;
+                buttonChangelog.FontSize = fontSize;
+                buttonChangelog.Background = Brushes.Transparent;
+                buttonChangelog.BorderThickness = new Thickness(0, 0, 0, 0);
+                buttonChangelog.Click += async (s, e) =>
+                {
+                    string changelogText = await Helper.AsyncHttpGet(app.ChangelogUrl, 4);
+                    if (String.IsNullOrEmpty(changelogText)) changelogText = "Changelog not available. Please try again later.";
+
+                    double width = Width;
+                    double height = Height;
+                    MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
+                    {
+                        Icon = MessageBox.Avalonia.Enums.Icon.None,
+                        ContentTitle = "Changelog",
+                        WindowIcon = Icon,
+                        Width = width,
+                        Height = height,
+                        MaxWidth = width,
+                        MaxHeight = height,
+                        CanResize = false,
+                        EscDefaultButton = ClickEnum.No,
+                        EnterDefaultButton = ClickEnum.Yes,
+                        SystemDecorations = SystemDecorations.Full,
+                        WindowStartupLocation = WindowStartupLocation,
+                        ButtonDefinitions = ButtonEnum.Ok,
+                        ContentMessage = changelogText
+                    }).ShowDialog(this);
+                };
+                var tt = new ToolTip();
+                tt.Content = "Get to know last changes?";
+                ToolTip.SetPlacement(buttonChangelog, PlacementMode.Pointer);
+                ToolTip.SetTip(buttonChangelog, tt);
+                GridMain.Children.Add(buttonChangelog);
+            }
+
             if (!String.IsNullOrEmpty(app.HelpUrl))
             {
                 var imageHelp = new Image();
-                imageHelp.Width = 24;
-                imageHelp.Height = 24;
+                imageHelp.Width = 32;
+                imageHelp.Height = 32;
                 imageHelp.Source = new Bitmap(assets.Open(new Uri("avares://autodarts-desktop/Assets/help.png")));
 
                 var buttonHelp = new Button();
-                buttonHelp.Margin = new Thickness(0, 25, 20, 0);
+                buttonHelp.Margin = new Thickness(0, 20, 415, 0);
                 buttonHelp.Content = imageHelp;
                 buttonHelp.HorizontalAlignment = HorizontalAlignment.Right;
                 buttonHelp.VerticalAlignment = VerticalAlignment.Top;
@@ -133,6 +182,10 @@ namespace autodarts_desktop
                         MessageBoxManager.GetMessageBoxStandardWindow("Error", "Error occured: " + ex.Message).Show();
                     }
                 };
+                var tt = new ToolTip();
+                tt.Content = "Need help?";
+                ToolTip.SetPlacement(buttonHelp, PlacementMode.Pointer);
+                ToolTip.SetTip(buttonHelp, tt);
                 GridMain.Children.Add(buttonHelp);
             }
 

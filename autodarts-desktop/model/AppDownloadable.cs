@@ -20,8 +20,6 @@ namespace autodarts_desktop.model
 
         public string DownloadUrl { get; set; }
 
-
-
         public event EventHandler<AppEventArgs>? DownloadStarted;
         public event EventHandler<AppEventArgs>? DownloadFinished;
         public event EventHandler<AppEventArgs>? DownloadFailed;
@@ -37,10 +35,11 @@ namespace autodarts_desktop.model
 
         // METHODS
 
-        public AppDownloadable(string downloadUrl, 
+        public AppDownloadable(string downloadUrl,
                                 string name,
                                 string? customName = null,
                                 string? helpUrl = null,
+                                string? changelogUrl = null,
                                 string? descriptionShort = null,
                                 string? descriptionLong = null,
                                 bool runAsAdmin = false,
@@ -48,15 +47,16 @@ namespace autodarts_desktop.model
                                 ProcessWindowStyle? startWindowState = null,
                                 Configuration? configuration = null) 
             : base(name: name,
-                   customName: customName,
-                        helpUrl: helpUrl,
-                        descriptionShort: descriptionShort,
-                        descriptionLong: descriptionLong,
-                        runAsAdmin: runAsAdmin,
-                        chmod: chmod,
-                        startWindowState: startWindowState,
-                        configuration: configuration
-                        )
+                    customName: customName,
+                    helpUrl: helpUrl,
+                    changelogUrl: changelogUrl,
+                    descriptionShort: descriptionShort,
+                    descriptionLong: descriptionLong,
+                    runAsAdmin: runAsAdmin,
+                    chmod: chmod,
+                    startWindowState: startWindowState,
+                    configuration: configuration
+                    )
         {
             DownloadUrl = downloadUrl;
             

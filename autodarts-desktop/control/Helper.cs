@@ -1,10 +1,13 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using System.Net.Http;
 
 
 namespace autodarts_desktop.control
@@ -60,6 +63,29 @@ namespace autodarts_desktop.control
                 return new FileInfo(pathToFile).Length;
             }
             return -2;
+        }
+
+        public static async Task<string> AsyncHttpGet(string url, double timeout)
+        {
+            try
+            {
+                var changelog = String.Empty;
+                using (var client = new HttpClient())
+                {
+                    client.Timeout = TimeSpan.FromSeconds(timeout);
+                    var response = await client.GetAsync(url);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        changelog = await response.Content.ReadAsStringAsync();
+                    }
+                }
+                return changelog;
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return string.Empty;
         }
 
         public static string GetAppBasePath()

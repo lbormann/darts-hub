@@ -66,6 +66,7 @@ namespace autodarts_desktop
                     MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
                     {
                         Icon = MessageBox.Avalonia.Enums.Icon.Success,
+                        ContentTitle = "Donation",
                         WindowIcon = Icon,
                         Width = Width / 1.3,
                         Height = Height / 1.3,
@@ -81,14 +82,15 @@ namespace autodarts_desktop
                     }).ShowDialog(this);
                     break;
                 case "changelog":
-                    changelogText = await Updater.GetChangelog();
-                    if(String.IsNullOrEmpty(changelogText)) changelogText = "Changelog not available. Please try again later.";
+                    changelogText = await Helper.AsyncHttpGet(Updater.appSourceUrlChangelog, 4);
+                    if (String.IsNullOrEmpty(changelogText)) changelogText = "Changelog not available. Please try again later.";
            
                     double width = Width + Width / 2;
                     double height = Height * 2;
                     MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
                     {
                         Icon = MessageBox.Avalonia.Enums.Icon.None,
+                        ContentTitle = "Changelog",
                         WindowIcon = Icon,
                         Width = width,
                         Height = height,

@@ -1,3 +1,10 @@
+## 0.11.0
+
+- adapt app versions
+- add changelog for apps
+- close app on profile uncheck
+
+
 ## 0.10.41
 
 - adapt app versions

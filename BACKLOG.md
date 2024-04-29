@@ -1,3 +1,2 @@
-- add changelog for every app
 - open urls with missing protocol
 - add possibility to run appLocal silent
