@@ -1,3 +1,8 @@
+## 0.11.2
+
+- adapt app versions
+
+
 ## 0.11.1
 
 - fix typo

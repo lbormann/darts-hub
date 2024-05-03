@@ -626,7 +626,7 @@ namespace autodarts_desktop.control
             autodartsClientDownloadMap.LinuxArm = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-armv7l.tar.gz"; 
             autodartsClientDownloadMap.MacX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-amd64.tar.gz";
             autodartsClientDownloadMap.MacArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-arm64.tar.gz";
-            var autodartsClientDownloadUrl = autodartsClientDownloadMap.GetDownloadUrlByOs("0.23.3");
+            var autodartsClientDownloadUrl = autodartsClientDownloadMap.GetDownloadUrlByOs("0.24.0");
 
             var autodartsCallerDownloadMap = new DownloadMap();
             autodartsCallerDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller.exe";
@@ -1483,7 +1483,7 @@ namespace autodarts_desktop.control
             autodartsClientDownloadMap.LinuxArm = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.linux-armv7l.tar.gz";
             autodartsClientDownloadMap.MacX64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-amd64.tar.gz";
             autodartsClientDownloadMap.MacArm64 = "https://github.com/autodarts/releases/releases/download/v***VERSION***/autodarts***VERSION***.darwin-arm64.tar.gz";
-            var autodartsClientDownloadUrl = autodartsClientDownloadMap.GetDownloadUrlByOs("0.23.3");
+            var autodartsClientDownloadUrl = autodartsClientDownloadMap.GetDownloadUrlByOs("0.24.0");
 
             var autodartsCallerDownloadMap = new DownloadMap();
             autodartsCallerDownloadMap.WindowsX64 = "https://github.com/lbormann/autodarts-caller/releases/download/v***VERSION***/autodarts-caller.exe";
