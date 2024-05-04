@@ -614,7 +614,6 @@ namespace darts_hub.control
                             new(name: "DL", type: "int[0..100]", required: false, nameHuman: "-DL / --downloads", section: "Downloads"),
                             new(name: "DLLA", type: "int[0..6]", required: false, nameHuman: "-DLLA / --downloads_language", section: "Downloads"),
                             new(name: "DLN", type: "string", required: false, nameHuman: "-DLN / --downloads_name", section: "Downloads"),
-                            new(name: "BLP", type: "path", required: false, nameHuman: "-BLP / --blacklist_path", section: "Media"),
                             new(name: "BAV", type: "float[0.0..1.0]", required: false, nameHuman: "-BAV / --background_audio_volume", section: "Calls"),
                             new(name: "LPB", type: "bool", required: false, nameHuman: "-LPB / --local_playback", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "WEBDH", type: "bool", required: false, nameHuman: "-WEBDH / --web_caller_disable_https", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
