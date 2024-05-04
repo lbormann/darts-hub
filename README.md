@@ -1,7 +1,7 @@
 # DARTS-HUB
 [![Downloads](https://img.shields.io/github/downloads/lbormann/darts-hub/total.svg)](https://github.com/lbormann/darts-hub/releases/latest)
 
-Darts-hub (formerly autodarts-desktop) manages several extension apps for https://autodarts.io.
+Darts-hub (formerly autodarts-desktop) manages several extension-apps for https://autodarts.io.
 It automatically downloads and updates those apps, provides configuration windows and launches extensions through a curated list of profiles.
 
 If you are looking for an video explaination (german), have a look at https://www.youtube.com/watch?v=L5qx0afyXKs
