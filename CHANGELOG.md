@@ -1,3 +1,13 @@
+## 0.12.0
+
+- rename application to darts-hub
+
+
+## 0.11.2
+
+- adapt app versions
+
+
 ## 0.11.1
 
 - fix typo

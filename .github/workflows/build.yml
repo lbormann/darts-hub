@@ -30,58 +30,58 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: dotnet restore autodarts-desktop.sln
+        run: dotnet restore darts-hub.sln
 
       # osx-x64
       - name: Build osx-x64
-        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r osx-x64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
+        run: dotnet publish darts-hub/darts-hub.csproj -r osx-x64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
 
       - name: Copy update-script manually
-        run: cp autodarts-desktop/update.sh autodarts-desktop/bin/Release/net6.0/osx-x64/publish/update.sh
+        run: cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-x64/publish/update.sh
 
       - name: Set execute permissions
         shell: bash
         run: |
-          chmod +x autodarts-desktop/bin/Release/net6.0/osx-x64/publish/update.sh
-          chmod +x autodarts-desktop/bin/Release/net6.0/osx-x64/publish/autodarts-desktop
+          chmod +x darts-hub/bin/Release/net6.0/osx-x64/publish/update.sh
+          chmod +x darts-hub/bin/Release/net6.0/osx-x64/publish/darts-hub
 
       - name: Zip osx-x64 build
         uses: vimtor/action-zip@v1
         with:
-          files: autodarts-desktop/bin/Release/net6.0/osx-x64/publish/
-          dest: autodarts-desktop-macOS-X64.zip
+          files: darts-hub/bin/Release/net6.0/osx-x64/publish/
+          dest: darts-hub-macOS-X64.zip
 
       - name: Collect osx-x64 artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: autodarts-desktop-macOS-x64
-          path: ${{ github.workspace }}/autodarts-desktop-macOS-X64.zip
+          name: darts-hub-macOS-x64
+          path: ${{ github.workspace }}/darts-hub-macOS-X64.zip
 
 
       # osx-arm64
       - name: Build osx-arm64
-        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r osx-arm64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
+        run: dotnet publish darts-hub/darts-hub.csproj -r osx-arm64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
 
       - name: Copy update-script manually
-        run: cp autodarts-desktop/update.sh autodarts-desktop/bin/Release/net6.0/osx-arm64/publish/update.sh
+        run: cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-arm64/publish/update.sh
 
       - name: Set execute permissions
         shell: bash
         run: |
-          chmod +x autodarts-desktop/bin/Release/net6.0/osx-arm64/publish/update.sh
-          chmod +x autodarts-desktop/bin/Release/net6.0/osx-arm64/publish/autodarts-desktop
+          chmod +x darts-hub/bin/Release/net6.0/osx-arm64/publish/update.sh
+          chmod +x darts-hub/bin/Release/net6.0/osx-arm64/publish/darts-hub
 
       - name: Zip osx-arm64 build
         uses: vimtor/action-zip@v1
         with:
-          files: autodarts-desktop/bin/Release/net6.0/osx-arm64/publish/
-          dest: autodarts-desktop-macOS-ARM64.zip
+          files: darts-hub/bin/Release/net6.0/osx-arm64/publish/
+          dest: darts-hub-macOS-ARM64.zip
 
       - name: Collect osx-arm64 artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: autodarts-desktop-macOS-arm64
-          path: ${{ github.workspace }}/autodarts-desktop-macOS-ARM64.zip
+          name: darts-hub-macOS-arm64
+          path: ${{ github.workspace }}/darts-hub-macOS-ARM64.zip
 
 
   # WINDOWS
@@ -98,71 +98,71 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: dotnet restore autodarts-desktop.sln
+        run: dotnet restore darts-hub.sln
 
       # win-x86
       - name: Build win-x86
-        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r win-x86 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+        run: dotnet publish darts-hub/darts-hub.csproj -r win-x86 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
 
       - name: Zip win-x86 build
         uses: vimtor/action-zip@v1
         with:
-          files: autodarts-desktop/bin/Release/net6.0/win-x86/publish/
-          dest: autodarts-desktop-windows-X86.zip
+          files: darts-hub/bin/Release/net6.0/win-x86/publish/
+          dest: darts-hub-windows-X86.zip
 
       - name: Collect win-x86 artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: autodarts-desktop-windows-x86
-          path: ${{ github.workspace }}/autodarts-desktop-windows-X86.zip
+          name: darts-hub-windows-x86
+          path: ${{ github.workspace }}/darts-hub-windows-X86.zip
 
       # win-x64
       - name: Build win-x64
-        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r win-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+        run: dotnet publish darts-hub/darts-hub.csproj -r win-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
 
       - name: Zip win-x64 build
         uses: vimtor/action-zip@v1
         with:
-          files: autodarts-desktop/bin/Release/net6.0/win-x64/publish/
-          dest: autodarts-desktop-windows-X64.zip
+          files: darts-hub/bin/Release/net6.0/win-x64/publish/
+          dest: darts-hub-windows-X64.zip
 
       - name: Collect win-x64 artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: autodarts-desktop-windows-x64
-          path: ${{ github.workspace }}/autodarts-desktop-windows-X64.zip
+          name: darts-hub-windows-x64
+          path: ${{ github.workspace }}/darts-hub-windows-X64.zip
 
       # win-arm
       - name: Build win-arm
-        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r win-arm -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+        run: dotnet publish darts-hub/darts-hub.csproj -r win-arm -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
 
       - name: Zip win-arm build
         uses: vimtor/action-zip@v1
         with:
-          files: autodarts-desktop/bin/Release/net6.0/win-arm/publish/
-          dest: autodarts-desktop-windows-ARM.zip
+          files: darts-hub/bin/Release/net6.0/win-arm/publish/
+          dest: darts-hub-windows-ARM.zip
 
       - name: Collect win-arm artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: autodarts-desktop-windows-arm
-          path: ${{ github.workspace }}/autodarts-desktop-windows-ARM.zip
+          name: darts-hub-windows-arm
+          path: ${{ github.workspace }}/darts-hub-windows-ARM.zip
 
       # win-arm64
       - name: Build win-arm64
-        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r win-arm64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+        run: dotnet publish darts-hub/darts-hub.csproj -r win-arm64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
 
       - name: Zip win-arm64 build
         uses: vimtor/action-zip@v1
         with:
-          files: autodarts-desktop/bin/Release/net6.0/win-arm64/publish/
-          dest: autodarts-desktop-windows-ARM64.zip
+          files: darts-hub/bin/Release/net6.0/win-arm64/publish/
+          dest: darts-hub-windows-ARM64.zip
 
       - name: Collect win-arm64 artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: autodarts-desktop-windows-arm64
-          path: ${{ github.workspace }}/autodarts-desktop-windows-ARM64.zip
+          name: darts-hub-windows-arm64
+          path: ${{ github.workspace }}/darts-hub-windows-ARM64.zip
 
 
   # LINUX
@@ -183,82 +183,82 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: dotnet restore autodarts-desktop.sln  
+        run: dotnet restore darts-hub.sln  
 
 
       # linux-x64
       - name: Build linux-x64
-        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r linux-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+        run: dotnet publish darts-hub/darts-hub.csproj -r linux-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
 
       - name: Convert line endings in update.sh
-        run: dos2unix autodarts-desktop/bin/Release/net6.0/linux-x64/publish/update.sh
+        run: dos2unix darts-hub/bin/Release/net6.0/linux-x64/publish/update.sh
 
       - name: Set execute permission for update.sh in output directory
         shell: bash
         run: |
-          chmod +x autodarts-desktop/bin/Release/net6.0/linux-x64/publish/update.sh
+          chmod +x darts-hub/bin/Release/net6.0/linux-x64/publish/update.sh
 
       - name: Zip linux-x64 build
         uses: vimtor/action-zip@v1
         with:
-          files: autodarts-desktop/bin/Release/net6.0/linux-x64/publish/
-          dest: autodarts-desktop-linux-X64.zip
+          files: darts-hub/bin/Release/net6.0/linux-x64/publish/
+          dest: darts-hub-linux-X64.zip
 
       - name: Collect linux-x64 artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: autodarts-desktop-linux-x64
-          path: ${{ github.workspace }}/autodarts-desktop-linux-X64.zip
+          name: darts-hub-linux-x64
+          path: ${{ github.workspace }}/darts-hub-linux-X64.zip
 
 
       # linux-arm
       - name: Build linux-arm
-        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r linux-arm -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+        run: dotnet publish darts-hub/darts-hub.csproj -r linux-arm -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
 
       - name: Convert line endings in update.sh
-        run: dos2unix autodarts-desktop/bin/Release/net6.0/linux-arm/publish/update.sh
+        run: dos2unix darts-hub/bin/Release/net6.0/linux-arm/publish/update.sh
 
       - name: Set execute permission for update.sh in output directory
         shell: bash
         run: |
-          chmod +x autodarts-desktop/bin/Release/net6.0/linux-arm/publish/update.sh
+          chmod +x darts-hub/bin/Release/net6.0/linux-arm/publish/update.sh
 
       - name: Zip linux-arm build
         uses: vimtor/action-zip@v1
         with:
-          files: autodarts-desktop/bin/Release/net6.0/linux-arm/publish/
-          dest: autodarts-desktop-linux-ARM.zip
+          files: darts-hub/bin/Release/net6.0/linux-arm/publish/
+          dest: darts-hub-linux-ARM.zip
 
       - name: Collect linux-arm artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: autodarts-desktop-linux-arm
-          path: ${{ github.workspace }}/autodarts-desktop-linux-ARM.zip
+          name: darts-hub-linux-arm
+          path: ${{ github.workspace }}/darts-hub-linux-ARM.zip
 
 
       # linux-arm64
       - name: Build linux-arm64
-        run: dotnet publish autodarts-desktop/autodarts-desktop.csproj -r linux-arm64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+        run: dotnet publish darts-hub/darts-hub.csproj -r linux-arm64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
 
       - name: Convert line endings in update.sh
-        run: dos2unix autodarts-desktop/bin/Release/net6.0/linux-arm64/publish/update.sh
+        run: dos2unix darts-hub/bin/Release/net6.0/linux-arm64/publish/update.sh
 
       - name: Set execute permission for update.sh in output directory
         shell: bash
         run: |
-          chmod +x autodarts-desktop/bin/Release/net6.0/linux-arm64/publish/update.sh
+          chmod +x darts-hub/bin/Release/net6.0/linux-arm64/publish/update.sh
 
       - name: Zip linux-arm64 build
         uses: vimtor/action-zip@v1
         with:
-          files: autodarts-desktop/bin/Release/net6.0/linux-arm64/publish/
-          dest: autodarts-desktop-linux-ARM64.zip
+          files: darts-hub/bin/Release/net6.0/linux-arm64/publish/
+          dest: darts-hub-linux-ARM64.zip
 
       - name: Collect linux-arm artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: autodarts-desktop-linux-arm64
-          path: ${{ github.workspace }}/autodarts-desktop-linux-ARM64.zip
+          name: darts-hub-linux-arm64
+          path: ${{ github.workspace }}/darts-hub-linux-ARM64.zip
 
 
 
@@ -278,12 +278,12 @@ jobs:
           release_name: Release ${{ github.ref }}
           generate_release_notes: true
           files: |
-            autodarts-desktop-macOS-x64/autodarts-desktop-macOS-X64.zip
-            autodarts-desktop-macOS-arm64/autodarts-desktop-macOS-ARM64.zip
-            autodarts-desktop-windows-x64/autodarts-desktop-windows-X64.zip
-            autodarts-desktop-windows-x86/autodarts-desktop-windows-X86.zip
-            autodarts-desktop-windows-arm/autodarts-desktop-windows-ARM.zip
-            autodarts-desktop-windows-arm64/autodarts-desktop-windows-ARM64.zip
-            autodarts-desktop-linux-x64/autodarts-desktop-linux-X64.zip
-            autodarts-desktop-linux-arm/autodarts-desktop-linux-ARM.zip
-            autodarts-desktop-linux-arm64/autodarts-desktop-linux-ARM64.zip
+            darts-hub-macOS-x64/darts-hub-macOS-X64.zip
+            darts-hub-macOS-arm64/darts-hub-macOS-ARM64.zip
+            darts-hub-windows-x64/darts-hub-windows-X64.zip
+            darts-hub-windows-x86/darts-hub-windows-X86.zip
+            darts-hub-windows-arm/darts-hub-windows-ARM.zip
+            darts-hub-windows-arm64/darts-hub-windows-ARM64.zip
+            darts-hub-linux-x64/darts-hub-linux-X64.zip
+            darts-hub-linux-arm/darts-hub-linux-ARM.zip
+            darts-hub-linux-arm64/darts-hub-linux-ARM64.zip

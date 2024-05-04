@@ -1,26 +1,23 @@
 #!/bin/bash
 
 add_to_autostart() {
-    echo "Trying to disable autodarts.service."
-    systemctl disable autodarts.service
-
-    echo "Trying to add Autodarts-desktop to autostart."
+    echo "Trying to add darts-hub to autostart."
 
     case "$PLATFORM" in
         "linux")
             mkdir -p "${HOME}/.config/autostart"
             echo "[Desktop Entry]
             Type=Application
-            Name=Autodarts-desktop
-            Exec="${HOME}/autodarts-desktop/autodarts-desktop"
+            Name=Darts-hub
+            Exec="${HOME}/darts-hub/darts-hub"
             Terminal=false
             Hidden=false
             NoDisplay=false
             X-GNOME-Autostart-enabled=true
-            X-GNOME-Autostart-Delay=10" > "${HOME}/.config/autostart/autodarts-desktop.desktop"
+            X-GNOME-Autostart-Delay=10" > "${HOME}/.config/autostart/darts-hub.desktop"
             ;;
         "macOS")
-            osascript -e "tell application \"System Events\" to make new login item at end with properties {path:\"${HOME}/autodarts-desktop/autodarts-desktop\", hidden:false}" > /dev/null
+            osascript -e "tell application \"System Events\" to make new login item at end with properties {path:\"${HOME}/darts-hub/darts-hub\", hidden:false}" > /dev/null
             ;;
         *)
             echo "Platform is not 'linux' or 'macOS', and hence autostart configuration is not supported by this script."
@@ -29,20 +26,17 @@ add_to_autostart() {
 }
 
 remove_from_autostart() {
-    echo "Trying to enable autodarts.service."
-    systemctl enable autodarts.service
-
-    echo "Trying to remove Autodarts-desktop from autostart."
+    echo "Trying to remove darts-hub from autostart."
     case "$PLATFORM" in
         "linux")
-            if [[ -f "${HOME}/.config/autostart/autodarts-desktop.desktop" ]]; then
-                rm "${HOME}/.config/autostart/autodarts-desktop.desktop"
+            if [[ -f "${HOME}/.config/autostart/darts-hub.desktop" ]]; then
+                rm "${HOME}/.config/autostart/darts-hub.desktop"
             else
-                echo "Autodarts-desktop is not in autostart. Nothing to remove."
+                echo "darts-hub is not in autostart. Nothing to remove."
             fi
             ;;
         "macOS")
-            osascript -e "tell application \"System Events\" to delete login item \"${HOME}/autodarts-desktop/autodarts-desktop\"" > /dev/null
+            osascript -e "tell application \"System Events\" to delete login item \"${HOME}/darts-hub/darts-hub\"" > /dev/null
             ;;
         *)
             echo "Platform is not 'linux' or 'macOS', and hence autostart configuration is not supported by this script."
@@ -51,12 +45,12 @@ remove_from_autostart() {
 }
 
 
-echo "Trying to close Autodarts-desktop"
-PID=$(pgrep -f "autodarts-desktop")
+echo "Trying to close darts-hub"
+PID=$(pgrep -f "darts-hub")
 if [ -z "$PID" ]; then
-    echo "Autodarts-desktop doesn't run."
+    echo "darts-hub doesn't run."
 else
-    echo "Close Autodarts-desktop ${PID}'."
+    echo "Close darts-hub ${PID}'."
     kill $PID
     sleep 2
     if ps -p $PID > /dev/null; then
@@ -67,8 +61,8 @@ fi
 
 
 if [[ $1 == "--uninstall" ]]; then
-    echo "Trying to remove Autodarts-desktop"
-    rm -rf ~/autodarts-desktop
+    echo "Trying to remove darts-hub"
+    rm -rf ~/darts-hub
     remove_from_autostart
     exit
 fi
@@ -91,11 +85,11 @@ case "${ARCH}" in
     *) echo "Kernel architecture '${ARCH}' is not supported." && exit 1;;
 esac
 
-mkdir -p ~/autodarts-desktop
-echo "Downloading and extracting 'autodarts-desktop-${PLATFORM}-${ARCH}.zip' into '~/autodarts-desktop'."  
-curl -sL https://github.com/lbormann/autodarts-desktop/releases/latest/download/autodarts-desktop-${PLATFORM}-${ARCH}.zip -o autodarts-desktop.zip && unzip -o autodarts-desktop.zip -d ~/autodarts-desktop && rm autodarts-desktop.zip
-echo "Making ~/autodarts-desktop/autodarts-desktop executable."
-chmod +x ~/autodarts-desktop/autodarts-desktop
-echo "Starting autodarts-desktop."
-~/autodarts-desktop/autodarts-desktop &
+mkdir -p ~/darts-hub
+echo "Downloading and extracting 'darts-hub-${PLATFORM}-${ARCH}.zip' into '~/darts-hub'."  
+curl -sL https://github.com/lbormann/darts-hub/releases/latest/download/darts-hub-${PLATFORM}-${ARCH}.zip -o darts-hub.zip && unzip -o darts-hub.zip -d ~/darts-hub && rm darts-hub.zip
+echo "Making ~/darts-hub/darts-hub executable."
+chmod +x ~/darts-hub/darts-hub
+echo "Starting darts-hub."
+~/darts-hub/darts-hub &
 add_to_autostart

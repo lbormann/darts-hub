@@ -1,0 +1,72 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="720" d:DesignMaxWidth="520" d:DesignMaxHeight="720"
+        x:Class="darts_hub.MainWindow"
+        Title="Darts-Hub"
+		Icon="/Assets/favicon.ico"
+		Width="520"
+		Height="720"
+		MaxWidth="520"
+		MaxHeight="720"
+		CanResize="False"
+		WindowStartupLocation="CenterScreen"
+		Closing="Window_Closing"
+		>
+
+	<Window.Background>
+		<ImageBrush Opacity="0.15" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background.png" />
+	</Window.Background>
+
+	
+	<ScrollViewer
+		x:Name="scroller"
+		VerticalScrollBarVisibility="Auto" 
+		HorizontalScrollBarVisibility="Hidden" 
+		VerticalAlignment="Top"
+        Margin="0,0,0,15"
+		>
+		
+		<Grid x:Name="GridMain">
+
+			<Button x:Name="Buttonabout" Margin="295,660,20,0" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Click="Buttonabout_Click">
+				<Image Width="24" Height="24" Source="/Assets/about.png"></Image>
+			</Button>
+			
+			<Label x:Name="SelectProfile" Content="Select profile:" HorizontalAlignment="Left" Margin="15,44,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.98,0.757" Foreground="White"/>
+
+			<ComboBox x:Name="Comboboxportal" HorizontalAlignment="Left" Margin="17,71,0,0" VerticalAlignment="Top" Width="360" SelectionChanged="Comboboxportal_SelectionChanged" SelectedIndex="0" />
+
+			<Button x:Name="Buttonstart" HorizontalAlignment="Right" Margin="0,40,0,0" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Click="Buttonstart_Click" >
+				<Image x:Name="darts_png" Width="60" Height="60" Source="/Assets/darts.png" Stretch="Fill"/>
+			</Button>
+
+			<CheckBox x:Name="CheckBoxStartProfileOnProgramStart" Checked="CheckBoxStartProfileOnProgramStartChanged" Unchecked="CheckBoxStartProfileOnProgramStartChanged" Content="Start with App" HorizontalAlignment="Left" Margin="323,40,0,0" VerticalAlignment="Top" Foreground="White"/>
+
+			<TextBlock x:Name="WaitingText"
+                        Text="Please wait.."
+						TextAlignment="Center"
+					    VerticalAlignment="Center"
+					    HorizontalAlignment="Center"
+                        TextWrapping="Wrap"
+                        Margin="0,265,0,0"
+					    Padding="5,10,5,5"
+					    Width="520"
+					    Height="50"
+					    Opacity="0.8"
+                        FontSize="20"
+                        Background="White"
+                        Foreground="Black"
+					    ZIndex="99"
+						PointerPressed="WaitingText_PointerPressed"
+						IsVisible="False"/>
+		</Grid>
+
+	</ScrollViewer>
+
+
+
+</Window>
+
+
