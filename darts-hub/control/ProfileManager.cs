@@ -288,127 +288,6 @@ namespace darts_hub.control
         }
 
 
-        private void CreateDummyDownloadMaps(){
-
-            // DEFINE DOWNLOAD-MAPS FOR APPS BY CURRENT OS 
-
-
-            // INSTALLABLE
-
-            var dartboardsClientDownloadMap = new DownloadMap
-            {
-                WindowsX64 = "https://dartboards.online/dboclient_***VERSION***.exe"
-                //MacX64 = "https://dartboards.online/dboclient_***VERSION***.dmg"
-            };
-            dartboardsClientDownloadUrl = dartboardsClientDownloadMap.GetDownloadUrlByOs("0.9.2");
-
-
-            var droidCamDownloadMap = new DownloadMap
-            {
-                WindowsX64 = "https://github.com/dev47apps/windows-releases/releases/download/win-***VERSION***/DroidCam.Setup.***VERSION***.exe"
-            };
-            droidCamDownloadUrl = droidCamDownloadMap.GetDownloadUrlByOs("6.5.2");
-
-
-            var epocCamDownloadMap = new DownloadMap
-            {
-                WindowsX64 = "https://edge.elgato.com/egc/windows/epoccam/EpocCam_Installer64_***VERSION***.exe"
-                //MacX64 = "https://edge.elgato.com/egc/macos/epoccam/EpocCam_Installer_***VERSION***.pkg"
-            };
-            epocCamDownloadUrl = epocCamDownloadMap.GetDownloadUrlByOs("3_4_0");
-
-
-
-            // DOWNLOADABLE
-
-            var dartsCallerDownloadMap = new DownloadMap
-            {
-                WindowsX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller",
-                LinuxArm64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-arm",
-                MacX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac",
-                MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac"
-            };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("2.13.0");
-
-
-            var dartsExternDownloadMap = new DownloadMap
-            {
-                WindowsX64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern",
-                //LinuxArm64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern-arm",
-                MacX64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern-mac",
-                MacArm64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern-mac"
-            };
-            dartsExternDownloadUrl = dartsExternDownloadMap.GetDownloadUrlByOs("1.6.0");
-
-
-            var dartsWledDownloadMap = new DownloadMap
-            {
-                WindowsX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled",
-                LinuxArm64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-arm",
-                MacX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac",
-                MacArm64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac"
-            };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("1.5.0");
-
-
-            var dartsPixelitDownloadMap = new DownloadMap
-            {
-                WindowsX64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit",
-                LinuxArm64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-arm",
-                MacX64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-mac",
-                MacArm64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-mac"
-            };
-            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("1.2.0");
-
-
-            var dartsGifDownloadMap = new DownloadMap
-            {
-                WindowsX64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif",
-                LinuxArm64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-arm",
-                MacX64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-mac",
-                MacArm64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-mac"
-            };
-            dartsGifDownloadUrl = dartsGifDownloadMap.GetDownloadUrlByOs("1.1.0");
-
-
-            var dartsVoiceDownloadMap = new DownloadMap
-            {
-                WindowsX64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice",
-                LinuxArm64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice-arm",
-                MacX64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice-mac",
-                MacArm64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice-mac"
-            };
-            dartsVoiceDownloadUrl = dartsVoiceDownloadMap.GetDownloadUrlByOs("1.1.0");
-
-
-            var camLoaderDownloadMap = new DownloadMap
-            {
-                WindowsX86 = "https://github.com/lbormann/cam-loader/releases/download/v***VERSION***/cam-loader.zip",
-                WindowsX64 = "https://github.com/lbormann/cam-loader/releases/download/v***VERSION***/cam-loader.zip"
-            };
-            camLoaderDownloadUrl = camLoaderDownloadMap.GetDownloadUrlByOs("1.0.0");
-
-
-            var virtualDartsZoomDownloadMap = new DownloadMap
-            {
-                WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip"
-            };
-            virtualDartsZoomDownloadUrl = virtualDartsZoomDownloadMap.GetDownloadUrlByOs();
-
-        }
-
 
         private void CreateDummyAppsLocal()
         {
@@ -577,6 +456,133 @@ namespace darts_hub.control
         }
 
 
+        private void CreateDummyDownloadMaps()
+        {
+
+            // DEFINE DOWNLOAD-MAPS FOR APPS BY CURRENT OS 
+
+
+
+            // DOWNLOADABLE
+
+            var dartsCallerDownloadMap = new DownloadMap
+            {
+                WindowsX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller.exe",
+                LinuxX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller",
+                LinuxArm64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-arm64",
+                //LinuxArm = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-arm",
+                MacX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac",
+                MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac"
+            };
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("2.14.0");
+
+
+            var dartsExternDownloadMap = new DownloadMap
+            {
+                WindowsX64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern.exe",
+                LinuxX64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern",
+                //LinuxArm64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern-arm64",
+                //LinuxArm = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern-arm",
+                MacX64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern-mac",
+                MacArm64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern-mac"
+            };
+            dartsExternDownloadUrl = dartsExternDownloadMap.GetDownloadUrlByOs("1.6.0");
+
+
+            var dartsWledDownloadMap = new DownloadMap
+            {
+                WindowsX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled.exe",
+                LinuxX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled",
+                LinuxArm64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-arm64",
+                //LinuxArm = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-arm",
+                MacX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac",
+                MacArm64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac"
+            };
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("1.5.0");
+
+
+            var dartsPixelitDownloadMap = new DownloadMap
+            {
+                WindowsX64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit.exe",
+                LinuxX64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit",
+                LinuxArm64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-arm64",
+                //LinuxArm = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-arm",
+                MacX64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-mac",
+                MacArm64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-mac"
+            };
+            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("1.2.0");
+
+
+            var dartsGifDownloadMap = new DownloadMap
+            {
+                WindowsX64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif.exe",
+                LinuxX64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif",
+                LinuxArm64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-arm64",
+                //LinuxArm = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-arm",
+                MacX64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-mac",
+                MacArm64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-mac"
+            };
+            dartsGifDownloadUrl = dartsGifDownloadMap.GetDownloadUrlByOs("1.1.0");
+
+
+            var dartsVoiceDownloadMap = new DownloadMap
+            {
+                WindowsX64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice.exe",
+                LinuxX64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice",
+                LinuxArm64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice-arm64",
+                //LinuxArm = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice-arm",
+                MacX64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice-mac",
+                MacArm64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice-mac"
+            };
+            dartsVoiceDownloadUrl = dartsVoiceDownloadMap.GetDownloadUrlByOs("1.1.0");
+
+
+            var camLoaderDownloadMap = new DownloadMap
+            {
+                WindowsX86 = "https://github.com/lbormann/cam-loader/releases/download/v***VERSION***/cam-loader.zip",
+                WindowsX64 = "https://github.com/lbormann/cam-loader/releases/download/v***VERSION***/cam-loader.zip"
+            };
+            camLoaderDownloadUrl = camLoaderDownloadMap.GetDownloadUrlByOs("1.0.0");
+
+
+            var virtualDartsZoomDownloadMap = new DownloadMap
+            {
+                WindowsX64 = "https://www.lehmann-bo.de/Downloads/VDZ/Virtual Darts Zoom.zip"
+            };
+            virtualDartsZoomDownloadUrl = virtualDartsZoomDownloadMap.GetDownloadUrlByOs();
+
+
+
+
+            // INSTALLABLE
+
+            var dartboardsClientDownloadMap = new DownloadMap
+            {
+                WindowsX64 = "https://dartboards.online/dboclient_***VERSION***.exe"
+                //MacX64 = "https://dartboards.online/dboclient_***VERSION***.dmg"
+            };
+            dartboardsClientDownloadUrl = dartboardsClientDownloadMap.GetDownloadUrlByOs("0.9.2");
+
+
+            var droidCamDownloadMap = new DownloadMap
+            {
+                WindowsX64 = "https://github.com/dev47apps/windows-releases/releases/download/win-***VERSION***/DroidCam.Setup.***VERSION***.exe"
+            };
+            droidCamDownloadUrl = droidCamDownloadMap.GetDownloadUrlByOs("6.5.2");
+
+
+            var epocCamDownloadMap = new DownloadMap
+            {
+                WindowsX64 = "https://edge.elgato.com/egc/windows/epoccam/EpocCam_Installer64_***VERSION***.exe"
+                //MacX64 = "https://edge.elgato.com/egc/macos/epoccam/EpocCam_Installer_***VERSION***.pkg"
+            };
+            epocCamDownloadUrl = epocCamDownloadMap.GetDownloadUrlByOs("3_4_0");
+
+
+
+
+        }
+
         private void CreateDummyAppsDownloadable()
         {
             List<AppDownloadable> apps = new();
@@ -605,7 +611,8 @@ namespace darts_hub.control
                             new(name: "RL", type: "int[0..6]", required: false, nameHuman: "-RL / --random_caller_language", section: "Random"),
                             new(name: "RG", type: "int[0..2]", required: false, nameHuman: "-RG / --random_caller_gender", section: "Random"),
                             new(name: "CCP", type: "int[0..2]", required: false, nameHuman: "-CCP / --call_current_player", section: "Calls"),
-                            new(name: "E", type: "int[0..2]", required: false, nameHuman: "-E / --call_every_dart", section: "Calls"),
+                            new(name: "CBA", type: "bool", required: false, nameHuman: "-CBA / --call_bot_actions", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "E", type: "int[0..3]", required: false, nameHuman: "-E / --call_every_dart", section: "Calls"),
                             new(name: "ETS", type: "bool", required: false, nameHuman: "-ETS / --call_every_dart_total_score", section: "Calls", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
                             new(name: "PCC", type: "int", required: false, nameHuman: "-PCC / --possible_checkout_call", section: "Calls"),
                             new(name: "PCCYO", type: "bool", required: false, nameHuman: "-PCCYO / --possible_checkout_call_yourself_only", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
@@ -614,6 +621,7 @@ namespace darts_hub.control
                             new(name: "DL", type: "int[0..100]", required: false, nameHuman: "-DL / --downloads", section: "Downloads"),
                             new(name: "DLLA", type: "int[0..6]", required: false, nameHuman: "-DLLA / --downloads_language", section: "Downloads"),
                             new(name: "DLN", type: "string", required: false, nameHuman: "-DLN / --downloads_name", section: "Downloads"),
+                            new(name: "ROVP", type: "bool", required: false, nameHuman: "-ROVP / --remove_old_voice_packs", section: "Downloads", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "BAV", type: "float[0.0..1.0]", required: false, nameHuman: "-BAV / --background_audio_volume", section: "Calls"),
                             new(name: "LPB", type: "bool", required: false, nameHuman: "-LPB / --local_playback", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "WEBDH", type: "bool", required: false, nameHuman: "-WEBDH / --web_caller_disable_https", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
@@ -894,6 +902,53 @@ namespace darts_hub.control
 
         private void MigrateAppsDownloadable()
         {
+            var dartsCaller = AppsDownloadable.Find(a => a.Name == "darts-caller");
+            if (dartsCaller != null)
+            {
+                if (dartsCallerDownloadUrl != null)
+                {
+                    dartsCaller.DownloadUrl = dartsCallerDownloadUrl;
+
+                    var callEveryDart = dartsCaller.Configuration.Arguments.Find(a => a.Name == "E");
+                    if (callEveryDart != null)
+                    {
+                        if (callEveryDart.Type == "int[0..2]")
+                        {
+                            if (callEveryDart.Value == "2")
+                            {
+                                callEveryDart.Value = "3";
+                            }
+                            callEveryDart.Type = "int[0..3]";
+                            callEveryDart.ValidateType();
+                        }
+                    }
+
+                    var callBotActions = dartsCaller.Configuration.Arguments.Find(a => a.Name == "CBA");
+                    if (callBotActions == null)
+                    {
+                        dartsCaller.Configuration.Arguments.Add(new(name: "CBA", type: "bool", required: false, nameHuman: "-CBA / --call_bot_actions", section: "Calls", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
+                    }
+                    var removeOldVoicePacks = dartsCaller.Configuration.Arguments.Find(a => a.Name == "ROVP");
+                    if (removeOldVoicePacks == null)
+                    {
+                        dartsCaller.Configuration.Arguments.Add(new(name: "ROVP", type: "bool", required: false, nameHuman: "-ROVP / --remove_old_voice_packs", section: "Downloads", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
+                    }
+
+
+
+
+                }
+                else
+                {
+                    var dartsCallerIndex = AppsDownloadable.FindIndex(a => a.Name == "darts-caller");
+                    if (dartsCallerIndex != -1)
+                    {
+                        AppsDownloadable.RemoveAt(dartsCallerIndex);
+                    }
+                }
+            }
+
+
             // Add more migs..
         }
 

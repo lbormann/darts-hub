@@ -1,3 +1,8 @@
+## 0.12.1
+
+- adapt app versions
+
+
 ## 0.12.0
 
 - rename application to darts-hub

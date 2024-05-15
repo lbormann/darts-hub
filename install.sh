@@ -1,8 +1,28 @@
 #!/bin/bash
 
+
+PLATFORM=$(uname)
+if [[ "$PLATFORM" = "Linux" ]]; then 
+    PLATFORM="linux"
+elif [[ "$PLATFORM" = "Darwin" ]]; then
+    PLATFORM="macOS"
+    sudo spctl --master-disable 
+else
+    echo "Platform '${PLATFORM}' is not supported." && exit 1
+fi
+
+ARCH=$(uname -m)
+case "${ARCH}" in
+    "x86_64"|"amd64") ARCH="X64";;
+    "aarch64"|"arm64") ARCH="ARM64";;
+    "armv7l") ARCH="ARM";;
+    *) echo "Kernel architecture '${ARCH}' is not supported." && exit 1;;
+esac
+
+
+
 add_to_autostart() {
     echo "Trying to add darts-hub to autostart."
-
     case "$PLATFORM" in
         "linux")
             mkdir -p "${HOME}/.config/autostart"
@@ -66,24 +86,6 @@ if [[ $1 == "--uninstall" ]]; then
     remove_from_autostart
     exit
 fi
-
-PLATFORM=$(uname)
-if [[ "$PLATFORM" = "Linux" ]]; then 
-    PLATFORM="linux"
-elif [[ "$PLATFORM" = "Darwin" ]]; then
-    PLATFORM="macOS"
-    sudo spctl --master-disable 
-else
-    echo "Platform is not 'linux', and hence is not supported by this script." && exit 1
-fi
-
-ARCH=$(uname -m)
-case "${ARCH}" in
-    "x86_64"|"amd64") ARCH="X64";;
-    "aarch64"|"arm64") ARCH="ARM64";;
-    "armv7l") ARCH="ARM";;
-    *) echo "Kernel architecture '${ARCH}' is not supported." && exit 1;;
-esac
 
 mkdir -p ~/darts-hub
 echo "Downloading and extracting 'darts-hub-${PLATFORM}-${ARCH}.zip' into '~/darts-hub'."  

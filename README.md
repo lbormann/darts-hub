@@ -78,7 +78,6 @@ Alternatively you can install darts-hub step by step.
     ```
 
     Unfortunately I couldn't find a proper way without doing this.
-    Moreover make sure you do initial installation-steps for macos in case you want to use autodarts-client (https://docs.autodarts.io/getting-started/installation/)
 
 6) Start the application by double-click darts-hub 
 
