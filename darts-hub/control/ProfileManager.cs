@@ -683,7 +683,8 @@ namespace darts_hub.control
                         new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "-B / --busted_effects", section: "WLED"),
                         new(name: "PJ", type: "string", required: false, isMulti : true, nameHuman: "-PJ / --player_joined_effects", section: "WLED"),
                         new(name: "PL", type: "string", required: false, isMulti : true, nameHuman: "-PL / --player_left_effects", section: "WLED"),
-                        new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
+                        new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
+                        new(name: "BSW", type: "bool", required: false, nameHuman: "-BSW / --board_stop_after_win", section: "Autodarts", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
 
                     };
                 for (int i = 0; i <= 180; i++)
@@ -944,6 +945,22 @@ namespace darts_hub.control
                     if (dartsCallerIndex != -1)
                     {
                         AppsDownloadable.RemoveAt(dartsCallerIndex);
+                    }
+                }
+            }
+
+            // Migration of darts-WLED
+            var dartsWled = AppsDownloadable.Find(a => a.Name == "darts-wled");
+            if (dartsWled != null)
+            {
+                if (dartsWledDownloadUrl != null)
+                {
+                    dartsWled.DownloadUrl = dartsWledDownloadUrl;
+
+                    var boardStopAfterWin = dartsWled.Configuration.Arguments.Find(a => a.Name == "BSW");
+                    if (boardStopAfterWin == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "BSW", type: "bool", required: false, nameHuman: "-BSW / --board_stop_after_win", section: "Autodarts", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
                     }
                 }
             }

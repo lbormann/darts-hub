@@ -18,7 +18,7 @@ jobs:
 
   # MACOS
   build-macos:
-    runs-on: macos-12
+    runs-on: macos-latest
 
     steps:
       - name: Setup .NET SDK
@@ -27,7 +27,7 @@ jobs:
           dotnet-version: '6.0.x'
 
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: dotnet restore darts-hub.sln
@@ -52,7 +52,7 @@ jobs:
           dest: darts-hub-macOS-X64.zip
 
       - name: Collect osx-x64 artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: darts-hub-macOS-x64
           path: ${{ github.workspace }}/darts-hub-macOS-X64.zip
@@ -78,7 +78,7 @@ jobs:
           dest: darts-hub-macOS-ARM64.zip
 
       - name: Collect osx-arm64 artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: darts-hub-macOS-arm64
           path: ${{ github.workspace }}/darts-hub-macOS-ARM64.zip
@@ -95,7 +95,7 @@ jobs:
           dotnet-version: '6.0.x'
 
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: dotnet restore darts-hub.sln
@@ -111,7 +111,7 @@ jobs:
           dest: darts-hub-windows-X86.zip
 
       - name: Collect win-x86 artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: darts-hub-windows-x86
           path: ${{ github.workspace }}/darts-hub-windows-X86.zip
@@ -127,7 +127,7 @@ jobs:
           dest: darts-hub-windows-X64.zip
 
       - name: Collect win-x64 artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: darts-hub-windows-x64
           path: ${{ github.workspace }}/darts-hub-windows-X64.zip
@@ -143,7 +143,7 @@ jobs:
           dest: darts-hub-windows-ARM.zip
 
       - name: Collect win-arm artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: darts-hub-windows-arm
           path: ${{ github.workspace }}/darts-hub-windows-ARM.zip
@@ -159,7 +159,7 @@ jobs:
           dest: darts-hub-windows-ARM64.zip
 
       - name: Collect win-arm64 artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: darts-hub-windows-arm64
           path: ${{ github.workspace }}/darts-hub-windows-ARM64.zip
@@ -180,7 +180,7 @@ jobs:
           dotnet-version: '6.0.x'
 
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: dotnet restore darts-hub.sln  
@@ -205,7 +205,7 @@ jobs:
           dest: darts-hub-linux-X64.zip
 
       - name: Collect linux-x64 artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: darts-hub-linux-x64
           path: ${{ github.workspace }}/darts-hub-linux-X64.zip
@@ -230,7 +230,7 @@ jobs:
           dest: darts-hub-linux-ARM.zip
 
       - name: Collect linux-arm artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: darts-hub-linux-arm
           path: ${{ github.workspace }}/darts-hub-linux-ARM.zip
@@ -255,7 +255,7 @@ jobs:
           dest: darts-hub-linux-ARM64.zip
 
       - name: Collect linux-arm artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: darts-hub-linux-arm64
           path: ${{ github.workspace }}/darts-hub-linux-ARM64.zip
@@ -268,14 +268,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           draft: false
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          name: Release ${{ github.ref }}
           generate_release_notes: true
           files: |
             darts-hub-macOS-x64/darts-hub-macOS-X64.zip
