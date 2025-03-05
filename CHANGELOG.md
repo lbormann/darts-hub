@@ -1,5 +1,5 @@
-## 0.12.2
-- update darts-wled to version 1.5.1
+## 0.12.3
+- update darts-wled to version 1.5.2
 
 ## 0.12.1
 
