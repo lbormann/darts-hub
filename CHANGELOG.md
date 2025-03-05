@@ -1,3 +1,6 @@
+## 0.12.2
+- update darts-wled to version 1.5.1
+
 ## 0.12.1
 
 - adapt app versions
