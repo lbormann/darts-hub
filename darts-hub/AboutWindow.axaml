@@ -25,19 +25,26 @@
 		<Label x:Name="appVersion" Content="v0.0.0" HorizontalAlignment="Left" Margin="12,40,0,0" VerticalAlignment="Top" FontSize="12" FontWeight="Bold" Foreground="White"/>
 		<CheckBox x:Name="CheckBoxSkipUpdateConfirmation" Checked="CheckBoxSkipUpdateConfirmationChanged" Unchecked="CheckBoxSkipUpdateConfirmationChanged" Content="Skip update-confirmation" HorizontalAlignment="Left" Margin="12,60,0,0" VerticalAlignment="Top" Foreground="White"/>
 
-		<Label Content="Developed and maintained by:" HorizontalAlignment="Left" Margin="10,113,0,0" VerticalAlignment="Top" Foreground="White"/>
+		<Label Content="Developed by:" HorizontalAlignment="Left" Margin="10,113,0,0" VerticalAlignment="Top" Foreground="White" FontWeight="Bold"/>
 		<Label Content="wusaaa" HorizontalAlignment="Left" Margin="23,140,0,0" VerticalAlignment="Top" FontSize="18" FontWeight="Bold" Foreground="White"/>
 		<Button ToolTip.Tip="Need help? or you want to contact the developers? Click here." 
 				x:Name="contact2" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left" 
 				Margin="110,136,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
 			<Image Width="24" Height="24" Source="/Assets/contact.png" RenderTransformOrigin="2.684,0.4"></Image>
 		</Button>
+		<Label Content="Maintained by:" HorizontalAlignment="Left" Margin="10,173,0,0" VerticalAlignment="Top" Foreground="White" FontWeight="Bold"/>
+		<Label Content="I3uLL3t" HorizontalAlignment="Left" Margin="23,203,0,0" VerticalAlignment="Top" FontSize="18" FontWeight="Bold" Foreground="White"/>
+		<Button ToolTip.Tip="Need help? or you want to contact the developers? Click here."
+				x:Name="contact3" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left"
+				Margin="210,203,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
+			<Image Width="24" Height="24" Source="/Assets/contact.png" RenderTransformOrigin="2.684,0.4"></Image>
+		</Button>
 		
-		<Label Content="Inspired by:" HorizontalAlignment="Left" Margin="10,196,0,0" VerticalAlignment="Top" Foreground="White"/>
-		<Label Content="Reepa86" HorizontalAlignment="Left" Margin="23,223,0,0" VerticalAlignment="Top" FontSize="18" FontWeight="Bold" Foreground="White"/>
+		<Label Content="Inspired by:" HorizontalAlignment="Left" Margin="10,246,0,0" VerticalAlignment="Top" Foreground="White"/>
+		<Label Content="Reepa86" HorizontalAlignment="Left" Margin="23,273,0,0" VerticalAlignment="Top" FontSize="18" FontWeight="Bold" Foreground="White"/>
 		<Button ToolTip.Tip="Need help? or you want to contact the developers? Click here." 
 				x:Name="contact1" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left" 
-				Margin="110,219,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
+				Margin="110,269,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
 			<Image Width="24" Height="24" Source="/Assets/contact.png" RenderTransformOrigin="2.684,0.4"></Image>
 		</Button>
 
