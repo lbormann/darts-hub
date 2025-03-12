@@ -111,7 +111,6 @@ namespace darts_hub.control
                     Helper.RemoveDirectory(downloadDirectory);
                     OnReleaseDownloadFailed(new ReleaseEventArgs(latestRepoVersion, ex.Message));
                 }
-
             }
         }
 
