@@ -37,7 +37,7 @@
 		<Label Content="I3uLL3t" HorizontalAlignment="Left" Margin="23,203,0,0" VerticalAlignment="Top" FontSize="18" FontWeight="Bold" Foreground="White"/>
 		<Button ToolTip.Tip="Need help? or you want to contact the developers? Click here."
 				x:Name="contact3" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left"
-				Margin="210,203,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
+				Margin="110,203,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
 			<Image Width="24" Height="24" Source="/Assets/contact.png" RenderTransformOrigin="2.684,0.4"></Image>
 		</Button>
 		

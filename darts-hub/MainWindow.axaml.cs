@@ -20,11 +20,44 @@ using System.Threading.Tasks;
 using MessageBox.Avalonia.BaseWindows.Base;
 using MessageBox.Avalonia.ViewModels;
 using MessageBox.Avalonia.Views;
+using System.ComponentModel;
 
 
 namespace darts_hub
 {
+    public class UpdaterViewModel : INotifyPropertyChanged
+    {
+        private bool _isBetaTester;
 
+        public bool IsBetaTester
+        {
+            get => _isBetaTester;
+            set
+            {
+                if (_isBetaTester != value)
+                {
+                    _isBetaTester = value;
+                    OnPropertyChanged(nameof(IsBetaTester));
+                    Updater.IsBetaTester = value;
+                    SaveBetaTesterStatus(value); // Speichern des Betatester-Status
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void SaveBetaTesterStatus(bool isBetaTester)
+        {
+            var configurator = new Configurator("config.json");
+            configurator.Settings.IsBetaTester = isBetaTester;
+            configurator.SaveSettings();
+        }
+    }
     public partial class MainWindow : Window
     {
 
@@ -49,6 +82,12 @@ namespace darts_hub
         public MainWindow()
         {
             InitializeComponent();
+            configurator = new Configurator("config.json");
+            var viewModel = new UpdaterViewModel
+            {
+                IsBetaTester = configurator.Settings.IsBetaTester // Laden des Betatester-Status
+            };
+            DataContext = viewModel;
 
             WindowHelper.CenterWindowOnScreen(this);
 
@@ -119,6 +158,10 @@ namespace darts_hub
             }
         }
 
+        private void CheckForUpdates()
+        {
+            Updater.CheckNewVersion();
+        }
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             try
@@ -664,4 +707,5 @@ namespace darts_hub
 
 
     }
+    
 }
