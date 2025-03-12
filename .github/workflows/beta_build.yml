@@ -1,0 +1,290 @@
+name: "Build"
+
+on:
+  push:
+    tags:
+    - 'b*' # Push events to matching v*, i.e. v1.0, v20.15.10
+    # branches:
+    #     - main
+
+permissions:
+  contents: write
+
+
+
+
+
+jobs:
+
+  # MACOS
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v1.9.0
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: dotnet restore darts-hub.sln
+
+      # osx-x64
+      - name: Build osx-x64
+        run: dotnet publish darts-hub/darts-hub.csproj -r osx-x64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Copy update-script manually
+        run: cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-x64/publish/update.sh
+
+      - name: Set execute permissions
+        shell: bash
+        run: |
+          chmod +x darts-hub/bin/Release/net6.0/osx-x64/publish/update.sh
+          chmod +x darts-hub/bin/Release/net6.0/osx-x64/publish/darts-hub
+
+      - name: Zip osx-x64 build
+        uses: vimtor/action-zip@v1
+        with:
+          files: darts-hub/bin/Release/net6.0/osx-x64/publish/
+          dest: darts-hub-macOS-X64.zip
+
+      - name: Collect osx-x64 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: darts-hub-macOS-x64
+          path: ${{ github.workspace }}/darts-hub-macOS-X64.zip
+
+
+      # osx-arm64
+      - name: Build osx-arm64
+        run: dotnet publish darts-hub/darts-hub.csproj -r osx-arm64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Copy update-script manually
+        run: cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-arm64/publish/update.sh
+
+      - name: Set execute permissions
+        shell: bash
+        run: |
+          chmod +x darts-hub/bin/Release/net6.0/osx-arm64/publish/update.sh
+          chmod +x darts-hub/bin/Release/net6.0/osx-arm64/publish/darts-hub
+
+      - name: Zip osx-arm64 build
+        uses: vimtor/action-zip@v1
+        with:
+          files: darts-hub/bin/Release/net6.0/osx-arm64/publish/
+          dest: darts-hub-macOS-ARM64.zip
+
+      - name: Collect osx-arm64 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: darts-hub-macOS-arm64
+          path: ${{ github.workspace }}/darts-hub-macOS-ARM64.zip
+
+
+  # WINDOWS
+  build-windows:
+    runs-on: windows-2022
+
+    steps:
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v1.9.0
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: dotnet restore darts-hub.sln
+
+      # win-x86
+      - name: Build win-x86
+        run: dotnet publish darts-hub/darts-hub.csproj -r win-x86 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+
+      - name: Zip win-x86 build
+        uses: vimtor/action-zip@v1
+        with:
+          files: darts-hub/bin/Release/net6.0/win-x86/publish/
+          dest: darts-hub-windows-X86.zip
+
+      - name: Collect win-x86 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: darts-hub-windows-x86
+          path: ${{ github.workspace }}/darts-hub-windows-X86.zip
+
+      # win-x64
+      - name: Build win-x64
+        run: dotnet publish darts-hub/darts-hub.csproj -r win-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+
+      - name: Zip win-x64 build
+        uses: vimtor/action-zip@v1
+        with:
+          files: darts-hub/bin/Release/net6.0/win-x64/publish/
+          dest: darts-hub-windows-X64.zip
+
+      - name: Collect win-x64 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: darts-hub-windows-x64
+          path: ${{ github.workspace }}/darts-hub-windows-X64.zip
+
+      # win-arm
+      - name: Build win-arm
+        run: dotnet publish darts-hub/darts-hub.csproj -r win-arm -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+
+      - name: Zip win-arm build
+        uses: vimtor/action-zip@v1
+        with:
+          files: darts-hub/bin/Release/net6.0/win-arm/publish/
+          dest: darts-hub-windows-ARM.zip
+
+      - name: Collect win-arm artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: darts-hub-windows-arm
+          path: ${{ github.workspace }}/darts-hub-windows-ARM.zip
+
+      # win-arm64
+      - name: Build win-arm64
+        run: dotnet publish darts-hub/darts-hub.csproj -r win-arm64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+
+      - name: Zip win-arm64 build
+        uses: vimtor/action-zip@v1
+        with:
+          files: darts-hub/bin/Release/net6.0/win-arm64/publish/
+          dest: darts-hub-windows-ARM64.zip
+
+      - name: Collect win-arm64 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: darts-hub-windows-arm64
+          path: ${{ github.workspace }}/darts-hub-windows-ARM64.zip
+
+
+  # LINUX
+  build-linux:
+
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Install dos2unix
+        run: sudo apt-get install dos2unix
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v1.9.0
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: dotnet restore darts-hub.sln  
+
+
+      # linux-x64
+      - name: Build linux-x64
+        run: dotnet publish darts-hub/darts-hub.csproj -r linux-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+
+      - name: Convert line endings in update.sh
+        run: dos2unix darts-hub/bin/Release/net6.0/linux-x64/publish/update.sh
+
+      - name: Set execute permission for update.sh in output directory
+        shell: bash
+        run: |
+          chmod +x darts-hub/bin/Release/net6.0/linux-x64/publish/update.sh
+
+      - name: Zip linux-x64 build
+        uses: vimtor/action-zip@v1
+        with:
+          files: darts-hub/bin/Release/net6.0/linux-x64/publish/
+          dest: darts-hub-linux-X64.zip
+
+      - name: Collect linux-x64 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: darts-hub-linux-x64
+          path: ${{ github.workspace }}/darts-hub-linux-X64.zip
+
+
+      # linux-arm
+      - name: Build linux-arm
+        run: dotnet publish darts-hub/darts-hub.csproj -r linux-arm -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+
+      - name: Convert line endings in update.sh
+        run: dos2unix darts-hub/bin/Release/net6.0/linux-arm/publish/update.sh
+
+      - name: Set execute permission for update.sh in output directory
+        shell: bash
+        run: |
+          chmod +x darts-hub/bin/Release/net6.0/linux-arm/publish/update.sh
+
+      - name: Zip linux-arm build
+        uses: vimtor/action-zip@v1
+        with:
+          files: darts-hub/bin/Release/net6.0/linux-arm/publish/
+          dest: darts-hub-linux-ARM.zip
+
+      - name: Collect linux-arm artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: darts-hub-linux-arm
+          path: ${{ github.workspace }}/darts-hub-linux-ARM.zip
+
+
+      # linux-arm64
+      - name: Build linux-arm64
+        run: dotnet publish darts-hub/darts-hub.csproj -r linux-arm64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+
+      - name: Convert line endings in update.sh
+        run: dos2unix darts-hub/bin/Release/net6.0/linux-arm64/publish/update.sh
+
+      - name: Set execute permission for update.sh in output directory
+        shell: bash
+        run: |
+          chmod +x darts-hub/bin/Release/net6.0/linux-arm64/publish/update.sh
+
+      - name: Zip linux-arm64 build
+        uses: vimtor/action-zip@v1
+        with:
+          files: darts-hub/bin/Release/net6.0/linux-arm64/publish/
+          dest: darts-hub-linux-ARM64.zip
+
+      - name: Collect linux-arm artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: darts-hub-linux-arm64
+          path: ${{ github.workspace }}/darts-hub-linux-ARM64.zip
+
+
+
+  # RELEASE
+  create-release:
+    needs: [build-macos, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          tag_name: ${{ github.ref }}
+          name: Release ${{ github.ref }}
+          generate_release_notes: true
+          prerelease: true
+          files: |
+            darts-hub-macOS-x64/darts-hub-macOS-X64.zip
+            darts-hub-macOS-arm64/darts-hub-macOS-ARM64.zip
+            darts-hub-windows-x64/darts-hub-windows-X64.zip
+            darts-hub-windows-x86/darts-hub-windows-X86.zip
+            darts-hub-windows-arm/darts-hub-windows-ARM.zip
+            darts-hub-windows-arm64/darts-hub-windows-ARM64.zip
+            darts-hub-linux-x64/darts-hub-linux-X64.zip
+            darts-hub-linux-arm/darts-hub-linux-ARM.zip
+            darts-hub-linux-arm64/darts-hub-linux-ARM64.zip
