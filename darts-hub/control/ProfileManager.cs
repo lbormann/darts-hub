@@ -474,7 +474,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac",
                 MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("2.14.0");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("2.15.0");
 
 
             var dartsExternDownloadMap = new DownloadMap
@@ -498,7 +498,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac",
                 MacArm64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac"
             };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("1.5.3");
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("1.6.0");
 
 
             var dartsPixelitDownloadMap = new DownloadMap
@@ -684,7 +684,13 @@ namespace darts_hub.control
                         new(name: "PJ", type: "string", required: false, isMulti : true, nameHuman: "-PJ / --player_joined_effects", section: "WLED"),
                         new(name: "PL", type: "string", required: false, isMulti : true, nameHuman: "-PL / --player_left_effects", section: "WLED"),
                         new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
-                        new(name: "BSW", type: "bool", required: false, nameHuman: "-BSW / --board_stop_after_win", section: "Autodarts", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
+                        new(name: "BSW", type: "bool", required: false, nameHuman: "-BSW / --board_stop_after_win", section: "Autodarts", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
+                        new(name: "OFF", type: "bool", required: false, nameHuman: "-OFF / --wled_off", section: "WLED", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
+                        new(name: "BSE", type: "string", required: false, isMulti: true, nameHuman: "-BSE / --board_stop_effect", section: "WLED"),
+                        new(name: "TOE", type: "string", required: false, isMulti: true, nameHuman: "-TOE / --takeout_effect", section: "WLED"),
+                        new(name: "CE", type: "string", required: false, isMulti: true, nameHuman: "-CE / --calibration_effect", section: "WLED")
+
+
 
                     };
                 for (int i = 0; i <= 180; i++)
@@ -961,6 +967,26 @@ namespace darts_hub.control
                     if (boardStopAfterWin == null)
                     {
                         dartsWled.Configuration.Arguments.Add(new(name: "BSW", type: "bool", required: false, nameHuman: "-BSW / --board_stop_after_win", section: "Autodarts", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
+                    }
+                    var boardStopeffect = dartsWled.Configuration.Arguments.Find(a => a.Name == "BSE");
+                    if (boardStopeffect == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "BSE", type: "string", required: false, isMulti: true, nameHuman: "-BSE / --board_stop_effect", section: "WLED"));
+                    }
+                    var takeouteffect = dartsWled.Configuration.Arguments.Find(a => a.Name == "TOE");
+                    if (takeouteffect == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "TOE", type: "string", required: false, isMulti: true, nameHuman: "-TOE / --takeout_effect", section: "WLED"));
+                    }
+                    var calibeffect = dartsWled.Configuration.Arguments.Find(a => a.Name == "CE");
+                    if (calibeffect == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "CE", type: "string", required: false, isMulti: true, nameHuman: "-CE / --calibration_effect", section: "WLED"));
+                    }
+                    var wledoff = dartsWled.Configuration.Arguments.Find(a => a.Name == "OFF");
+                    if (wledoff == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "OFF", type: "bool", required: false, nameHuman: "-OFF / --wled_off", section: "WLED", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
                     }
                 }
             }
