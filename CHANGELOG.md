@@ -1,3 +1,9 @@
+## 0.12.6
+- update darts-wled to version 1.7.0
+    - div new fetures
+- update darts-caller to version 2.16.1
+- update darts-pixel to version 1.2.1
+
 ## 0.12.5
 - update darts-wled to version 1.6.0
     - div new fetures
