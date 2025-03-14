@@ -474,7 +474,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac",
                 MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("2.16.1");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("2.16.2");
 
 
             var dartsExternDownloadMap = new DownloadMap
@@ -689,7 +689,8 @@ namespace darts_hub.control
                         new(name: "BSE", type: "string", required: false, isMulti: true, nameHuman: "-BSE / --board_stop_effect", section: "WLED"),
                         new(name: "TOE", type: "string", required: false, isMulti: true, nameHuman: "-TOE / --takeout_effect", section: "WLED"),
                         new(name: "CE", type: "string", required: false, isMulti: true, nameHuman: "-CE / --calibration_effect", section: "WLED"),
-                        new(name: "DSBULL", type: "string", required: false, isMulti: true, nameHuman: "-DSBULL / --dart_score_BULL_effects", section: "WLED")
+                        new(name: "DSBULL", type: "string", required: false, isMulti: true, nameHuman: "-DSBULL / --dart_score_BULL_effects", section: "WLED"),
+                      //  new(name: "TEST", type: "string", required: false, isMulti: true, nameHuman: "test", section: "WLED")
 
 
 
@@ -1100,6 +1101,11 @@ namespace darts_hub.control
                     {
                         dartsWled.Configuration.Arguments.Add(new(name: "DSBULL", type: "string", required: false, isMulti: true, nameHuman: "-DSBULL / --dart_score_BULL_effects", section: "WLED"));
                     }
+                    //var wledtest = dartsWled.Configuration.Arguments.Find(a => a.Name == "TEST");
+                    //if (wledtest != null)
+                    //{
+                    //    dartsWled.Configuration.Arguments.Remove(wledtest);
+                    //}
                 }
             }
             var dartsPixelit = AppsDownloadable.Find(a => a.Name == "darts-pixelit");
