@@ -510,7 +510,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-mac",
                 MacArm64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-mac"
             };
-            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("1.2.1");
+            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("1.2.2");
 
 
             var dartsGifDownloadMap = new DownloadMap
@@ -995,15 +995,105 @@ namespace darts_hub.control
                     {
                         dartsWled.Configuration.Arguments.Add(new(name: "OFF", type: "bool", required: false, nameHuman: "-OFF / --wled_off", section: "WLED", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
                     }
-
-                    for (int i = 1; i <= 20; i++)
+                    var wledds1 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS1");
+                    if (wledds1 == null)
                     {
-                        var wleddartscore = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS" + i);
-                        if (wleddartscore == null)
-                        {
-                            var dartscore = i.ToString();
-                            dartsWled.Configuration.Arguments.Add(new(name: "DS" + dartscore, type: "string", required: false, isMulti: true, nameHuman: "-DS" + dartscore + " / --dart_score_" + dartscore + "_effects", section: "WLED"));
-                        }
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS1", type: "string", required: false, isMulti: true, nameHuman: "-DS1 / --dart_score_1_effects", section: "WLED"));
+                    }
+                    var wledds2 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS2");
+                    if (wledds2 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS2", type: "string", required: false, isMulti: true, nameHuman: "-DS2 / --dart_score_2_effects", section: "WLED"));
+                    }
+                    var wledds3 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS3");
+                    if (wledds3 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS3", type: "string", required: false, isMulti: true, nameHuman: "-DS3 / --dart_score_3_effects", section: "WLED"));
+                    }
+                    var wledds4 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS4");
+                    if (wledds4 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS4", type: "string", required: false, isMulti: true, nameHuman: "-DS4 / --dart_score_4_effects", section: "WLED"));
+                    }
+                    var wledds5 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS5");
+                    if (wledds5 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS5", type: "string", required: false, isMulti: true, nameHuman: "-DS5 / --dart_score_5_effects", section: "WLED"));
+                    }
+                    var wledds6 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS6");
+                    if (wledds6 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS6", type: "string", required: false, isMulti: true, nameHuman: "-DS6 / --dart_score_6_effects", section: "WLED"));
+                    }
+                    var wledds7 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS7");
+                    if (wledds7 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS7", type: "string", required: false, isMulti: true, nameHuman: "-DS7 / --dart_score_7_effects", section: "WLED"));
+                    }
+                    var wledds8 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS8");
+                    if (wledds8 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS8", type: "string", required: false, isMulti: true, nameHuman: "-DS8 / --dart_score_8_effects", section: "WLED"));
+                    }
+                    var wledds9 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS9");
+                    if (wledds9 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS9", type: "string", required: false, isMulti: true, nameHuman: "-DS9 / --dart_score_9_effects", section: "WLED"));
+                    }
+                    var wledds10 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS10");
+                    if (wledds10 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS10", type: "string", required: false, isMulti: true, nameHuman: "-DS10 / --dart_score_10_effects", section: "WLED"));
+                    }
+                    var wledds11 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS11");
+                    if (wledds11 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS11", type: "string", required: false, isMulti: true, nameHuman: "-DS11 / --dart_score_11_effects", section: "WLED"));
+                    }
+                    var wledds12 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS12");
+                    if (wledds12 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS12", type: "string", required: false, isMulti: true, nameHuman: "-DS12 / --dart_score_12_effects", section: "WLED"));
+                    }
+                    var wledds13 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS13");
+                    if (wledds13 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS13", type: "string", required: false, isMulti: true, nameHuman: "-DS13 / --dart_score_13_effects", section: "WLED"));
+                    }
+                    var wledds14 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS14");
+                    if (wledds14 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS14", type: "string", required: false, isMulti: true, nameHuman: "-DS14 / --dart_score_14_effects", section: "WLED"));
+                    }
+                    var wledds15 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS15");
+                    if (wledds15 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS15", type: "string", required: false, isMulti: true, nameHuman: "-DS15 / --dart_score_15_effects", section: "WLED"));
+                    }
+                    var wledds16 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS16");
+                    if (wledds16 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS16", type: "string", required: false, isMulti: true, nameHuman: "-DS16 / --dart_score_16_effects", section: "WLED"));
+                    }
+                    var wledds17 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS17");
+                    if (wledds17 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS17", type: "string", required: false, isMulti: true, nameHuman: "-DS17 / --dart_score_17_effects", section: "WLED"));
+                    }
+                    var wledds18 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS18");
+                    if (wledds18 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS18", type: "string", required: false, isMulti: true, nameHuman: "-DS18 / --dart_score_18_effects", section: "WLED"));
+                    }
+                    var wledds19 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS19");
+                    if (wledds19 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS19", type: "string", required: false, isMulti: true, nameHuman: "-DS19 / --dart_score_19_effects", section: "WLED"));
+                    }
+                    var wledds20 = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS20");
+                    if (wledds20 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DS20", type: "string", required: false, isMulti: true, nameHuman: "-DS20 / --dart_score_20_effects", section: "WLED"));
                     }
                     var wledDSbull = dartsWled.Configuration.Arguments.Find(a => a.Name == "DSBULL");
                     if (wledDSbull == null)
