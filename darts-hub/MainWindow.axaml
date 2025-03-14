@@ -29,6 +29,9 @@
 		>
 		
 		<Grid x:Name="GridMain">
+			<CheckBox x:Name="BetaTesterCheckBox" Content="Betatester"
+					  IsChecked="{Binding IsBetaTester, Mode=TwoWay}"
+					  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="12,10,0,0"/>
 
 			<Button x:Name="Buttonabout" Margin="295,660,20,0" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Click="Buttonabout_Click">
 				<Image Width="24" Height="24" Source="/Assets/about.png"></Image>

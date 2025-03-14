@@ -8,6 +8,7 @@ namespace darts_hub.control
     {
         public bool StartProfileOnStart { get; set; }
         public bool SkipUpdateConfirmation { get; set; }
+        public bool IsBetaTester { get; set; } // Neue Eigenschaft für den Betatester-Status
     }
 
 
@@ -16,7 +17,7 @@ namespace darts_hub.control
     {
         // ATTRIBUTES
         private readonly string ConfigFilePath;
-        public AppConfiguration Settings;
+        public AppConfiguration Settings { get; private set; }
 
 
 
@@ -41,7 +42,8 @@ namespace darts_hub.control
                 Settings = new AppConfiguration
                 {
                     StartProfileOnStart = false,
-                    SkipUpdateConfirmation = false
+                    SkipUpdateConfirmation = false,
+                    IsBetaTester = false
                 };
                 SaveSettings();
             }

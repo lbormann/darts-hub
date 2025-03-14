@@ -6,6 +6,8 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Threading.Tasks;
 using darts_hub.model;
 
 namespace darts_hub.control
@@ -19,7 +21,7 @@ namespace darts_hub.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "v0.12.5";
+        public static readonly string version = "b0.12.7";
         
 
         public static event EventHandler<ReleaseEventArgs>? NoNewReleaseFound;
@@ -45,8 +47,21 @@ namespace darts_hub.control
 
 
         // METHODS
+        public static bool IsBetaTester { get; set; } = false;
 
         public static async void CheckNewVersion()
+        {
+            if (IsBetaTester)
+            {
+                await CheckNewBetaVersion();
+            }
+            else
+            {
+                await CheckNewStableVersion();
+            }
+        }
+
+        private static async Task CheckNewStableVersion()
         {
             try
             {
@@ -71,6 +86,51 @@ namespace darts_hub.control
                 else
                 {
                     OnNoNewReleaseFound(new ReleaseEventArgs(latestGithubVersion, string.Empty));
+                }
+            }
+            catch (Exception ex)
+            {
+                OnReleaseDownloadFailed(new ReleaseEventArgs("vx.x.x", ex.Message));
+            }
+        }
+
+        private static async Task CheckNewBetaVersion()
+        {
+            try
+            {
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.Add("User-Agent", requestUserAgent);
+                client.Timeout = TimeSpan.FromSeconds(requestTimeout);
+                var result = await client.GetStringAsync("https://api.github.com/repos/lbormann/darts-hub/releases");
+                var releases = JsonDocument.Parse(result).RootElement.EnumerateArray();
+                JsonElement? latestBetaRelease = null;
+
+                foreach (var release in releases)
+                {
+                    if (release.GetProperty("prerelease").GetBoolean())
+                    {
+                        latestBetaRelease = release;
+                        break;
+                    }
+                }
+
+                if (latestBetaRelease.HasValue)
+                {
+                    var latestBetaVersion = latestBetaRelease.Value.GetProperty("tag_name").GetString();
+                    if (version != latestBetaVersion)
+                    {
+                        latestRepoVersion = latestBetaVersion;
+                        var changelog = await Helper.AsyncHttpGet(appSourceUrlChangelog, requestTimeout);
+                        OnNewReleaseFound(new ReleaseEventArgs(latestRepoVersion, changelog));
+                    }
+                    else
+                    {
+                        OnNoNewReleaseFound(new ReleaseEventArgs(latestBetaVersion, string.Empty));
+                    }
+                }
+                else
+                {
+                    OnNoNewReleaseFound(new ReleaseEventArgs("vx.x.x", "No beta releases found."));
                 }
             }
             catch (Exception ex)
@@ -111,9 +171,80 @@ namespace darts_hub.control
                     Helper.RemoveDirectory(downloadDirectory);
                     OnReleaseDownloadFailed(new ReleaseEventArgs(latestRepoVersion, ex.Message));
                 }
-
             }
         }
+
+
+
+
+        //public static async void CheckNewVersion()
+        //{
+        //    try
+        //    {
+        //        using var client = new HttpClient();
+        //        client.DefaultRequestHeaders.Add("User-Agent", requestUserAgent);
+        //        client.Timeout = TimeSpan.FromSeconds(requestTimeout);
+        //        var result = await client.GetStringAsync(appSourceUrlLatest);
+        //        int tagNameIndex = result.IndexOf("tag_name");
+        //        if (tagNameIndex == -1) throw new ArgumentException("github-tagName-Index not found");
+        //        result = result.Substring(tagNameIndex);
+        //        int tagNameCommaIndex = result.IndexOf(',');
+        //        if (tagNameCommaIndex == -1) throw new ArgumentException("github-tagNameComma-Index not found");
+        //        result = result.Substring("tag_name: \"".Length, tagNameCommaIndex - "tag_name: \"".Length);
+        //        var latestGithubVersion = result.Replace("\"", "");
+
+        //        if (version != latestGithubVersion)
+        //        {
+        //            latestRepoVersion = latestGithubVersion;
+        //            var changelog = await Helper.AsyncHttpGet(appSourceUrlChangelog, requestTimeout);
+        //            OnNewReleaseFound(new ReleaseEventArgs(latestRepoVersion, changelog));
+        //        }
+        //        else
+        //        {
+        //            OnNoNewReleaseFound(new ReleaseEventArgs(latestGithubVersion, string.Empty));
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        OnReleaseDownloadFailed(new ReleaseEventArgs("vx.x.x", ex.Message));
+        //    }
+        //}
+
+        //public static void UpdateToNewVersion()
+        //{
+        //    if (!string.IsNullOrEmpty(latestRepoVersion))
+        //    {
+        //        try
+        //        {
+        //            var appSourceFile = GetAppFileByOS();
+        //            if (String.IsNullOrEmpty(appSourceFile)) throw new Exception("There are no releases for your specific OS.");
+
+        //            destinationPath = Helper.GetAppBasePath();
+        //            downloadPath = Path.Join(destinationPath, appDestination, appSourceFile);
+        //            downloadDirectory = Path.GetDirectoryName(downloadPath);
+
+        //            string downloadUrl = appSourceUrl + "/" + latestRepoVersion + "/" + appSourceFile;
+
+        //            // Removes existing download-directory and creates a new one
+        //            Helper.RemoveDirectory(downloadDirectory, true);
+
+        //            // Inform subscribers about a pending download
+        //            OnReleaseDownloadStarted(new ReleaseEventArgs(latestRepoVersion, latestRepoVersion));
+
+        //            // Start the download
+        //            var webClient = new WebClient();
+        //            webClient.DownloadProgressChanged += WebClient_DownloadProgressChanged;
+        //            webClient.DownloadFileCompleted += WebClient_DownloadCompleted;
+        //            webClient.DownloadFileAsync(new Uri(downloadUrl), downloadPath);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            Helper.RemoveDirectory(downloadDirectory);
+        //            OnReleaseDownloadFailed(new ReleaseEventArgs(latestRepoVersion, ex.Message));
+        //        }
+
+        //    }
+        //}
 
 
 
