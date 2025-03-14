@@ -40,7 +40,7 @@ namespace darts_hub
                     OnPropertyChanged(nameof(IsBetaTester));
                     Updater.IsBetaTester = value;
                     SaveBetaTesterStatus(value); // Speichern des Betatester-Status
-                    Updater.CheckNewVersion(); // Trigger the update check when the checkbox is toggled
+                   // Updater.CheckNewVersion(); // Trigger the update check when the checkbox is toggled
                 }
             }
         }
