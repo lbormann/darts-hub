@@ -1,3 +1,7 @@
+## 0.12.9
+- update darts-pixel to version 1.2.2
+- bugfix beta check
+
 ## 0.12.6
 - update darts-wled to version 1.7.0
     - div new fetures
