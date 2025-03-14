@@ -1,3 +1,7 @@
+## 0.12.9
+- update darts-pixel to version 1.2.2
+- bugfix beta check
+
 ## 0.12.8
 - update darts-pixel to version 1.2.2
 - migration bugfix
