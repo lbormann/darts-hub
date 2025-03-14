@@ -474,7 +474,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac",
                 MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("2.15.0");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("2.16.1");
 
 
             var dartsExternDownloadMap = new DownloadMap
@@ -498,7 +498,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac",
                 MacArm64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac"
             };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("1.6.0");
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("1.7.0");
 
 
             var dartsPixelitDownloadMap = new DownloadMap
@@ -510,7 +510,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-mac",
                 MacArm64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-mac"
             };
-            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("1.2.0");
+            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("1.2.1");
 
 
             var dartsGifDownloadMap = new DownloadMap
@@ -688,7 +688,8 @@ namespace darts_hub.control
                         new(name: "OFF", type: "bool", required: false, nameHuman: "-OFF / --wled_off", section: "WLED", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
                         new(name: "BSE", type: "string", required: false, isMulti: true, nameHuman: "-BSE / --board_stop_effect", section: "WLED"),
                         new(name: "TOE", type: "string", required: false, isMulti: true, nameHuman: "-TOE / --takeout_effect", section: "WLED"),
-                        new(name: "CE", type: "string", required: false, isMulti: true, nameHuman: "-CE / --calibration_effect", section: "WLED")
+                        new(name: "CE", type: "string", required: false, isMulti: true, nameHuman: "-CE / --calibration_effect", section: "WLED"),
+                        new(name: "DSBULL", type: "string", required: false, isMulti: true, nameHuman: "-DSBULL / --dart_score_BULL_effects", section: "WLED")
 
 
 
@@ -704,6 +705,12 @@ namespace darts_hub.control
                     var areaNumber = i.ToString();
                     Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "-A" + areaNumber + " / --score_area_" + areaNumber + "_effects", section: "WLED");
                     dartsWledArguments.Add(areaArgument);
+                }
+                for (int i = 1; i <= 20; i++)
+                {
+                    var dartscore = i.ToString();
+                    Argument dartscoreArgument = new(name: "DS" + dartscore, type: "string", required: false, isMulti: true, nameHuman: "-DS" + dartscore + " / --dart_score_" + dartscore + "_effects", section: "WLED");
+                    dartsWledArguments.Add(dartscoreArgument);
                 }
 
                 AppDownloadable dartsWled =
@@ -987,6 +994,21 @@ namespace darts_hub.control
                     if (wledoff == null)
                     {
                         dartsWled.Configuration.Arguments.Add(new(name: "OFF", type: "bool", required: false, nameHuman: "-OFF / --wled_off", section: "WLED", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
+                    }
+
+                    for (int i = 1; i <= 20; i++)
+                    {
+                        var wleddartscore = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS" + i);
+                        if (wleddartscore == null)
+                        {
+                            var dartscore = i.ToString();
+                            dartsWled.Configuration.Arguments.Add(new(name: "DS" + dartscore, type: "string", required: false, isMulti: true, nameHuman: "-DS" + dartscore + " / --dart_score_" + dartscore + "_effects", section: "WLED"));
+                        }
+                    }
+                    var wledDSbull = dartsWled.Configuration.Arguments.Find(a => a.Name == "DSBULL");
+                    if (wledDSbull == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DSBULL", type: "string", required: false, isMulti: true, nameHuman: "-DSBULL / --dart_score_BULL_effects", section: "WLED"));
                     }
                 }
             }
