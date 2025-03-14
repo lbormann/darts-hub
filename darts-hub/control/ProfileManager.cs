@@ -1102,11 +1102,17 @@ namespace darts_hub.control
                     }
                 }
             }
+            var dartsPixelit = AppsDownloadable.Find(a => a.Name == "darts-pixelit");
+            if (dartsPixelit != null)
+            {
+                if (dartsPixelitDownloadUrl != null)
+                {
+                    dartsPixelit.DownloadUrl = dartsPixelitDownloadUrl;
 
-
-            // Add more migs..
+                    // Add more migs..
+                }
+            }
         }
-
 
 
         private void CreateDummyProfiles()
