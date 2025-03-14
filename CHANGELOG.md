@@ -1,3 +1,7 @@
+## 0.12.11
+- Webcaller bugfix
+
+
 ## 0.12.10
 - Checkbox removed
 - IF YOU WANT TO BE A BETA TESTER YOU CAN ACTIVATE THE BETA TESTER CHECKBOX, 
