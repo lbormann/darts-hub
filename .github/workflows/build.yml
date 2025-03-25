@@ -281,11 +281,14 @@ jobs:
             - added **Tooltips** for Darts-Caller configuration
             - added **Tooltips** for Darts-WLED configuration
 
-            **Darts-Caller v2.17.5**
+            **Darts-Caller v2.17.6**
             - Updated new Gamemodes: Bermuda, Gotcha, Count Up, Shanghai
             - changed Soundfile host
             - Soundfiles Updated
               - Bermuda and Gotcha needs two aditional soudfiles to call score reset
+              
+            -**Darts-WLED v1.7.1**
+            - Updated new Gamemodes: Bermuda, Gotcha, Count Up, Shanghai <--just Basic functions, still in dev.
           generate_release_notes: true
           files: |
             darts-hub-macOS-x64/darts-hub-macOS-X64.zip
