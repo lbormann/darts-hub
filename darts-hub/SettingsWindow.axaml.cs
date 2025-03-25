@@ -273,10 +273,11 @@ namespace darts_hub
                         textBox.Width = elementWidth;
                         textBox.BorderBrush = borderColor;
                         textBox.BorderThickness = borderThickness;
-                        
+
                         textBox.KeyDown += (s, e) => textBox.Opacity = 1.0;
                         textBox.DataContext = argument;
-                       
+                        ToolTip.SetTip(textBox, argument.Description);
+
                         textBox.Bind(TextBox.TextProperty, new Binding("Value"));
                         HighlightElement(textBox, argument);
                         customElement = textBox;
@@ -294,6 +295,7 @@ namespace darts_hub
                         selectButton.Width = 70;
                         selectButton.BorderBrush = borderColor;
                         selectButton.BorderThickness = borderThickness;
+                        
 
 
                         var textBox = new TextBox();
@@ -305,6 +307,7 @@ namespace darts_hub
                         textBox.Width = elementWidth - 70;
                         textBox.BorderBrush = borderColor;
                         textBox.BorderThickness = borderThickness;
+                        ToolTip.SetTip(textBox, argument.Description);
                         textBox.PropertyChanged += (s, e) =>
                         {
                             if (e.Property.Name == "Text")
@@ -356,6 +359,7 @@ namespace darts_hub
                         passwordBox.BorderThickness = borderThickness;
                         passwordBox.KeyDown += (s, e) => passwordBox.Opacity = 1.0;
                         passwordBox.DataContext = argument;
+                        ToolTip.SetTip(passwordBox, argument.Description);
                         passwordBox.Bind(TextBox.TextProperty, new Binding("Value"));
                         HighlightElement(passwordBox, argument);
                         GridMain.Children.Add(passwordBox);
@@ -380,6 +384,7 @@ namespace darts_hub
                                 if(e.Property.Name == "Text") textBoxSlider.Opacity = 1.0;
                             };
                             textBoxSlider.DataContext = slider;
+                            ToolTip.SetTip(textBoxSlider, argument.Description);
                             textBoxSlider.Bind(TextBox.TextProperty, new Binding("Value"));
 
                             counter += 1;
@@ -396,9 +401,10 @@ namespace darts_hub
                             slider.IsSnapToTickEnabled = true;
                             slider.PropertyChanged += (s, e) => slider.Opacity = 1.0;
                             slider.Tag = textBoxSlider;
+                            ToolTip.SetTip(slider, argument.Description);
 
 
-                            if(argument.Value == null)
+                            if (argument.Value == null)
                             {
                                 slider.PropertyChanged += (s, e) =>
                                 {
@@ -473,6 +479,7 @@ namespace darts_hub
                             integerUpDown.BorderThickness = borderThickness;
                             integerUpDown.ValueChanged += (s, e) => integerUpDown.Opacity = 1.0;
                             integerUpDown.DataContext = argument;
+                            ToolTip.SetTip(integerUpDown, argument.Description);
                             integerUpDown.Bind(NumericUpDown.ValueProperty, new Binding("Value"));
                             HighlightElement(integerUpDown, argument);
                             GridMain.Children.Add(integerUpDown);
@@ -496,6 +503,7 @@ namespace darts_hub
                             decimalUpDown.BorderThickness = borderThickness;
                             decimalUpDown.ValueChanged += (s, e) => decimalUpDown.Opacity = 1.0;
                             decimalUpDown.DataContext = argument;
+                            ToolTip.SetTip(decimalUpDown, argument.Description);
                             decimalUpDown.Bind(NumericUpDown.ValueProperty, new Binding("Value"));
                             HighlightElement(decimalUpDown, argument);
                             GridMain.Children.Add(decimalUpDown);
@@ -530,6 +538,7 @@ namespace darts_hub
                         checkBox.Checked += (s, e) => checkBox.Opacity = 1.0;
                         checkBox.Unchecked += (s, e) => checkBox.Opacity = 1.0;
                         checkBox.DataContext = argument;
+                        ToolTip.SetTip(checkBox, argument.Description);
                         checkBox.Bind(CheckBox.IsCheckedProperty, new Binding("Value"));
                         HighlightElement(checkBox, argument);
                         GridMain.Children.Add(checkBox);
@@ -555,6 +564,7 @@ namespace darts_hub
                         button.VerticalAlignment = VerticalAlignment.Top;
                         button.Background = Brushes.Transparent;
                         button.BorderThickness = new Thickness(0, 0, 0, 0);
+                        
                         button.Click += (s, e) =>
                         {
                             argument.Value = null;

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "darts-hub": {
+      "commandName": "Project",
+      "workingDirectory": "Z:\\Github\\VisualStudio\\Darts-Hub"
+    }
+  }
+}
