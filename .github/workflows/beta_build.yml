@@ -277,7 +277,10 @@ jobs:
           tag_name: ${{ github.ref }}
           name: Release ${{ github.ref }}
           body: |
-            Changes in this Release
+            **Changes in this Release**
+            - added **Tooltips** for Darts-Caller configuration
+            - added **Tooltips** for Darts-WLED configuration
+
             **Darts-Caller v2.17.5**
             - Updated new Gamemodes: Bermuda, Gotcha, Count Up, Shanghai
             - changed Soundfile host

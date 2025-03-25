@@ -1,3 +1,10 @@
+## 0.12.17
+- Major Caller Update in V2.17.5
+  - Gamemodes
+  - Soundpacks
+  - Hostserver
+- added Tooltips for Darts-Caller configuration
+- added Tooltips for Darts-WLED configuration
 ## 0.12.15
 - Major Caller Update in V2.17.0
 
