@@ -1,3 +1,7 @@
+## 0.12.19
+- automatic paring of Readme.md files
+  - use parsed values for tooltips
+
 ## 0.12.18
 - Major Caller Update in V2.17.6
   - Gamemodes

@@ -278,17 +278,8 @@ jobs:
           name: Release ${{ github.ref }}
           body: |
             **Changes in this Release**
-            - added **Tooltips** for Darts-Caller configuration
-            - added **Tooltips** for Darts-WLED configuration
-
-            **Darts-Caller v2.17.6**
-            - Updated new Gamemodes: Bermuda, Gotcha, Count Up, Shanghai
-            - changed Soundfile host
-            - Soundfiles Updated
-              - Bermuda and Gotcha needs two aditional soudfiles to call score reset
-            
-            -**Darts-WLED v1.7.1**
-            - Updated new Gamemodes: Bermuda, Gotcha, Count Up, Shanghai <--just Basic functions, still in dev.
+            - automatic paring of Readme.md files
+              - use parsed values for tooltips
           generate_release_notes: true
           prerelease: true
           files: |
