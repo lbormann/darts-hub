@@ -280,6 +280,8 @@ jobs:
             **Changes in this Release**
             - automatic paring of Readme.md files
               - use parsed values for tooltips
+            - Darts-Caller Update v2.17.7
+              - Bermuda: if you dont hit the target, Broadcast Busted for extensions
           generate_release_notes: true
           files: |
             darts-hub-macOS-x64/darts-hub-macOS-X64.zip

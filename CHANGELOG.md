@@ -1,6 +1,8 @@
-## 0.12.19
+## 0.12.21
 - automatic paring of Readme.md files
   - use parsed values for tooltips
+- Darts-Caller Update v2.17.7
+  - Bermuda: if you dont hit the target, Broadcast Busted for extensions
 
 ## 0.12.18
 - Major Caller Update in V2.17.6
