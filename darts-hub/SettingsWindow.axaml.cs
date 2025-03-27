@@ -68,9 +68,72 @@ namespace darts_hub
             Title = "Configuration - " + this.app.Name;
 
             RenderAppConfiguration();
-            
-        }
+            //ShowArgumentDescriptions();
 
+        }
+        private async void ShowArgumentDescriptions()
+        {
+            var readmeUrl = "fehler";
+            if (app.CustomName == "darts-caller")
+            {
+                readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-caller/refs/heads/master/README.md";
+            }
+            else if (app.CustomName == "darts-wled")
+            {
+                readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-wled/refs/heads/main/README.md";
+            }
+            else if (app.CustomName == "darts-pixelit")
+            {
+                readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-pixelit/refs/heads/main/README.md";
+            }
+            else if (app.CustomName == "darts-gif")
+            {
+                readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-gif/refs/heads/main/README.md";
+            }
+            else if (app.CustomName == "darts-voice")
+            {
+                readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-voice/refs/heads/main/README.md";
+            }
+            else if (app.CustomName == "darts-extern")
+            {
+                readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-extern/refs/heads/master/README.md";
+            }
+
+            if (readmeUrl != "fehler")
+            {
+                var parser = new ReadmeParser();
+                var argumentDescriptions = await parser.GetArgumentsFromReadme(readmeUrl);
+
+                if (argumentDescriptions != null)
+                {
+                    var sb = new StringBuilder();
+                    foreach (var kvp in argumentDescriptions)
+                    {
+                        sb.AppendLine($"{kvp.Key}: {kvp.Value}");
+                    }
+
+                    var messageBox = MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
+                    {
+                        Icon = MessageBox.Avalonia.Enums.Icon.None,
+                        ContentTitle = "Argument Descriptions",
+                        WindowIcon = Icon,
+                        Width = 600,
+                        Height = 400,
+                        MaxWidth = 600,
+                        MaxHeight = 400,
+                        CanResize = true,
+                        EscDefaultButton = ClickEnum.No,
+                        EnterDefaultButton = ClickEnum.Yes,
+                        SystemDecorations = SystemDecorations.Full,
+                        WindowStartupLocation = WindowStartupLocation,
+                        ButtonDefinitions = ButtonEnum.Ok,
+                        ContentMessage = sb.ToString()
+                    });
+
+                    await messageBox.ShowDialog(this);
+                }
+            }
+        }
 
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
