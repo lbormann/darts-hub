@@ -16,12 +16,15 @@ using model;
 using Avalonia.Interactivity;
 using MessageBox.Avalonia.DTO;
 using MessageBox.Avalonia.Enums;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Avalonia.Controls.Primitives;
+using System.Text;
 
 namespace darts_hub
 {
     public partial class SettingsWindow : Window
     {
-
         // ATTRIBUTES
 
         private ProfileManager profileManager;
@@ -36,20 +39,19 @@ namespace darts_hub
         private double elementClearedOpacity;
         private HorizontalAlignment elementHoAl;
 
-
-
         // METHODES
 
         public SettingsWindow()
         {
             InitializeComponent();
             WindowHelper.CenterWindowOnScreen(this);
+            
         }
+
         public SettingsWindow(ProfileManager profileManager, AppBase app)
         {
             InitializeComponent();
             WindowHelper.CenterWindowOnScreen(this);
-
 
             this.profileManager = profileManager;
             this.app = app;
@@ -66,6 +68,7 @@ namespace darts_hub
             Title = "Configuration - " + this.app.Name;
 
             RenderAppConfiguration();
+            
         }
 
 
@@ -73,7 +76,7 @@ namespace darts_hub
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             Focus();
-            
+
             try
             {
                 profileManager.StoreApps();
@@ -84,8 +87,7 @@ namespace darts_hub
             }
         }
 
-
-        private void RenderAppConfiguration()
+        private async void RenderAppConfiguration()
         {
             // Set the CultureInfo to use a dot as the decimal separator
             CultureInfo customCulture = (CultureInfo)CultureInfo.CurrentCulture.Clone();
@@ -93,8 +95,16 @@ namespace darts_hub
 
             var dotDecimalSeparatorValueConverter = new DotDecimalSeparatorValueConverter();
 
-
             var assets = AvaloniaLocator.Current.GetService<IAssetLoader>();
+            var readmeUrl = "fehler";
+            
+
+            
+            
+            
+
+
+
 
             var labelHeader = new Label();
             labelHeader.Content = app.CustomName;
@@ -189,12 +199,47 @@ namespace darts_hub
                 GridMain.Children.Add(buttonHelp);
             }
 
-
-
             if (!app.IsConfigurable()) return;
 
             var appConfiguration = app.Configuration;
             var argumentsBySection = appConfiguration.Arguments.GroupBy(a => a.Section);
+            if (app.CustomName == "darts-caller")
+            {
+                readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-caller/refs/heads/master/README.md"; // URL zur README-Datei
+            }
+            else if (app.CustomName == "darts-wled")
+            {
+                readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-wled/refs/heads/main/README.md";
+            }
+            else if (app.CustomName == "darts-pixelit")
+            {
+                readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-pixelit/refs/heads/main/README.md";
+            }
+            else if(app.CustomName == "darts-gif")
+            {
+                readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-gif/refs/heads/main/README.md";
+            }
+            else if (app.CustomName == "darts-voice")
+            {
+                readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-voice/refs/heads/main/README.md";
+            }
+            else if (app.CustomName == "darts-extern")
+            {
+                readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-extern/refs/heads/master/README.md";
+            }
+            Dictionary<string, string>? argumentDescriptions = null;
+            if (readmeUrl != "fehler")
+            {
+                var parser = new ReadmeParser();
+                argumentDescriptions = await parser.GetArgumentsFromReadme(readmeUrl);
+            }
+            foreach (var argument in appConfiguration.Arguments)
+            {
+                if (argumentDescriptions != null && argumentDescriptions.TryGetValue(argument.Name, out var description))
+                {
+                    argument.Description = description;
+                }
+            }
 
             int counter = 1;
             foreach (var section in argumentsBySection)

@@ -38,8 +38,13 @@
 		<Label Content="I3uLL3t" HorizontalAlignment="Left" Margin="23,213,0,0" VerticalAlignment="Top" FontSize="18" FontWeight="Bold" Foreground="White"/>
 		<Button ToolTip.Tip="Need help? or you want to contact the developers? Click here."
 				x:Name="contact3" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left"
-				Margin="110,213,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
+				Margin="110,210,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
 			<Image Width="24" Height="24" Source="/Assets/contact.png" RenderTransformOrigin="2.684,0.4"></Image>
+		</Button>
+		<Button ToolTip.Tip="You want to support? What about a little Tip? Click here."
+				x:Name="paypal" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left"
+				Margin="150,204,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
+			<Image Width="36" Height="36" Source="/Assets/paypal.png" RenderTransformOrigin="2.684,0.4"></Image>
 		</Button>
 		
 		<Label Content="Inspired by:" HorizontalAlignment="Left" Margin="10,256,0,0" VerticalAlignment="Top" Foreground="White"/>
