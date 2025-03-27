@@ -56,11 +56,11 @@ namespace darts_hub
             this.profileManager = profileManager;
             this.app = app;
 
-            fontSize = 22.0;
+            fontSize = 16.0; // 22.0
             fontColor = Brushes.White;
             fontColorContent = Brushes.Orange;
-            marginTop = (int)fontSize + 5;
-            elementWidth = (int)(Width * 0.80);
+            marginTop = (int)fontSize + 5;  // +5
+            elementWidth = (int)(Width * 0.80); // 80% of the window width
             elementHoAl = HorizontalAlignment.Left;
             elementOffsetRight = 0.0;
             elementOffsetLeft = 25.0;
@@ -173,7 +173,7 @@ namespace darts_hub
             labelHeader.Content = app.CustomName;
             labelHeader.HorizontalAlignment = HorizontalAlignment.Center;
             labelHeader.VerticalAlignment = VerticalAlignment.Top;
-            labelHeader.FontSize = fontSize;
+            labelHeader.FontSize = fontSize + 5;
             labelHeader.FontWeight = FontWeight.ExtraBold;
             labelHeader.Margin = new Thickness(elementOffsetLeft, 24, elementOffsetRight, 0);
             labelHeader.Foreground = fontColor;
@@ -315,7 +315,7 @@ namespace darts_hub
                     textBlockSectionHeader.Text = section.Key;
                     textBlockSectionHeader.HorizontalAlignment = HorizontalAlignment.Center;
                     textBlockSectionHeader.VerticalAlignment = VerticalAlignment.Top;
-                    textBlockSectionHeader.FontSize = fontSize - 3;
+                    textBlockSectionHeader.FontSize = fontSize; //-3 
                     textBlockSectionHeader.FontWeight = FontWeight.Bold;
                     textBlockSectionHeader.Margin = new Thickness(elementOffsetLeft, counter * marginTop, elementOffsetRight, 0);
                     textBlockSectionHeader.Foreground = fontColor;
@@ -355,7 +355,7 @@ namespace darts_hub
                         textBlock.Text = argument.NameHuman + (argument.Required ? " * " : "");
                         textBlock.HorizontalAlignment = elementHoAl;
                         textBlock.VerticalAlignment = VerticalAlignment.Top;
-                        textBlock.FontSize = fontSize - 6;
+                        textBlock.FontSize = fontSize - 2; // 6
                         textBlock.Margin = new Thickness(elementOffsetLeft, counter * marginTop, elementOffsetRight, 0);
                         textBlock.Foreground = fontColor;
                         if (argument.Value == null) textBlock.Opacity = elementClearedOpacity;
@@ -376,7 +376,7 @@ namespace darts_hub
                         textBox.HorizontalAlignment = elementHoAl;
                         textBox.Foreground = fontColorContent;
                         textBox.VerticalAlignment = VerticalAlignment.Top;
-                        textBox.FontSize = fontSize - 6;
+                        textBox.FontSize = fontSize - 2; // 6
                         textBox.Margin = new Thickness(elementOffsetLeft, counter * marginTop, elementOffsetRight, 0);
                         textBox.Width = elementWidth;
                         textBox.BorderBrush = borderColor;
@@ -398,7 +398,7 @@ namespace darts_hub
                         selectButton.HorizontalAlignment = elementHoAl;
                         selectButton.Foreground = fontColor;
                         selectButton.VerticalAlignment = VerticalAlignment.Top;
-                        selectButton.FontSize = fontSize - 6;
+                        selectButton.FontSize = fontSize - 2; // 6
                         selectButton.Margin = new Thickness(elementOffsetLeft + elementWidth - 70, counter * marginTop, elementOffsetRight, 0);
                         selectButton.Width = 70;
                         selectButton.BorderBrush = borderColor;
@@ -410,7 +410,7 @@ namespace darts_hub
                         textBox.HorizontalAlignment = elementHoAl;
                         textBox.Foreground = fontColorContent;
                         textBox.VerticalAlignment = VerticalAlignment.Top;
-                        textBox.FontSize = fontSize - 6;
+                        textBox.FontSize = fontSize - 2;// 6
                         textBox.Margin = new Thickness(elementOffsetLeft, counter * marginTop, elementOffsetRight, 0);
                         textBox.Width = elementWidth - 70;
                         textBox.BorderBrush = borderColor;
@@ -460,7 +460,7 @@ namespace darts_hub
                         passwordBox.Foreground = fontColorContent;
                         passwordBox.HorizontalAlignment = elementHoAl;
                         passwordBox.VerticalAlignment = VerticalAlignment.Top;
-                        passwordBox.FontSize = fontSize - 6;
+                        passwordBox.FontSize = fontSize - 2; // 6
                         passwordBox.Margin = new Thickness(elementOffsetLeft, counter * marginTop, elementOffsetRight, 0);
                         passwordBox.Width = elementWidth;
                         passwordBox.BorderBrush = borderColor;
@@ -483,7 +483,7 @@ namespace darts_hub
                             textBoxSlider.Foreground = fontColorContent;
                             textBoxSlider.HorizontalAlignment = elementHoAl;
                             textBoxSlider.VerticalAlignment = VerticalAlignment.Top;
-                            textBoxSlider.FontSize = fontSize - 6;
+                            textBoxSlider.FontSize = fontSize - 2; // 6
                             textBoxSlider.Margin = new Thickness(elementOffsetLeft, counter * marginTop, elementOffsetRight, 0);
                             textBoxSlider.Width = elementWidth;
                             textBoxSlider.IsEnabled = false;
@@ -501,7 +501,7 @@ namespace darts_hub
                             slider.Foreground = fontColorContent;
                             slider.HorizontalAlignment = elementHoAl;
                             slider.VerticalAlignment = VerticalAlignment.Top;
-                            slider.FontSize = fontSize - 6;
+                            slider.FontSize = fontSize - 2;// 6
                             slider.Margin = new Thickness(elementOffsetLeft, counter * marginTop, elementOffsetRight, 0);
                             slider.Width = elementWidth;
                             //slider.BorderBrush = borderColor;
@@ -579,7 +579,7 @@ namespace darts_hub
                             integerUpDown.Foreground = fontColorContent;
                             integerUpDown.HorizontalAlignment = elementHoAl;
                             integerUpDown.VerticalAlignment = VerticalAlignment.Top;
-                            integerUpDown.FontSize = fontSize - 6;
+                            integerUpDown.FontSize = fontSize - 2;// 6
                             integerUpDown.Margin = new Thickness(elementOffsetLeft, counter * marginTop, elementOffsetRight, 0);
                             integerUpDown.Width = elementWidth;
                             //integerUpDown.BorderBrush = borderColor;
@@ -601,7 +601,7 @@ namespace darts_hub
                             decimalUpDown.Foreground = fontColorContent;
                             decimalUpDown.HorizontalAlignment = elementHoAl;
                             decimalUpDown.VerticalAlignment = VerticalAlignment.Top;
-                            decimalUpDown.FontSize = fontSize - 6;
+                            decimalUpDown.FontSize = fontSize - 2; //6
                             decimalUpDown.Margin = new Thickness(elementOffsetLeft, counter * marginTop, elementOffsetRight, 0);
                             decimalUpDown.Width = elementWidth;
                             //decimalUpDown.BorderBrush = borderColor;
@@ -625,7 +625,7 @@ namespace darts_hub
                         checkBox.Foreground = fontColorContent;
                         checkBox.Margin = new Thickness(elementOffsetLeft, counter * marginTop, elementOffsetRight, 0);
                         var checkBoxContent = new TextBox();
-                        checkBoxContent.FontSize = fontSize - 6;
+                        checkBoxContent.FontSize = fontSize - 2; // 6
                         checkBoxContent.Focusable = false;
                         checkBoxContent.Text = argument.NameHuman;
                         checkBoxContent.Background = Brushes.Transparent;
@@ -639,7 +639,7 @@ namespace darts_hub
                         checkBox.Content = checkBoxContent;
                         checkBox.HorizontalAlignment = elementHoAl;
                         checkBox.VerticalAlignment = VerticalAlignment.Top;
-                        checkBox.FontSize = fontSize - 6;
+                        checkBox.FontSize = fontSize - 2; // 6
                         checkBox.Foreground = Brushes.White;
                         //checkBox.BorderBrush = borderColor;
                         checkBox.BorderThickness = borderThickness;
