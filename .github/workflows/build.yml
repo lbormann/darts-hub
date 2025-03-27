@@ -280,7 +280,7 @@ jobs:
             **Changes in this Release**
             - automatic paring of Readme.md files
               - use parsed values for tooltips
-            - Darts-Caller Update v2.17.7
+            - Darts-Caller Update v2.17.8
               - Bermuda: if you dont hit the target, Broadcast Busted for extensions
           generate_release_notes: true
           files: |
