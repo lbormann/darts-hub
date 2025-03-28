@@ -47,6 +47,7 @@ namespace darts_hub
         public SettingsWindow()
         {
             InitializeComponent();
+            ConfigureTitleBar();
             WindowHelper.CenterWindowOnScreen(this);
             
         }

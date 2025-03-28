@@ -24,6 +24,7 @@ namespace darts_hub
         public AboutWindow()
         {
             InitializeComponent();
+            ConfigureTitleBar();
             WindowHelper.CenterWindowOnScreen(this);;
         }
         private void ConfigureTitleBar()

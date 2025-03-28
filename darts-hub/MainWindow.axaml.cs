@@ -85,6 +85,7 @@ namespace darts_hub
         public MainWindow()
         {
             InitializeComponent();
+            ConfigureTitleBar();
             configurator = new Configurator("config.json");
             var viewModel = new UpdaterViewModel
             {
