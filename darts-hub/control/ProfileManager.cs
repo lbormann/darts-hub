@@ -1205,27 +1205,27 @@ namespace darts_hub.control
                     {
                         var argS = i.ToString();
                         var WLEDDescMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "S" + i);
-                        if (WLEDDescMig != null) { WLEDDescMig.Description = "Controls your wled(s) when a specific score occurs. You can define every score-value between 0 and 180. Define one effect/preset/playlist or a list. If you define a list, the program will randomly choose at runtime.\n\r\n\rExamples: \nbreathe|orange|red1\nps|5 ps|6"; }
+                        if (WLEDDescMig != null) { WLEDDescMig.Section ="Score Effects" ; }
                     }
                     for (int i = 1; i <= 12; i++)
                     {
                         var argA = i.ToString();
                         var WLEDDescMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "A" + i);
-                        if (WLEDDescMig != null) { WLEDDescMig.Description = "Besides the definition of single score-values you can define up to 12 score-areas. Define one effect/preset/playlist or a list. If you define a list, the program will randomly choose at runtime.\n\r\n\rExamples: \n\n0-14 solid|deeppink1\nScore from 0 to 14 with given effect"; }
+                        if (WLEDDescMig != null) { WLEDDescMig.Section = "Area Effects"; }
                     }
                     for (int i = 1; i <= 20; i++)
                     {
                         var argA = i.ToString();
                         var WLEDDescMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS" + i);
-                        if (WLEDDescMig != null) { WLEDDescMig.Description = "NOT FULLY IMPLEMENTED!!!!!!"; }
+                        if (WLEDDescMig != null) { WLEDDescMig.Description = "NOT FULLY IMPLEMENTED!!!!!!";
+                            WLEDDescMig.Section = "Single Dart Effects !!still in Progress!!";
+                        }
                     }
-                    //foreach (var argument in dartsWled.Configuration.Arguments)
-                    //{
-                    //    if (argumentDescriptions.TryGetValue(argument.Name, out var description))
-                    //    {
-                    //        argument.Description = description;
-                    //    }
-                    //}
+                    var DSBULLWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "DSBULL");
+                    if (DSBULLWLEDMig != null) { DSBULLWLEDMig.Description = "NOT FULLY IMPLEMENTED!!!!!!";
+                        DSBULLWLEDMig.Section = "Single Dart Effects !!still in Progress!!";
+                    }
+
                     //var DEBWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "DEB");
                     //if (DEBWLEDMig != null) { DEBWLEDMig.Description = "The application outputs extended event-information.\r\n\r\nDefault: '0'"; }
                     //var CONWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "CON");
@@ -1264,8 +1264,7 @@ namespace darts_hub.control
                     //if (CEWLEDMig != null) { CEWLEDMig.Description = "Controls your wled(s) when calibration will be performed. Define one effect/preset/playlist or a list. If you define a list, the program will randomly choose at runtime.\n\r\n\rExamples: \nbreathe|orange|red1\nps|5 ps|6"; }
                     //var OFFWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "OFF");
                     //if (OFFWLEDMig != null) { OFFWLEDMig.Description = "Controls your wled(s) and turns it off when match has ended. 1/true will activate the feature"; }
-                    //var DSBULLWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "DSBULL");
-                    //if (DSBULLWLEDMig != null) { DSBULLWLEDMig.Description = "NOT FULLY IMPLEMENTED!!!!!!"; }
+
 
 
                     //var wledtest = dartsWled.Configuration.Arguments.Find(a => a.Name == "TEST");
