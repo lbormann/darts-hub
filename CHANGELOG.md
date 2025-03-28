@@ -1,3 +1,11 @@
+## 0.12.23
+- Major GUI chnages. 
+  - collabsable Settings
+  - new Design
+  - Settings reordered
+
+- Bugfix description Parsing
+
 ## 0.12.22
 - Caller version update: Bermuda: if you dont hit the target Broadcast busted for extensions
 

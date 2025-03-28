@@ -1156,12 +1156,12 @@ namespace darts_hub.control
                         var argA = i.ToString();
                         var WLEDDescMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "DS" + i);
                         if (WLEDDescMig != null) { WLEDDescMig.Description = "NOT FULLY IMPLEMENTED!!!!!!";
-                            WLEDDescMig.Section = "Single Dart Effects !!still in Progress!!";
+                            WLEDDescMig.Section = "Single Dart Effects !! still in Progress !!";
                         }
                     }
                     var DSBULLWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "DSBULL");
                     if (DSBULLWLEDMig != null) { DSBULLWLEDMig.Description = "NOT FULLY IMPLEMENTED!!!!!!";
-                        DSBULLWLEDMig.Section = "Single Dart Effects !!still in Progress!!";
+                        DSBULLWLEDMig.Section = "Single Dart Effects !! still in Progress !!";
                     }
 
                     var DEBWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "DEB");

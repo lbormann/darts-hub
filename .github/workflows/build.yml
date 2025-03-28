@@ -278,10 +278,12 @@ jobs:
           name: Release ${{ github.ref }}
           body: |
             **Changes in this Release**
-            - automatic paring of Readme.md files
-              - use parsed values for tooltips
-            - Darts-Caller Update v2.17.8
-              - Bermuda: if you dont hit the target, Broadcast Busted for extensions
+            - Major GUI chnages. 
+              - collabsable Settings
+              - new Design
+              - Settings reordered
+
+            - Bugfix description Parsing
           generate_release_notes: true
           files: |
             darts-hub-macOS-x64/darts-hub-macOS-X64.zip
