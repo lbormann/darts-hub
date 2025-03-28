@@ -47,17 +47,17 @@ namespace darts_hub
         public SettingsWindow()
         {
             InitializeComponent();
-            ConfigureTitleBar();
             WindowHelper.CenterWindowOnScreen(this);
-            
+            ConfigureTitleBarSettings();
+
         }
-        private void ConfigureTitleBar()
+        private void ConfigureTitleBarSettings()
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                CustomTitleBar.IsVisible = false;
-                ExtendClientAreaToDecorationsHint = false;
-                ExtendClientAreaChromeHints = Avalonia.Platform.ExtendClientAreaChromeHints.Default;
+                CustomTitleBarSettings.IsVisible = true;
+                ExtendClientAreaToDecorationsHint = true;
+                ExtendClientAreaChromeHints = Avalonia.Platform.ExtendClientAreaChromeHints.NoChrome;
             }
         }
         private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -76,6 +76,7 @@ namespace darts_hub
         public SettingsWindow(ProfileManager profileManager, AppBase app)
         {
             InitializeComponent();
+            ConfigureTitleBarSettings();
             WindowHelper.CenterWindowOnScreen(this);
 
             this.profileManager = profileManager;

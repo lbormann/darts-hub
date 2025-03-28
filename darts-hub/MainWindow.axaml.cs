@@ -111,11 +111,11 @@ namespace darts_hub
         }
         private void ConfigureTitleBar()
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                CustomTitleBar.IsVisible = false;
-                ExtendClientAreaToDecorationsHint = false;
-                ExtendClientAreaChromeHints = Avalonia.Platform.ExtendClientAreaChromeHints.Default;
+                CustomTitleBar.IsVisible = true;
+                ExtendClientAreaToDecorationsHint = true;
+                ExtendClientAreaChromeHints = Avalonia.Platform.ExtendClientAreaChromeHints.NoChrome;
             }
         }
         private void CloseButton_Click(object sender, RoutedEventArgs e)

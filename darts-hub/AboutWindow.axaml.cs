@@ -24,16 +24,16 @@ namespace darts_hub
         public AboutWindow()
         {
             InitializeComponent();
-            ConfigureTitleBar();
-            WindowHelper.CenterWindowOnScreen(this);;
+            WindowHelper.CenterWindowOnScreen(this);
+            ConfigureTitleBarAbout();
         }
-        private void ConfigureTitleBar()
+        private void ConfigureTitleBarAbout()
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                CustomTitleBar.IsVisible = false;
-                ExtendClientAreaToDecorationsHint = false;
-                ExtendClientAreaChromeHints = Avalonia.Platform.ExtendClientAreaChromeHints.Default;
+                CustomTitleBarAbout.IsVisible = true;
+                ExtendClientAreaToDecorationsHint = true;
+                ExtendClientAreaChromeHints = Avalonia.Platform.ExtendClientAreaChromeHints.NoChrome;
             }
         }
         private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -60,6 +60,7 @@ namespace darts_hub
 
         private async void AboutWindow_Opened(object sender, EventArgs e)
         {
+            ConfigureTitleBarAbout();
             CheckBoxSkipUpdateConfirmation.IsChecked = configurator.Settings.SkipUpdateConfirmation;
         }
 
