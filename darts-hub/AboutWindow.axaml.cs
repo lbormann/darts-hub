@@ -7,6 +7,7 @@ using Avalonia;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using MessageBox.Avalonia.DTO;
+using Avalonia.Input;
 using MessageBox.Avalonia.Enums;
 
 namespace darts_hub
@@ -24,7 +25,18 @@ namespace darts_hub
             InitializeComponent();
             WindowHelper.CenterWindowOnScreen(this);;
         }
-        
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+        private void TitleBar_PointerPressed(object sender, PointerPressedEventArgs e)
+        {
+            BeginMoveDrag(e);
+        }
         public AboutWindow(Configurator configurator)
         {
             InitializeComponent();

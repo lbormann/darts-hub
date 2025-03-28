@@ -107,7 +107,18 @@ namespace darts_hub
 
             Opened += MainWindow_Opened;
         }
-
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+        private void TitleBar_PointerPressed(object sender, PointerPressedEventArgs e)
+        {
+            BeginMoveDrag(e);
+        }
 
         private async void MainWindow_Opened(object sender, EventArgs e)
         {

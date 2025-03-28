@@ -14,19 +14,26 @@
 		WindowStartupLocation="CenterScreen"
 		Closing="Window_Closing"
 		TransparencyLevelHint="AcrylicBlur"
-		>
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome">
 
 	<Window.Background>
 		<ImageBrush Opacity="0.2" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background.png" />
 	</Window.Background>
 
-	
+	<Grid>
+		<!-- Custom Title Bar -->
+		<DockPanel Background="#FF2D2D30" Height="30" VerticalAlignment="Top" PointerPressed="TitleBar_PointerPressed">
+			<TextBlock Text="Darts-Hub" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="White"/>
+			<Button Content=" -" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent" Foreground="White" BorderBrush="Transparent" Click="MinimizeButton_Click" FontWeight="Bold" Margin="0,0,-410,0"/>
+			<Button Content="X" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Background="DarkRed" Foreground="White" BorderBrush="Transparent" Click="CloseButton_Click" FontWeight="Bold" />
+		</DockPanel>
 	<ScrollViewer
 		x:Name="scroller"
 		VerticalScrollBarVisibility="Auto" 
 		HorizontalScrollBarVisibility="Hidden" 
 		VerticalAlignment="Top"
-        Margin="0,0,0,15"
+        Margin="0,30,0,10"
 		>
 		
 		<Grid x:Name="GridMain">
@@ -34,7 +41,7 @@
 					  IsChecked="{Binding IsBetaTester, Mode=TwoWay}"
 					  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="12,10,0,0"/> -->
 
-			<Button x:Name="Buttonabout" Margin="295,660,20,0" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Click="Buttonabout_Click">
+			<Button x:Name="Buttonabout" Margin="295,0,20,0" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="Transparent" BorderThickness="0" Click="Buttonabout_Click">
 				<Image Width="24" Height="24" Source="/Assets/about.png"></Image>
 			</Button>
 			
@@ -69,7 +76,7 @@
 
 	</ScrollViewer>
 
-
+	</Grid>
 
 </Window>
 

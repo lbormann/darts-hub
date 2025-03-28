@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 using Avalonia.Controls.Primitives;
 using System.Text;
 using Avalonia.Styling;
+using Avalonia.Input;
 
 namespace darts_hub
 {
@@ -47,6 +48,18 @@ namespace darts_hub
             InitializeComponent();
             WindowHelper.CenterWindowOnScreen(this);
             
+        }
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+        private void TitleBar_PointerPressed(object sender, PointerPressedEventArgs e)
+        {
+            BeginMoveDrag(e);
         }
 
         public SettingsWindow(ProfileManager profileManager, AppBase app)

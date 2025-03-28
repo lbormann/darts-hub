@@ -971,68 +971,6 @@ namespace darts_hub.control
                             callEveryDart.ValidateType();
                         }
                     }
-                    //foreach (var argument in dartsCaller.Configuration.Arguments)
-                    //{
-                    //    if (argumentDescriptions.TryGetValue(argument.Name, out var description))
-                    //    {
-                    //        argument.Description = description;
-                    //    }
-                    //}
-
-                    //var callerEmailMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "U");
-                    //if (callerEmailMig != null) { callerEmailMig.Description = "REQUIRED: Your autodarts.io registered email-address."; }
-                    //var callerPassMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "P");
-                    //if (callerPassMig != null) { callerPassMig.Description = "REQUIRED: Your autodarts.io registered password. Make sure you disable 2FA (Two-Factor-Auth)."; }
-                    //var callerBoardMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "B");
-                    //if (callerBoardMig != null) { callerBoardMig.Description = "REQUIRED: Your autodarts.io registered board-id. You can find your Board-ID in Board-Manager."; }
-                    //var callerMediaMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "M");
-                    //if (callerMediaMig != null) { callerMediaMig.Description = "REQUIRED: Setup an absolute-path where voice-packs should be located.\n Make sure the given path doesn't reside inside main-directory (darts-caller)."; }
-                    //var callerMediaShareMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "MS");
-                    //if (callerMediaShareMig != null) { callerMediaShareMig.Description = "If you do not want to configure same sounds again for every individual voice-pack, you can specify an absolute path to a shared directory. \n Every voice-pack will use the sounds of that directory. Have a look at supported SOUND-FILE-KEYS. \n Moreover make sure the given path neither resides inside main-directory (darts-caller) nor inside media-path (-M).\n Side note: sounds located in that directory will override sounds located in voice-pack(s)."; }
-                    //var callerVolMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "V");
-                    //if (callerVolMig != null) { callerVolMig.Description = "You can lower the local playback volume in relation to current system volume. '1.0' is max volume. '0.5' is \"half\" volume.\r\n\r\nDefault: '1.0'"; }
-                    //var callerCallerMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "C");
-                    //if (callerCallerMig != null) { callerCallerMig.Description = "Sets a specific voice-pack as caller. On start the application displays a list of installed voice-packs; copy the name of chosen one and paste it here.\r\n\r\nSide note: You can change the caller/voice-pack anytime in the web-caller."; }
-                    //var callerRCallerMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "R");
-                    //if (callerRCallerMig != null) { callerRCallerMig.Description = "The application will randomly choose a voice-pack. If you use this functionality, the application only considers most recent version of a voice-pack by finding its highest version number by name. Example: 'en-US-Joey-Male-v3'. Because there is no voice-pack with name 'en-US-Joey-Male-v4', version is 'v3' (en-US-Joey-Male-v3). \n\r 0 = random caller deactivated (instead use -C to set your favorite caller) \n\r 1 = random caller for every match-start \n\r 2 = random caller for every leg"; }
-                    //var callerRLMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "RL");
-                    //if (callerRLMig != null) { callerRLMig.Description = "Filters randomly chosen voice-pack by its language.\r\n\r\n'0' = every language\r\n'1' = english\r\n'2' = french\r\n'3' = russian\r\n'4' = german\r\n'5' = spanish\r\n'6' = dutch\r\nDefault: '1'\r\n\r\nSide note: You can change that option anytime in the web-caller."; }
-                    //var callerRGMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "RG");
-                    //if (callerRGMig != null) { callerRGMig.Description = "Filters randomly chosen voice-pack by its gender.\r\n\r\n'0' = every gender\r\n'1' = female\r\n'2' = male\r\nDefault: '0'\r\n\r\nSide note: You can change that option anytime in the web-caller."; }
-                    //var callerCCPMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "CCP");
-                    //if (callerCCPMig != null) { callerCCPMig.Description = "The application will call playernames for certain events like \"you require\", \"leg/set start\", \"leg/set end\".\r\n\r\n'0' = call current playername deactivated\r\n'1' = call current playername activated\r\n'2' = call current playername activated also on every playerchange\r\n\r\nDefault: '1'\r\n\r\nSide note: You can change that option anytime in the web-caller."; }
-                    //var callerCBAMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "CBA");
-                    //if (callerCBAMig != null) { callerCBAMig.Description = "The application will call bot actions.\r\n\r\n'0' = call bot actions deactivated\r\n'1' = call bot actions activated\r\nDefault: '1'\r\n\r\nSide note: You can change that option anytime in the web-caller."; }
-                    //var callerEMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "E");
-                    //if (callerEMig != null) { callerEMig.Description = "The application will call every thrown dart.\r\n\r\n'0' = call every dart deactivated\r\n'1' = SINGLE-DART-SCORE: call every dart by multiplicated score of field-number and field-multiplier (for example: you hit a triple 20, resulting in calling sound-file-key '60')\r\n'2' = SINGLE-DART-NAME: call every dart by field-name (for example: you hit a triple 20, resulting in calling sound-file-key 't20' if available, else falls back to sound-file-key 'triple' and sound-file-key '20')\r\n'3' = SINGLE-DART-EFFECT: call every dart by using sound-effects (for example: you hit a triple 20, resulting in calling sound-file-key 'effect_t20' if available, else falls back to 'effect_triple')\r\n\r\nDefault: '0'\r\n\r\nSide note: You can change that option anytime in the web-caller."; }
-                    //var callerETSMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "ETS");
-                    //if (callerETSMig != null) { callerETSMig.Description = "The application will call total score if call-every-dart is active ('1', '2', '3').\r\n\r\n'0' = call total score deactivated\r\n'1' = call total score activated\r\nDefault: '1'"; }
-                    //var callerPCCMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "PCC");
-                    //if (callerPCCMig != null) { callerPCCMig.Description = "The application will call and repeat 'x' times a particular checkout until configured value 'x' is reached. If configured value 'x' is reached it will playback sound-file-key 'ambient_checkout_call_limit' instead. If possible-checkout`s remaining value changes it will call and repeat 'x' times a particular checkout until configured value 'x' is reached.\r\n\r\nFor playback the application uses two SOUND-FILE-KEYS: 'you_require' and 'c_2-c_170' (fallback to '2-170'). If 'you_require' is not available it will fallback to single sound-file-key: 'yr_2 to yr_170'.\r\n\r\nDefault: '1' (x = 1 => call a particular possible checkout one time)\r\n\r\nSide note: You can change that option anytime in the web-caller.\r\n\r\n-PCCYO / --possible_checkout_call_yourself_only\r\nIf you set this to '1' the application will only call if there is a checkout possibility and the current player is you (associated to your board-id). This functionality won't work if your board is offline.\r\n\r\n'0' = call possible checkout for every player\r\n'1' = call possible checkout only for yourself\r\nDefault: '0'\r\n\r\nSide note: You can change that option anytime in the web-caller."; }
-                    //var callerPCCYOMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "PCCYO");
-                    //if (callerPCCYOMig != null) { callerPCCYOMig.Description = "If you set this to '1' the application will only call if there is a checkout possibility and the current player is you (associated to your board-id). This functionality won't work if your board is offline.\r\n\r\n'0' = call possible checkout for every player\r\n'1' = call possible checkout only for yourself\r\nDefault: '0'\r\n\r\nSide note: You can change that option anytime in the web-caller."; }
-                    //var callerAMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "A");
-                    //if (callerAMig != null) { callerAMig.Description = "If you set this to value between '0.1' and '1.0' the application will playback SOUND-FILE-KEYS ambient_*. The configured value will be multiplied by caller-volume (-V). As an example: caller-volume = '0.8' and ambient-sounds = '1.0' resultung in '0.8' relative to your system-volume.\r\n\r\nDefault: '0.0'"; }
-                    //var callerAACMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "AAC");
-                    //if (callerAACMig != null) { callerAACMig.Description = "If you set this to '1', SOUND-FILE-KEYS ambient_* will wait until main-calls are finished.\r\n\r\nDefault: '0'"; }
-                    //var callerDLMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "DL");
-                    //if (callerDLMig != null) { callerDLMig.Description = "The application will download 'x' available voice-packs that are not already installed. Installation path is the value of -M.\r\n\r\nDefault: '3'"; }
-                    //var callerDLLAMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "DLLA");
-                    //if (callerDLLAMig != null) { callerDLLAMig.Description = "If you want to filter downloads for a specific language.\r\n\r\n'0' = every language\r\n'1' = english\r\n'2' = french\r\n'3' = russian\r\n'4' = german\r\n'5' = spanish\r\n'6' = dutch\r\nDefault: '1'"; }
-                    //var callerDLNMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "DLN");
-                    //if (callerDLNMig != null) { callerDLNMig.Description = "If you want to filter downloads to a specific voice-pack. For example you could set a value 'en-US-Joey-Male'."; }
-                    //var callerROVPMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "ROVP");
-                    //if (callerROVPMig != null) { callerROVPMig.Description = "The application will remove old voice-packs folders from your disk.\r\n\r\nDefault: '0'"; }
-                    //var callerBAVMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "BAV");
-                    //if (callerBAVMig != null) { callerBAVMig.Description = "You can not hear any calls as your music is way too loud? Try to set this to '0.03'.\r\n\r\nDefault: '0.0' (no background-audio-muting)\r\n\r\nSide Note: only availble for windows-os and local playback (LPB = 1)."; }
-                    //var callerLPBMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "LPB");
-                    //if (callerLPBMig != null) { callerLPBMig.Description = "The application will playback audio by using your local speakers.\r\n\r\nDefault: '1'"; }
-                    //var callerWEBDHMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "WEBDH");
-                    //if (callerWEBDHMig != null) { callerWEBDHMig.Description = "If you set this to '1' the application will run all connection services with insecure http/ws protocol. It's NOT recommended! Also you won't be able to use video-/voice-calls on web-caller.\r\n\r\nDefault: '0'"; }
-                    //var callerHPMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "HP");
-                    //if (callerHPMig != null) { callerHPMig.Description = "The application provides a websocket-service. Other extensions like darts-extern or darts-wled can connect to this service (wss://ip:port). For a list of json-examples look at 'broadcast-examples.dat' - who knows maybe you build your own extension upon this?!\r\n\r\nDefault: '8079'"; }
-                    //var callerDEBMig = dartsCaller.Configuration.Arguments.Find(a => a.Name == "DEB");
-                    //if (callerDEBMig != null) { callerDEBMig.Description = "The application outputs extended event-information.\r\n\r\nDefault: '0'"; }
                     
 
                     var callBotActions = dartsCaller.Configuration.Arguments.Find(a => a.Name == "CBA");
@@ -1226,44 +1164,44 @@ namespace darts_hub.control
                         DSBULLWLEDMig.Section = "Single Dart Effects !!still in Progress!!";
                     }
 
-                    //var DEBWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "DEB");
-                    //if (DEBWLEDMig != null) { DEBWLEDMig.Description = "The application outputs extended event-information.\r\n\r\nDefault: '0'"; }
-                    //var CONWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "CON");
-                    //if (CONWLEDMig != null) { CONWLEDMig.Description = "Host address to data-feeder (darts-caller). By Default this is '127.0.0.1:8079' (means your local ip-address / usually you do NOT need to change this)"; }
-                    //var WEPSWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "WEPS");
-                    //if (WEPSWLEDMig != null) { WEPSWLEDMig.Description = "IP to your WLED. You can define multiple entries. For example: '192.168.3.200' '192.168.3.201'. It is important to say that in case of multiple endpoints, the first one is treated as your primary endpoint which means it will be used to check if is idle state is returned. Moreover if you drive multiple WLEDS make sure you disable WLEDs Sync function."; }
-                    //var DUWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "DU");
-                    //if (DUWLEDMig != null) { DUWLEDMig.Description = "Duration (in seconds), after a triggered effect/preset/playlist will return to idle-effect. By default this is '0' (infinity duration = return to idle happens when you pull your darts)"; }
-                    //var BSSWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "BSS");
-                    //if (BSSWLEDMig != null) { BSSWLEDMig.Description = "The app stops your board after thrown darts. When duration (-DU) pasts wled returns to idle and starts the board: Value '0.0' means no \"stop-start\" at all; values greater '0.0' declare how long the start should be delayed. For instance a value '0.3' delays the board-start for one third of second after wled switched back to idle. You can play around with that. In my tests '0.4' was an appropriate value."; }
-                    //var BRIWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "BRI");
-                    //if (BRIWLEDMig != null) { BRIWLEDMig.Description = "Brightness for WLED-effects. You can choose a value between '1' and '255'. By default this is 175."; }
-                    //var HFOWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "HFO");
-                    //if (HFOWLEDMig != null) { HFOWLEDMig.Description = "Define what a highfinish means for you. Choose a score-value between '2' and '170'. This value is relevant for argument '-HF'. By default this is not set = no effects for 'Highfinishes'."; }
-                    //var HFWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "HF");
-                    //if (HFWLEDMig != null) { HFWLEDMig.Description = "Controls your wled(s) when a high-finish occurs. Define one effect/preset/playlist or a list. If you define a list, the program will randomly choose at runtime. For examples see below!"; }
-                    //var IDEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE");
-                    //if (IDEWLEDMig != null) { IDEWLEDMig.Description = "Controls your wled(s) when dart-pulling occurs or a configurated duration pasts. Define an effect/preset/playlist that gets triggered. For examples see below!"; }
-                    //var GWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "G");
-                    //if (GWLEDMig != null) { GWLEDMig.Description = "Controls your wled(s) when a game won occurs. Define one effect/preset/playlist or a list. If you define a list, the program will randomly choose at runtime. \n\r\n\rExamples: \nbreathe|orange|red1\nps|5 ps|6"; }
-                    //var MWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "M");
-                    //if (MWLEDMig != null) { MWLEDMig.Description = "Controls your wled(s) when a match won occurs. Define one effect/preset/playlist or a list. If you define a list, the program will randomly choose at runtime. \n\r\n\rExamples: \nbreathe|orange|red1\nps|5 ps|6"; }
-                    //var BWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "B");
-                    //if (BWLEDMig != null) { BWLEDMig.Description = "Controls your wled(s) when a bust occurs. Define one effect/preset/playlist or a list. If you define a list, the program will randomly choose at runtime. \n\r\n\rExamples: \nbreathe|orange|red1\nps|5 ps|6"; }
-                    //var PJWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "PJ");
-                    //if (PJWLEDMig != null) { PJWLEDMig.Description = "Controls your wled(s) when a player-join occurs. Define one effect/preset/playlist or a list. If you define a list, the program will randomly choose at runtime. \n\r\n\rExamples: \nbreathe|orange|red1\nps|5 ps|6"; }
-                    //var PLWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "PL");
-                    //if (PLWLEDMig != null) { PLWLEDMig.Description = "Controls your wled(s) when a player-left occurs. Define one effect/preset/playlist or a list. If you define a list, the program will randomly choose at runtime. \n\r\n\rExamples: \nbreathe|orange|red1\nps|5 ps|6"; }
-                    //var BSWWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "BSW");
-                    //if (BSWWLEDMig != null) { BSWWLEDMig.Description = "Controles board stop behaviour after win. When activated, the board will be stoped after winning Leg or match"; }
-                    //var BSEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "BSE");
-                    //if (BSEWLEDMig != null) { BSEWLEDMig.Description = "Controls your wled(s) when a board stop occurs during the match. Define one effect/preset/playlist or a list. If you define a list, the program will randomly choose at runtime.\n\r\n\rExamples: \nbreathe|orange|red1\nps|5 ps|6"; }
-                    //var TOEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "TOE");
-                    //if (TOEWLEDMig != null) { TOEWLEDMig.Description = "Controls your wled(s) when a takeout will be performed or is wrongly triggered. Define one effect/preset/playlist or a list. If you define a list, the program will randomly choose at runtime.\n\r\n\rExamples: \nbreathe|orange|red1\nps|5 ps|6"; }
-                    //var CEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "CE");
-                    //if (CEWLEDMig != null) { CEWLEDMig.Description = "Controls your wled(s) when calibration will be performed. Define one effect/preset/playlist or a list. If you define a list, the program will randomly choose at runtime.\n\r\n\rExamples: \nbreathe|orange|red1\nps|5 ps|6"; }
-                    //var OFFWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "OFF");
-                    //if (OFFWLEDMig != null) { OFFWLEDMig.Description = "Controls your wled(s) and turns it off when match has ended. 1/true will activate the feature"; }
+                    var DEBWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "DEB");
+                    if (DEBWLEDMig != null) { DEBWLEDMig.Section = "Service"; }
+                    var CONWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "CON");
+                    if (CONWLEDMig != null) { CONWLEDMig.Section = "Service"; }
+                    var WEPSWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "WEPS");
+                    if (WEPSWLEDMig != null) { WEPSWLEDMig.Section = "Service"; }
+                    var DUWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "DU");
+                    if (DUWLEDMig != null) { DUWLEDMig.Section = "Board Stop Start"; }
+                    var BSSWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "BSS");
+                    if (BSSWLEDMig != null) { BSSWLEDMig.Section = "Board Stop Start"; }
+                    var BRIWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "BRI");
+                    if (BRIWLEDMig != null) { BRIWLEDMig.Section = "Service"; }
+                    var HFOWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "HFO");
+                    if (HFOWLEDMig != null) { HFOWLEDMig.Section = "Effects"; }
+                    var HFWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "HF");
+                    if (HFWLEDMig != null) { HFWLEDMig.Section = "Effects"; }
+                    var IDEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE");
+                    if (IDEWLEDMig != null) { IDEWLEDMig.Section = "Service"; }
+                    var GWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "G");
+                    if (GWLEDMig != null) { GWLEDMig.Section = "Effects"; }
+                    var MWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "M");
+                    if (MWLEDMig != null) { MWLEDMig.Section = "Effects"; }
+                    var BWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "B");
+                    if (BWLEDMig != null) { BWLEDMig.Section = "Effects"; }
+                    var PJWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "PJ");
+                    if (PJWLEDMig != null) { PJWLEDMig.Section = "Lobby Effects"; }
+                    var PLWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "PL");
+                    if (PLWLEDMig != null) { PLWLEDMig.Section = "Lobby Effects"; }
+                    var BSWWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "BSW");
+                    if (BSWWLEDMig != null) { BSWWLEDMig.Section = "Board Status Effects"; }
+                    var BSEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "BSE");
+                    if (BSEWLEDMig != null) { BSEWLEDMig.Section = "Board Status Effects"; }
+                    var TOEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "TOE");
+                    if (TOEWLEDMig != null) { TOEWLEDMig.Section = "Board Status Effects"; }
+                    var CEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "CE");
+                    if (CEWLEDMig != null) { CEWLEDMig.Section = "Board Status Effects"; }
+                    var OFFWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "OFF");
+                    if (OFFWLEDMig != null) { OFFWLEDMig.Section = "Service"; }
 
 
 
