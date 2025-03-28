@@ -22,6 +22,7 @@ using Avalonia.Controls.Primitives;
 using System.Text;
 using Avalonia.Styling;
 using Avalonia.Input;
+using System.Runtime.InteropServices;
 
 namespace darts_hub
 {
@@ -48,6 +49,15 @@ namespace darts_hub
             InitializeComponent();
             WindowHelper.CenterWindowOnScreen(this);
             
+        }
+        private void ConfigureTitleBar()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                CustomTitleBar.IsVisible = false;
+                ExtendClientAreaToDecorationsHint = false;
+                ExtendClientAreaChromeHints = Avalonia.Platform.ExtendClientAreaChromeHints.Default;
+            }
         }
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {

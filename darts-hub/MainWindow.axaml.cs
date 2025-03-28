@@ -21,6 +21,7 @@ using MessageBox.Avalonia.BaseWindows.Base;
 using MessageBox.Avalonia.ViewModels;
 using MessageBox.Avalonia.Views;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 
 namespace darts_hub
@@ -106,6 +107,15 @@ namespace darts_hub
             CheckBoxStartProfileOnProgramStart.FontSize = fontSize - 6;
 
             Opened += MainWindow_Opened;
+        }
+        private void ConfigureTitleBar()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                CustomTitleBar.IsVisible = false;
+                ExtendClientAreaToDecorationsHint = false;
+                ExtendClientAreaChromeHints = Avalonia.Platform.ExtendClientAreaChromeHints.Default;
+            }
         }
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
