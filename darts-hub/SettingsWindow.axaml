@@ -12,10 +12,6 @@
 		MaxHeight="720"
 		WindowStartupLocation="CenterScreen"
 		CanResize="False"
-		Closing="Window_Closing"
-		TransparencyLevelHint="AcrylicBlur"
-		ExtendClientAreaToDecorationsHint="False"
-        ExtendClientAreaChromeHints="Default">
 
 	<Window.Styles>
 		<Style Selector="Window">
@@ -24,7 +20,7 @@
 	</Window.Styles>
 
 	<Window.Background>
-		<ImageBrush Opacity="0.2" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background.png" />
+		<ImageBrush Opacity="0.2" Stretch="UniformToFill"  Source="/Assets/background.png" />
 	</Window.Background>
 
 

@@ -8,21 +8,14 @@ using Avalonia.Media;
 using System.Diagnostics;
 using System.Linq;
 using System;
-using MessageBox.Avalonia;
+using MsBox.Avalonia;
 using Avalonia.Platform;
 using Avalonia.Media.Imaging;
 using System.Globalization;
 using model;
 using Avalonia.Interactivity;
-using MessageBox.Avalonia.DTO;
-using MessageBox.Avalonia.Enums;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Avalonia.Controls.Primitives;
-using System.Text;
-using Avalonia.Styling;
-using Avalonia.Input;
-using System.Runtime.InteropServices;
+using MsBox.Avalonia.Dto;
+using MsBox.Avalonia.Enums;
 
 namespace darts_hub
 {
@@ -172,7 +165,7 @@ namespace darts_hub
             }
             catch (Exception ex)
             {
-                MessageBoxManager.GetMessageBoxStandardWindow("Error", "Error occured: " + ex.Message).Show();
+                MessageBoxManager.GetMessageBoxStandard("Error", "Error occured: " + ex.Message).ShowWindowAsync();
             }
         }
 
@@ -184,8 +177,8 @@ namespace darts_hub
 
             var dotDecimalSeparatorValueConverter = new DotDecimalSeparatorValueConverter();
 
-            var assets = AvaloniaLocator.Current.GetService<IAssetLoader>();
-            var readmeUrl = "fehler";
+
+            
 
             var labelHeader = new Label();
             labelHeader.Content = app.CustomName;
@@ -202,7 +195,7 @@ namespace darts_hub
                 var imageChangelog = new Image();
                 imageChangelog.Width = 32;
                 imageChangelog.Height = 32;
-                imageChangelog.Source = new Bitmap(assets.Open(new Uri("avares://darts-hub/Assets/changelog.png")));
+                imageChangelog.Source = new Bitmap(AssetLoader.Open(new Uri("avares://darts-hub/Assets/changelog.png")));
 
                 var buttonChangelog = new Button();
                 buttonChangelog.Margin = new Thickness(0, 20, 20, 0);
@@ -219,9 +212,9 @@ namespace darts_hub
 
                     double width = Width;
                     double height = Height;
-                    MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
+                    MessageBoxManager.GetMessageBoxStandard(new MessageBoxStandardParams
                     {
-                        Icon = MessageBox.Avalonia.Enums.Icon.None,
+                        Icon = MsBox.Avalonia.Enums.Icon.None,
                         ContentTitle = "Changelog",
                         WindowIcon = Icon,
                         Width = width,
@@ -235,7 +228,7 @@ namespace darts_hub
                         WindowStartupLocation = WindowStartupLocation,
                         ButtonDefinitions = ButtonEnum.Ok,
                         ContentMessage = changelogText
-                    }).ShowDialog(this);
+                    }).ShowWindowAsync();
                 };
                 var tt = new ToolTip();
                 tt.Content = "Get to know last changes?";
@@ -249,7 +242,7 @@ namespace darts_hub
                 var imageHelp = new Image();
                 imageHelp.Width = 32;
                 imageHelp.Height = 32;
-                imageHelp.Source = new Bitmap(assets.Open(new Uri("avares://darts-hub/Assets/help.png")));
+                imageHelp.Source = new Bitmap(AssetLoader.Open(new Uri("avares://darts-hub/Assets/help.png")));
 
                 var buttonHelp = new Button();
                 buttonHelp.Margin = new Thickness(0, 20, 455, 0);
@@ -270,7 +263,7 @@ namespace darts_hub
                     }
                     catch (Exception ex)
                     {
-                        MessageBoxManager.GetMessageBoxStandardWindow("Error", "Error occured: " + ex.Message).Show();
+                        MessageBoxManager.GetMessageBoxStandard("Error", "Error occured: " + ex.Message).ShowWindowAsync();
                     }
                 };
                 var tt = new ToolTip();
@@ -624,7 +617,8 @@ namespace darts_hub
                             integerUpDown.FontSize = fontSize - 2;
                             integerUpDown.Margin = new Thickness(elementOffsetLeft, 10, elementOffsetRight, 10);
                             integerUpDown.Width = elementWidth;
-                            integerUpDown.CultureInfo = customCulture;
+                            //integerUpDown.BorderBrush = borderColor;
+                            integerUpDown.NumberFormat = customCulture.NumberFormat;
                             integerUpDown.BorderThickness = borderThickness;
                             integerUpDown.ValueChanged += (s, e) => integerUpDown.Opacity = 1.0;
                             integerUpDown.DataContext = argument;
@@ -645,9 +639,10 @@ namespace darts_hub
                             decimalUpDown.FontSize = fontSize - 2;
                             decimalUpDown.Margin = new Thickness(elementOffsetLeft, 10, elementOffsetRight, 10);
                             decimalUpDown.Width = elementWidth;
-                            decimalUpDown.Increment = (double)0.1;
+                            //decimalUpDown.BorderBrush = borderColor;
+                            decimalUpDown.Increment = (decimal)(double)0.1;
                             decimalUpDown.FormatString = "F1";
-                            decimalUpDown.CultureInfo = customCulture;
+                            decimalUpDown.NumberFormat = customCulture.NumberFormat;
                             decimalUpDown.BorderThickness = borderThickness;
                             decimalUpDown.ValueChanged += (s, e) => decimalUpDown.Opacity = 1.0;
                             decimalUpDown.DataContext = argument;
@@ -702,7 +697,7 @@ namespace darts_hub
                         var imageClear = new Image();
                         imageClear.Width = 24;
                         imageClear.Height = 24;
-                        imageClear.Source = new Bitmap(assets.Open(new Uri("avares://darts-hub/Assets/clear.png")));
+                        imageClear.Source = new Bitmap(AssetLoader.Open(new Uri("avares://darts-hub/Assets/clear.png")));
 
 
                         var button = new Button();
