@@ -21,6 +21,7 @@ using MessageBox.Avalonia.BaseWindows.Base;
 using MessageBox.Avalonia.ViewModels;
 using MessageBox.Avalonia.Views;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 
 namespace darts_hub
@@ -84,6 +85,7 @@ namespace darts_hub
         public MainWindow()
         {
             InitializeComponent();
+            ConfigureTitleBar();
             configurator = new Configurator("config.json");
             var viewModel = new UpdaterViewModel
             {
@@ -107,7 +109,27 @@ namespace darts_hub
 
             Opened += MainWindow_Opened;
         }
-
+        private void ConfigureTitleBar()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                CustomTitleBar.IsVisible = true;
+                ExtendClientAreaToDecorationsHint = true;
+                ExtendClientAreaChromeHints = Avalonia.Platform.ExtendClientAreaChromeHints.NoChrome;
+            }
+        }
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+        private void TitleBar_PointerPressed(object sender, PointerPressedEventArgs e)
+        {
+            BeginMoveDrag(e);
+        }
 
         private async void MainWindow_Opened(object sender, EventArgs e)
         {

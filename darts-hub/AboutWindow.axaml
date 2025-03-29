@@ -12,14 +12,21 @@
 		MaxHeight="460"
 		WindowStartupLocation="CenterScreen"
 		CanResize="False"
-		
-		>
+		TransparencyLevelHint="AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="False"
+        ExtendClientAreaChromeHints="Default">
 	
 	
 	<Window.Background>
 		<ImageBrush Opacity="0.35" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background_color.png" />
 	</Window.Background>
-	
+	<StackPanel>
+		<!-- Custom Title Bar -->
+		<DockPanel x:Name="CustomTitleBarAbout" Background="#FF2D2D30" Height="30" VerticalAlignment="Top" PointerPressed="TitleBar_PointerPressed" IsVisible="false">
+			<TextBlock Text="Darts-Hub" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="White"/>
+			<Button Content=" -" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent" Foreground="White" BorderBrush="Transparent" Click="MinimizeButton_Click" FontWeight="Bold" Margin="0,0,-265,0"/>
+			<Button Content="X" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Background="DarkRed" Foreground="White" BorderBrush="Transparent" Click="CloseButton_Click" FontWeight="Bold" />
+		</DockPanel>
 	<Grid x:Name="GridMain">
 		
 
@@ -38,8 +45,13 @@
 		<Label Content="I3uLL3t" HorizontalAlignment="Left" Margin="23,213,0,0" VerticalAlignment="Top" FontSize="18" FontWeight="Bold" Foreground="White"/>
 		<Button ToolTip.Tip="Need help? or you want to contact the developers? Click here."
 				x:Name="contact3" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left"
-				Margin="110,213,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
+				Margin="110,210,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
 			<Image Width="24" Height="24" Source="/Assets/contact.png" RenderTransformOrigin="2.684,0.4"></Image>
+		</Button>
+		<Button ToolTip.Tip="You want to support? What about a little Tip? Click here."
+				x:Name="paypal" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left"
+				Margin="150,204,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
+			<Image Width="36" Height="36" Source="/Assets/paypal.png" RenderTransformOrigin="2.684,0.4"></Image>
 		</Button>
 		
 		<Label Content="Inspired by:" HorizontalAlignment="Left" Margin="10,256,0,0" VerticalAlignment="Top" Foreground="White"/>
@@ -75,4 +87,5 @@
 		</Separator>
 		
 	</Grid>
+	</StackPanel>
 </Window>

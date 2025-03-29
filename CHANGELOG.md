@@ -1,4 +1,30 @@
-## 0.12.12
+## 0.12.25
+- Major GUI chnages. 
+  - collabsable Settings
+  - new Design
+  - Settings reordered
+
+- Bugfix description Parsing
+
+## 0.12.22
+- Caller version update: Bermuda: if you dont hit the target Broadcast busted for extensions
+
+## 0.12.21
+- automatic paring of Readme.md files
+  - use parsed values for tooltips
+- Darts-Caller Update v2.17.7
+  - Bermuda: if you dont hit the target, Broadcast Busted for extensions
+
+## 0.12.18
+- Major Caller Update in V2.17.6
+  - Gamemodes
+  - Soundpacks
+  - Hostserver
+- WLED Update v1.7.1
+  -add Gamemodes
+- added Tooltips for Darts-Caller configuration
+- added Tooltips for Darts-WLED configuration
+## 0.12.15
 - Major Caller Update in V2.17.0
 
 ## 0.12.11
@@ -14,6 +40,10 @@
 
 - update darts-pixel to version 1.2.2
 - bugfix beta check
+
+## 0.12.8
+- update darts-pixel to version 1.2.2
+- migration bugfix
 
 ## 0.12.6
 - update darts-wled to version 1.7.0

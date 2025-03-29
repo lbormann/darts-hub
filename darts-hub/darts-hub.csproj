@@ -34,16 +34,25 @@
     <TrimmableAssembly Include="Avalonia.Themes.Default" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="0.10.18" />
-    <PackageReference Include="Avalonia.Desktop" Version="0.10.18" />
+    <PackageReference Include="Avalonia" Version="0.10.22" />
+    <PackageReference Include="Avalonia.Desktop" Version="0.10.22" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="0.10.18" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="0.10.22" />
     <PackageReference Include="Dotnet.Bundle" Version="0.9.13" />
     <PackageReference Include="MessageBox.Avalonia" Version="2.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="SharpCompress" Version="0.33.0" />
     <PackageReference Include="XamlNameReferenceGenerator" Version="1.6.1" />
-  </ItemGroup>
+	  <!-- <PackageReference Include="Avalonia" Version="0.10.18" />
+	  <PackageReference Include="Avalonia.Desktop" Version="0.10.18" />
+	  Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.
+	<PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="0.10.18" />
+	<PackageReference Include="Dotnet.Bundle" Version="0.9.13" />
+	<PackageReference Include="MessageBox.Avalonia" Version="2.1.0" />
+	<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	<PackageReference Include="SharpCompress" Version="0.33.0" />
+	<PackageReference Include="XamlNameReferenceGenerator" Version="1.6.1" /> -->
+</ItemGroup>
     <ItemGroup>
 	    <AvaloniaResource Include="Assets\**" />
     </ItemGroup>

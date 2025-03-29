@@ -7,7 +7,9 @@ using Avalonia;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using MessageBox.Avalonia.DTO;
+using Avalonia.Input;
 using MessageBox.Avalonia.Enums;
+using System.Runtime.InteropServices;
 
 namespace darts_hub
 {
@@ -22,9 +24,30 @@ namespace darts_hub
         public AboutWindow()
         {
             InitializeComponent();
-            WindowHelper.CenterWindowOnScreen(this);;
+            WindowHelper.CenterWindowOnScreen(this);
+            ConfigureTitleBarAbout();
         }
-        
+        private void ConfigureTitleBarAbout()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                CustomTitleBarAbout.IsVisible = true;
+                ExtendClientAreaToDecorationsHint = true;
+                ExtendClientAreaChromeHints = Avalonia.Platform.ExtendClientAreaChromeHints.NoChrome;
+            }
+        }
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+        private void TitleBar_PointerPressed(object sender, PointerPressedEventArgs e)
+        {
+            BeginMoveDrag(e);
+        }
         public AboutWindow(Configurator configurator)
         {
             InitializeComponent();
@@ -37,6 +60,7 @@ namespace darts_hub
 
         private async void AboutWindow_Opened(object sender, EventArgs e)
         {
+            ConfigureTitleBarAbout();
             CheckBoxSkipUpdateConfirmation.IsChecked = configurator.Settings.SkipUpdateConfirmation;
         }
 
@@ -57,6 +81,12 @@ namespace darts_hub
                     break;
                 case "contact2":
                     VisitHelpPage("https://discordapp.com/users/wusaaa#0578");
+                    break;
+                case "contact3":
+                    VisitHelpPage("https://discordapp.com/users/366537096414101504");
+                    break;
+                case "paypal":
+                    VisitHelpPage("https://paypal.me/I3ull3t");
                     break;
                 case "bug":
                     VisitHelpPage("https://github.com/lbormann/darts-hub/issues");
