@@ -12,13 +12,14 @@
 		MaxHeight="720"
 		CanResize="False"
 		WindowStartupLocation="CenterScreen"
-		Closing="Window_Closing"
+		
 		TransparencyLevelHint="AcrylicBlur"
         ExtendClientAreaToDecorationsHint="False"
         ExtendClientAreaChromeHints="Default">
+	<!-- Closing="Window_Closing" -->
 
 	<Window.Background>
-		<ImageBrush Opacity="0.2" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background.png" />
+		<ImageBrush Opacity="0.2" Stretch="UniformToFill" Source="/Assets/background.png" />
 	</Window.Background>
 
 	<Grid>

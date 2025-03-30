@@ -16,6 +16,10 @@ using model;
 using Avalonia.Interactivity;
 using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Enums;
+using Avalonia.Input;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace darts_hub
 {
@@ -131,9 +135,9 @@ namespace darts_hub
                         sb.AppendLine($"{kvp.Key}: {kvp.Value}");
                     }
 
-                    var messageBox = MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
+                    var messageBox = MessageBoxManager.GetMessageBoxStandard(new MessageBoxStandardParams
                     {
-                        Icon = MessageBox.Avalonia.Enums.Icon.None,
+                        Icon = MsBox.Avalonia.Enums.Icon.None,
                         ContentTitle = "Argument Descriptions",
                         WindowIcon = Icon,
                         Width = 600,
@@ -149,7 +153,7 @@ namespace darts_hub
                         ContentMessage = sb.ToString()
                     });
 
-                    await messageBox.ShowDialog(this);
+                    await messageBox.ShowWindowAsync();
                 }
             }
         }
@@ -277,6 +281,7 @@ namespace darts_hub
 
             var appConfiguration = app.Configuration;
             var argumentsBySection = appConfiguration.Arguments.GroupBy(a => a.Section);
+            string readmeUrl = "fehler"; // Initialize readmeUrl here
             if (app.CustomName == "darts-caller")
             {
                 readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-caller/refs/heads/master/README.md"; // URL zur README-Datei
@@ -705,25 +710,25 @@ namespace darts_hub
                         {
                             if (!string.IsNullOrEmpty(argument.RangeBy))
                             {
-                                button.Margin = new Thickness(0, -138, -45, 0);
+                                button.Margin = new Thickness(0, -138, 0, 0);
                             }
                             else
                             {
-                                button.Margin = new Thickness(0, -47 - (imageClear.Height / 6), -45, 0);
+                                button.Margin = new Thickness(0, -47 - (imageClear.Height / 6), 0, 0);
                             }
                                 
                         }
                         else if (type == Argument.TypePath || type == Argument.TypeFile)
                         {
-                            button.Margin = new Thickness(0, -76, -45, 0);
+                            button.Margin = new Thickness(0, -76, 0, 0);
                         }
                         else if (type == Argument.TypeBool)
                         {
-                            button.Margin = new Thickness(0, -70, -45, 0);
+                            button.Margin = new Thickness(0, -70, 0, 0);
                         }
                         else
                         {
-                            button.Margin = new Thickness(0, -32 - (imageClear.Height / 6), -45, 0);
+                            button.Margin = new Thickness(0, -32 - (imageClear.Height / 6), 0, 0);
                         }
                             
                         button.IsTabStop = false;
