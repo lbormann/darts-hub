@@ -12,18 +12,20 @@
 		MaxHeight="720"
 		CanResize="False"
 		WindowStartupLocation="CenterScreen"
-		TransparencyLevelHint="AcrylicBlur, Blur"
+		TransparencyLevelHint="None"
         ExtendClientAreaToDecorationsHint="False"
-        ExtendClientAreaChromeHints="Default">
+        ExtendClientAreaChromeHints="Default"
+		Background="rgb(20,20,20)" Opacity="0.9">
 	<!-- Closing="Window_Closing" -->
 
-	<Window.Background>
-		<ImageBrush Opacity="0.2" Stretch="UniformToFill" Source="/Assets/background.png" />
-	</Window.Background>
 
 	<Grid>
+		<Grid.Background>
+			<ImageBrush Opacity="0.2" Stretch="UniformToFill" Source="/Assets/background.png" />
+		</Grid.Background>
+		
 		<!-- Custom Title Bar -->
-		<DockPanel x:Name="CustomTitleBar" Background="#FF2D2D30" Height="30" VerticalAlignment="Top" PointerPressed="TitleBar_PointerPressed" IsVisible="false">
+		<DockPanel x:Name="CustomTitleBar" Background="#FF2D2D30" Height="30" VerticalAlignment="Top" PointerPressed="TitleBar_PointerPressed" IsVisible="false" Opacity="1.1">
 			<TextBlock Text="Darts-Hub" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="White"/>
 			<Button Content=" -" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent" Foreground="White" BorderBrush="Transparent" Click="MinimizeButton_Click" FontWeight="Bold" Margin="0,0,-410,0"/>
 			<Button Content="X" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Background="DarkRed" Foreground="White" BorderBrush="Transparent" Click="CloseButton_Click" FontWeight="Bold" />
@@ -36,7 +38,7 @@
         Margin="0,30,0,10"
 		>
 		
-		<Grid x:Name="GridMain">
+		<Grid x:Name="GridMain" Opacity="1.1">
 			<!-- <CheckBox x:Name="BetaTesterCheckBox" Content="Betatester"
 					  IsChecked="{Binding IsBetaTester, Mode=TwoWay}"
 					  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="12,10,0,0"/> -->
