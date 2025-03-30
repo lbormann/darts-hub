@@ -12,7 +12,7 @@
 		MaxHeight="720"
 		WindowStartupLocation="CenterScreen"
 		CanResize="False"
-		TransparencyLevelHint="AcrylicBlur"
+		TransparencyLevelHint="AcrylicBlur, Blur"
 		ExtendClientAreaToDecorationsHint="False"
         ExtendClientAreaChromeHints="Default">
 	<!--Closing="Window_Closing"-->
