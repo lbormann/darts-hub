@@ -2,14 +2,17 @@ using darts_hub.control;
 using Avalonia.Controls;
 using System.Diagnostics;
 using System;
-using MessageBox.Avalonia;
+using MsBox.Avalonia;
 using Avalonia;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using MessageBox.Avalonia.DTO;
+using MsBox.Avalonia.Dto;
+using MsBox.Avalonia.Enums;
+using Avalonia.Input.Platform;
 using Avalonia.Input;
-using MessageBox.Avalonia.Enums;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace darts_hub
 {
@@ -92,10 +95,11 @@ namespace darts_hub
                     VisitHelpPage("https://github.com/lbormann/darts-hub/issues");
                     break;
                 case "donation":
-                    Application.Current.Clipboard.SetTextAsync(donationAdress);
-                    MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
+                    var clipboard = this.Clipboard;
+                    await clipboard.SetTextAsync(donationAdress);
+                    MessageBoxManager.GetMessageBoxStandard(new MessageBoxStandardParams
                     {
-                        Icon = MessageBox.Avalonia.Enums.Icon.Success,
+                        Icon = MsBox.Avalonia.Enums.Icon.Success,
                         ContentTitle = "Donation",
                         WindowIcon = Icon,
                         Width = Width / 1.3,
@@ -109,17 +113,18 @@ namespace darts_hub
                         WindowStartupLocation = WindowStartupLocation,
                         ButtonDefinitions = ButtonEnum.Ok,
                         ContentMessage = $"{donationAdress} copied to clipboard - Thank you!"
-                    }).ShowDialog(this);
+                    }).ShowWindowAsync();
                     break;
+                    
                 case "changelog":
                     changelogText = await Helper.AsyncHttpGet(Updater.appSourceUrlChangelog, 4);
                     if (String.IsNullOrEmpty(changelogText)) changelogText = "Changelog not available. Please try again later.";
            
                     double width = Width + Width / 2;
                     double height = Height * 2;
-                    MessageBoxManager.GetMessageBoxStandardWindow(new MessageBoxStandardParams
+                    MessageBoxManager.GetMessageBoxStandard(new MessageBoxStandardParams
                     {
-                        Icon = MessageBox.Avalonia.Enums.Icon.None,
+                        Icon = MsBox.Avalonia.Enums.Icon.None,
                         ContentTitle = "Changelog",
                         WindowIcon = Icon,
                         Width = width,
@@ -133,8 +138,8 @@ namespace darts_hub
                         WindowStartupLocation = WindowStartupLocation,
                         ButtonDefinitions = ButtonEnum.Ok,
                         ContentMessage = changelogText
-                    }).ShowDialog(this);
-                    
+                    }).ShowWindowAsync();
+
                     break;
             }
         }
@@ -150,7 +155,7 @@ namespace darts_hub
             }
             catch (Exception ex)
             {
-                MessageBoxManager.GetMessageBoxStandardWindow("Error", "Error occured: " + ex.Message).Show();
+                MessageBoxManager.GetMessageBoxStandard("Error", "Error occured: " + ex.Message).ShowAsync();
             }
         }
 

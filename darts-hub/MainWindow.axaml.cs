@@ -10,18 +10,21 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using MessageBox.Avalonia;
-using MessageBox.Avalonia.DTO;
-using MessageBox.Avalonia.Enums;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Dto;
+using MsBox.Avalonia.Enums;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using System.Threading.Tasks;
-using MessageBox.Avalonia.BaseWindows.Base;
-using MessageBox.Avalonia.ViewModels;
-using MessageBox.Avalonia.Views;
+using MsBox.Avalonia.Base;
+using MsBox.Avalonia.ViewModels;
 using System.ComponentModel;
+using MsBox.Avalonia.Models;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Windows;
 
 
 namespace darts_hub
@@ -156,7 +159,7 @@ namespace darts_hub
                 }
                 catch (Exception ex)
                 {
-                    RenderMessageBox("", "Error occured: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
+                    RenderMessageBox("", "Error occured: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
                 }
 
                 RenderProfiles();
@@ -177,7 +180,7 @@ namespace darts_hub
             }
             catch (Exception ex)
             {
-                await RenderMessageBox("", "Something went wrong: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
+                await RenderMessageBox("", "Something went wrong: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
                 Environment.Exit(1);
             }
         }
@@ -194,7 +197,7 @@ namespace darts_hub
             }
             catch (Exception ex)
             {
-                RenderMessageBox("", "Error occured: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
+                RenderMessageBox("", "Error occured: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
             }
         }
 
@@ -241,7 +244,7 @@ namespace darts_hub
                 IsEnabled = false;
                 Opacity = 0.25;
 
-                var result = await RenderMessageBox("", $"Configuration - file '{ex.File}' not readable ('{ex.Message}'). You can fix it by yourself or let it go to hell and I recreate it for you. Do you want me to reset it ? (All of your settings will be lost)", MessageBox.Avalonia.Enums.Icon.Error, ButtonEnum.YesNo);
+                var result = await RenderMessageBox("", $"Configuration - file '{ex.File}' not readable ('{ex.Message}'). You can fix it by yourself or let it go to hell and I recreate it for you. Do you want me to reset it ? (All of your settings will be lost)", MsBox.Avalonia.Enums.Icon.Error, ButtonEnum.YesNo);
                 if (result == ButtonResult.Yes)
                 {
                     try
@@ -250,21 +253,21 @@ namespace darts_hub
                     }
                     catch (Exception e)
                     {
-                        await MessageBoxManager.GetMessageBoxStandardWindow("Error", "Configuration-file-deletion failed. Please delete it by yourself. " + e.Message).Show();
+                        await MessageBoxManager.GetMessageBoxStandard("Error", "Configuration-file-deletion failed. Please delete it by yourself. " + e.Message).ShowWindowAsync();
                     }
                 }
-                await RenderMessageBox("", "Application will close now. Please restart it.", MessageBox.Avalonia.Enums.Icon.Warning);
+                await RenderMessageBox("", "Application will close now. Please restart it.", MsBox.Avalonia.Enums.Icon.Warning);
                 Environment.Exit(1);
             });
         }
 
-        private async Task<ButtonResult> RenderMessageBox(string title = "", 
-                                                    string message = "",
-                                                    Icon icon = MessageBox.Avalonia.Enums.Icon.None, 
-                                                    ButtonEnum buttons = ButtonEnum.Ok,
-                                                    double width = -1,
-                                                    double height = -1,
-                                                    int autoCloseDelayInSeconds = 0)
+        private async Task<ButtonResult> RenderMessageBox(string title = "",
+                                                  string message = "",
+                                                  Icon icon = MsBox.Avalonia.Enums.Icon.None,
+                                                  ButtonEnum buttons = ButtonEnum.Ok,
+                                                  double width = -1,
+                                                  double height = -1,
+                                                  int autoCloseDelayInSeconds = 0)
         {
             if (width < 0)
             {
@@ -275,7 +278,20 @@ namespace darts_hub
                 height = Height / 1.3;
             }
 
-            var messageBoxParams = new MessageBoxStandardParams
+            var buttonDefinitions = new List<ButtonDefinition>();
+            switch (buttons)
+            {
+                case ButtonEnum.Ok:
+                    buttonDefinitions.Add(new ButtonDefinition { Name = "Ok", IsDefault = true });
+                    break;
+                case ButtonEnum.YesNo:
+                    buttonDefinitions.Add(new ButtonDefinition { Name = "Yes", IsDefault = true });
+                    buttonDefinitions.Add(new ButtonDefinition { Name = "No", IsCancel = true });
+                    break;
+                    // Füge hier weitere Fälle hinzu, falls nötig
+            }
+
+            var messageBoxParams = new MessageBoxCustomParams
             {
                 Icon = icon,
                 WindowIcon = Icon,
@@ -284,29 +300,32 @@ namespace darts_hub
                 MaxWidth = width,
                 MaxHeight = height,
                 CanResize = (width == -1) ? false : true,
-                EscDefaultButton = ClickEnum.No,
-                EnterDefaultButton = ClickEnum.Yes,
                 SystemDecorations = SystemDecorations.Full,
                 WindowStartupLocation = WindowStartupLocation,
-                ButtonDefinitions = buttons,
+                ButtonDefinitions = buttonDefinitions,
                 ContentTitle = title,
                 ContentMessage = message
             };
 
-            var msBoxStandardWindow = new MsBoxStandardWindow();
-            msBoxStandardWindow.DataContext = new MsBoxStandardViewModel(messageBoxParams, msBoxStandardWindow);
-            var msBoxWindowBase = new MsBoxWindowBase<MsBoxStandardWindow, ButtonResult>(msBoxStandardWindow);
-            var task = msBoxWindowBase.Show(this);
+            var msBoxWindow = MessageBoxManager.GetMessageBoxCustom(messageBoxParams);
+            var result = await msBoxWindow.ShowWindowAsync();
 
             if (autoCloseDelayInSeconds > 0)
             {
                 await Task.Delay(autoCloseDelayInSeconds * 1000);
-                msBoxStandardWindow.ButtonResult = ButtonResult.No;
-                msBoxStandardWindow.CloseSafe();
+                ((Window)msBoxWindow).Close();
+                return ButtonResult.No;
+                //((Window)msBoxWindow).Close(ButtonResult.No);
             }
-            return await task;
+            return result switch
+            {
+                "Ok" => ButtonResult.Ok,
+                "Yes" => ButtonResult.Yes,
+                "No" => ButtonResult.No,
+                _ => ButtonResult.None
+            };
         }
-        
+
 
 
 
@@ -328,7 +347,7 @@ namespace darts_hub
                 {
                     update = await RenderMessageBox($"Update available",
                                                     $"New Version '{e.Version}' available!\r\n\r\nDO YOU WANT TO UPDATE?\r\n\r\n\r\n------------------  CHANGELOG  ------------------\r\n\r\n{e.Message}", 
-                                                    MessageBox.Avalonia.Enums.Icon.Success, 
+                                                    MsBox.Avalonia.Enums.Icon.Success, 
                                                     ButtonEnum.YesNo, 
                                                     520.0, 720.0);
                 }
@@ -344,7 +363,7 @@ namespace darts_hub
                     }
                     catch (Exception ex)
                     {
-                        await RenderMessageBox("", "Update to new version failed: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
+                        await RenderMessageBox("", "Update to new version failed: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
                     }
                 }
                 else
@@ -365,7 +384,7 @@ namespace darts_hub
 
         private async void Updater_ReleaseDownloadFailed(object? sender, ReleaseEventArgs e)
         {
-            await RenderMessageBox("", "Check or update to new version failed: " + e.Message, MessageBox.Avalonia.Enums.Icon.Error, autoCloseDelayInSeconds: 5);
+            await RenderMessageBox("", "Check or update to new version failed: " + e.Message, MsBox.Avalonia.Enums.Icon.Error, autoCloseDelayInSeconds: 5);
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 SetWait(false);
@@ -437,7 +456,7 @@ namespace darts_hub
             }
             catch (Exception ex)
             {
-                RenderMessageBox("", "Error occured: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
+                RenderMessageBox("", "Error occured: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
             }
         }
 
@@ -451,7 +470,7 @@ namespace darts_hub
             }
             catch (Exception ex)
             {
-                await RenderMessageBox("", "An error ocurred: " + ex.Message, MessageBox.Avalonia.Enums.Icon.Error);
+                await RenderMessageBox("", "An error ocurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
             }
             finally
             {
@@ -489,7 +508,7 @@ namespace darts_hub
             var profiles = profileManager.GetProfiles();
             if (profiles.Count == 0)
             {
-                await RenderMessageBox("", "No profiles available.", MessageBox.Avalonia.Enums.Icon.Warning);
+                await RenderMessageBox("", "No profiles available.", MsBox.Avalonia.Enums.Icon.Warning);
                 Environment.Exit(1);
             }
 
@@ -503,7 +522,11 @@ namespace darts_hub
 
                 if (profile.IsTaggedForStart) lastItemTaggedForStart = comboBoxItem;
             }
-            Comboboxportal.Items = cbiProfiles;
+            Comboboxportal.Items.Clear();
+            foreach (var item in cbiProfiles)
+            {
+                Comboboxportal.Items.Add(item);
+            }
             Comboboxportal.SelectedItem = lastItemTaggedForStart != null ? lastItemTaggedForStart : cbiProfiles[0];
 
             RenderProfile();
@@ -519,7 +542,7 @@ namespace darts_hub
             var startMargin = Comboboxportal.Margin;
             var top = 30;
             var counter = 1;
-            var assets = AvaloniaLocator.Current.GetService<IAssetLoader>();
+            
             
 
             foreach (var app in selectedProfile.Apps.OrderBy(a => a.Value.App.CustomName)
@@ -536,7 +559,7 @@ namespace darts_hub
                 imageRunState.HorizontalAlignment = HorizontalAlignment.Left;
                 imageRunState.Width = 30;
                 imageRunState.Height = 30;
-                imageRunState.Source = new Bitmap(assets.Open(new Uri("avares://darts-hub/Assets/exit.png")));
+                imageRunState.Source = new Bitmap(AssetLoader.Open(new Uri("avares://darts-hub/Assets/exit.png")));
                 imageRunState.DataContext = app.Value.App;
                 imageRunState.Bind(Image.IsVisibleProperty, new Binding("AppRunningState"));
 
@@ -563,7 +586,7 @@ namespace darts_hub
                 imageMonitor.HorizontalAlignment = HorizontalAlignment.Left;
                 imageMonitor.Width = 24;
                 imageMonitor.Height = 24;
-                imageMonitor.Source = new Bitmap(assets.Open(new Uri("avares://darts-hub/Assets/terminal.png")));
+                imageMonitor.Source = new Bitmap(AssetLoader.Open(new Uri("avares://darts-hub/Assets/terminal.png")));
                 imageMonitor.DataContext = app.Value.App;
                 imageMonitor.Bind(Image.IsVisibleProperty, new Binding("AppMonitorAvailable"));
 
@@ -590,7 +613,7 @@ namespace darts_hub
                 imageConfiguration.HorizontalAlignment = HorizontalAlignment.Left;
                 imageConfiguration.Width = 24;
                 imageConfiguration.Height = 24;
-                imageConfiguration.Source = new Bitmap(assets.Open(new Uri("avares://darts-hub/Assets/configuration.png")));
+                imageConfiguration.Source = new Bitmap(AssetLoader.Open(new Uri("avares://darts-hub/Assets/configuration.png")));
 
                 var buttonConfiguration = new Button();
                 buttonConfiguration.ZIndex = 99;
@@ -677,7 +700,7 @@ namespace darts_hub
                 {
                     var parent = (textBox.Tag as CheckBox);
                     if (e.Key == Key.Enter) {
-                        GridMain.Children.Remove(s as IControl);
+                        GridMain.Children.Remove(s as Control);
                         if(textBox.Text == String.Empty)
                         {
                             textBox.Text = appProfile.App.Name;
@@ -689,14 +712,14 @@ namespace darts_hub
                     }
                     else if (e.Key == Key.Escape)
                     {
-                        GridMain.Children.Remove(s as IControl);
+                        GridMain.Children.Remove(s as Control);
                         parent.IsVisible = true;
                     }
                 };
                 textBox.LostFocus += (s, e) =>
                 {
                     var parent = (textBox.Tag as CheckBox);
-                    GridMain.Children.Remove(s as IControl);
+                    GridMain.Children.Remove(s as Control);
                     parent.IsVisible = true;
                 };
                 textBox.Text = appProfile.App.CustomName;

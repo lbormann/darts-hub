@@ -38,8 +38,9 @@ Darts-hub supports all major platforms:
 Darts-hub is built with Avalonia. check it out: https://docs.avaloniaui.net/
 
 
-![alt text](https://github.com/lbormann/darts-hub/blob/main/images/main.png?raw=true)
-![alt text](https://github.com/lbormann/darts-hub/blob/main/images/configuration.png?raw=true)
+![alt text](https://raw.githubusercontent.com/lbormann/darts-hub/refs/heads/develop_mp/images/main.png)
+![alt text](https://raw.githubusercontent.com/lbormann/darts-hub/refs/heads/develop_mp/images/configuration.png)
+![alt text](https://raw.githubusercontent.com/lbormann/darts-hub/refs/heads/develop_mp/images/collabs.png)
 
 
 

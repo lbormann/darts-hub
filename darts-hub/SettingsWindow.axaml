@@ -12,25 +12,21 @@
 		MaxHeight="720"
 		WindowStartupLocation="CenterScreen"
 		CanResize="False"
-		Closing="Window_Closing"
-		TransparencyLevelHint="AcrylicBlur"
+		TransparencyLevelHint="None"
 		ExtendClientAreaToDecorationsHint="False"
-        ExtendClientAreaChromeHints="Default">
+		ExtendClientAreaChromeHints="Default"
+		Background="rgb(20,20,20)" Opacity="0.9">
+	<!--Closing="Window_Closing"-->
 
-	<Window.Styles>
-		<Style Selector="Window">
-			<Setter Property="Background" Value="Transparent"/>
-		</Style>
-	</Window.Styles>
 
-	<Window.Background>
-		<ImageBrush Opacity="0.2" Stretch="UniformToFill" BitmapInterpolationMode="HighQuality" Source="/Assets/background.png" />
-	</Window.Background>
 
 
 	<Grid>
+		<Grid.Background>
+			<ImageBrush Opacity="0.2" Stretch="UniformToFill" Source="/Assets/background.png" />
+		</Grid.Background>
 		<!-- Custom Title Bar -->
-		<DockPanel x:Name="CustomTitleBarSettings" Background="#FF2D2D30" Height="30" VerticalAlignment="Top" PointerPressed="TitleBar_PointerPressed" IsVisible="false">
+		<DockPanel Opacity="1.1" x:Name="CustomTitleBarSettings" Background="#FF2D2D30" Height="30" VerticalAlignment="Top" PointerPressed="TitleBar_PointerPressed" IsVisible="false">
 			<TextBlock Text="Darts-Hub" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="White"/>
 			<Button Content=" -" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent" Foreground="White" BorderBrush="Transparent" Click="MinimizeButton_Click" FontWeight="Bold" Margin="0,0,-425,0"/>
 			<Button Content="X" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Background="DarkRed" Foreground="White" BorderBrush="Transparent" Click="CloseButton_Click" FontWeight="Bold" />
@@ -43,7 +39,7 @@
             VerticalAlignment="Top"
             Margin="0,30,0,10">
 
-			<Grid x:Name="GridMain">
+			<Grid x:Name="GridMain" Opacity="1.1">
 			</Grid>
 		</ScrollViewer>
 	</Grid>

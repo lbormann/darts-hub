@@ -1,4 +1,4 @@
-## 0.12.25
+## 0.13.3
 - Major GUI chnages. 
   - collabsable Settings
   - new Design
