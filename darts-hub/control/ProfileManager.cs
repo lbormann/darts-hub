@@ -482,7 +482,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac",
                 MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("2.17.9");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("2.17.10");
 
 
             var dartsExternDownloadMap = new DownloadMap
@@ -506,7 +506,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac",
                 MacArm64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac"
             };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("1.7.2");
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("1.7.3");
 
 
             var dartsPixelitDownloadMap = new DownloadMap
@@ -711,6 +711,7 @@ namespace darts_hub.control
                         new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
                         new(name: "BSW", type: "bool", required: false, nameHuman: "-BSW / --board_stop_after_win", section: "Board Status Effects", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
                         new(name: "OFF", type: "bool", required: false, nameHuman: "-OFF / --wled_off", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
+                        new(name: "SOFF", type: "bool", required: false, nameHuman: "-SOFF / --wled_off_at_start", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
                         new(name: "BSE", type: "string", required: false, isMulti: true, nameHuman: "-BSE / --board_stop_effect", section: "Board Status Effects"),
                         new(name: "TOE", type: "string", required: false, isMulti: true, nameHuman: "-TOE / --takeout_effect", section: "Board Status Effects"),
                         new(name: "CE", type: "string", required: false, isMulti: true, nameHuman: "-CE / --calibration_effect", section: "Board Status Effects"),
@@ -1030,6 +1031,11 @@ namespace darts_hub.control
                     {
                         dartsWled.Configuration.Arguments.Add(new(name: "CE", type: "string", required: false, isMulti: true, nameHuman: "-CE / --calibration_effect", section: "Board Status Effects"));
                     }
+                    var wledsoff = dartsWled.Configuration.Arguments.Find(a => a.Name == "SOFF");
+                    if (wledsoff == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "SOFF", type: "bool", required: false, nameHuman: "-SOFF / --wled_off_at_start", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
+                    }                    
                     var wledoff = dartsWled.Configuration.Arguments.Find(a => a.Name == "OFF");
                     if (wledoff == null)
                     {

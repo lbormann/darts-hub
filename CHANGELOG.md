@@ -1,5 +1,11 @@
-## 0.13.6
+## 0.13.7
 - Version Updates Caller and WLED
+- WLED
+  - improved ATC, RTW, Chricket, Bermuda, tactics support
+  - add -SOFF argument to turn off the lights when WLED controller is connected!
+
+- Caller
+  - add Tactics
 
 ## 0.13.5
 - Bugfix Extensions where not closed after closing Darts-Hub
