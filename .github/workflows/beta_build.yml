@@ -278,7 +278,12 @@ jobs:
           name: Release ${{ github.ref }}
           body: |
             **Changes in this Release**
-            - Bugfix Extensions where not closed when Darts-Hub was closed
+            - Version Updates Caller and WLED
+
+
+
+            **BACKUP YOUR CONFIGURATION FILES BEFORE UPDATING!**
+                   all .json files in Dart-Hub folder
           generate_release_notes: true
           prerelease: true
           files: |

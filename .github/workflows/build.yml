@@ -278,7 +278,7 @@ jobs:
           name: Release ${{ github.ref }}
           body: |
             **Changes in this Release**
-            - Bugfix Extensions where not closed when Darts-Hub was closed
+            - Version Updates Caller and WLED
           generate_release_notes: true
           files: |
             darts-hub-macOS-x64/darts-hub-macOS-X64.zip
