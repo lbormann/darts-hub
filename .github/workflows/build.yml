@@ -278,12 +278,7 @@ jobs:
           name: Release ${{ github.ref }}
           body: |
             **Changes in this Release**
-            - Major GUI chnages. 
-              - collabsable Settings
-              - new Design
-              - Settings reordered
-
-            - Bugfix description Parsing
+            - Bugfix Extensions where not closed when Darts-Hub was closed
           generate_release_notes: true
           files: |
             darts-hub-macOS-x64/darts-hub-macOS-X64.zip
