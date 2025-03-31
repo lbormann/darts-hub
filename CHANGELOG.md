@@ -1,3 +1,6 @@
+## 0.13.5
+- Bugfix Extensions where not closed after closing Darts-Hub
+
 ## 0.13.3
 - Major GUI chnages. 
   - collabsable Settings
