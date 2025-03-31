@@ -124,6 +124,7 @@ namespace darts_hub
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
+            Window_Closing(sender, new CancelEventArgs());
         }
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         {
