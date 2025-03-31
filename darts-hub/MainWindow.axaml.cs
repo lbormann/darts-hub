@@ -111,6 +111,7 @@ namespace darts_hub
             CheckBoxStartProfileOnProgramStart.FontSize = fontSize - 6;
 
             Opened += MainWindow_Opened;
+            Closing += Window_Closing;
         }
         private void ConfigureTitleBar()
         {
