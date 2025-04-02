@@ -703,6 +703,11 @@ namespace darts_hub.control
                         new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "-HFO / --high_finish_on", section: "Effects"),
                         new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "-HF / --high_finish_effects", section: "Effects"),
                         new(name: "IDE", type: "string", required: false, nameHuman: "-IDE / --idle_effect", section: "Service"),
+                        new(name: "IDE2", type: "string", required: false, nameHuman: "-IDE2 / --idle_effect_player2", section: "Service"),
+                        new(name: "IDE3", type: "string", required: false, nameHuman: "-IDE3 / --idle_effect_player3", section: "Service"),
+                        new(name: "IDE4", type: "string", required: false, nameHuman: "-IDE4 / --idle_effect_player4", section: "Service"),
+                        new(name: "IDE5", type: "string", required: false, nameHuman: "-IDE5 / --idle_effect_player5", section: "Service"),
+                        new(name: "IDE6", type: "string", required: false, nameHuman: "-IDE6 / --idle_effect_player6", section: "Service"),
                         new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "-G / --game_won_effects", section: "Effects"),
                         new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "-M / --match_won_effects", section: "Effects"),
                         new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "-B / --busted_effects", section: "Effects"),
@@ -1146,6 +1151,34 @@ namespace darts_hub.control
                     {
                         dartsWled.Configuration.Arguments.Add(new(name: "DSBULL", type: "string", required: false, isMulti: true, nameHuman: "-DSBULL / --dart_score_BULL_effects", section: "Single Dart Effects !! still in Progress !!"));
                     }
+                    var wledIDE2 = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE2");
+                    if (wledIDE2 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "IDE2", type: "string", required: false, nameHuman: "-IDE2 / --idle_effect_player2", section: "Service"));
+                    }
+                    var wledIDE3 = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE3");
+                    if (wledIDE3 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "IDE3", type: "string", required: false, nameHuman: "-IDE3 / --idle_effect_player3", section: "Service"));
+                    }
+                    var wledIDE4 = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE4");
+                    if (wledIDE4 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "IDE4", type: "string", required: false, nameHuman: "-IDE4 / --idle_effect_player4", section: "Service"));
+                    }
+                    var wledIDE5 = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE5");
+                    if (wledIDE5 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "IDE5", type: "string", required: false, nameHuman: "-IDE5 / --idle_effect_player5", section: "Service"));
+                    }
+                    var wledIDE6 = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE6");
+                    if (wledIDE6 == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "IDE6", type: "string", required: false, nameHuman: "-IDE6 / --idle_effect_player6", section: "Service"));
+                    }
+
+
+
 
                     for (int i = 0; i <= 180; i++)
                     {
