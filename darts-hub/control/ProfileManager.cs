@@ -479,10 +479,10 @@ namespace darts_hub.control
                 LinuxX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller",
                 LinuxArm64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-arm64",
                 //LinuxArm = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-arm",
-                MacX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac",
+                MacX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-macx64",
                 MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("2.17.9");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("2.17.11");
 
 
             var dartsExternDownloadMap = new DownloadMap
@@ -503,10 +503,10 @@ namespace darts_hub.control
                 LinuxX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled",
                 LinuxArm64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-arm64",
                 //LinuxArm = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-arm",
-                MacX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac",
+                MacX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac64",
                 MacArm64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac"
             };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("1.7.2");
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("1.8.0");
 
 
             var dartsPixelitDownloadMap = new DownloadMap
@@ -527,7 +527,7 @@ namespace darts_hub.control
                 LinuxX64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif",
                 LinuxArm64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-arm64",
                 //LinuxArm = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-arm",
-                MacX64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-mac",
+                MacX64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-mac64",
                 MacArm64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-mac"
             };
             dartsGifDownloadUrl = dartsGifDownloadMap.GetDownloadUrlByOs("1.1.0");
