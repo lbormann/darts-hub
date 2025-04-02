@@ -3,9 +3,14 @@
 - WLED
   - improved ATC, RTW, Chricket, Bermuda, tactics support
   - add -SOFF argument to turn off the lights when WLED controller is connected!
+  - IDE2 - IDE6 available now to set collors/presets for each player
+
+  - add mac intel build
 
 - Caller
   - add Tactics
+
+  - add mac intel build
 
 ## 0.13.5
 - Bugfix Extensions where not closed after closing Darts-Hub

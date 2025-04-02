@@ -278,16 +278,20 @@ jobs:
           name: Release ${{ github.ref }}
           body: |
             # Changes in this Release
+            - Version Updates Caller and WLED
+            - mig of new Arguments for WLED
 
-            ### WLED
-            - improved ATC, RTW, Chricket, Bermuda, tactics support
-            - added -SOFF argument to turn off the lights when WLED controller is connected!
+            ## WLED
+              - improved ATC, RTW, Chricket, Bermuda, tactics support
+              - add -SOFF argument to turn off the lights when WLED controller is connected!
+              - IDE2 - IDE6 available now to set collors/presets for each player
 
-            ### Caller
-            - add Tactics
+              - add mac intel build
 
+            ## Caller
+              - add Tactics
 
-
+              - add mac intel build
             **BACKUP YOUR CONFIGURATION FILES BEFORE UPDATING!**
                    all .json files in Dart-Hub folder
           generate_release_notes: true
