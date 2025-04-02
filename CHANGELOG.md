@@ -1,4 +1,4 @@
-## 0.13.7
+## 0.13.8
 - Version Updates Caller and WLED
 - WLED
   - improved ATC, RTW, Chricket, Bermuda, tactics support
