@@ -278,20 +278,12 @@ jobs:
           name: Release ${{ github.ref }}
           body: |
             # Changes in this Release
-            - Version Updates Caller and WLED
-            - mig of new Arguments for WLED
 
             ## WLED
-              - improved ATC, RTW, Chricket, Bermuda, tactics support
-              - add -SOFF argument to turn off the lights when WLED controller is connected!
-              - IDE2 - IDE6 available now to set collors/presets for each player
-
-              - add mac intel build
+            - nothing new
 
             ## Caller
-              - add Tactics
-
-              - add mac intel build
+            - Bugfix PlayerIndex reset in Turnament mode
           generate_release_notes: true
           files: |
             darts-hub-macOS-x64/darts-hub-macOS-X64.zip

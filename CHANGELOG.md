@@ -1,4 +1,7 @@
 ## 0.13.8
+- Caller - Bugfix PlayerIndex reset in Turnament mode
+
+## 0.13.8
 - Version Updates Caller and WLED
 - WLED
   - improved ATC, RTW, Chricket, Bermuda, tactics support
