@@ -573,7 +573,7 @@ namespace darts_hub
                                         }
                                         else if (type == Argument.TypeInt)
                                         {
-                                            slider.TickFrequency = 1.0;
+                                            slider.TickFrequency = 1;
                                             slider.Minimum = Helper.GetIntByString(argument.RangeBy);
                                             slider.Maximum = Helper.GetIntByString(argument.RangeTo);
                                             slider.Bind(Slider.ValueProperty, new Binding("Value"));
@@ -598,7 +598,7 @@ namespace darts_hub
                                 }
                                 else if (type == Argument.TypeInt)
                                 {
-                                    slider.TickFrequency = 1.0;
+                                    slider.TickFrequency = 1;
                                     slider.Minimum = Helper.GetIntByString(argument.RangeBy);
                                     slider.Maximum = Helper.GetIntByString(argument.RangeTo);
                                     slider.Bind(Slider.ValueProperty, new Binding("Value"));
@@ -623,6 +623,7 @@ namespace darts_hub
                             integerUpDown.Margin = new Thickness(elementOffsetLeft, 10, elementOffsetRight, 10);
                             integerUpDown.Width = elementWidth;
                             //integerUpDown.BorderBrush = borderColor;
+                            integerUpDown.Increment = 1;
                             integerUpDown.NumberFormat = customCulture.NumberFormat;
                             integerUpDown.BorderThickness = borderThickness;
                             integerUpDown.ValueChanged += (s, e) => integerUpDown.Opacity = 1.0;
