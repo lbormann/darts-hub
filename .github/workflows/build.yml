@@ -280,10 +280,10 @@ jobs:
             # Changes in this Release
 
             ## WLED
-            - nothing new
+            - Bugfix -DU argument doesnt effect the player Idle effect anymore
 
             ## Caller
-            - Bugfix PlayerIndex reset in Turnament mode
+            - nothing new
           generate_release_notes: true
           files: |
             darts-hub-macOS-x64/darts-hub-macOS-X64.zip

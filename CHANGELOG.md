@@ -1,4 +1,7 @@
-## 0.13.8
+## 0.13.10
+- Bugfix -DU argument doesnt effect the player Idle effect anymore
+
+## 0.13.9
 - Caller - Bugfix PlayerIndex reset in Turnament mode
 
 ## 0.13.8
