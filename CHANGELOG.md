@@ -1,5 +1,7 @@
 ## 0.13.10
+- Bugfix -Caller PCC argument was wrong typed float insted of int
 - Bugfix -DU argument doesnt effect the player Idle effect anymore
+- add Random Checkout to caller
 
 ## 0.13.9
 - Caller - Bugfix PlayerIndex reset in Turnament mode

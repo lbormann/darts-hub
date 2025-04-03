@@ -278,13 +278,15 @@ jobs:
           name: Release ${{ github.ref }}
           body: |
             # Changes in this Release
+            - Bugfix updown input was wrong for Caller Argument PCC
+              Error behaviour was: 
+              Caller is not starting and wants required arguments even if they are set in the config file
 
             ## WLED
             - Bugfix -DU argument doesnt effect the player Idle effect anymore
-
+            
             ## Caller
-            - nothing new
-
+            - add Random Checkout. 
             
             **BACKUP YOUR CONFIGURATION FILES BEFORE UPDATING!**
                    all .json files in Dart-Hub folder
