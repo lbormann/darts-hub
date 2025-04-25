@@ -475,14 +475,14 @@ namespace darts_hub.control
 
             var dartsCallerDownloadMap = new DownloadMap
             {
-                WindowsX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller",
-                LinuxArm64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-arm",
-                MacX64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-macx64",
-                MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/v***VERSION***/darts-caller-mac"
+                WindowsX64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller.exe",
+                LinuxX64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller",
+                LinuxArm64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-arm64",
+                //LinuxArm = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-arm",
+                MacX64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-macx64",
+                MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("2.18.3");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("v2.18.3");
 
 
             var dartsExternDownloadMap = new DownloadMap
