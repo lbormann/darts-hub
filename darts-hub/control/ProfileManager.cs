@@ -482,7 +482,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-macx64",
                 MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("v2.18.4");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("v2.18.5");
 
 
             var dartsExternDownloadMap = new DownloadMap
