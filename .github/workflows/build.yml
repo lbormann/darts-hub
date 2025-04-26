@@ -278,15 +278,15 @@ jobs:
           name: Release ${{ github.ref }}
           body: |
             # Changes in this Release
-            - Bugfix updown input was wrong for Caller Argument PCC
-              Error behaviour was: 
-              Caller is not starting and wants required arguments even if they are set in the config file
 
             ## WLED
-            - Bugfix -DU argument doesnt effect the player Idle effect anymore
+          
             
             ## Caller
-            - add Random Checkout. 
+            - version Update for Darts-Caller
+
+            - IMPORTANT NOTE!!!!!!!
+            - You need to Update to this version, otherwhise the caller will not run anymore after mid of Mai
             
           generate_release_notes: true
           files: |
