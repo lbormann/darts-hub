@@ -1,3 +1,20 @@
+## 0.13.16
+- WLED
+- backend changes
+
+- PIXELIT
+- backend changes
+
+- Caller
+- implementet more detailes user Stats to debug faster
+  - no personal data will be stored
+- prepare for new soundpacks and languages
+  - new variable voices
+  - RU, IT will come in the future
+
+- USER NEED TO UPDATE TO GET CALLER RUNNING IN THE FUTURE
+- You need to Update to this version, otherwhise the caller will not run anymore after mid of Mai
+
 ## 0.13.15
 - version Update for Darts-Caller
 

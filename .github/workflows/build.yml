@@ -280,12 +280,19 @@ jobs:
             # Changes in this Release
 
             ## WLED
-          
+            - backend changes
             
-            ## Caller
-            - version Update for Darts-Caller
+            ## PIXELIT
+            - backend changes
 
-            - IMPORTANT NOTE!!!!!!!
+            ## Caller
+            - implementet more detailes user Stats to debug faster
+              - no personal data will be stored
+            - prepare for new soundpacks and languages
+              - new variable voices
+              - RU, IT will come in the future
+            
+            ## USER NEED TO UPDATE TO GET CALLER RUNNING IN THE FUTURE
             - You need to Update to this version, otherwhise the caller will not run anymore after mid of Mai
             
           generate_release_notes: true
