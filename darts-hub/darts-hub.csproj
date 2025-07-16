@@ -11,6 +11,7 @@
 	<AssemblyName>darts-hub</AssemblyName>
 	<RootNamespace>darts_hub</RootNamespace>
 	<UseAppHost>true</UseAppHost>
+	<BaseOutputPath>C:\Users\I3uLL3t\Documents\Darts-Hub</BaseOutputPath>
   </PropertyGroup>
   <ItemGroup>
     <None Remove=".gitignore" />
