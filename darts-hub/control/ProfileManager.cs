@@ -640,7 +640,8 @@ namespace darts_hub.control
                             new(name: "WEBDH", type: "bool", required: false, nameHuman: "-WEBDH / --web_caller_disable_https", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"} ),
                             new(name: "HP", type: "int", required: false, nameHuman: "-HP / --host_port", section: "Service" ),
                             new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"} ),
-                            new(name: "CC", type: "bool", required: false, nameHuman: "-CC / --cert_check", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"})
+                            new(name: "CC", type: "bool", required: false, nameHuman: "-CC / --cert_check", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "CRL", type: "bool", required: false, nameHuman: "-CRL / --caller_real_life", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"})
                             })
                         );
                 
@@ -979,7 +980,7 @@ namespace darts_hub.control
                             callEveryDart.ValidateType();
                         }
                     }
-                    
+
 
                     var callBotActions = dartsCaller.Configuration.Arguments.Find(a => a.Name == "CBA");
                     if (callBotActions == null)
@@ -990,6 +991,11 @@ namespace darts_hub.control
                     if (removeOldVoicePacks == null)
                     {
                         dartsCaller.Configuration.Arguments.Add(new(name: "ROVP", type: "bool", required: false, nameHuman: "-ROVP / --remove_old_voice_packs", section: "Downloads", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
+                    }
+                    var callerRealLife = dartsCaller.Configuration.Arguments.Find(a => a.Name == "CRL");
+                    if (callerRealLife == null)
+                    {
+                        dartsCaller.Configuration.Arguments.Add(new(name: "CRL", type: "bool", required: false, nameHuman: "-CRL / --caller_real_life", section: "Calls", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
                     }
 
 
