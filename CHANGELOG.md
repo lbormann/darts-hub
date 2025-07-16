@@ -1,3 +1,18 @@
+## 0.13.17
+- WLED
+  - nothing new
+
+- PIXELIT
+  - nothing new
+
+- Caller
+  - reactivate possibility to use the Caller standalone via source
+  - changed webcaller design
+  - add new soundpacks
+  - add new languages IT, RU
+  - add more realistic caller behaviour arg -CRL "--caller-real-life" (just X01)
+  - add if no playername soundkey avaialble play "player one, two....."
+
 ## 0.13.16
 - WLED
 - backend changes
