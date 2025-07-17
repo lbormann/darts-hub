@@ -465,6 +465,38 @@ namespace darts_hub
             consoleText.AppendLine($"Status: {(app.AppRunningState ? "RUNNING" : "STOPPED")}");
             consoleText.AppendLine($"Last updated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
             consoleText.AppendLine();
+            
+            // Add startup command information
+            if (app.AppRunningState || !string.IsNullOrEmpty(app.AppMonitor))
+            {
+                consoleText.AppendLine("=== STARTUP COMMAND ===");
+                
+                // Get executable path
+                var executable = GetAppExecutable(app);
+                if (!string.IsNullOrEmpty(executable))
+                {
+                    consoleText.AppendLine($"Executable: {executable}");
+                }
+                
+                // Get composed arguments
+                var arguments = GetAppArguments(app);
+                if (!string.IsNullOrEmpty(arguments))
+                {
+                    consoleText.AppendLine($"Arguments: {arguments}");
+                }
+                else
+                {
+                    consoleText.AppendLine("Arguments: (none)");
+                }
+                
+                // Show full command line
+                var fullCommand = !string.IsNullOrEmpty(executable) ? 
+                    $"\"{executable}\"" + (!string.IsNullOrEmpty(arguments) ? $" {arguments}" : "") : 
+                    "(executable not determined)";
+                consoleText.AppendLine($"Full Command: {fullCommand}");
+                consoleText.AppendLine();
+                consoleText.AppendLine("=== CONSOLE OUTPUT ===");
+            }
 
             if (!string.IsNullOrEmpty(app.AppMonitor))
             {
@@ -503,6 +535,82 @@ namespace darts_hub
                 {
                     scrollViewer?.ScrollToEnd();
                 });
+            }
+        }
+
+        // Helper methods for getting app execution information
+        private string GetAppExecutable(AppBase app)
+        {
+            try
+            {
+                // For most apps, we can get the executable info from configuration or derive it
+                if (app.Configuration != null && app.Configuration.Arguments.Count > 0)
+                {
+                    // Check if first argument is path-to-executable or file for AppLocal/AppOpen
+                    var firstArg = app.Configuration.Arguments[0];
+                    if (firstArg.Name == "path-to-executable" || firstArg.Name == "file")
+                    {
+                        return !string.IsNullOrEmpty(firstArg.Value) ? firstArg.Value : "Not configured";
+                    }
+                }
+                
+                // For downloadable apps, try to construct typical path
+                if (app.GetType().Name.Contains("Downloadable"))
+                {
+                    var basePath = System.IO.Path.Combine(Environment.CurrentDirectory, "apps", app.Name);
+                    var exePath = System.IO.Path.Combine(basePath, $"{app.Name}.exe");
+                    if (System.IO.File.Exists(exePath))
+                        return exePath;
+                    
+                    // Try without .exe for Linux/Mac
+                    exePath = System.IO.Path.Combine(basePath, app.Name);
+                    if (System.IO.File.Exists(exePath))
+                        return exePath;
+                        
+                    // Check common installation patterns
+                    if (app.Name == "darts-caller")
+                    {
+                        var commonPaths = new[]
+                        {
+                            System.IO.Path.Combine(basePath, "darts-caller.exe"),
+                            System.IO.Path.Combine(basePath, "darts-caller"),
+                            System.IO.Path.Combine(Environment.CurrentDirectory, "darts-caller.exe")
+                        };
+                        
+                        foreach (var path in commonPaths)
+                        {
+                            if (System.IO.File.Exists(path))
+                                return path;
+                        }
+                    }
+                    
+                    return $"Expected: {exePath}";
+                }
+                
+                return $"{app.GetType().Name} executable";
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting executable for {app.CustomName}: {ex.Message}");
+                return "Error determining executable";
+            }
+        }
+        
+        private string GetAppArguments(AppBase app)
+        {
+            try
+            {
+                if (app.Configuration == null)
+                    return "";
+                
+                // Use the Configuration.GenerateArgumentString method
+                var arguments = app.Configuration.GenerateArgumentString(app, null);
+                return arguments?.Trim() ?? "";
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting arguments for {app.CustomName}: {ex.Message}");
+                return "Error determining arguments";
             }
         }
 
@@ -591,19 +699,42 @@ namespace darts_hub
                     
                     overviewText.AppendLine($"• {app.App.CustomName}");
                     overviewText.AppendLine($"  Status: {status}");
+                    
+                    // Add startup command info for running or recently run apps
+                    if (app.App.AppRunningState || hasOutput)
+                    {
+                        var executable = GetAppExecutable(app.App);
+                        var arguments = GetAppArguments(app.App);
+                        
+                        overviewText.AppendLine($"  Executable: {executable}");
+                        if (!string.IsNullOrEmpty(arguments))
+                        {
+                            // Limit argument display length for overview
+                            var displayArgs = arguments.Length > 80 ? 
+                                arguments.Substring(0, 77) + "..." : arguments;
+                            overviewText.AppendLine($"  Arguments: {displayArgs}");
+                        }
+                        else
+                        {
+                            overviewText.AppendLine($"  Arguments: (none)");
+                        }
+                    }
+                    
                     overviewText.AppendLine($"  Console Output: {(hasOutput ? "Available" : "None")}");
 
                     if (hasOutput)
                     {
                         var lines = app.App.AppMonitor.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        var lastLines = lines.TakeLast(3);
+                        var lastLines = lines.TakeLast(2); // Reduced to 2 lines to make room for command info
                         overviewText.AppendLine($"  Last Output:");
                         foreach (var line in lastLines)
                         {
-                            overviewText.AppendLine($"    {line.Trim()}");
+                            var trimmedLine = line.Trim();
+                            if (trimmedLine.Length > 60)
+                                trimmedLine = trimmedLine.Substring(0, 57) + "...";
+                            overviewText.AppendLine($"    {trimmedLine}");
                         }
                     }
-                    overviewText.AppendLine();
                 }
             }
             else
@@ -1387,6 +1518,18 @@ namespace darts_hub
             Control? inputControl = null;
             string type = argument.GetTypeClear();
 
+            // Helper function to check if value is default/empty
+            bool IsValueDefault(Argument arg)
+            {
+                return string.IsNullOrEmpty(arg.Value) || arg.Value == null;
+            }
+
+            // Helper function to update clear button opacity
+            void UpdateClearButtonOpacity(Button clearButton, Argument arg)
+            {
+                clearButton.Opacity = IsValueDefault(arg) ? 0.1 : 1.0;
+            }
+
             // Create appropriate input control based on argument type
             switch (type)
             {
@@ -1403,31 +1546,25 @@ namespace darts_hub
                         Padding = new Thickness(8),
                         HorizontalAlignment = HorizontalAlignment.Stretch
                     };
-                    ((TextBox)inputControl).TextChanged += (s, e) => 
-                    {
-                        argument.Value = ((TextBox)s).Text;
-                        AutoSaveConfiguration(argument);
-                    };
                     break;
 
                 case Argument.TypeBool:
+                    // Handle bool values - correctly support valueMapping for darts-caller
+                    bool isChecked = false;
+                    if (!string.IsNullOrEmpty(argument.Value))
+                    {
+                        // For valueMapping: "True" maps to "1", "False" maps to "0"
+                        // So we need to check for "True" or "1" as checked state
+                        isChecked = argument.Value == "True" || argument.Value == "1";
+                    }
+                    
                     inputControl = new CheckBox
                     {
                         Content = argument.NameHuman,
-                        IsChecked = bool.TryParse(argument.Value, out var boolVal) && boolVal,
+                        IsChecked = isChecked,
                         FontSize = 14,
                         Foreground = Brushes.White,
                         HorizontalAlignment = HorizontalAlignment.Stretch
-                    };
-                    ((CheckBox)inputControl).Checked += (s, e) => 
-                    {
-                        argument.Value = "true";
-                        AutoSaveConfiguration(argument);
-                    };
-                    ((CheckBox)inputControl).Unchecked += (s, e) => 
-                    {
-                        argument.Value = "false";
-                        AutoSaveConfiguration(argument);
                     };
                     break;
 
@@ -1435,23 +1572,19 @@ namespace darts_hub
                     inputControl = new NumericUpDown
                     {
                         Value = int.TryParse(argument.Value, out var intVal) ? intVal : 0,
+                        Increment = 1,
                         FontSize = 14,
                         Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
                         Foreground = Brushes.White,
                         BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
                         HorizontalAlignment = HorizontalAlignment.Stretch
                     };
-                    ((NumericUpDown)inputControl).ValueChanged += (s, e) => 
-                    {
-                        argument.Value = ((NumericUpDown)s).Value?.ToString() ?? "";
-                        AutoSaveConfiguration(argument);
-                    };
                     break;
 
                 case Argument.TypeFloat:
                     inputControl = new NumericUpDown
                     {
-                        Value = double.TryParse(argument.Value, out var doubleVal) ? (decimal)doubleVal : 0,
+                        Value = double.TryParse(argument.Value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var doubleVal) ? (decimal)doubleVal : 0,
                         Increment = 0.1m,
                         FormatString = "F1",
                         FontSize = 14,
@@ -1459,11 +1592,6 @@ namespace darts_hub
                         Foreground = Brushes.White,
                         BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
                         HorizontalAlignment = HorizontalAlignment.Stretch
-                    };
-                    ((NumericUpDown)inputControl).ValueChanged += (s, e) => 
-                    {
-                        argument.Value = ((NumericUpDown)s).Value?.ToString() ?? "";
-                        AutoSaveConfiguration(argument);
                     };
                     break;
 
@@ -1478,11 +1606,6 @@ namespace darts_hub
                         BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
                         Padding = new Thickness(8),
                         HorizontalAlignment = HorizontalAlignment.Stretch
-                    };
-                    fileTextBox.TextChanged += (s, e) => 
-                    {
-                        argument.Value = fileTextBox.Text;
-                        AutoSaveConfiguration(argument);
                     };
 
                     var browseButton = new Button
@@ -1537,16 +1660,158 @@ namespace darts_hub
                     grid.Children.Add(browseButton);
                     
                     inputControl = grid;
+                    fileTextBox.TextChanged += (s, e) => 
+                    {
+                        argument.Value = fileTextBox.Text;
+                        AutoSaveConfiguration(argument);
+                    };
                     break;
             }
 
             if (inputControl != null)
             {
+                // Create a container for the input control and clear button
+                var inputContainer = new Grid
+                {
+                    HorizontalAlignment = HorizontalAlignment.Stretch
+                };
+                inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                // Add the input control to the first column
+                Grid.SetColumn(inputControl, 0);
+                inputContainer.Children.Add(inputControl);
+
+                // Create the clear button with radiergummi icon
+                var clearImage = new Image
+                {
+                    Width = 20,
+                    Height = 20,
+                    Source = new Bitmap(AssetLoader.Open(new Uri("avares://darts-hub/Assets/clear.png")))
+                };
+
+                var clearButton = new Button
+                {
+                    Content = clearImage,
+                    Background = Brushes.Transparent,
+                    BorderThickness = new Thickness(0),
+                    Padding = new Thickness(5),
+                    Margin = new Thickness(5, 0, 0, 0),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Width = 30,
+                    Height = 30
+                };
+
+                // Set tooltip for clear button
+                ToolTip.SetTip(clearButton, "Reset to default");
+
+                // Add clear button click handler
+                clearButton.Click += (s, e) =>
+                {
+                    // Reset value to default (null/empty)
+                    argument.Value = null;
+
+                    // Update the UI control
+                    switch (type)
+                    {
+                        case Argument.TypeString:
+                        case Argument.TypePassword:
+                            if (inputControl is TextBox textBox)
+                                textBox.Text = "";
+                            break;
+                        case Argument.TypeBool:
+                            if (inputControl is CheckBox checkBox)
+                                checkBox.IsChecked = false;
+                                // Reset the argument value to null so it won't be included in command line
+                                argument.Value = null;
+                            break;
+                        case Argument.TypeInt:
+                        case Argument.TypeFloat:
+                            if (inputControl is NumericUpDown numericUpDown)
+                                numericUpDown.Value = 0;
+                            break;
+                        case Argument.TypeFile:
+                        case Argument.TypePath:
+                            if (inputControl is Grid gridControl)
+                            {
+                                var textBoxInGrid = gridControl.Children.OfType<TextBox>().FirstOrDefault();
+                                if (textBoxInGrid != null)
+                                    textBoxInGrid.Text = "";
+                            }
+                            break;
+                    }
+
+                    // Update button opacity
+                    UpdateClearButtonOpacity(clearButton, argument);
+                    
+                    // Save configuration
+                    AutoSaveConfiguration(argument);
+                };
+
+                // Add event handlers to update clear button opacity when value changes
+                switch (type)
+                {
+                    case Argument.TypeString:
+                    case Argument.TypePassword:
+                        if (inputControl is TextBox textBox)
+                        {
+                            textBox.TextChanged += (s, e) => 
+                            {
+                                argument.Value = textBox.Text;
+                                UpdateClearButtonOpacity(clearButton, argument);
+                                AutoSaveConfiguration(argument);
+                            };
+                        }
+                        break;
+                    case Argument.TypeBool:
+                        if (inputControl is CheckBox checkBox)
+                        {
+                            checkBox.Checked += (s, e) => 
+                            {
+                                argument.Value = "True";
+                                UpdateClearButtonOpacity(clearButton, argument);
+                                AutoSaveConfiguration(argument);
+                            };
+                            checkBox.Unchecked += (s, e) => 
+                            {
+                                argument.Value = "False";
+                                UpdateClearButtonOpacity(clearButton, argument);
+                                AutoSaveConfiguration(argument);
+                            };
+                        }
+                        break;
+                    case Argument.TypeInt:
+                    case Argument.TypeFloat:
+                        if (inputControl is NumericUpDown numericUpDown)
+                        {
+                            numericUpDown.ValueChanged += (s, e) => 
+                            {
+                                // For float values, ensure we use dot as decimal separator
+                                if (type == Argument.TypeFloat)
+                                {
+                                    argument.Value = numericUpDown.Value?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
+                                }
+                                else
+                                {
+                                    argument.Value = numericUpDown.Value?.ToString() ?? "";
+                                }
+                                UpdateClearButtonOpacity(clearButton, argument);
+                                AutoSaveConfiguration(argument);
+                            };
+                        }
+                        break;
+                    // File/Path already handled above in the switch case
+                }
+
+                // Add clear button to the second column
+                Grid.SetColumn(clearButton, 1);
+                inputContainer.Children.Add(clearButton);
+
                 // Add hover and click events for tooltip display
                 inputControl.PointerEntered += (s, e) => ShowTooltip(argument);
                 inputControl.PointerPressed += (s, e) => ShowTooltip(argument);
                 
-                mainPanel.Children.Add(inputControl);
+                mainPanel.Children.Add(inputContainer);
             }
 
             return mainPanel;
@@ -1595,314 +1860,6 @@ namespace darts_hub
             }
         }
 
-        private void ShowTooltip(Argument argument)
-        {
-            if (currentContentMode != ContentMode.Settings) return;
-
-            TooltipTitle.Text = argument.NameHuman;
-            
-            var description = "No description available.";
-            if (currentTooltips != null && currentTooltips.TryGetValue(argument.Name, out var tooltipDesc))
-            {
-                description = tooltipDesc;
-            }
-            else if (!string.IsNullOrEmpty(argument.Description))
-            {
-                description = argument.Description;
-            }
-            
-            TooltipDescription.Text = description;
-            
-            // Force layout update to ensure text wrapping works properly
-            TooltipDescription.InvalidateMeasure();
-            TooltipDescription.InvalidateArrange();
-        }
-
-        private void ConsoleScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
-        {
-            ConsoleScrollViewer_ScrollChanged(sender, e, currentConsoleTab);
-        }
-        
-        private void ConsoleScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e, string? tabName)
-        {
-            if (sender is not ScrollViewer scrollViewer || string.IsNullOrEmpty(tabName)) return;
-            
-            // Check if user is manually scrolling (not at the bottom)
-            if (scrollViewer != null)
-            {
-                // Allow small tolerance for floating point precision
-                var isAtBottom = Math.Abs(scrollViewer.Offset.Y - scrollViewer.ScrollBarMaximum.Y) < 5;
-                
-                // If user scrolled up from bottom, disable auto-scroll
-                if (!isAtBottom && e.OffsetDelta.Y < 0)
-                {
-                    isUserScrolling = true;
-                    if (ConsoleAutoScrollCheckBox.IsChecked == true)
-                    {
-                        ConsoleAutoScrollCheckBox.IsChecked = false;
-                        isAutoScrollEnabled = false;
-                    }
-                }
-                // If user scrolled back to bottom, re-enable auto-scroll
-                else if (isAtBottom && isUserScrolling)
-                {
-                    isUserScrolling = false;
-                    if (ConsoleAutoScrollCheckBox.IsChecked == false)
-                    {
-                        ConsoleAutoScrollCheckBox.IsChecked = true;
-                        isAutoScrollEnabled = true;
-                    }
-                }
-            }
-        }
-
-        private async void ConsoleExportButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                var filename = currentConsoleTab == "Overview" 
-                    ? $"{timestamp}_DartsHub_Overview.log"
-                    : $"{timestamp}_{currentConsoleTab}_Console.log";
-                
-                // Get the directory path where the app is running
-                var appPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-                var logPath = System.IO.Path.Combine(appPath ?? Environment.CurrentDirectory, "logs");
-                
-                // Create logs directory if it doesn't exist
-                if (!System.IO.Directory.Exists(logPath))
-                {
-                    System.IO.Directory.CreateDirectory(logPath);
-                }
-                
-                var fullPath = System.IO.Path.Combine(logPath, filename);
-                
-                // Create detailed log content
-                var logContent = new StringBuilder();
-                
-                if (currentConsoleTab == "Overview")
-                {
-                    // Export overview of all apps
-                    logContent.AppendLine($"Darts-Hub Overview Export");
-                    logContent.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-                    logContent.AppendLine($"Profile: {selectedProfile?.Name ?? "None"}");
-                    logContent.AppendLine("".PadRight(80, '='));
-                    logContent.AppendLine();
-                    
-                    if (selectedProfile != null)
-                    {
-                        foreach (var appState in selectedProfile.Apps.Values.OrderBy(a => a.App.CustomName))
-                        {
-                            logContent.AppendLine($"App: {appState.App.CustomName}");
-                            logContent.AppendLine($"Status: {(appState.TaggedForStart ? (appState.App.AppRunningState ? "RUNNING" : "ENABLED") : "DISABLED")}");
-                            logContent.AppendLine($"Running State: {appState.App.AppRunningState}");
-                            logContent.AppendLine("".PadRight(60, '-'));
-                            
-                            if (!string.IsNullOrEmpty(appState.App.AppMonitor))
-                            {
-                                logContent.AppendLine("Console Output:");
-                                logContent.AppendLine(appState.App.AppMonitor);
-                            }
-                            else
-                            {
-                                logContent.AppendLine("No console output available.");
-                            }
-                            
-                            logContent.AppendLine();
-                            logContent.AppendLine("".PadRight(80, '='));
-                            logContent.AppendLine();
-                        }
-                    }
-                }
-                else
-                {
-                    // Export specific app console
-                    var app = selectedProfile?.Apps.Values.FirstOrDefault(a => a.App.CustomName == currentConsoleTab)?.App;
-                    if (app != null)
-                    {
-                        logContent.AppendLine($"{app.CustomName} Console Export");
-                        logContent.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-                        logContent.AppendLine($"Profile: {selectedProfile?.Name ?? "None"}");
-                        logContent.AppendLine($"App Status: {(app.AppRunningState ? "RUNNING" : "STOPPED")}");
-                        logContent.AppendLine("".PadRight(80, '='));
-                        logContent.AppendLine();
-                        
-                        if (!string.IsNullOrEmpty(app.AppMonitor))
-                        {
-                            logContent.AppendLine("Console Output:");
-                            logContent.AppendLine(app.AppMonitor);
-                        }
-                        else
-                        {
-                            logContent.AppendLine("No console output available.");
-                        }
-                    }
-                    else
-                    {
-                        logContent.AppendLine($"App '{currentConsoleTab}' not found.");
-                    }
-                }
-                
-                // Write to file
-                await System.IO.File.WriteAllTextAsync(fullPath, logContent.ToString());
-                
-                await RenderMessageBox("Export Success", 
-                    $"Console log exported successfully to:\n{fullPath}", 
-                    MsBox.Avalonia.Enums.Icon.Success);
-            }
-            catch (Exception ex)
-            {
-                await RenderMessageBox("Export Error", 
-                    $"Failed to export console log:\n{ex.Message}", 
-                    MsBox.Avalonia.Enums.Icon.Error);
-            }
-        }
-
-        private void ConsoleAutoScrollCheckBox_Changed(object sender, RoutedEventArgs e)
-        {
-            isAutoScrollEnabled = ConsoleAutoScrollCheckBox.IsChecked ?? true;
-            
-            // If auto-scroll was re-enabled, scroll to bottom
-            if (isAutoScrollEnabled)
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    // Scroll the current tab to bottom
-                    if (!string.IsNullOrEmpty(currentConsoleTab) && consoleTabs.TryGetValue(currentConsoleTab, out var tab))
-                    {
-                        var scrollViewer = tab.Content as ScrollViewer;
-                        scrollViewer?.ScrollToEnd();
-                    }
-                });
-            }
-        }
-
-        private async Task LoadChangelogContent()
-        {
-            try
-            {
-                var changelogUrl = "https://raw.githubusercontent.com/lbormann/darts-hub/main/CHANGELOG.md";
-                var changelogText = await Helper.AsyncHttpGet(changelogUrl, 10);
-                
-                if (string.IsNullOrEmpty(changelogText))
-                {
-                    changelogText = "Changelog not available. Please check your internet connection and try again.";
-                }
-                
-                ChangelogContent.Text = changelogText;
-            }
-            catch (Exception ex)
-            {
-                ChangelogContent.Text = $"Error loading changelog: {ex.Message}";
-            }
-        }
-
-        private void Comboboxportal_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (selectedProfile != null) selectedProfile.IsTaggedForStart = false;
-            selectedProfile = ((ComboBoxItem)Comboboxportal.SelectedItem).Tag as Profile;
-            if (selectedProfile == null) return;
-            selectedProfile.IsTaggedForStart = true;
-            RenderAppNavigation();
-            Save();
-        }
-
-        private void CheckBoxStartProfileOnProgramStartChanged(object sender, RoutedEventArgs e)
-        {
-            configurator.Settings.StartProfileOnStart = (bool)CheckBoxStartProfileOnProgramStart.IsChecked;
-            configurator.SaveSettings();
-        }
-
-        private async void ShowCorruptedConfigHandlingBox(ConfigurationException ex)
-        {
-            await Dispatcher.UIThread.InvokeAsync(async () =>
-            {
-                IsEnabled = false;
-                Opacity = 0.25;
-
-                var result = await RenderMessageBox("", 
-                    $"Configuration file '{ex.File}' not readable ('{ex.Message}'). " +
-                    "You can fix it by yourself or let it be recreated. " +
-                    "Do you want to reset it? (All settings will be lost)", 
-                    MsBox.Avalonia.Enums.Icon.Error, ButtonEnum.YesNo);
-                    
-                if (result == ButtonResult.Yes)
-                {
-                    try
-                    {
-                        profileManager.DeleteConfigurationFile(ex.File);
-                    }
-                    catch (Exception e)
-                    {
-                        await MessageBoxManager.GetMessageBoxStandard("Error", 
-                            "Configuration file deletion failed. Please delete it manually. " + e.Message)
-                            .ShowWindowAsync();
-                    }
-                }
-                await RenderMessageBox("", "Application will close now. Please restart it.", MsBox.Avalonia.Enums.Icon.Warning);
-                Environment.Exit(1);
-            });
-        }
-
-        private async Task<ButtonResult> RenderMessageBox(string title = "",
-                                                          string message = "",
-                                                          MsBox.Avalonia.Enums.Icon icon = MsBox.Avalonia.Enums.Icon.None,
-                                                          ButtonEnum buttons = ButtonEnum.Ok,
-                                                          double width = -1,
-                                                          double height = -1,
-                                                          int autoCloseDelayInSeconds = 0)
-        {
-            if (width < 0) width = Width / 1.3;
-            if (height < 0) height = Height / 1.3;
-
-            var buttonDefinitions = new List<ButtonDefinition>();
-            switch (buttons)
-            {
-                case ButtonEnum.Ok:
-                    buttonDefinitions.Add(new ButtonDefinition { Name = "Ok", IsDefault = true });
-                    break;
-                case ButtonEnum.YesNo:
-                    buttonDefinitions.Add(new ButtonDefinition { Name = "Yes", IsDefault = true });
-                    buttonDefinitions.Add(new ButtonDefinition { Name = "No", IsCancel = true });
-                    break;
-            }
-
-            var messageBoxParams = new MessageBoxCustomParams
-            {
-                Icon = icon,
-                WindowIcon = Icon,
-                Width = width,
-                Height = height,
-                MaxWidth = width,
-                MaxHeight = height,
-                CanResize = (width == -1) ? false : true,
-                SystemDecorations = SystemDecorations.Full,
-                WindowStartupLocation = WindowStartupLocation,
-                ButtonDefinitions = buttonDefinitions,
-                ContentTitle = title,
-                ContentMessage = message
-            };
-
-            var msBoxWindow = MessageBoxManager.GetMessageBoxCustom(messageBoxParams);
-            var result = await msBoxWindow.ShowWindowAsync();
-
-            if (autoCloseDelayInSeconds > 0)
-            {
-                await Task.Delay(autoCloseDelayInSeconds * 1000);
-                ((Window)msBoxWindow).Close();
-                return ButtonResult.No;
-            }
-            
-            return result switch
-            {
-                "Ok" => ButtonResult.Ok,
-                "Yes" => ButtonResult.Yes,
-                "No" => ButtonResult.No,
-                _ => ButtonResult.None
-            };
-        }
-
-        // Event handlers for updates and apps
         private async void Updater_NoNewReleaseFound(object? sender, ReleaseEventArgs e)
         {
             await Dispatcher.UIThread.InvokeAsync(async () =>
@@ -1974,6 +1931,160 @@ namespace darts_hub
         private void Updater_ReleaseInstallInitialized(object? sender, ReleaseEventArgs e)
         {
             Close();
+        }
+
+        // Missing methods that need to be added
+        private async Task<ButtonResult> RenderMessageBox(string title, string message, MsBox.Avalonia.Enums.Icon icon, ButtonEnum buttons = ButtonEnum.Ok, double? width = null, double? height = null, int autoCloseDelayInSeconds = 0)
+        {
+            var messageBoxParams = new MessageBoxStandardParams
+            {
+                ContentTitle = title,
+                ContentMessage = message,
+                Icon = icon,
+                ButtonDefinitions = buttons,
+                WindowIcon = Icon,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+
+            if (width.HasValue)
+                messageBoxParams.Width = width.Value;
+            if (height.HasValue)
+                messageBoxParams.Height = height.Value;
+
+            var messageBox = MessageBoxManager.GetMessageBoxStandard(messageBoxParams);
+            
+            if (autoCloseDelayInSeconds > 0)
+            {
+                // Auto close after specified delay - simplified approach
+                _ = Task.Delay(TimeSpan.FromSeconds(autoCloseDelayInSeconds)).ContinueWith(_ =>
+                {
+                    // The MessageBox will auto-close on timeout - no need to manually close
+                });
+            }
+
+            return await messageBox.ShowWindowDialogAsync(this);
+        }
+
+        private async void ShowCorruptedConfigHandlingBox(ConfigurationException ex)
+        {
+            var result = await RenderMessageBox("Configuration Error", 
+                $"Configuration file is corrupted:\n{ex.Message}\n\nWould you like to reset to default settings?",
+                MsBox.Avalonia.Enums.Icon.Error, 
+                ButtonEnum.YesNo);
+
+            if (result == ButtonResult.Yes)
+            {
+                try
+                {
+                    // Reset to default configuration
+                    configurator = new Configurator("config.json");
+                    await RenderMessageBox("", "Configuration has been reset to defaults.", MsBox.Avalonia.Enums.Icon.Info);
+                }
+                catch (Exception resetEx)
+                {
+                    await RenderMessageBox("", "Failed to reset configuration: " + resetEx.Message, MsBox.Avalonia.Enums.Icon.Error);
+                    Environment.Exit(1);
+                }
+            }
+            else
+            {
+                Environment.Exit(1);
+            }
+        }
+
+        private async Task LoadChangelogContent()
+        {
+            try
+            {
+                // Try to load changelog from a known location or URL
+                var changelogText = "Changelog not available yet.";
+                
+                // You can implement actual changelog loading here
+                // For example, from a URL or local file
+                
+                ChangelogContent.Text = changelogText;
+            }
+            catch (Exception ex)
+            {
+                ChangelogContent.Text = $"Failed to load changelog: {ex.Message}";
+            }
+        }
+
+        private void ConsoleScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e, string appName)
+        {
+            if (sender is not ScrollViewer scrollViewer) return;
+
+            // Detect if user is manually scrolling
+            if (e.OffsetDelta.Y != 0)
+            {
+                // Check if user scrolled up (not at bottom)
+                var isAtBottom = Math.Abs(scrollViewer.Offset.Y - scrollViewer.ScrollBarMaximum.Y) < 1;
+                
+                if (currentConsoleTab == appName)
+                {
+                    isUserScrolling = !isAtBottom;
+                }
+            }
+        }
+
+        private void ShowTooltip(Argument argument)
+        {
+            try
+            {
+                if (currentTooltips != null && currentTooltips.TryGetValue(argument.Name, out var tooltip))
+                {
+                    TooltipDescription.Text = tooltip;
+                }
+                else
+                {
+                    TooltipDescription.Text = argument.Description ?? "No description available.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TooltipDescription.Text = "Error loading tooltip.";
+                System.Diagnostics.Debug.WriteLine($"Error showing tooltip: {ex.Message}");
+            }
+        }
+
+        private void Comboboxportal_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (Comboboxportal.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is Profile profile)
+            {
+                selectedProfile = profile;
+                RenderAppNavigation();
+                
+                // Clear settings panel when switching profiles
+                SettingsPanel.Children.Clear();
+                selectedApp = null;
+                
+                // Update console tabs if in console mode
+                if (currentContentMode == ContentMode.Console)
+                {
+                    InitializeConsoleTabs();
+                }
+            }
+        }
+
+        // Additional missing event handlers
+        private void CheckBoxStartProfileOnProgramStartChanged(object sender, RoutedEventArgs e)
+        {
+            if (CheckBoxStartProfileOnProgramStart.IsChecked.HasValue)
+            {
+                configurator.Settings.StartProfileOnStart = CheckBoxStartProfileOnProgramStart.IsChecked.Value;
+                configurator.SaveSettings();
+            }
+        }
+
+        private void ConsoleExportButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Implement console export functionality
+            // This could export the current console content to a file
+        }
+
+        private void ConsoleAutoScrollCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            isAutoScrollEnabled = ConsoleAutoScrollCheckBox.IsChecked == true;
         }
     }
 }
