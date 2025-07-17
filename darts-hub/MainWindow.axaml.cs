@@ -83,6 +83,9 @@ namespace darts_hub
         private Timer? navigationUpdateTimer;
         private Dictionary<string, TabItem> consoleTabs = new Dictionary<string, TabItem>();
         private string? currentConsoleTab;
+        
+        // Track app running states to detect changes
+        private Dictionary<string, bool> lastKnownRunningStates = new Dictionary<string, bool>();
 
         private enum ContentMode
         {
@@ -961,7 +964,7 @@ namespace darts_hub
                 //    Margin = new Thickness(0, 2)
                 //};
                 
-                // Create app button content with running indicator if needed
+                // Create app button content with running indicator if app is running
                 var buttonContent = new StackPanel
                 {
                     Orientation = Orientation.Horizontal,
@@ -1227,6 +1230,9 @@ namespace darts_hub
                         await Task.Delay(500); // Give it time to start
                     }
                     
+                    // Update tracking after state change
+                    lastKnownRunningStates[app.CustomName] = app.AppRunningState;
+                    
                     // Refresh the settings page and navigation
                     await RenderAppSettings(app);
                     RenderAppNavigation();
@@ -1242,7 +1248,7 @@ namespace darts_hub
             
             controlButtonPanel.Children.Add(startStopButton);
 
-            // Restart Button
+            // Restart Button - properly disabled when app is not running
             var restartButton = new Button
             {
                 Content = "Restart",
@@ -1256,18 +1262,66 @@ namespace darts_hub
                 IsEnabled = app.AppRunningState
             };
             
+            // When app is not running, make restart button visually disabled
+            if (!app.AppRunningState)
+            {
+                restartButton.Background = new SolidColorBrush(Color.FromRgb(100, 100, 100));
+                restartButton.Foreground = new SolidColorBrush(Color.FromRgb(150, 150, 150));
+            }
+            
             restartButton.Click += async (s, e) =>
             {
+                if (!app.AppRunningState) return; // Extra safety check
+                
                 try
                 {
+                    // Show loading overlay with rotating indicator during restart
+                    SetWait(true, $"Restarting {app.CustomName}...");
+                    
+                    // Disable buttons during restart operation
+                    startStopButton.IsEnabled = false;
+                    restartButton.IsEnabled = false;
+                    
+                    // Update tracking for the current app state
+                    lastKnownRunningStates[app.CustomName] = app.AppRunningState;
+                    
+                    // Stop the app
                     if (app.AppRunningState)
                     {
                         app.Close();
                         await Task.Delay(2000); // Wait for proper shutdown
+                        
+                        // Update tracking after stop
+                        lastKnownRunningStates[app.CustomName] = app.AppRunningState;
                     }
                     
+                    // Start the app
                     app.Run();
-                    await Task.Delay(1000); // Give it time to start
+                    
+                    // Wait a bit more for startup and monitor status
+                    int attempts = 0;
+                    bool startedSuccessfully = false;
+                    while (attempts < 10) // Max 5 seconds wait
+                    {
+                        await Task.Delay(500);
+                        attempts++;
+                        if (app.AppRunningState)
+                        {
+                            startedSuccessfully = true;
+                            break;
+                        }
+                    }
+                    
+                    // Update tracking after start
+                    lastKnownRunningStates[app.CustomName] = app.AppRunningState;
+                    
+                    // Hide loading overlay
+                    SetWait(false);
+                    
+                    if (!startedSuccessfully)
+                    {
+                        await RenderMessageBox("Warning", $"Restart initiated for {app.CustomName}, but the app may not have started properly. Please check the console for details.", MsBox.Avalonia.Enums.Icon.Warning);
+                    }
                     
                     // Refresh the settings page and navigation
                     await RenderAppSettings(app);
@@ -1278,7 +1332,19 @@ namespace darts_hub
                 }
                 catch (Exception ex)
                 {
+                    SetWait(false);
                     await RenderMessageBox("Error", $"Failed to restart {app.CustomName}:\n{ex.Message}", MsBox.Avalonia.Enums.Icon.Error);
+                    
+                    // Update tracking even if restart failed
+                    lastKnownRunningStates[app.CustomName] = app.AppRunningState;
+                    
+                    // Re-enable buttons even if restart failed
+                    startStopButton.IsEnabled = true;
+                    restartButton.IsEnabled = app.AppRunningState;
+                    
+                    // Refresh UI to reflect current state
+                    await RenderAppSettings(app);
+                    RenderAppNavigation();
                 }
             };
             
@@ -1836,7 +1902,52 @@ namespace darts_hub
             // Update navigation to refresh running states
             Dispatcher.UIThread.Post(() =>
             {
+                var currentSelectedApp = selectedApp;
+                bool needsSettingsRefresh = false;
+                
+                // Check if any app running state has changed
+                if (selectedProfile != null)
+                {
+                    foreach (var appState in selectedProfile.Apps.Values)
+                    {
+                        var appName = appState.App.CustomName;
+                        var currentRunningState = appState.App.AppRunningState;
+                        
+                        if (lastKnownRunningStates.TryGetValue(appName, out var lastKnownState))
+                        {
+                            if (lastKnownState != currentRunningState)
+                            {
+                                // Running state changed
+                                lastKnownRunningStates[appName] = currentRunningState;
+                                
+                                // If this is the currently selected app, we need to refresh settings
+                                if (currentSelectedApp != null && currentSelectedApp.CustomName == appName)
+                                {
+                                    needsSettingsRefresh = true;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // First time seeing this app, store its state
+                            lastKnownRunningStates[appName] = currentRunningState;
+                        }
+                    }
+                }
+                
                 RenderAppNavigation();
+                
+                // Only refresh app settings if needed and we're in settings mode
+                if (needsSettingsRefresh && currentSelectedApp != null && currentContentMode == ContentMode.Settings)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        await Dispatcher.UIThread.InvokeAsync(async () =>
+                        {
+                            await RenderAppSettings(currentSelectedApp);
+                        });
+                    });
+                }
             });
         }
 
@@ -2052,6 +2163,10 @@ namespace darts_hub
             if (Comboboxportal.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is Profile profile)
             {
                 selectedProfile = profile;
+                
+                // Reset the running state tracking when switching profiles
+                lastKnownRunningStates.Clear();
+                
                 RenderAppNavigation();
                 
                 // Clear settings panel when switching profiles
