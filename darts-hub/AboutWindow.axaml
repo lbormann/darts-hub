@@ -2,92 +2,112 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="360" d:DesignHeight="360"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="500"
         x:Class="darts_hub.AboutWindow"
-        Title=""
+        Title="About Darts-Hub"
 		Icon="/Assets/favicon.ico"
-		Width="360"
-		Height="460"
-		MinWidth="360"
-		MaxHeight="460"
+		Width="400"
+		Height="500"
+		MinWidth="400"
+		MinHeight="500"
 		WindowStartupLocation="CenterScreen"
 		CanResize="False"
-		TransparencyLevelHint="None"
-		ExtendClientAreaToDecorationsHint="False"
-		ExtendClientAreaChromeHints="Default"
-		Background="rgb(20,20,20)" Opacity="0.9">
+		Background="#FF1E1E1E">
 
 	<Grid>
 		<Grid.Background>
-			<ImageBrush Opacity="0.35" Stretch="UniformToFill"  Source="/Assets/background_color.png" />
+			<ImageBrush Opacity="0.35" Stretch="UniformToFill" Source="/Assets/background_color.png" />
 		</Grid.Background>
-		<StackPanel>
-			<!-- Custom Title Bar -->
-			<DockPanel Opacity="1.1" x:Name="CustomTitleBarAbout" Background="#FF2D2D30" Height="30" VerticalAlignment="Top" PointerPressed="TitleBar_PointerPressed" IsVisible="false">
-				<TextBlock Text="Darts-Hub" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="White"/>
-				<Button Content=" -" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent" Foreground="White" BorderBrush="Transparent" Click="MinimizeButton_Click" FontWeight="Bold" Margin="0,0,-265,0"/>
-				<Button Content="X" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Background="DarkRed" Foreground="White" BorderBrush="Transparent" Click="CloseButton_Click" FontWeight="Bold" />
-			</DockPanel>
-		<Grid x:Name="GridMain" Opacity="1.1">
 		
+		<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+			<StackPanel>
+				<Label FontSize="24" FontWeight="Bold" Content="Darts-Hub" HorizontalAlignment="Left" Margin="0,0,0,10" Foreground="White"/>
+				<Label x:Name="appVersion" Content="v0.0.0" HorizontalAlignment="Left" Margin="0,0,0,10" FontSize="12" FontWeight="Bold" Foreground="White"/>
+				<CheckBox x:Name="CheckBoxSkipUpdateConfirmation" 
+						  Checked="CheckBoxSkipUpdateConfirmationChanged" 
+						  Unchecked="CheckBoxSkipUpdateConfirmationChanged" 
+						  Content="Skip update confirmation" 
+						  HorizontalAlignment="Left" 
+						  Margin="0,0,0,20" 
+						  Foreground="White"/>
 
-			<Label FontSize="24" FontWeight="Bold" Content="Darts-Hub" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.422,0.449" Foreground="White"/>
-			<Label x:Name="appVersion" Content="v0.0.0" HorizontalAlignment="Left" Margin="12,40,0,0" VerticalAlignment="Top" FontSize="12" FontWeight="Bold" Foreground="White"/>
-			<CheckBox x:Name="CheckBoxSkipUpdateConfirmation" Checked="CheckBoxSkipUpdateConfirmationChanged" Unchecked="CheckBoxSkipUpdateConfirmationChanged" Content="Skip update-confirmation" HorizontalAlignment="Left" Margin="12,60,0,0" VerticalAlignment="Top" Foreground="White"/>
-		
-			<Label Content="Developed by:" HorizontalAlignment="Left" Margin="10,123,0,0" VerticalAlignment="Top" Foreground="White" FontWeight="Bold"/>
-			<Label Content="wusaaa" HorizontalAlignment="Left" Margin="23,150,0,0" VerticalAlignment="Top" FontSize="18" FontWeight="Bold" Foreground="White"/>
-			<Button ToolTip.Tip="Need help? or you want to contact the developers? Click here." 
-					x:Name="contact2" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left" 
-					Margin="110,146,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
-				<Image Width="24" Height="24" Source="/Assets/contact.png" RenderTransformOrigin="2.684,0.4"></Image>
-			</Button>
-			<Label Content="Maintained by:" HorizontalAlignment="Left" Margin="10,183,0,0" VerticalAlignment="Top" Foreground="White" FontWeight="Bold"/>
-			<Label Content="I3uLL3t" HorizontalAlignment="Left" Margin="23,213,0,0" VerticalAlignment="Top" FontSize="18" FontWeight="Bold" Foreground="White"/>
-			<Button ToolTip.Tip="Need help? or you want to contact the developers? Click here."
-					x:Name="contact3" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left"
-					Margin="110,210,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
-				<Image Width="24" Height="24" Source="/Assets/contact.png" RenderTransformOrigin="2.684,0.4"></Image>
-			</Button>
-			<Button ToolTip.Tip="You want to support? What about a little Tip? Click here."
-					x:Name="paypal" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left"
-					Margin="150,204,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
-				<Image Width="36" Height="36" Source="/Assets/paypal.png" RenderTransformOrigin="2.684,0.4"></Image>
-			</Button>
-		
-			<Label Content="Inspired by:" HorizontalAlignment="Left" Margin="10,256,0,0" VerticalAlignment="Top" Foreground="White"/>
-			<Label Content="Reepa86" HorizontalAlignment="Left" Margin="23,283,0,0" VerticalAlignment="Top" FontSize="18" FontWeight="Bold" Foreground="White"/>
-			<Button ToolTip.Tip="Need help? or you want to contact the developers? Click here." 
-					x:Name="contact1" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left" 
-					Margin="110,279,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
-				<Image Width="24" Height="24" Source="/Assets/contact.png" RenderTransformOrigin="2.684,0.4"></Image>
-			</Button>
+				<Label Content="Developed by:" HorizontalAlignment="Left" Margin="0,10,0,5" Foreground="White" FontWeight="Bold"/>
+				<StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+					<Label Content="wusaaa" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+					<Button ToolTip.Tip="Need help? Contact the developer" 
+							x:Name="contact2" 
+							Background="Transparent" 
+							BorderThickness="0" 
+							Click="Button_Click" 
+							Margin="10,0,0,0">
+						<Image Width="24" Height="24" Source="/Assets/contact.png"/>
+					</Button>
+				</StackPanel>
 
+				<Label Content="Maintained by:" HorizontalAlignment="Left" Margin="0,20,0,5" Foreground="White" FontWeight="Bold"/>
+				<StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+					<Label Content="I3uLL3t" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+					<Button ToolTip.Tip="Need help? Contact the maintainer"
+							x:Name="contact3" 
+							Background="Transparent" 
+							BorderThickness="0" 
+							Click="Button_Click" 
+							Margin="10,0,0,0">
+						<Image Width="24" Height="24" Source="/Assets/contact.png"/>
+					</Button>
+					<Button ToolTip.Tip="Support the project with a tip"
+							x:Name="paypal" 
+							Background="Transparent" 
+							BorderThickness="0" 
+							Click="Button_Click" 
+							Margin="10,0,0,0">
+						<Image Width="36" Height="36" Source="/Assets/paypal.png"/>
+					</Button>
+				</StackPanel>
 
-			<Button ToolTip.Tip="Appreciate our work? Value for value - Send us some satoshi." x:Name="donation" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left" Margin="10,327,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
-				<Image Width="32" Height="32" Source="/Assets/donation.png"></Image>
-			</Button>
+				<Label Content="Inspired by:" HorizontalAlignment="Left" Margin="0,20,0,5" Foreground="White"/>
+				<StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+					<Label Content="Reepa86" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+					<Button ToolTip.Tip="Contact the inspiration" 
+							x:Name="contact1" 
+							Background="Transparent" 
+							BorderThickness="0" 
+							Click="Button_Click" 
+							Margin="10,0,0,0">
+						<Image Width="24" Height="24" Source="/Assets/contact.png"/>
+					</Button>
+				</StackPanel>
 
-			<Button ToolTip.Tip="Found a bug? Please create an issue on github." x:Name="bug" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Left" Margin="305,327,0,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
-				<Image Width="32" Height="32" Source="/Assets/bug.png"></Image>
-			</Button>
+				<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,30,0,0">
+					<Button ToolTip.Tip="Appreciate our work? Send some satoshi" 
+							x:Name="donation" 
+							Background="Transparent" 
+							BorderThickness="0" 
+							Click="Button_Click" 
+							Margin="10,0">
+						<Image Width="32" Height="32" Source="/Assets/donation.png"/>
+					</Button>
 
-			<Button ToolTip.Tip="Get to know last changes?" x:Name="changelog" Background="Transparent" BorderThickness="0" Click="Button_Click" HorizontalAlignment="Right" Margin="305,10,10,0" VerticalAlignment="Top" FontSize="14" FontWeight="Bold">
-				<Image Width="32" Height="32" Source="/Assets/changelog.png"></Image>
-			</Button>
+					<Button ToolTip.Tip="Found a bug? Create an issue on GitHub" 
+							x:Name="bug" 
+							Background="Transparent" 
+							BorderThickness="0" 
+							Click="Button_Click" 
+							Margin="10,0">
+						<Image Width="32" Height="32" Source="/Assets/bug.png"/>
+					</Button>
 
-			<Separator RenderTransformOrigin="0.5,0.8" Margin="0,-6,0,10" Background="{x:Null}">
-				<Separator.RenderTransform>
-					<TransformGroup>
-						<ScaleTransform/>
-						<SkewTransform/>
-						<RotateTransform/>
-						<TranslateTransform Y="0"/>
-					</TransformGroup>
-				</Separator.RenderTransform>
-			</Separator>
-		
-		</Grid>
-		</StackPanel>
+					<Button ToolTip.Tip="View changelog" 
+							x:Name="changelog" 
+							Background="Transparent" 
+							BorderThickness="0" 
+							Click="Button_Click" 
+							Margin="10,0">
+						<Image Width="32" Height="32" Source="/Assets/changelog.png"/>
+					</Button>
+				</StackPanel>
+			</StackPanel>
+		</ScrollViewer>
 	</Grid>
+
 </Window>

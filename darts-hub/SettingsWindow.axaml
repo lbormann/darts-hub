@@ -2,47 +2,25 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="720"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
         x:Class="darts_hub.SettingsWindow"
-        Title="Darts-Hub"
+        Title="App Configuration"
 		Icon="/Assets/favicon.ico"
-		Width="520"
-		Height="720"
-		MinWidth="520"
-		MaxHeight="720"
+		Width="800"
+		Height="600"
+		MinWidth="600"
+		MinHeight="400"
 		WindowStartupLocation="CenterScreen"
-		CanResize="False"
-		TransparencyLevelHint="None"
-		ExtendClientAreaToDecorationsHint="False"
-		ExtendClientAreaChromeHints="Default"
-		Background="rgb(20,20,20)" Opacity="0.9">
-	<!--Closing="Window_Closing"-->
-
-
-
+		CanResize="True"
+		Background="#FF1E1E1E">
 
 	<Grid>
-		<Grid.Background>
-			<ImageBrush Opacity="0.2" Stretch="UniformToFill" Source="/Assets/background.png" />
-		</Grid.Background>
-		<!-- Custom Title Bar -->
-		<DockPanel Opacity="1.1" x:Name="CustomTitleBarSettings" Background="#FF2D2D30" Height="30" VerticalAlignment="Top" PointerPressed="TitleBar_PointerPressed" IsVisible="false">
-			<TextBlock Text="Darts-Hub" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="White"/>
-			<Button Content=" -" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent" Foreground="White" BorderBrush="Transparent" Click="MinimizeButton_Click" FontWeight="Bold" Margin="0,0,-425,0"/>
-			<Button Content="X" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Background="DarkRed" Foreground="White" BorderBrush="Transparent" Click="CloseButton_Click" FontWeight="Bold" />
-		</DockPanel>
-
-		<ScrollViewer
-            x:Name="scroller"
-            VerticalScrollBarVisibility="Auto"
-            HorizontalScrollBarVisibility="Hidden"
-            VerticalAlignment="Top"
-            Margin="0,30,0,10">
-
-			<Grid x:Name="GridMain" Opacity="1.1">
-			</Grid>
+		<ScrollViewer x:Name="scroller"
+					  VerticalScrollBarVisibility="Auto"
+					  HorizontalScrollBarVisibility="Hidden"
+					  Padding="20">
+			<StackPanel x:Name="GridMain"/>
 		</ScrollViewer>
 	</Grid>
-
 
 </Window>
