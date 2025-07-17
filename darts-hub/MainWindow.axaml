@@ -19,7 +19,7 @@
 			<ColumnDefinition Width="280" MinWidth="250"/>
 			<ColumnDefinition Width="4"/>
 			<!-- Content Panel (Settings or merged content) -->
-			<ColumnDefinition Width="*" MinWidth="300"/>
+			<ColumnDefinition Width="*" MinWidth="550"/>
 			<ColumnDefinition Width="4"/>
 			<!-- Tooltip Panel -->
 			<ColumnDefinition Width="300" MinWidth="200"/>
@@ -112,7 +112,7 @@
 				<ScrollViewer x:Name="SettingsScrollViewer" 
 							  VerticalScrollBarVisibility="Auto" 
 							  HorizontalScrollBarVisibility="Hidden"
-							  Padding="10">
+							  Padding="0,0">
 					<StackPanel x:Name="SettingsPanel">
 						<TextBlock Text="Select an app from the navigation panel to configure its settings" 
 								   Foreground="#FF999999" 

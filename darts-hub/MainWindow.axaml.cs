@@ -1041,7 +1041,7 @@ namespace darts_hub
             var headerPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 0, 0, 20)
+                Margin = new Thickness(20, 20, 0, 20)
             };
 
             headerPanel.Children.Add(new TextBlock
@@ -1220,7 +1220,7 @@ namespace darts_hub
                 {
                     Header = section.Key,
                     IsExpanded = true,
-                    Margin = new Thickness(0, 20), // Größerer Abstand zwischen den Expandern (20px)
+                    Margin = new Thickness(0, 10), // Größerer Abstand zwischen den Expandern (20px)
                     FontSize = 16,
                     FontWeight = FontWeight.Bold,
                     Foreground = Brushes.White,
@@ -1244,7 +1244,7 @@ namespace darts_hub
                     if (argumentControl != null)
                     {
                         // Remove margin from individual controls to use full width
-                        argumentControl.Margin = new Thickness(0, 5);
+                        argumentControl.Margin = new Thickness(0, 15);
                         argumentControl.HorizontalAlignment = HorizontalAlignment.Stretch; // Volle Breite nutzen
                         sectionPanel.Children.Add(argumentControl);
                     }
@@ -1261,7 +1261,7 @@ namespace darts_hub
             {
                 Header = "Application Control",
                 IsExpanded = true,
-                Margin = new Thickness(0, 20), // Größerer Abstand (20px)
+                Margin = new Thickness(0, 10), // Größerer Abstand (20px)
                 FontSize = 16,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
