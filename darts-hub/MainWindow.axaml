@@ -6,9 +6,9 @@
         x:Class="darts_hub.MainWindow"
         Title="Darts-Hub"
 		Icon="/Assets/favicon.ico"
-		Width="1200"
+		Width="1004"
 		Height="800"
-		MinWidth="800"
+		MinWidth="1004"
 		MinHeight="600"
 		WindowStartupLocation="CenterScreen"
 		Background="#FF1E1E1E">
@@ -16,13 +16,13 @@
 	<Grid x:Name="MainGrid">
 		<Grid.ColumnDefinitions>
 			<!-- Navigation Panel -->
-			<ColumnDefinition Width="280" MinWidth="250"/>
-			<ColumnDefinition Width="4"/>
+			<ColumnDefinition Width="250" MinWidth="250"/>
+			<ColumnDefinition Width="2"/>
 			<!-- Content Panel (Settings or merged content) -->
-			<ColumnDefinition Width="*" MinWidth="550"/>
-			<ColumnDefinition Width="4"/>
+			<ColumnDefinition Width="*" MinWidth="500"/>
+			<ColumnDefinition Width="2"/>
 			<!-- Tooltip Panel -->
-			<ColumnDefinition Width="300" MinWidth="200"/>
+			<ColumnDefinition Width="250" MinWidth="250"/>
 		</Grid.ColumnDefinitions>
 
 		<!-- Navigation Panel -->
@@ -124,6 +124,101 @@
 					</StackPanel>
 				</ScrollViewer>
 
+				<!-- About Content -->
+				<ScrollViewer x:Name="AboutScrollViewer" 
+							  VerticalScrollBarVisibility="Auto" 
+							  HorizontalScrollBarVisibility="Hidden"
+							  Padding="20"
+							  IsVisible="False">
+					<StackPanel x:Name="AboutPanel">
+						<Label FontSize="24" FontWeight="Bold" Content="Darts-Hub" HorizontalAlignment="Left" Margin="0,0,0,10" Foreground="White"/>
+						<Label x:Name="AboutAppVersion" Content="v0.0.0" HorizontalAlignment="Left" Margin="0,0,0,10" FontSize="12" FontWeight="Bold" Foreground="White"/>
+						<CheckBox x:Name="AboutCheckBoxSkipUpdateConfirmation" 
+								  Content="Skip update confirmation" 
+								  HorizontalAlignment="Left" 
+								  Margin="0,0,0,20" 
+								  Foreground="White"
+								  Checked="AboutCheckBoxSkipUpdateConfirmationChanged" 
+								  Unchecked="AboutCheckBoxSkipUpdateConfirmationChanged"/>
+
+						<Label Content="Developed by:" HorizontalAlignment="Left" Margin="0,10,0,5" Foreground="White" FontWeight="Bold"/>
+						<StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+							<Label Content="wusaaa" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+							<Button ToolTip.Tip="Need help? Contact the developer" 
+									x:Name="AboutContact2" 
+									Background="Transparent" 
+									BorderThickness="0" 
+									Click="AboutButton_Click" 
+									Margin="10,0,0,0">
+								<Image Width="24" Height="24" Source="/Assets/contact.png"/>
+							</Button>
+						</StackPanel>
+
+						<Label Content="Maintained by:" HorizontalAlignment="Left" Margin="0,20,0,5" Foreground="White" FontWeight="Bold"/>
+						<StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+							<Label Content="I3uLL3t" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+							<Button ToolTip.Tip="Need help? Contact the maintainer"
+									x:Name="AboutContact3" 
+									Background="Transparent" 
+									BorderThickness="0" 
+									Click="AboutButton_Click" 
+									Margin="10,0,0,0">
+								<Image Width="24" Height="24" Source="/Assets/contact.png"/>
+							</Button>
+							<Button ToolTip.Tip="Support the project with a tip"
+									x:Name="AboutPaypal" 
+									Background="Transparent" 
+									BorderThickness="0" 
+									Click="AboutButton_Click" 
+									Margin="10,0,0,0">
+								<Image Width="36" Height="36" Source="/Assets/paypal.png"/>
+							</Button>
+						</StackPanel>
+
+						<Label Content="Inspired by:" HorizontalAlignment="Left" Margin="0,20,0,5" Foreground="White"/>
+						<StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+							<Label Content="Reepa86" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+							<Button ToolTip.Tip="Contact the inspiration" 
+									x:Name="AboutContact1" 
+									Background="Transparent" 
+									BorderThickness="0" 
+									Click="AboutButton_Click" 
+									Margin="10,0,0,0">
+								<Image Width="24" Height="24" Source="/Assets/contact.png"/>
+							</Button>
+						</StackPanel>
+
+						<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,30,0,0">
+							<Button ToolTip.Tip="Appreciate our work? Send some satoshi" 
+									x:Name="AboutDonation" 
+									Background="Transparent" 
+									BorderThickness="0" 
+									Click="AboutButton_Click" 
+									Margin="10,0">
+								<Image Width="32" Height="32" Source="/Assets/donation.png"/>
+							</Button>
+
+							<Button ToolTip.Tip="Found a bug? Create an issue on GitHub" 
+									x:Name="AboutBug" 
+									Background="Transparent" 
+									BorderThickness="0" 
+									Click="AboutButton_Click" 
+									Margin="10,0">
+								<Image Width="32" Height="32" Source="/Assets/bug.png"/>
+							</Button>
+
+							<!-- <Button ToolTip.Tip="View changelog" 
+									x:Name="AboutChangelog" 
+									Background="Transparent" 
+									BorderThickness="0" 
+									Click="AboutButton_Click" 
+									Margin="10,0">
+								<Image Width="32" Height="32" Source="/Assets/changelog.png"/>
+							</Button> -->
+						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+
 				<!-- Changelog Content -->
 				<ScrollViewer x:Name="ChangelogScrollViewer" 
 							  VerticalScrollBarVisibility="Auto" 
@@ -173,19 +268,29 @@
 			<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Hidden" Padding="10">
 				<StackPanel x:Name="TooltipContent">
 					<TextBlock x:Name="TooltipTitle" 
-							   Text="Setting Information" 
+							   Text="Darts-Hub Info Area" 
 							   Foreground="White" 
 							   FontSize="16" 
 							   FontWeight="Bold" 
 							   Margin="0,0,0,10"
 							   TextWrapping="Wrap"/>
-					<TextBlock x:Name="TooltipDescription" 
-							   Text="Hover over or click on a setting to see its description here." 
-							   Foreground="#FFCCCCCC" 
-							   TextWrapping="Wrap" 
-							   FontSize="14"
-							   MaxWidth="{Binding $parent[Border].Bounds.Width}"
-							   HorizontalAlignment="Stretch"/>
+					<Border Margin="0" Padding="0,0,50,0" MaxWidth="{Binding $parent[Border].Bounds.Width}">
+						<!--<TextBlock x:Name="TooltipDescription" 
+								   Text="This is your central hub for managing darts applications. Use the navigation panel to configure your apps, or click on settings to see detailed information here." 
+								   Foreground="#FFCCCCCC"
+								   TextWrapping="Wrap" 
+								   FontSize="14"
+								   HorizontalAlignment="Stretch"/> -->
+						<TextBlock x:Name="TooltipDescription" 
+								   Foreground="#FFCCCCCC"
+								   Margin="0,0,10,0"
+								   TextWrapping="Wrap" 
+								   FontSize="14"
+								   MaxWidth="{Binding $parent[Border].Bounds.Width}"
+								   HorizontalAlignment="Stretch">
+							<TextBlock.Text>This is your central hub for managing darts applications. Use the navigation panel to configure your apps, or click on settings to see detailed information here.</TextBlock.Text>
+						</TextBlock>
+					</Border>
 				</StackPanel>
 			</ScrollViewer>
 		</Border>

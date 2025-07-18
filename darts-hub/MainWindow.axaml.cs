@@ -1,34 +1,35 @@
-using darts_hub.control;
-using darts_hub.model;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
+using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Shapes;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using MsBox.Avalonia;
-using MsBox.Avalonia.Dto;
-using MsBox.Avalonia.Enums;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using System.Threading.Tasks;
+using Avalonia.Threading;
+using darts_hub.control;
+using darts_hub.model;
+using MsBox.Avalonia;
 using MsBox.Avalonia.Base;
-using MsBox.Avalonia.ViewModels;
-using System.ComponentModel;
+using MsBox.Avalonia.Dto;
+using MsBox.Avalonia.Enums;
 using MsBox.Avalonia.Models;
+using MsBox.Avalonia.ViewModels;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Collections.ObjectModel;
-using Avalonia.Threading;
+using System.Threading.Tasks;
 using System.Timers;
-using System.IO;
-using Avalonia.Controls.Primitives;
-using Avalonia.Controls.Shapes;
 
 namespace darts_hub
 {
@@ -91,10 +92,11 @@ namespace darts_hub
         {
             Settings,
             Console,
-            Changelog
+            Changelog,
+            About
         }
 
-        private ContentMode currentContentMode = ContentMode.Settings;
+        private ContentMode currentContentMode = ContentMode.About; // Start with About mode
 
         // METHODS
         public MainWindow()
@@ -133,6 +135,9 @@ namespace darts_hub
             {
                 configurator = new(ConfigPath);
                 CheckBoxStartProfileOnProgramStart.IsChecked = configurator.Settings.StartProfileOnStart;
+                
+                // Initialize About content with app version and settings
+                InitializeAboutContent();
 
                 profileManager = new ProfileManager();
                 profileManager.AppDownloadStarted += ProfileManager_AppDownloadStarted;
@@ -205,9 +210,14 @@ namespace darts_hub
 
         private async void Buttonabout_Click(object sender, RoutedEventArgs e)
         {
-            WindowState = WindowState.Minimized;
-            await new AboutWindow(configurator).ShowDialog(this);
-            WindowState = WindowState.Normal;
+            if (currentContentMode == ContentMode.About)
+            {
+                ShowSettingsMode();
+            }
+            else
+            {
+                ShowAboutMode();
+            }
         }
 
         private void ButtonConsole_Click(object sender, RoutedEventArgs e)
@@ -245,13 +255,15 @@ namespace darts_hub
             MainGrid.ColumnDefinitions[4].Width = new GridLength(300, GridUnitType.Pixel);
             TooltipPanel.IsVisible = true;
             TooltipSplitter.IsVisible = true;
-            
+            TooltipTitle.Text = "Tooltips";
+            TooltipDescription.Text = "";
             // Hide console panel
             ConsolePanel.IsVisible = false;
             
             // Show settings, hide others
             SettingsScrollViewer.IsVisible = true;
             ChangelogScrollViewer.IsVisible = false;
+            AboutScrollViewer.IsVisible = false;
             
             // Reset to top button visibility based on current scroll position
             UpdateToTopButtonVisibility();
@@ -259,6 +271,13 @@ namespace darts_hub
             // Update button states
             ButtonConsole.Background = Brushes.Transparent;
             ButtonChangelog.Background = Brushes.Transparent;
+            
+            // Update the about button appearance
+            var aboutButton = this.FindControl<Button>("Buttonabout");
+            if (aboutButton != null)
+            {
+                aboutButton.Background = Brushes.Transparent;
+            }
         }
 
         private void ShowConsoleMode()
@@ -277,9 +296,10 @@ namespace darts_hub
             TooltipPanel.IsVisible = false;
             TooltipSplitter.IsVisible = false;
             
-            // Hide settings and changelog
+            // Hide settings, changelog and about
             SettingsScrollViewer.IsVisible = false;
             ChangelogScrollViewer.IsVisible = false;
+            AboutScrollViewer.IsVisible = false;
             
             // Show console panel (spans across both content columns)
             ConsolePanel.IsVisible = true;
@@ -293,6 +313,13 @@ namespace darts_hub
             // Update button states
             ButtonConsole.Background = new SolidColorBrush(Color.FromRgb(0, 122, 204));
             ButtonChangelog.Background = Brushes.Transparent;
+            
+            // Update the about button appearance
+            var aboutButton = this.FindControl<Button>("Buttonabout");
+            if (aboutButton != null)
+            {
+                aboutButton.Background = Brushes.Transparent;
+            }
         }
 
         private async Task ShowChangelogMode()
@@ -319,6 +346,7 @@ namespace darts_hub
             
             // Show changelog, hide others
             SettingsScrollViewer.IsVisible = false;
+            AboutScrollViewer.IsVisible = false;
             ChangelogScrollViewer.IsVisible = true;
             
             // Load changelog content
@@ -327,6 +355,13 @@ namespace darts_hub
             // Update button states
             ButtonConsole.Background = Brushes.Transparent;
             ButtonChangelog.Background = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+            
+            // Update the about button appearance
+            var aboutButton = this.FindControl<Button>("Buttonabout");
+            if (aboutButton != null)
+            {
+                aboutButton.Background = Brushes.Transparent;
+            }
         }
 
         private void UpdateToTopButtonVisibility()
@@ -2016,18 +2051,53 @@ namespace darts_hub
             }
         }
 
+        //private void ShowTooltip(Argument argument)
+        //{
+        //    try
+        //    {
+        //        if (currentTooltips != null && currentTooltips.TryGetValue(argument.Name, out var tooltip))
+        //        {
+        //            TooltipDescription.Text = tooltip;
+        //        }
+        //        else
+        //        {
+        //            TooltipDescription.Text = argument.Description ?? "No description available.";
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        TooltipDescription.Text = "Error loading tooltip.";
+        //        System.Diagnostics.Debug.WriteLine($"Error showing tooltip: {ex.Message}");
+        //    }
+        //}
+        // In der ShowTooltip-Methode:
         private void ShowTooltip(Argument argument)
         {
             try
             {
+                // Inlines leeren, um vorherigen Text zu entfernen
+                TooltipDescription.Inlines.Clear();
+
+                // Argument-Namen in fett hinzufügen
+                TooltipDescription.Inlines.Add(new Run(argument.NameHuman) { FontWeight = FontWeight.Bold });
+
+                // Doppelpunkt als Trenner
+                TooltipDescription.Inlines.Add(new Run(": "));
+                TooltipDescription.Inlines.Add(new LineBreak());
+                TooltipDescription.Inlines.Add(new LineBreak());
+
+                // Beschreibungstext in normaler Schrift hinzufügen
+                string description;
                 if (currentTooltips != null && currentTooltips.TryGetValue(argument.Name, out var tooltip))
                 {
-                    TooltipDescription.Text = tooltip;
+                    description = tooltip;
                 }
                 else
                 {
-                    TooltipDescription.Text = argument.Description ?? "No description available.";
+                    description = argument.Description ?? "No description available.";
                 }
+
+                TooltipDescription.Inlines.Add(new Run(description));
             }
             catch (Exception ex)
             {
@@ -2306,6 +2376,126 @@ namespace darts_hub
                 "darts-extern" => "https://raw.githubusercontent.com/lbormann/darts-extern/refs/heads/master/README.md",
                 _ => "error"
             };
+        }
+
+        private void ShowAboutMode()
+        {
+            currentContentMode = ContentMode.About;
+            
+            // Hide to top button when not in settings mode
+            var toTopButton = this.FindControl<Button>("ToTopButton");
+            if (toTopButton != null)
+            {
+                toTopButton.IsVisible = false;
+            }
+            
+            // Stop the console update timer
+            consoleUpdateTimer?.Stop();
+            
+            // Show tooltip panel and splitter
+            MainGrid.ColumnDefinitions[4].Width = new GridLength(300, GridUnitType.Pixel);
+            TooltipPanel.IsVisible = true;
+            TooltipSplitter.IsVisible = true;
+            
+            // Hide console panel
+            ConsolePanel.IsVisible = false;
+            
+            // Show about, hide others
+            SettingsScrollViewer.IsVisible = false;
+            ChangelogScrollViewer.IsVisible = false;
+            AboutScrollViewer.IsVisible = true;
+            
+            // Update tooltip content
+            TooltipTitle.Text = "Darts-Hub Info Area";
+            TooltipDescription.Text = "This is your central hub for managing darts applications. Use the navigation panel to configure your apps, or explore the settings for detailed configuration options.";
+            
+            // Update button states
+            ButtonConsole.Background = Brushes.Transparent;
+            ButtonChangelog.Background = Brushes.Transparent;
+            
+            // Update the about button appearance to show it's active
+            var aboutButton = this.FindControl<Button>("Buttonabout");
+            if (aboutButton != null)
+            {
+                aboutButton.Background = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+            }
+        }
+
+        private void InitializeAboutContent()
+        {
+            try
+            {
+                // Set the app version
+                AboutAppVersion.Content = Updater.version;
+                
+                // Set the skip update confirmation checkbox
+                AboutCheckBoxSkipUpdateConfirmation.IsChecked = configurator.Settings.SkipUpdateConfirmation;
+                
+                // Show the About content by default
+                ShowAboutMode();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error initializing About content: {ex.Message}");
+            }
+        }
+
+        private async void AboutButton_Click(object sender, RoutedEventArgs e)
+        {
+            Button helpButton = sender as Button;
+
+            switch (helpButton?.Name)
+            {
+                case "AboutContact1":
+                    VisitHelpPage("https://discordapp.com/users/Reepa86#1149");
+                    break;
+                case "AboutContact2":
+                    VisitHelpPage("https://discordapp.com/users/wusaaa#0578");
+                    break;
+                case "AboutContact3":
+                    VisitHelpPage("https://discordapp.com/users/366537096414101504");
+                    break;
+                case "AboutPaypal":
+                    VisitHelpPage("https://www.paypal.com/paypalme/wusaaa");
+                    break;
+                case "AboutDonation":
+                    var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+                    if (clipboard != null)
+                    {
+                        const string donationAddress = "bc1qr7wsvmmgaj6dle8gae2dl0dcxu5yh8vqlv34x4";
+                        await clipboard.SetTextAsync(donationAddress);
+                        await MessageBoxManager.GetMessageBoxStandard("Bitcoin donation address copied", 
+                            $"Address copied to clipboard:\n{donationAddress}").ShowWindowAsync();
+                    }
+                    break;
+                case "AboutBug":
+                    VisitHelpPage("https://github.com/lbormann/darts-hub/issues");
+                    break;
+                case "AboutChangelog":
+                    await ShowChangelogMode();
+                    break;
+            }
+        }
+
+        private void AboutCheckBoxSkipUpdateConfirmationChanged(object sender, RoutedEventArgs e)
+        {
+            configurator.Settings.SkipUpdateConfirmation = (bool)AboutCheckBoxSkipUpdateConfirmation.IsChecked;
+            configurator.SaveSettings();
+        }
+
+        private void VisitHelpPage(string url)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
+                {
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                RenderMessageBox("Error", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
+            }
         }
     }
 }
