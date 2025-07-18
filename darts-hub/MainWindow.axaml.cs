@@ -72,6 +72,9 @@ namespace darts_hub
         // ATTRIBUTES
         private const string ConfigPath = "config.json";
 
+        // Originales Seitenverhältnis für proportionales Resizing
+        private readonly double originalAspectRatio = 1004.0 / 800.0;
+
         private ProfileManager profileManager;
         private Profile? selectedProfile;
         private AppBase? selectedApp;
@@ -112,7 +115,11 @@ namespace darts_hub
             };
             DataContext = viewModel;
 
-            WindowHelper.CenterWindowOnScreen(this);
+            // DEAKTIVIERT: Setup viewport with MainWindow-specific dimensions
+            // WindowHelper.SetupMainWindowViewport(this);
+            
+            // Verwende stattdessen nur die normale Zentrierung
+            WindowStartupLocation = WindowStartupLocation.CenterScreen;
             
             // Initialize console update timer
             consoleUpdateTimer = new Timer(2000); // Update every 2 seconds
@@ -127,6 +134,11 @@ namespace darts_hub
             
             Opened += MainWindow_Opened;
             Closing += Window_Closing;
+            
+            // Setup proportional resize mit Viewbox-Unterstützung für MainWindow
+            // Die Viewbox im XAML sorgt für automatische Skalierung
+            // Das proportionale Resizing sorgt für korrektes Seitenverhältnis
+            WindowResizeHelper.SetupProportionalResize(this, originalAspectRatio, true, false);
         }
 
         private async void MainWindow_Opened(object sender, EventArgs e)
@@ -660,7 +672,7 @@ namespace darts_hub
                     // Check common installation patterns
                     if (app.Name == "darts-caller")
                     {
-                        var commonPaths = new[]
+                        var commonPaths = new string[]
                         {
                             System.IO.Path.Combine(basePath, "darts-caller.exe"),
                             System.IO.Path.Combine(basePath, "darts-caller"),
@@ -2384,7 +2396,7 @@ namespace darts_hub
             
             // Hide to top button when not in settings mode
             var toTopButton = this.FindControl<Button>("ToTopButton");
-            if (toTopButton != null)
+            if ( toTopButton != null)
             {
                 toTopButton.IsVisible = false;
             }

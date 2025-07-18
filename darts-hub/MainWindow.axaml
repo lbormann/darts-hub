@@ -6,387 +6,382 @@
         x:Class="darts_hub.MainWindow"
         Title="Darts-Hub"
 		Icon="/Assets/favicon.ico"
-		Width="1004"
+		Width="1000"
 		Height="800"
-		MinWidth="1004"
-		MinHeight="600"
+		MinWidth="400"
+		MinHeight="200"
+		MaxWidth="1000"
+		MaxHeight="800"
 		WindowStartupLocation="CenterScreen"
-		Background="#FF1E1E1E">
+		Background="#FF1E1E1E"
+		CanResize="True">
 
-	<Grid x:Name="MainGrid">
-		<Grid.ColumnDefinitions>
+	<!-- Hybrid-Lösung: Viewbox mit besserer Kontrolle für automatische Skalierung -->
+	<Viewbox x:Name="MainViewbox" 
+			 Stretch="Uniform" 
+			 StretchDirection="DownOnly"
+			 HorizontalAlignment="Stretch"
+			 VerticalAlignment="Stretch">
+		<Grid x:Name="MainGrid" Width="1000" Height="800">
+			<Grid.ColumnDefinitions>
+				<!-- Navigation Panel -->
+				<ColumnDefinition Width="250" MinWidth="250"/>
+				<ColumnDefinition Width="2"/>
+				<!-- Content Panel (Settings or merged content) -->
+				<ColumnDefinition Width="*" MinWidth="500"/>
+				<ColumnDefinition Width="2"/>
+				<!-- Tooltip Panel -->
+				<ColumnDefinition Width="250" MinWidth="250"/>
+			</Grid.ColumnDefinitions>
+
 			<!-- Navigation Panel -->
-			<ColumnDefinition Width="250" MinWidth="250"/>
-			<ColumnDefinition Width="2"/>
-			<!-- Content Panel (Settings or merged content) -->
-			<ColumnDefinition Width="*" MinWidth="500"/>
-			<ColumnDefinition Width="2"/>
-			<!-- Tooltip Panel -->
-			<ColumnDefinition Width="250" MinWidth="250"/>
-		</Grid.ColumnDefinitions>
+			<Border Grid.Column="0" Background="#FF2D2D30" BorderBrush="#FF464647" BorderThickness="0,0,1,0">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto"/>
+						<RowDefinition Height="Auto"/>
+						<RowDefinition Height="*"/>
+						<RowDefinition Height="Auto"/>
+					</Grid.RowDefinitions>
 
-		<!-- Navigation Panel -->
-		<Border Grid.Column="0" Background="#FF2D2D30" BorderBrush="#FF464647" BorderThickness="0,0,1,0">
-			<Grid>
-				<Grid.RowDefinitions>
-					<RowDefinition Height="Auto"/>
-					<RowDefinition Height="Auto"/>
-					<RowDefinition Height="*"/>
-					<RowDefinition Height="Auto"/>
-				</Grid.RowDefinitions>
-
-				<!-- Profile Selection -->
-				<StackPanel Grid.Row="0" Margin="10">
-					<Label x:Name="SelectProfile" Content="Select profile:" Foreground="White" FontSize="14" FontWeight="Bold"/>
-					<ComboBox x:Name="Comboboxportal" Margin="0,5,0,0" SelectionChanged="Comboboxportal_SelectionChanged" SelectedIndex="0"/>
-					<CheckBox x:Name="CheckBoxStartProfileOnProgramStart" 
-							  Content="Start with App" 
-							  Margin="0,10,0,0" 
-							  Foreground="White" 
-							  FontSize="12"
-							  Checked="CheckBoxStartProfileOnProgramStartChanged" 
-							  Unchecked="CheckBoxStartProfileOnProgramStartChanged"/>
-				</StackPanel>
-
-				<!-- Start Button -->
-				<Button x:Name="Buttonstart" 
-						Grid.Row="1" 
-						Margin="10,0,10,10" 
-						Height="60"
-						BorderThickness="1"
-						CornerRadius="4"
-						Click="Buttonstart_Click">
-					<!-- Background="#FF007ACC"
-						BorderBrush="#FF005A9E" -->
-					<StackPanel Orientation="Horizontal">
-						<Image x:Name="darts_png" Width="32" Height="32" Source="/Assets/darts.png" Margin="0,0,10,0"/>
-						<TextBlock Text="Start Profile" VerticalAlignment="Center" Foreground="White" FontWeight="Bold"/>
+					<!-- Profile Selection -->
+					<StackPanel Grid.Row="0" Margin="10">
+						<Label x:Name="SelectProfile" Content="Select profile:" Foreground="White" FontSize="14" FontWeight="Bold"/>
+						<ComboBox x:Name="Comboboxportal" Margin="0,5,0,0" SelectionChanged="Comboboxportal_SelectionChanged" SelectedIndex="0"/>
+						<CheckBox x:Name="CheckBoxStartProfileOnProgramStart" 
+								  Content="Start with App" 
+								  Margin="0,10,0,0" 
+								  Foreground="White" 
+								  FontSize="12"
+								  Checked="CheckBoxStartProfileOnProgramStartChanged" 
+								  Unchecked="CheckBoxStartProfileOnProgramStartChanged"/>
 					</StackPanel>
-				</Button>
 
-				<!-- App Navigation -->
-				<ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Hidden">
-					<StackPanel x:Name="AppNavigationPanel" Margin="5"/>
-				</ScrollViewer>
-
-				<!-- Bottom Controls -->
-				<StackPanel Grid.Row="3" Margin="10" Orientation="Horizontal" HorizontalAlignment="Center">
-					<Button x:Name="ButtonConsole" 
-							Content="Console" 
-							Margin="0,0,5,0" 
-							Padding="10,5"
-							Background="Transparent" 
-							BorderBrush="#FF464647"
+					<!-- Start Button -->
+					<Button x:Name="Buttonstart" 
+							Grid.Row="1" 
+							Margin="10,0,10,10" 
+							Height="60"
 							BorderThickness="1"
-							CornerRadius="3"
-							Foreground="White"
-							Click="ButtonConsole_Click"/>
-					<Button x:Name="ButtonChangelog" 
-							Content="Changelog" 
-							Margin="5,0,5,0" 
-							Padding="10,5"
-							Background="Transparent" 
-							BorderBrush="#FF464647"
-							BorderThickness="1"
-							CornerRadius="3"
-							Foreground="White"
-							Click="ButtonChangelog_Click"/>
-					<Button x:Name="Buttonabout" 
-							Margin="5,0,0,0" 
-							Background="Transparent" 
-							BorderThickness="0" 
-							Click="Buttonabout_Click">
-						<Image Width="24" Height="24" Source="/Assets/about.png"/>
+							CornerRadius="4"
+							Click="Buttonstart_Click">
+						<!-- Background="#FF007ACC"
+							BorderBrush="#FF005A9E" -->
+						<StackPanel Orientation="Horizontal">
+							<Image x:Name="darts_png" Width="32" Height="32" Source="/Assets/darts.png" Margin="0,0,10,0"/>
+							<TextBlock Text="Start Profile" VerticalAlignment="Center" Foreground="White" FontWeight="Bold"/>
+						</StackPanel>
 					</Button>
-				</StackPanel>
-			</Grid>
-		</Border>
 
-		<!-- Splitter 1 -->
-		<GridSplitter Grid.Column="1" Background="#FF464647" HorizontalAlignment="Stretch"/>
+					<!-- App Navigation -->
+					<ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Hidden">
+						<StackPanel x:Name="AppNavigationPanel" Margin="5"/>
+					</ScrollViewer>
 
-		<!-- Settings/Content Panel -->
-		<Border Grid.Column="2" Background="#FF252526" BorderBrush="#FF464647" BorderThickness="0,0,1,0">
-			<Grid>
-				<!-- Settings Content -->
-				<ScrollViewer x:Name="SettingsScrollViewer" 
-							  VerticalScrollBarVisibility="Auto" 
-							  HorizontalScrollBarVisibility="Hidden"
-							  Padding="0,0"
-							  ScrollChanged="SettingsScrollViewer_ScrollChanged">
-					<StackPanel x:Name="SettingsPanel">
-						<TextBlock Text="Select an app from the navigation panel to configure its settings" 
-								   Foreground="#FF999999" 
-								   FontSize="16" 
-								   HorizontalAlignment="Center" 
-								   VerticalAlignment="Center" 
-								   Margin="20"/>
+					<!-- Bottom Controls -->
+					<StackPanel Grid.Row="3" Margin="10" Orientation="Horizontal" HorizontalAlignment="Center">
+						<Button x:Name="ButtonConsole" 
+								Content="Console" 
+								Margin="0,0,5,0" 
+								Padding="10,5"
+								Background="Transparent" 
+								BorderBrush="#FF464647"
+								BorderThickness="1"
+								CornerRadius="3"
+								Foreground="White"
+								Click="ButtonConsole_Click"/>
+						<Button x:Name="ButtonChangelog" 
+								Content="Changelog" 
+								Margin="5,0,5,0" 
+								Padding="10,5"
+								Background="Transparent" 
+								BorderBrush="#FF464647"
+								BorderThickness="1"
+								CornerRadius="3"
+								Foreground="White"
+								Click="ButtonChangelog_Click"/>
+						<Button x:Name="Buttonabout" 
+								Margin="5,0,0,0" 
+								Background="Transparent" 
+								BorderThickness="0" 
+								Click="Buttonabout_Click">
+							<Image Width="24" Height="24" Source="/Assets/about.png"/>
+						</Button>
 					</StackPanel>
-				</ScrollViewer>
+				</Grid>
+			</Border>
 
-				<!-- About Content -->
-				<ScrollViewer x:Name="AboutScrollViewer" 
-							  VerticalScrollBarVisibility="Auto" 
-							  HorizontalScrollBarVisibility="Hidden"
-							  Padding="20"
-							  IsVisible="False">
-					<StackPanel x:Name="AboutPanel">
-						<Label FontSize="24" FontWeight="Bold" Content="Darts-Hub" HorizontalAlignment="Left" Margin="0,0,0,10" Foreground="White"/>
-						<Label x:Name="AboutAppVersion" Content="v0.0.0" HorizontalAlignment="Left" Margin="0,0,0,10" FontSize="12" FontWeight="Bold" Foreground="White"/>
-						<CheckBox x:Name="AboutCheckBoxSkipUpdateConfirmation" 
-								  Content="Skip update confirmation" 
-								  HorizontalAlignment="Left" 
-								  Margin="0,0,0,20" 
-								  Foreground="White"
-								  Checked="AboutCheckBoxSkipUpdateConfirmationChanged" 
-								  Unchecked="AboutCheckBoxSkipUpdateConfirmationChanged"/>
+			<!-- Splitter 1 -->
+			<GridSplitter Grid.Column="1" Background="#FF464647" HorizontalAlignment="Stretch"/>
 
-						<Label Content="Developed by:" HorizontalAlignment="Left" Margin="0,10,0,5" Foreground="White" FontWeight="Bold"/>
-						<StackPanel Orientation="Horizontal" Margin="20,0,0,0">
-							<Label Content="wusaaa" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
-							<Button ToolTip.Tip="Need help? Contact the developer" 
-									x:Name="AboutContact2" 
-									Background="Transparent" 
-									BorderThickness="0" 
-									Click="AboutButton_Click" 
-									Margin="10,0,0,0">
-								<Image Width="24" Height="24" Source="/Assets/contact.png"/>
-							</Button>
+			<!-- Settings/Content Panel -->
+			<Border Grid.Column="2" Background="#FF252526" BorderBrush="#FF464647" BorderThickness="0,0,1,0">
+				<Grid>
+					<!-- Settings Content -->
+					<ScrollViewer x:Name="SettingsScrollViewer" 
+								  VerticalScrollBarVisibility="Auto" 
+								  HorizontalScrollBarVisibility="Hidden"
+								  Padding="0,0"
+								  ScrollChanged="SettingsScrollViewer_ScrollChanged">
+						<StackPanel x:Name="SettingsPanel">
+							<TextBlock Text="Select an app from the navigation panel to configure its settings" 
+									   Foreground="#FF999999" 
+									   FontSize="16" 
+									   HorizontalAlignment="Center" 
+									   VerticalAlignment="Center" 
+									   Margin="20"/>
 						</StackPanel>
+					</ScrollViewer>
 
-						<Label Content="Maintained by:" HorizontalAlignment="Left" Margin="0,20,0,5" Foreground="White" FontWeight="Bold"/>
-						<StackPanel Orientation="Horizontal" Margin="20,0,0,0">
-							<Label Content="I3uLL3t" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
-							<Button ToolTip.Tip="Need help? Contact the maintainer"
-									x:Name="AboutContact3" 
-									Background="Transparent" 
-									BorderThickness="0" 
-									Click="AboutButton_Click" 
-									Margin="10,0,0,0">
-								<Image Width="24" Height="24" Source="/Assets/contact.png"/>
-							</Button>
-							<Button ToolTip.Tip="Support the project with a tip"
-									x:Name="AboutPaypal" 
-									Background="Transparent" 
-									BorderThickness="0" 
-									Click="AboutButton_Click" 
-									Margin="10,0,0,0">
-								<Image Width="36" Height="36" Source="/Assets/paypal.png"/>
-							</Button>
+					<!-- About Content -->
+					<ScrollViewer x:Name="AboutScrollViewer" 
+								  VerticalScrollBarVisibility="Auto" 
+								  HorizontalScrollBarVisibility="Hidden"
+								  Padding="20"
+								  IsVisible="False">
+						<StackPanel x:Name="AboutPanel">
+							<Label FontSize="24" FontWeight="Bold" Content="Darts-Hub" HorizontalAlignment="Left" Margin="0,0,0,10" Foreground="White"/>
+							<Label x:Name="AboutAppVersion" Content="v0.0.0" HorizontalAlignment="Left" Margin="0,0,0,10" FontSize="12" FontWeight="Bold" Foreground="White"/>
+							<CheckBox x:Name="AboutCheckBoxSkipUpdateConfirmation" 
+									  Content="Skip update confirmation" 
+									  HorizontalAlignment="Left" 
+									  Margin="0,0,0,20" 
+									  Foreground="White"
+									  Checked="AboutCheckBoxSkipUpdateConfirmationChanged" 
+									  Unchecked="AboutCheckBoxSkipUpdateConfirmationChanged"/>
+
+							<Label Content="Developed by:" HorizontalAlignment="Left" Margin="0,10,0,5" Foreground="White" FontWeight="Bold"/>
+							<StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+								<Label Content="wusaaa" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+								<Button ToolTip.Tip="Need help? Contact the developer" 
+										x:Name="AboutContact2" 
+										Background="Transparent" 
+										BorderThickness="0" 
+										Click="AboutButton_Click" 
+										Margin="10,0,0,0">
+									<Image Width="24" Height="24" Source="/Assets/contact.png"/>
+								</Button>
+							</StackPanel>
+
+							<Label Content="Maintained by:" HorizontalAlignment="Left" Margin="0,20,0,5" Foreground="White" FontWeight="Bold"/>
+							<StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+								<Label Content="I3uLL3t" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+								<Button ToolTip.Tip="Need help? Contact the maintainer"
+										x:Name="AboutContact3" 
+										Background="Transparent" 
+										BorderThickness="0" 
+										Click="AboutButton_Click" 
+										Margin="10,0,0,0">
+									<Image Width="24" Height="24" Source="/Assets/contact.png"/>
+								</Button>
+								<Button ToolTip.Tip="Support the project with a tip"
+										x:Name="AboutPaypal" 
+										Background="Transparent" 
+										BorderThickness="0" 
+										Click="AboutButton_Click" 
+										Margin="10,0,0,0">
+									<Image Width="36" Height="36" Source="/Assets/paypal.png"/>
+								</Button>
+							</StackPanel>
+
+							<Label Content="Inspired by:" HorizontalAlignment="Left" Margin="0,20,0,5" Foreground="White"/>
+							<StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+								<Label Content="Reepa86" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+								<Button ToolTip.Tip="Contact the inspiration" 
+										x:Name="AboutContact1" 
+										Background="Transparent" 
+										BorderThickness="0" 
+										Click="AboutButton_Click" 
+										Margin="10,0,0,0">
+									<Image Width="24" Height="24" Source="/Assets/contact.png"/>
+								</Button>
+							</StackPanel>
+
+							<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,30,0,0">
+								<Button ToolTip.Tip="Appreciate our work? Send some satoshi" 
+										x:Name="AboutDonation" 
+										Background="Transparent" 
+										BorderThickness="0" 
+										Click="AboutButton_Click" 
+										Margin="10,0">
+									<Image Width="32" Height="32" Source="/Assets/donation.png"/>
+								</Button>
+
+								<Button ToolTip.Tip="Found a bug? Create an issue on GitHub" 
+										x:Name="AboutBug" 
+										Background="Transparent" 
+										BorderThickness="0" 
+										Click="AboutButton_Click" 
+										Margin="10,0">
+									<Image Width="32" Height="32" Source="/Assets/bug.png"/>
+								</Button>
+							</StackPanel>
 						</StackPanel>
+					</ScrollViewer>
 
-						<Label Content="Inspired by:" HorizontalAlignment="Left" Margin="0,20,0,5" Foreground="White"/>
-						<StackPanel Orientation="Horizontal" Margin="20,0,0,0">
-							<Label Content="Reepa86" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
-							<Button ToolTip.Tip="Contact the inspiration" 
-									x:Name="AboutContact1" 
-									Background="Transparent" 
-									BorderThickness="0" 
-									Click="AboutButton_Click" 
-									Margin="10,0,0,0">
-								<Image Width="24" Height="24" Source="/Assets/contact.png"/>
-							</Button>
-						</StackPanel>
+					<!-- Changelog Content -->
+					<ScrollViewer x:Name="ChangelogScrollViewer" 
+								  VerticalScrollBarVisibility="Auto" 
+								  HorizontalScrollBarVisibility="Hidden"
+								  Padding="10"
+								  IsVisible="False">
+						<TextBox x:Name="ChangelogContent"
+								 Text="Changelog will appear here..."
+								 Foreground="White"
+								 Background="Transparent"
+								 TextWrapping="Wrap"
+								 IsReadOnly="True"
+								 BorderThickness="0"/>
+					</ScrollViewer>
 
-						<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,30,0,0">
-							<Button ToolTip.Tip="Appreciate our work? Send some satoshi" 
-									x:Name="AboutDonation" 
-									Background="Transparent" 
-									BorderThickness="0" 
-									Click="AboutButton_Click" 
-									Margin="10,0">
-								<Image Width="32" Height="32" Source="/Assets/donation.png"/>
-							</Button>
+					<!-- To Top Button - Fixed position in bottom-right corner of settings area -->
+					<Button x:Name="ToTopButton"
+							Width="40"
+							Height="40"
+							HorizontalAlignment="Right"
+							VerticalAlignment="Bottom"
+							Margin="0,0,20,20"
+							Background="#FF0078D4"
+							BorderBrush="#FF005A9E"
+							BorderThickness="2"
+							CornerRadius="25"
+							Opacity="0"
+							IsVisible="False"
+							Click="ToTopButton_Click"
+							ZIndex="100"
+							ToolTip.Tip="Scroll to top">
+						<TextBlock Text="↑" 
+								   FontSize="24" 
+								   FontWeight="Bold"
+								   Foreground="White"
+								   HorizontalAlignment="Center"
+								   VerticalAlignment="Center"/>
+					</Button>
+				</Grid>
+			</Border>
 
-							<Button ToolTip.Tip="Found a bug? Create an issue on GitHub" 
-									x:Name="AboutBug" 
-									Background="Transparent" 
-									BorderThickness="0" 
-									Click="AboutButton_Click" 
-									Margin="10,0">
-								<Image Width="32" Height="32" Source="/Assets/bug.png"/>
-							</Button>
+			<!-- Splitter 2 -->
+			<GridSplitter Grid.Column="3" Background="#FF464647" HorizontalAlignment="Stretch" x:Name="TooltipSplitter"/>
 
-							<!-- <Button ToolTip.Tip="View changelog" 
-									x:Name="AboutChangelog" 
-									Background="Transparent" 
-									BorderThickness="0" 
-									Click="AboutButton_Click" 
-									Margin="10,0">
-								<Image Width="32" Height="32" Source="/Assets/changelog.png"/>
-							</Button> -->
-						</StackPanel>
-					</StackPanel>
-				</ScrollViewer>
-
-				<!-- Changelog Content -->
-				<ScrollViewer x:Name="ChangelogScrollViewer" 
-							  VerticalScrollBarVisibility="Auto" 
-							  HorizontalScrollBarVisibility="Hidden"
-							  Padding="10"
-							  IsVisible="False">
-					<TextBox x:Name="ChangelogContent"
-							 Text="Changelog will appear here..."
-							 Foreground="White"
-							 Background="Transparent"
-							 TextWrapping="Wrap"
-							 IsReadOnly="True"
-							 BorderThickness="0"/>
-				</ScrollViewer>
-
-				<!-- To Top Button - Fixed position in bottom-right corner of settings area -->
-				<Button x:Name="ToTopButton"
-						Width="40"
-						Height="40"
-						HorizontalAlignment="Right"
-						VerticalAlignment="Bottom"
-						Margin="0,0,20,20"
-						Background="#FF0078D4"
-						BorderBrush="#FF005A9E"
-						BorderThickness="2"
-						CornerRadius="25"
-						Opacity="0"
-						IsVisible="False"
-						Click="ToTopButton_Click"
-						ZIndex="100"
-						ToolTip.Tip="Scroll to top">
-					<TextBlock Text="↑" 
-							   FontSize="24" 
-							   FontWeight="Bold"
-							   Foreground="White"
-							   HorizontalAlignment="Center"
-							   VerticalAlignment="Center"/>
-				</Button>
-			</Grid>
-		</Border>
-
-		<!-- Splitter 2 -->
-		<GridSplitter Grid.Column="3" Background="#FF464647" HorizontalAlignment="Stretch" x:Name="TooltipSplitter"/>
-
-		<!-- Tooltip Panel -->
-		<Border Grid.Column="4" Background="#FF2D2D30" x:Name="TooltipPanel">
-			<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Hidden" Padding="10">
-				<StackPanel x:Name="TooltipContent">
-					<TextBlock x:Name="TooltipTitle" 
-							   Text="Darts-Hub Info Area" 
-							   Foreground="White" 
-							   FontSize="16" 
-							   FontWeight="Bold" 
-							   Margin="0,0,0,10"
-							   TextWrapping="Wrap"/>
-					<Border Margin="0" Padding="0,0,50,0" MaxWidth="{Binding $parent[Border].Bounds.Width}">
-						<!--<TextBlock x:Name="TooltipDescription" 
-								   Text="This is your central hub for managing darts applications. Use the navigation panel to configure your apps, or click on settings to see detailed information here." 
-								   Foreground="#FFCCCCCC"
-								   TextWrapping="Wrap" 
-								   FontSize="14"
-								   HorizontalAlignment="Stretch"/> -->
-						<TextBlock x:Name="TooltipDescription" 
-								   Foreground="#FFCCCCCC"
-								   Margin="0,0,10,0"
-								   TextWrapping="Wrap" 
-								   FontSize="14"
-								   MaxWidth="{Binding $parent[Border].Bounds.Width}"
-								   HorizontalAlignment="Stretch">
-							<TextBlock.Text>This is your central hub for managing darts applications. Use the navigation panel to configure your apps, or click on settings to see detailed information here.</TextBlock.Text>
-						</TextBlock>
-					</Border>
-				</StackPanel>
-			</ScrollViewer>
-		</Border>
-
-		<!-- Console Content - spans across Settings and Tooltip columns -->
-		<Border Grid.Column="2" Grid.ColumnSpan="3" Background="#FF1A1A1A" x:Name="ConsolePanel" IsVisible="False">
-			<Grid>
-				<Grid.RowDefinitions>
-					<RowDefinition Height="Auto"/>
-					<RowDefinition Height="*"/>
-				</Grid.RowDefinitions>
-				
-				<!-- Console Header -->
-				<Border Grid.Row="0" Background="#FF2D2D30" Padding="10,5">
-					<StackPanel Orientation="Horizontal">
-						<TextBlock Text="Console Output" 
+			<!-- Tooltip Panel -->
+			<Border Grid.Column="4" Background="#FF2D2D30" x:Name="TooltipPanel">
+				<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Hidden" Padding="10">
+					<StackPanel x:Name="TooltipContent">
+						<TextBlock x:Name="TooltipTitle" 
+								   Text="Darts-Hub Info Area" 
 								   Foreground="White" 
 								   FontSize="16" 
 								   FontWeight="Bold" 
-								   VerticalAlignment="Center"/>
-						<Button x:Name="ConsoleClearButton" 
-								Content="Clear All" 
-								Margin="10,0,0,0" 
-								Padding="8,4"
-								Background="#FF444444" 
-								Foreground="White"
-								BorderThickness="0"
-								CornerRadius="3"
-								Click="ConsoleClearButton_Click"/>
-						<Button x:Name="ConsoleClearCurrentButton" 
-								Content="Clear Current" 
-								Margin="5,0,0,0" 
-								Padding="8,4"
-								Background="#FF666666" 
-								Foreground="White"
-								BorderThickness="0"
-								CornerRadius="3"
-								Click="ConsoleClearCurrentButton_Click"/>
-						<Button x:Name="ConsoleExportButton" 
-								Content="Export Log" 
-								Margin="5,0,0,0" 
-								Padding="8,4"
-								Background="#FF0078D4" 
-								Foreground="White"
-								BorderThickness="0"
-								CornerRadius="3"
-								Click="ConsoleExportButton_Click"/>
-						<CheckBox x:Name="ConsoleAutoScrollCheckBox" 
-								  Content="Auto-scroll" 
-								  Margin="10,0,0,0" 
-								  Foreground="White"
-								  IsChecked="True"
-								  Checked="ConsoleAutoScrollCheckBox_Changed"
-								  Unchecked="ConsoleAutoScrollCheckBox_Changed"/>
+								   Margin="0,0,0,10"
+								   TextWrapping="Wrap"/>
+						<Border Margin="0" Padding="0,0,50,0" MaxWidth="{Binding $parent[Border].Bounds.Width}">
+							<TextBlock x:Name="TooltipDescription" 
+									   Foreground="#FFCCCCCC"
+									   Margin="0,0,10,0"
+									   TextWrapping="Wrap" 
+									   FontSize="14"
+									   MaxWidth="{Binding $parent[Border].Bounds.Width}"
+									   HorizontalAlignment="Stretch">
+								<TextBlock.Text>This is your central hub for managing darts applications. Use the navigation panel to configure your apps, or click on settings to see detailed information here.</TextBlock.Text>
+							</TextBlock>
+						</Border>
 					</StackPanel>
-				</Border>
-				
-				<!-- Console Tabs -->
-				<TabControl x:Name="ConsoleTabControl" 
-						    Grid.Row="1"
-						    Background="#FF252526"
-						    BorderThickness="0"
-						    SelectionChanged="ConsoleTabControl_SelectionChanged">
-				</TabControl>
-			</Grid>
-		</Border>
+				</ScrollViewer>
+			</Border>
 
-		<!-- Loading Overlay -->
-		<Border x:Name="LoadingOverlay" 
-				Grid.ColumnSpan="5" 
-				Background="#AA000000" 
-				IsVisible="False"
-				ZIndex="1000">
-			<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-				<!-- Simple loading circle using border -->
-				<Border Width="60"
-						Height="60"
-						CornerRadius="30"
-						BorderBrush="White"
-						BorderThickness="4"
-						Margin="0,0,0,20">
-					<!-- Simple dash pattern effect -->
-					<Ellipse Width="40" Height="40" 
-							 Fill="Transparent" 
-							 Stroke="White" 
-							 StrokeThickness="3" 
-							 StrokeDashArray="5,3"/>
-				</Border>
-				<TextBlock x:Name="WaitingText"
-						   Text="Please wait..."
-						   TextAlignment="Center"
-						   Foreground="White"
-						   FontSize="20"
-						   FontWeight="Bold"/>
-			</StackPanel>
-		</Border>
-	</Grid>
+			<!-- Console Content - spans across Settings and Tooltip columns -->
+			<Border Grid.Column="2" Grid.ColumnSpan="3" Background="#FF1A1A1A" x:Name="ConsolePanel" IsVisible="False">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto"/>
+						<RowDefinition Height="*"/>
+					</Grid.RowDefinitions>
+					
+					<!-- Console Header -->
+					<Border Grid.Row="0" Background="#FF2D2D30" Padding="10,5">
+						<StackPanel Orientation="Horizontal">
+							<TextBlock Text="Console Output" 
+									   Foreground="White" 
+									   FontSize="16" 
+									   FontWeight="Bold" 
+									   VerticalAlignment="Center"/>
+							<Button x:Name="ConsoleClearButton" 
+									Content="Clear All" 
+									Margin="10,0,0,0" 
+									Padding="8,4"
+									Background="#FF444444" 
+									Foreground="White"
+									BorderThickness="0"
+									CornerRadius="3"
+									Click="ConsoleClearButton_Click"/>
+							<Button x:Name="ConsoleClearCurrentButton" 
+									Content="Clear Current" 
+									Margin="5,0,0,0" 
+									Padding="8,4"
+									Background="#FF666666" 
+									Foreground="White"
+									BorderThickness="0"
+									CornerRadius="3"
+									Click="ConsoleClearCurrentButton_Click"/>
+							<Button x:Name="ConsoleExportButton" 
+									Content="Export Log" 
+									Margin="5,0,0,0" 
+									Padding="8,4"
+									Background="#FF0078D4" 
+									Foreground="White"
+									BorderThickness="0"
+									CornerRadius="3"
+									Click="ConsoleExportButton_Click"/>
+							<CheckBox x:Name="ConsoleAutoScrollCheckBox" 
+									  Content="Auto-scroll" 
+									  Margin="10,0,0,0" 
+									  Foreground="White"
+									  IsChecked="True"
+									  Checked="ConsoleAutoScrollCheckBox_Changed"
+									  Unchecked="ConsoleAutoScrollCheckBox_Changed"/>
+						</StackPanel>
+					</Border>
+					
+					<!-- Console Tabs -->
+					<TabControl x:Name="ConsoleTabControl" 
+								Grid.Row="1"
+								Background="#FF252526"
+							BorderThickness="0"
+								SelectionChanged="ConsoleTabControl_SelectionChanged">
+					</TabControl>
+				</Grid>
+			</Border>
 
+			<!-- Loading Overlay -->
+			<Border x:Name="LoadingOverlay" 
+					Grid.ColumnSpan="5" 
+					Background="#AA000000" 
+					IsVisible="False"
+					ZIndex="1000">
+				<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+					<!-- Simple loading circle using border -->
+					<Border Width="60"
+							Height="60"
+							CornerRadius="30"
+							BorderBrush="White"
+							BorderThickness="4"
+							Margin="0,0,0,20">
+						<!-- Simple dash pattern effect -->
+						<Ellipse Width="40" Height="40" 
+								 Fill="Transparent" 
+								 Stroke="White" 
+								 StrokeThickness="3" 
+								 StrokeDashArray="5,3"/>
+					</Border>
+					<TextBlock x:Name="WaitingText"
+							   Text="Please wait..."
+							   TextAlignment="Center"
+							   Foreground="White"
+							   FontSize="20"
+							   FontWeight="Bold"/>
+				</StackPanel>
+			</Border>
+		</Grid>
+	</Viewbox>
+	<!-- Schließe Viewbox für automatische Skalierung -->
 </Window>
