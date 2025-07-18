@@ -1,4 +1,4 @@
-<Window xmlns="https://github.com/avaloniaui"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -112,7 +112,8 @@
 				<ScrollViewer x:Name="SettingsScrollViewer" 
 							  VerticalScrollBarVisibility="Auto" 
 							  HorizontalScrollBarVisibility="Hidden"
-							  Padding="0,0">
+							  Padding="0,0"
+							  ScrollChanged="SettingsScrollViewer_ScrollChanged">
 					<StackPanel x:Name="SettingsPanel">
 						<TextBlock Text="Select an app from the navigation panel to configure its settings" 
 								   Foreground="#FF999999" 
@@ -137,6 +138,30 @@
 							 IsReadOnly="True"
 							 BorderThickness="0"/>
 				</ScrollViewer>
+
+				<!-- To Top Button - Fixed position in bottom-right corner of settings area -->
+				<Button x:Name="ToTopButton"
+						Width="40"
+						Height="40"
+						HorizontalAlignment="Right"
+						VerticalAlignment="Bottom"
+						Margin="0,0,20,20"
+						Background="#FF0078D4"
+						BorderBrush="#FF005A9E"
+						BorderThickness="2"
+						CornerRadius="25"
+						Opacity="0"
+						IsVisible="False"
+						Click="ToTopButton_Click"
+						ZIndex="100"
+						ToolTip.Tip="Scroll to top">
+					<TextBlock Text="↑" 
+							   FontSize="24" 
+							   FontWeight="Bold"
+							   Foreground="White"
+							   HorizontalAlignment="Center"
+							   VerticalAlignment="Center"/>
+				</Button>
 			</Grid>
 		</Border>
 
@@ -260,260 +285,3 @@
 	</Grid>
 
 </Window>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

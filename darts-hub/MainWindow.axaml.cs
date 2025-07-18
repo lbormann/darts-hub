@@ -253,6 +253,9 @@ namespace darts_hub
             SettingsScrollViewer.IsVisible = true;
             ChangelogScrollViewer.IsVisible = false;
             
+            // Reset to top button visibility based on current scroll position
+            UpdateToTopButtonVisibility();
+            
             // Update button states
             ButtonConsole.Background = Brushes.Transparent;
             ButtonChangelog.Background = Brushes.Transparent;
@@ -261,6 +264,13 @@ namespace darts_hub
         private void ShowConsoleMode()
         {
             currentContentMode = ContentMode.Console;
+            
+            // Hide to top button when not in settings mode
+            var toTopButton = this.FindControl<Button>("ToTopButton");
+            if (toTopButton != null)
+            {
+                toTopButton.IsVisible = false;
+            }
             
             // Hide tooltip panel and splitter
             MainGrid.ColumnDefinitions[4].Width = new GridLength(0);
@@ -289,6 +299,13 @@ namespace darts_hub
         {
             currentContentMode = ContentMode.Changelog;
             
+            // Hide to top button when not in settings mode
+            var toTopButton = this.FindControl<Button>("ToTopButton");
+            if (toTopButton != null)
+            {
+                toTopButton.IsVisible = false;
+            }
+            
             // Stop the console update timer
             consoleUpdateTimer?.Stop();
             
@@ -310,6 +327,39 @@ namespace darts_hub
             // Update button states
             ButtonConsole.Background = Brushes.Transparent;
             ButtonChangelog.Background = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+        }
+
+        private void UpdateToTopButtonVisibility()
+        {
+            var toTopButton = this.FindControl<Button>("ToTopButton");
+            if (toTopButton != null)
+            {
+                if (currentContentMode == ContentMode.Settings)
+                {
+                    const double showThreshold = 100.0;
+                    bool shouldShow = SettingsScrollViewer.Offset.Y > showThreshold;
+                    toTopButton.IsVisible = shouldShow;
+                    toTopButton.Opacity = shouldShow ? 0.9 : 0.0;
+                }
+                else
+                {
+                    toTopButton.IsVisible = false;
+                }
+            }
+        }
+
+        private void UpdateButtonState(Button button, bool isActive)
+        {
+            if (isActive)
+            {
+                button.Background = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+                button.Foreground = Brushes.White;
+            }
+            else
+            {
+                button.Background = Brushes.Transparent;
+                button.Foreground = Brushes.Black;
+            }
         }
 
         private void UpdateConsoleContent()
@@ -2200,6 +2250,67 @@ namespace darts_hub
         private void ConsoleAutoScrollCheckBox_Changed(object sender, RoutedEventArgs e)
         {
             isAutoScrollEnabled = ConsoleAutoScrollCheckBox.IsChecked == true;
+        }
+
+        private void SettingsScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            // Only show the button in settings mode and when we have scrolled down
+            if (currentContentMode == ContentMode.Settings && sender is ScrollViewer scrollViewer)
+            {
+                // Show button when scrolled down more than 100 pixels
+                const double showThreshold = 100.0;
+                bool shouldShow = scrollViewer.Offset.Y > showThreshold;
+                var toTopButton = this.FindControl<Button>("ToTopButton");
+                if (toTopButton != null)
+                {
+                    if (shouldShow && !toTopButton.IsVisible)
+                    {
+                        toTopButton.IsVisible = true;
+                        toTopButton.Opacity = 0.9;
+                    }
+                    else if (!shouldShow && toTopButton.IsVisible)
+                    {
+                        toTopButton.IsVisible = false;
+                        toTopButton.Opacity = 0.0;
+                    }
+                }
+            }
+        }
+
+        private void ToTopButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Smooth scroll to top animation
+            if (currentContentMode == ContentMode.Settings)
+            {
+                var scrollViewer = SettingsScrollViewer;
+                var startOffset = scrollViewer.Offset.Y;
+                var duration = TimeSpan.FromMilliseconds(500);
+                var startTime = DateTime.Now;
+
+                // Create a timer-based smooth scroll animation
+                var scrollTimer = new Timer(16); // ~60 FPS
+                scrollTimer.Elapsed += (s, args) =>
+                {
+                    var elapsed = DateTime.Now - startTime;
+                    var progress = Math.Min(elapsed.TotalMilliseconds / duration.TotalMilliseconds, 1.0);
+                    
+                    // Ease-out animation curve
+                    var easedProgress = 1 - Math.Pow(1 - progress, 3);
+                    var currentOffset = startOffset * (1 - easedProgress);
+                    
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        scrollViewer.Offset = scrollViewer.Offset.WithY(currentOffset);
+                        
+                        if (progress >= 1.0)
+                        {
+                            scrollTimer.Stop();
+                            scrollTimer.Dispose();
+                        }
+                    });
+                };
+                scrollTimer.Start();
+            }
         }
     }
 }
