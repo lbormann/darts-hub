@@ -425,12 +425,13 @@ namespace darts_hub
                 Text = "Overview of all applications...",
                 Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
                 Background = Brushes.Transparent,
-                TextWrapping = TextWrapping.Wrap,
+                TextWrapping = TextWrapping.NoWrap, // Änderung: NoWrap für besseres horizontales Scrolling
                 IsReadOnly = true,
                 BorderThickness = new Thickness(0),
                 FontFamily = "Consolas,Monaco,Courier New,monospace",
                 FontSize = 12,
-                AcceptsReturn = true
+                AcceptsReturn = true,
+                UseLayoutRounding = true // Verbessert das Rendering
             };
 
             scrollViewer.Content = textBox;
@@ -488,12 +489,13 @@ namespace darts_hub
                 Text = $"Console output for {app.CustomName}...",
                 Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
                 Background = Brushes.Transparent,
-                TextWrapping = TextWrapping.Wrap,
+                TextWrapping = TextWrapping.NoWrap, // Änderung: NoWrap für besseres horizontales Scrolling
                 IsReadOnly = true,
                 BorderThickness = new Thickness(0),
                 FontFamily = "Consolas,Monaco,Courier New,monospace",
                 FontSize = 12,
-                AcceptsReturn = true
+                AcceptsReturn = true,
+                UseLayoutRounding = true // Verbessert das Rendering
             };
 
             // Add scroll change tracking for this specific app
@@ -854,6 +856,85 @@ namespace darts_hub
             }
         }
 
+        private async void ConsoleExportButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(currentConsoleTab) || selectedProfile == null)
+                {
+                    await RenderMessageBox("Export Error", "No console tab selected or profile active.", MsBox.Avalonia.Enums.Icon.Warning);
+                    return;
+                }
+
+                var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string fileName;
+                string content;
+
+                if (currentConsoleTab == "Overview")
+                {
+                    fileName = $"{timestamp}_Overview.log";
+                    
+                    // Get overview content
+                    if (consoleTabs.TryGetValue("Overview", out var overviewTab))
+                    {
+                        var scrollViewer = overviewTab.Content as ScrollViewer;
+                        var textBox = scrollViewer?.Content as TextBox;
+                        content = textBox?.Text ?? "No overview content available.";
+                    }
+                    else
+                    {
+                        content = "Overview tab not found.";
+                    }
+                }
+                else
+                {
+                    // Export specific app console
+                    var app = selectedProfile.Apps.Values.FirstOrDefault(appState => appState.App.CustomName == currentConsoleTab)?.App;
+                    if (app == null)
+                    {
+                        await RenderMessageBox("Export Error", $"App '{currentConsoleTab}' not found.", MsBox.Avalonia.Enums.Icon.Warning);
+                        return;
+                    }
+
+                    fileName = $"{timestamp}_{app.CustomName.Replace(" ", "_")}.log";
+                    
+                    // Get console content for this app
+                    if (consoleTabs.TryGetValue(currentConsoleTab, out var appTab))
+                    {
+                        var scrollViewer = appTab.Content as ScrollViewer;
+                        var textBox = scrollViewer?.Content as TextBox;
+                        content = textBox?.Text ?? "No console content available.";
+                    }
+                    else
+                    {
+                        content = "Console tab not found.";
+                    }
+                }
+
+                // Create logs directory if it doesn't exist
+                var logsDir = System.IO.Path.Combine(Environment.CurrentDirectory, "logs");
+                if (!System.IO.Directory.Exists(logsDir))
+                {
+                    System.IO.Directory.CreateDirectory(logsDir);
+                }
+
+                var filePath = System.IO.Path.Combine(logsDir, fileName);
+                
+                // Save to file
+                await System.IO.File.WriteAllTextAsync(filePath, content);
+                
+                await RenderMessageBox("Export Success", 
+                    $"Console log exported successfully to:\n{filePath}", 
+                    MsBox.Avalonia.Enums.Icon.Success);
+            }
+            catch (Exception ex)
+            {
+                await RenderMessageBox("Export Error", 
+                    $"Failed to export console log:\n{ex.Message}", 
+                    MsBox.Avalonia.Enums.Icon.Error);
+            }
+        }
+
         private void ConsoleTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (ConsoleTabControl.SelectedItem is TabItem selectedTab)
@@ -873,6 +954,49 @@ namespace darts_hub
             }
         }
 
+        private void ConsoleScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e, string appName)
+        {
+            if (sender is not ScrollViewer scrollViewer) return;
+
+            // Detect if user is manually scrolling
+            if (e.OffsetDelta.Y != 0)
+            {
+                // Check if user scrolled up (not at bottom)
+                var isAtBottom = Math.Abs(scrollViewer.Offset.Y - scrollViewer.ScrollBarMaximum.Y) < 1;
+                
+                if (currentConsoleTab == appName)
+                {
+                    isUserScrolling = !isAtBottom;
+                }
+            }
+
+            // Verbessertes horizontales Scrolling: Position beibehalten, wenn nicht explizit gescrollt
+            if (e.OffsetDelta.X != 0 && Math.Abs(e.OffsetDelta.X) < 50) // Kleine horizontale Änderungen ignorieren
+            {
+                // Prüfe ob das eine ungewollte horizontale Scroll-Aktion war
+                var textBox = scrollViewer.Content as TextBox;
+                if (textBox != null && textBox.TextWrapping == TextWrapping.NoWrap)
+                {
+                    // Lasse horizontales Scrolling zu, aber verhindere ungewollte Rücksprünge
+                    var currentHorizontalOffset = scrollViewer.Offset.X;
+                    
+                    // Falls der horizontale Offset zurückgesetzt wurde, aber der Benutzer nicht explizit gescrollt hat
+                    if (currentHorizontalOffset == 0 && e.OffsetDelta.X < 0)
+                    {
+                        // Verhindere den Rücksprung zum Anfang
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            if (scrollViewer.Offset.X == 0 && scrollViewer.ScrollBarMaximum.X > 0)
+                            {
+                                scrollViewer.Offset = scrollViewer.Offset.WithX(Math.Min(50, scrollViewer.ScrollBarMaximum.X));
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
+        // ProfileManager event handlers
         private async void ProfileManager_AppDownloadStarted(object? sender, AppEventArgs e)
         {
             SetWait(true, "Downloading " + e.App.Name + "...");
@@ -1007,13 +1131,6 @@ namespace darts_hub
             {
                 var appState = app.Value;
                 
-                // Create main button container - now just contains the button
-                //var buttonContainer = new StackPanel
-                //{
-                //    Orientation = Orientation.Horizontal,
-                //    Margin = new Thickness(0, 2)
-                //};
-                
                 // Create app button content with running indicator if app is running
                 var buttonContent = new StackPanel
                 {
@@ -1062,35 +1179,7 @@ namespace darts_hub
                     
                     buttonContent.Children.Add(runningIndicator);
                 }
-                //// Linie oben
-                //var topLine = new Border
-                //{
-                //    Height = 1,
-                //    Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-                //    Margin = new Thickness(0, 4, 0, 0),
-                //    HorizontalAlignment = HorizontalAlignment.Stretch
-                //};
-                //var appButton = new Button
-                //{
-                //    Content = buttonContent,
-                //    Background = Brushes.Transparent,
-                //    //BorderBrush = new SolidColorBrush(Color.FromRgb(70, 70, 71)),
-                //    //BorderThickness = new Thickness(1),
-                //    //CornerRadius = new CornerRadius(3),
-                //    HorizontalAlignment = HorizontalAlignment.Stretch,
-                //    HorizontalContentAlignment = HorizontalAlignment.Left,
-                //    Padding = new Thickness(10, 8),
-                //    Width = double.NaN; // Slightly wider to accommodate running indicator
-                //    Tag = appState.App
-                //};
-                //// Linie unten
-                //var bottomLine = new Border
-                //{
-                //    Height = 1,
-                //    Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-                //    Margin = new Thickness(0, 0, 0, 4),
-                //    HorizontalAlignment = HorizontalAlignment.Stretch
-                //};
+
                 // Linie oben
                 var topLine = new Border
                 {
@@ -1140,16 +1229,6 @@ namespace darts_hub
                 {
                     selectedApp = appState.App;
 
-                    // Update button selection visual
-                    //foreach (var container in AppNavigationPanel.Children.OfType<StackPanel>())
-                    //{
-                    //    foreach (var child in container.Children.OfType<Button>())
-                    //    {
-                    //        child.Background = Brushes.Transparent;
-                    //    }
-                    //}
-                    //appButton.Background = new SolidColorBrush(Color.FromRgb(0, 122, 204));
-
                     // Show settings mode if not already
                     if (currentContentMode != ContentMode.Settings)
                     {
@@ -1194,10 +1273,75 @@ namespace darts_hub
                 contextMenu.Items.Add(toggleMenuItem);
                 
                 appButton.ContextMenu = contextMenu;
-                //buttonContainer.Children.Add(appButton);
-                
-                //AppNavigationPanel.Children.Add(buttonContainer);
             }
+        }
+
+        // Timer event handlers
+        private void ConsoleUpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            // Only update if we're in console mode
+            if (currentContentMode == ContentMode.Console)
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    UpdateConsoleContent();
+                    UpdateOverviewTab();
+                });
+            }
+        }
+
+        private void NavigationUpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            // Update navigation to refresh running states
+            Dispatcher.UIThread.Post(() =>
+            {
+                var currentSelectedApp = selectedApp;
+                bool needsSettingsRefresh = false;
+                
+                // Check if any app running state has changed
+                if (selectedProfile != null)
+                {
+                    foreach (var appState in selectedProfile.Apps.Values)
+                    {
+                        var appName = appState.App.CustomName;
+                        var currentRunningState = appState.App.AppRunningState;
+                        
+                        if (lastKnownRunningStates.TryGetValue(appName, out var lastKnownState))
+                        {
+                            if (lastKnownState != currentRunningState)
+                            {
+                                // Running state changed
+                                lastKnownRunningStates[appName] = currentRunningState;
+                                
+                                // If this is the currently selected app, we need to refresh settings
+                                if (currentSelectedApp != null && currentSelectedApp.CustomName == appName)
+                                {
+                                    needsSettingsRefresh = true;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // First time seeing this app, store its state
+                            lastKnownRunningStates[appName] = currentRunningState;
+                        }
+                    }
+                }
+                
+                RenderAppNavigation();
+                
+                // Only refresh app settings if needed and we're in settings mode
+                if (needsSettingsRefresh && currentSelectedApp != null && currentContentMode == ContentMode.Settings)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        await Dispatcher.UIThread.InvokeAsync(async () =>
+                        {
+                            await RenderAppSettings(currentSelectedApp);
+                        });
+                    });
+                }
+            });
         }
 
         private async Task RenderAppSettings(AppBase app)
@@ -1298,7 +1442,7 @@ namespace darts_hub
             
             controlButtonPanel.Children.Add(startStopButton);
 
-            // Restart Button - properly disabled when app is not running
+            // Restart Button
             var restartButton = new Button
             {
                 Content = "Restart",
@@ -1312,7 +1456,6 @@ namespace darts_hub
                 IsEnabled = app.AppRunningState
             };
             
-            // When app is not running, make restart button visually disabled
             if (!app.AppRunningState)
             {
                 restartButton.Background = new SolidColorBrush(Color.FromRgb(100, 100, 100));
@@ -1321,37 +1464,29 @@ namespace darts_hub
             
             restartButton.Click += async (s, e) =>
             {
-                if (!app.AppRunningState) return; // Extra safety check
+                if (!app.AppRunningState) return;
                 
                 try
                 {
-                    // Show loading overlay with rotating indicator during restart
                     SetWait(true, $"Restarting {app.CustomName}...");
                     
-                    // Disable buttons during restart operation
                     startStopButton.IsEnabled = false;
                     restartButton.IsEnabled = false;
                     
-                    // Update tracking for the current app state
                     lastKnownRunningStates[app.CustomName] = app.AppRunningState;
                     
-                    // Stop the app
                     if (app.AppRunningState)
                     {
                         app.Close();
-                        await Task.Delay(2000); // Wait for proper shutdown
-                        
-                        // Update tracking after stop
+                        await Task.Delay(2000);
                         lastKnownRunningStates[app.CustomName] = app.AppRunningState;
                     }
                     
-                    // Start the app
                     app.Run();
                     
-                    // Wait a bit more for startup and monitor status
                     int attempts = 0;
                     bool startedSuccessfully = false;
-                    while (attempts < 10) // Max 5 seconds wait
+                    while (attempts < 10)
                     {
                         await Task.Delay(500);
                         attempts++;
@@ -1362,10 +1497,7 @@ namespace darts_hub
                         }
                     }
                     
-                    // Update tracking after start
                     lastKnownRunningStates[app.CustomName] = app.AppRunningState;
-                    
-                    // Hide loading overlay
                     SetWait(false);
                     
                     if (!startedSuccessfully)
@@ -1373,11 +1505,8 @@ namespace darts_hub
                         await RenderMessageBox("Warning", $"Restart initiated for {app.CustomName}, but the app may not have started properly. Please check the console for details.", MsBox.Avalonia.Enums.Icon.Warning);
                     }
                     
-                    // Refresh the settings page and navigation
                     await RenderAppSettings(app);
                     RenderAppNavigation();
-                    
-                    // Save changes
                     Save();
                 }
                 catch (Exception ex)
@@ -1385,14 +1514,10 @@ namespace darts_hub
                     SetWait(false);
                     await RenderMessageBox("Error", $"Failed to restart {app.CustomName}:\n{ex.Message}", MsBox.Avalonia.Enums.Icon.Error);
                     
-                    // Update tracking even if restart failed
                     lastKnownRunningStates[app.CustomName] = app.AppRunningState;
-                    
-                    // Re-enable buttons even if restart failed
                     startStopButton.IsEnabled = true;
                     restartButton.IsEnabled = app.AppRunningState;
                     
-                    // Refresh UI to reflect current state
                     await RenderAppSettings(app);
                     RenderAppNavigation();
                 }
@@ -1467,20 +1592,20 @@ namespace darts_hub
                 {
                     Header = section.Key,
                     IsExpanded = true,
-                    Margin = new Thickness(0, 10), // Größerer Abstand zwischen den Expandern (20px)
+                    Margin = new Thickness(0, 10),
                     FontSize = 16,
                     FontWeight = FontWeight.Bold,
                     Foreground = Brushes.White,
                     Background = Brushes.Transparent,
                     BorderThickness = new Thickness(0),
-                    HorizontalAlignment = HorizontalAlignment.Stretch // Volle Breite nutzen
+                    HorizontalAlignment = HorizontalAlignment.Stretch
                 };
 
                 var sectionPanel = new StackPanel 
                 { 
                     Margin = new Thickness(10),
                     Background = Brushes.Transparent,
-                    HorizontalAlignment = HorizontalAlignment.Stretch // Volle Breite nutzen
+                    HorizontalAlignment = HorizontalAlignment.Stretch
                 };
 
                 foreach (var argument in section)
@@ -1490,9 +1615,8 @@ namespace darts_hub
                     var argumentControl = await CreateArgumentControl(argument);
                     if (argumentControl != null)
                     {
-                        // Remove margin from individual controls to use full width
                         argumentControl.Margin = new Thickness(0, 15);
-                        argumentControl.HorizontalAlignment = HorizontalAlignment.Stretch; // Volle Breite nutzen
+                        argumentControl.HorizontalAlignment = HorizontalAlignment.Stretch;
                         sectionPanel.Children.Add(argumentControl);
                     }
                 }
@@ -1508,32 +1632,30 @@ namespace darts_hub
             {
                 Header = "Application Control",
                 IsExpanded = true,
-                Margin = new Thickness(0, 10), // Größerer Abstand (20px)
+                Margin = new Thickness(0, 10),
                 FontSize = 16,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
-                HorizontalAlignment = HorizontalAlignment.Stretch // Volle Breite nutzen
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
             var sectionPanel = new StackPanel 
             { 
                 Margin = new Thickness(10),
                 Background = Brushes.Transparent,
-                HorizontalAlignment = HorizontalAlignment.Stretch // Volle Breite nutzen
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
-            // Get the current app state from the selected profile
             var appState = selectedProfile?.Apps.Values.FirstOrDefault(a => a.App.CustomName == app.CustomName);
             
             if (appState != null)
             {
-                // Autostart checkbox
                 var autostartPanel = new StackPanel 
                 { 
                     Margin = new Thickness(0, 5),
-                    HorizontalAlignment = HorizontalAlignment.Stretch // Volle Breite nutzen
+                    HorizontalAlignment = HorizontalAlignment.Stretch
                 };
                 
                 var autostartLabel = new TextBlock
@@ -1552,21 +1674,21 @@ namespace darts_hub
                     FontSize = 12,
                     Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
                     Margin = new Thickness(0, 0, 0, 10),
-                    HorizontalAlignment = HorizontalAlignment.Stretch // Volle Breite nutzen
+                    HorizontalAlignment = HorizontalAlignment.Stretch
                 };
 
                 autostartCheckBox.Checked += (s, e) => 
                 {
                     appState.TaggedForStart = true;
-                    Save(); // Save profile changes
-                    RenderAppNavigation(); // Update navigation to reflect changes
+                    Save();
+                    RenderAppNavigation();
                 };
                 
                 autostartCheckBox.Unchecked += (s, e) => 
                 {
                     appState.TaggedForStart = false;
-                    Save(); // Save profile changes
-                    RenderAppNavigation(); // Update navigation to reflect changes
+                    Save();
+                    RenderAppNavigation();
                 };
 
                 autostartPanel.Children.Add(autostartCheckBox);
@@ -1577,47 +1699,12 @@ namespace darts_hub
             return expander;
         }
 
-        private async Task LoadTooltipsForApp(AppBase app)
-        {
-            try
-            {
-                string readmeUrl = GetReadmeUrlForApp(app.CustomName);
-                if (readmeUrl != "error")
-                {
-                    currentTooltips = await readmeParser.GetArgumentsFromReadme(readmeUrl);
-                }
-                else
-                {
-                    currentTooltips = new Dictionary<string, string>();
-                }
-            }
-            catch (Exception ex)
-            {
-                currentTooltips = new Dictionary<string, string>();
-                System.Diagnostics.Debug.WriteLine($"Error loading tooltips: {ex.Message}");
-            }
-        }
-
-        private string GetReadmeUrlForApp(string appName)
-        {
-            return appName switch
-            {
-                "darts-caller" => "https://raw.githubusercontent.com/lbormann/darts-caller/refs/heads/master/README.md",
-                "darts-wled" => "https://raw.githubusercontent.com/lbormann/darts-wled/refs/heads/main/README.md",
-                "darts-pixelit" => "https://raw.githubusercontent.com/lbormann/darts-pixelit/refs/heads/main/README.md",
-                "darts-gif" => "https://raw.githubusercontent.com/lbormann/darts-gif/refs/heads/main/README.md",
-                "darts-voice" => "https://raw.githubusercontent.com/lbormann/darts-voice/refs/heads/main/README.md",
-                "darts-extern" => "https://raw.githubusercontent.com/lbormann/darts-extern/refs/heads/master/README.md",
-                _ => "error"
-            };
-        }
-
         private async Task<Control?> CreateArgumentControl(Argument argument)
         {
             var mainPanel = new StackPanel 
             { 
                 Margin = new Thickness(0, 5),
-                HorizontalAlignment = HorizontalAlignment.Stretch // Volle Breite nutzen
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
             
             // Label
@@ -1665,18 +1752,15 @@ namespace darts_hub
                     break;
 
                 case Argument.TypeBool:
-                    // Handle bool values - correctly support valueMapping for darts-caller
                     bool isChecked = false;
                     if (!string.IsNullOrEmpty(argument.Value))
                     {
-                        // For valueMapping: "True" maps to "1", "False" maps to "0"
-                        // So we need to check for "True" or "1" as checked state
                         isChecked = argument.Value == "True" || argument.Value == "1";
                     }
                     
                     inputControl = new CheckBox
                     {
-                        Content = argument.NameHuman,
+                        //Content = argument.NameHuman,
                         IsChecked = isChecked,
                         FontSize = 14,
                         Foreground = Brushes.White,
@@ -1761,10 +1845,9 @@ namespace darts_hub
                         }
                     };
 
-                    // Set up grid for proper sizing
                     var grid = new Grid
                     {
-                        HorizontalAlignment = HorizontalAlignment.Stretch // Volle Breite nutzen
+                        HorizontalAlignment = HorizontalAlignment.Stretch
                     };
                     grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                     grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -1786,7 +1869,6 @@ namespace darts_hub
 
             if (inputControl != null)
             {
-                // Create a container for the input control and clear button
                 var inputContainer = new Grid
                 {
                     HorizontalAlignment = HorizontalAlignment.Stretch
@@ -1794,11 +1876,9 @@ namespace darts_hub
                 inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-                // Add the input control to the first column
                 Grid.SetColumn(inputControl, 0);
                 inputContainer.Children.Add(inputControl);
 
-                // Create the clear button with radiergummi icon
                 var clearImage = new Image
                 {
                     Width = 20,
@@ -1818,16 +1898,12 @@ namespace darts_hub
                     Height = 30
                 };
 
-                // Set tooltip for clear button
                 ToolTip.SetTip(clearButton, "Reset to default");
 
-                // Add clear button click handler
                 clearButton.Click += (s, e) =>
                 {
-                    // Reset value to default (null/empty)
                     argument.Value = null;
 
-                    // Update the UI control
                     switch (type)
                     {
                         case Argument.TypeString:
@@ -1837,9 +1913,10 @@ namespace darts_hub
                             break;
                         case Argument.TypeBool:
                             if (inputControl is CheckBox checkBox)
+                            {
                                 checkBox.IsChecked = false;
-                                // Reset the argument value to null so it won't be included in command line
                                 argument.Value = null;
+                            }
                             break;
                         case Argument.TypeInt:
                         case Argument.TypeFloat:
@@ -1857,10 +1934,7 @@ namespace darts_hub
                             break;
                     }
 
-                    // Update button opacity
                     UpdateClearButtonOpacity(clearButton, argument);
-                    
-                    // Save configuration
                     AutoSaveConfiguration(argument);
                 };
 
@@ -1902,7 +1976,6 @@ namespace darts_hub
                         {
                             numericUpDown.ValueChanged += (s, e) => 
                             {
-                                // For float values, ensure we use dot as decimal separator
                                 if (type == Argument.TypeFloat)
                                 {
                                     argument.Value = numericUpDown.Value?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
@@ -1916,14 +1989,11 @@ namespace darts_hub
                             };
                         }
                         break;
-                    // File/Path already handled above in the switch case
                 }
 
-                // Add clear button to the second column
                 Grid.SetColumn(clearButton, 1);
                 inputContainer.Children.Add(clearButton);
 
-                // Add hover and click events for tooltip display
                 inputControl.PointerEntered += (s, e) => ShowTooltip(argument);
                 inputControl.PointerPressed += (s, e) => ShowTooltip(argument);
                 
@@ -1933,94 +2003,40 @@ namespace darts_hub
             return mainPanel;
         }
 
-        // Timer event handler for console updates
-        private void ConsoleUpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            // Only update if we're in console mode
-            if (currentContentMode == ContentMode.Console)
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    UpdateConsoleContent();
-                    UpdateOverviewTab();
-                });
-            }
-        }
-
-        private void NavigationUpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            // Update navigation to refresh running states
-            Dispatcher.UIThread.Post(() =>
-            {
-                var currentSelectedApp = selectedApp;
-                bool needsSettingsRefresh = false;
-                
-                // Check if any app running state has changed
-                if (selectedProfile != null)
-                {
-                    foreach (var appState in selectedProfile.Apps.Values)
-                    {
-                        var appName = appState.App.CustomName;
-                        var currentRunningState = appState.App.AppRunningState;
-                        
-                        if (lastKnownRunningStates.TryGetValue(appName, out var lastKnownState))
-                        {
-                            if (lastKnownState != currentRunningState)
-                            {
-                                // Running state changed
-                                lastKnownRunningStates[appName] = currentRunningState;
-                                
-                                // If this is the currently selected app, we need to refresh settings
-                                if (currentSelectedApp != null && currentSelectedApp.CustomName == appName)
-                                {
-                                    needsSettingsRefresh = true;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // First time seeing this app, store its state
-                            lastKnownRunningStates[appName] = currentRunningState;
-                        }
-                    }
-                }
-                
-                RenderAppNavigation();
-                
-                // Only refresh app settings if needed and we're in settings mode
-                if (needsSettingsRefresh && currentSelectedApp != null && currentContentMode == ContentMode.Settings)
-                {
-                    _ = Task.Run(async () =>
-                    {
-                        await Dispatcher.UIThread.InvokeAsync(async () =>
-                        {
-                            await RenderAppSettings(currentSelectedApp);
-                        });
-                    });
-                }
-            });
-        }
-
         private void AutoSaveConfiguration(Argument argument)
         {
             try
             {
-                // Mark the argument as changed
                 argument.IsValueChanged = true;
-                
-                // Save the apps configuration immediately
                 Save();
-                
-                // Optional: Show a brief visual feedback (could be a small tooltip or status)
-                // For now, we'll just ensure the save happens silently
             }
             catch (Exception ex)
             {
-                // Silent failure - we don't want to interrupt user experience
                 System.Diagnostics.Debug.WriteLine($"Auto-save failed: {ex.Message}");
             }
         }
 
+        private void ShowTooltip(Argument argument)
+        {
+            try
+            {
+                if (currentTooltips != null && currentTooltips.TryGetValue(argument.Name, out var tooltip))
+                {
+                    TooltipDescription.Text = tooltip;
+                }
+                else
+                {
+                    TooltipDescription.Text = argument.Description ?? "No description available.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TooltipDescription.Text = "Error loading tooltip.";
+                System.Diagnostics.Debug.WriteLine($"Error showing tooltip: {ex.Message}");
+            }
+        }
+
+        // Updater event handlers
         private async void Updater_NoNewReleaseFound(object? sender, ReleaseEventArgs e)
         {
             await Dispatcher.UIThread.InvokeAsync(async () =>
@@ -2094,7 +2110,7 @@ namespace darts_hub
             Close();
         }
 
-        // Missing methods that need to be added
+        // Message box and utility methods
         private async Task<ButtonResult> RenderMessageBox(string title, string message, MsBox.Avalonia.Enums.Icon icon, ButtonEnum buttons = ButtonEnum.Ok, double? width = null, double? height = null, int autoCloseDelayInSeconds = 0)
         {
             var messageBoxParams = new MessageBoxStandardParams
@@ -2116,10 +2132,9 @@ namespace darts_hub
             
             if (autoCloseDelayInSeconds > 0)
             {
-                // Auto close after specified delay - simplified approach
                 _ = Task.Delay(TimeSpan.FromSeconds(autoCloseDelayInSeconds)).ContinueWith(_ =>
                 {
-                    // The MessageBox will auto-close on timeout - no need to manually close
+                    // The MessageBox will auto-close on timeout
                 });
             }
 
@@ -2137,7 +2152,6 @@ namespace darts_hub
             {
                 try
                 {
-                    // Reset to default configuration
                     configurator = new Configurator("config.json");
                     await RenderMessageBox("", "Configuration has been reset to defaults.", MsBox.Avalonia.Enums.Icon.Info);
                 }
@@ -2157,12 +2171,7 @@ namespace darts_hub
         {
             try
             {
-                // Try to load changelog from a known location or URL
                 var changelogText = "Changelog not available yet.";
-                
-                // You can implement actual changelog loading here
-                // For example, from a URL or local file
-                
                 ChangelogContent.Text = changelogText;
             }
             catch (Exception ex)
@@ -2171,59 +2180,17 @@ namespace darts_hub
             }
         }
 
-        private void ConsoleScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e, string appName)
-        {
-            if (sender is not ScrollViewer scrollViewer) return;
-
-            // Detect if user is manually scrolling
-            if (e.OffsetDelta.Y != 0)
-            {
-                // Check if user scrolled up (not at bottom)
-                var isAtBottom = Math.Abs(scrollViewer.Offset.Y - scrollViewer.ScrollBarMaximum.Y) < 1;
-                
-                if (currentConsoleTab == appName)
-                {
-                    isUserScrolling = !isAtBottom;
-                }
-            }
-        }
-
-        private void ShowTooltip(Argument argument)
-        {
-            try
-            {
-                if (currentTooltips != null && currentTooltips.TryGetValue(argument.Name, out var tooltip))
-                {
-                    TooltipDescription.Text = tooltip;
-                }
-                else
-                {
-                    TooltipDescription.Text = argument.Description ?? "No description available.";
-                }
-            }
-            catch (Exception ex)
-            {
-                TooltipDescription.Text = "Error loading tooltip.";
-                System.Diagnostics.Debug.WriteLine($"Error showing tooltip: {ex.Message}");
-            }
-        }
-
+        // Additional event handlers
         private void Comboboxportal_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (Comboboxportal.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is Profile profile)
             {
                 selectedProfile = profile;
-                
-                // Reset the running state tracking when switching profiles
                 lastKnownRunningStates.Clear();
-                
                 RenderAppNavigation();
-                
-                // Clear settings panel when switching profiles
                 SettingsPanel.Children.Clear();
                 selectedApp = null;
                 
-                // Update console tabs if in console mode
                 if (currentContentMode == ContentMode.Console)
                 {
                     InitializeConsoleTabs();
@@ -2231,7 +2198,6 @@ namespace darts_hub
             }
         }
 
-        // Additional missing event handlers
         private void CheckBoxStartProfileOnProgramStartChanged(object sender, RoutedEventArgs e)
         {
             if (CheckBoxStartProfileOnProgramStart.IsChecked.HasValue)
@@ -2241,12 +2207,6 @@ namespace darts_hub
             }
         }
 
-        private void ConsoleExportButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Implement console export functionality
-            // This could export the current console content to a file
-        }
-
         private void ConsoleAutoScrollCheckBox_Changed(object sender, RoutedEventArgs e)
         {
             isAutoScrollEnabled = ConsoleAutoScrollCheckBox.IsChecked == true;
@@ -2254,10 +2214,8 @@ namespace darts_hub
 
         private void SettingsScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            // Only show the button in settings mode and when we have scrolled down
             if (currentContentMode == ContentMode.Settings && sender is ScrollViewer scrollViewer)
             {
-                // Show button when scrolled down more than 100 pixels
                 const double showThreshold = 100.0;
                 bool shouldShow = scrollViewer.Offset.Y > showThreshold;
                 var toTopButton = this.FindControl<Button>("ToTopButton");
@@ -2279,7 +2237,6 @@ namespace darts_hub
 
         private void ToTopButton_Click(object sender, RoutedEventArgs e)
         {
-            // Smooth scroll to top animation
             if (currentContentMode == ContentMode.Settings)
             {
                 var scrollViewer = SettingsScrollViewer;
@@ -2287,14 +2244,12 @@ namespace darts_hub
                 var duration = TimeSpan.FromMilliseconds(500);
                 var startTime = DateTime.Now;
 
-                // Create a timer-based smooth scroll animation
                 var scrollTimer = new Timer(16); // ~60 FPS
                 scrollTimer.Elapsed += (s, args) =>
                 {
                     var elapsed = DateTime.Now - startTime;
                     var progress = Math.Min(elapsed.TotalMilliseconds / duration.TotalMilliseconds, 1.0);
                     
-                    // Ease-out animation curve
                     var easedProgress = 1 - Math.Pow(1 - progress, 3);
                     var currentOffset = startOffset * (1 - easedProgress);
                     
@@ -2311,6 +2266,41 @@ namespace darts_hub
                 };
                 scrollTimer.Start();
             }
+        }
+
+        private async Task LoadTooltipsForApp(AppBase app)
+        {
+            try
+            {
+                string readmeUrl = GetReadmeUrlForApp(app.CustomName);
+                if (readmeUrl != "error")
+                {
+                    currentTooltips = await readmeParser.GetArgumentsFromReadme(readmeUrl);
+                }
+                else
+                {
+                    currentTooltips = new Dictionary<string, string>();
+                }
+            }
+            catch (Exception ex)
+            {
+                currentTooltips = new Dictionary<string, string>();
+                System.Diagnostics.Debug.WriteLine($"Error loading tooltips: {ex.Message}");
+            }
+        }
+
+        private string GetReadmeUrlForApp(string appName)
+        {
+            return appName switch
+            {
+                "darts-caller" => "https://raw.githubusercontent.com/lbormann/darts-caller/refs/heads/master/README.md",
+                "darts-wled" => "https://raw.githubusercontent.com/lbormann/darts-wled/refs/heads/main/README.md",
+                "darts-pixelit" => "https://raw.githubusercontent.com/lbormann/darts-pixelit/refs/heads/main/README.md",
+                "darts-gif" => "https://raw.githubusercontent.com/lbormann/darts-gif/refs/heads/main/README.md",
+                "darts-voice" => "https://raw.githubusercontent.com/lbormann/darts-voice/refs/heads/main/README.md",
+                "darts-extern" => "https://raw.githubusercontent.com/lbormann/darts-extern/refs/heads/master/README.md",
+                _ => "error"
+            };
         }
     }
 }
