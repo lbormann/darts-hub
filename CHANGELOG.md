@@ -1,8 +1,9 @@
-## B0.14.0
+## B0.14.1
 - Complete UI redesign
   - more user friendly
   - more modern
-  - Tooltips for all arguments 
+  - Tooltips for all arguments
+  - viewport settings
 
 ## 0.13.19
 - WLED

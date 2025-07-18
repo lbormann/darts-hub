@@ -281,7 +281,8 @@ jobs:
             - Complete UI redesign
              - more user friendly
              - more modern
-             - Tooltips for all arguments 
+             - Tooltips for all arguments
+             - viewport settings
 
             ## WLED
             - nothing new
