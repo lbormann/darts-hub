@@ -2171,7 +2171,12 @@ namespace darts_hub
         {
             try
             {
-                var changelogText = "Changelog not available yet.";
+               
+                var changelogText = await Helper.AsyncHttpGet("https://raw.githubusercontent.com/lbormann/darts-hub/main/CHANGELOG.md", 4);
+                if (string.IsNullOrEmpty(changelogText))
+                    changelogText = "Changelog not available. Please try again later.";
+               
+                //var changelogText = "Changelog not available yet.";
                 ChangelogContent.Text = changelogText;
             }
             catch (Exception ex)

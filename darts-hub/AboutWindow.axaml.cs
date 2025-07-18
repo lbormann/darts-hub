@@ -91,6 +91,7 @@ namespace darts_hub
 
                     await MessageBoxManager.GetMessageBoxStandard(new MessageBoxStandardParams
                     {
+                        //Icon = Icon.None,
                         Icon = MsBox.Avalonia.Enums.Icon.None,
                         ContentTitle = "Changelog",
                         WindowIcon = Icon,
