@@ -283,7 +283,25 @@ namespace darts_hub
             // Update button states
             ButtonConsole.Background = Brushes.Transparent;
             ButtonChangelog.Background = Brushes.Transparent;
-            
+
+            // *** Reset ChangelogScrollViewer positioning ***
+            Grid.SetColumn(ChangelogScrollViewer, 2);
+            Grid.SetColumnSpan(ChangelogScrollViewer, 1);
+
+            // *** Reset Border-Eigenschaften zu Standardwerten ***
+            var contentBorder = MainGrid.Children.OfType<Border>()
+                .FirstOrDefault(b => Grid.GetColumn(b) == 2 && Grid.GetColumnSpan(b) == 1);
+
+            if (contentBorder != null)
+            {
+                // Zurück zu Original-Werten
+                contentBorder.Background = new SolidColorBrush(Color.FromArgb(242, 37, 37, 38)); // #F2252526 (Original)
+
+                // Zurück zu Avalonia-Standardwerten (da diese nicht im XAML definiert waren)
+                contentBorder.Width = double.NaN;  // NaN = Auto-Größe (Standard)
+                contentBorder.HorizontalAlignment = HorizontalAlignment.Stretch; // Standard-Wert
+            }
+
             // Update the about button appearance
             var aboutButton = this.FindControl<Button>("Buttonabout");
             if (aboutButton != null)
@@ -315,7 +333,22 @@ namespace darts_hub
             
             // Show console panel (spans across both content columns)
             ConsolePanel.IsVisible = true;
-            
+
+            // *** Reset ChangelogScrollViewer positioning ***
+            Grid.SetColumn(ChangelogScrollViewer, 2);
+            Grid.SetColumnSpan(ChangelogScrollViewer, 1);
+
+            // *** Reset Border-Eigenschaften ***
+            var contentBorder = MainGrid.Children.OfType<Border>()
+                .FirstOrDefault(b => Grid.GetColumn(b) == 2 && Grid.GetColumnSpan(b) == 1);
+
+            if (contentBorder != null)
+            {
+                contentBorder.Background = new SolidColorBrush(Color.FromArgb(242, 37, 37, 38));
+                contentBorder.Width = double.NaN;
+                contentBorder.HorizontalAlignment = HorizontalAlignment.Stretch;
+            }
+
             // Initialize console tabs
             InitializeConsoleTabs();
             
@@ -360,7 +393,21 @@ namespace darts_hub
             SettingsScrollViewer.IsVisible = false;
             AboutScrollViewer.IsVisible = false;
             ChangelogScrollViewer.IsVisible = true;
-            
+            // *** NEU: Changelog soll beide Spalten überlagern (Content + Tooltip) ***
+            Grid.SetColumn(ChangelogScrollViewer, 2);
+            Grid.SetColumnSpan(ChangelogScrollViewer, 3); // Überlagert Spalten 2, 3 und 4
+                                                          // *** NEU: Finde und ändere das übergeordnete Border-Element ***
+            var contentBorder = MainGrid.Children.OfType<Border>()
+                .FirstOrDefault(b => Grid.GetColumn(b) == 2 && Grid.GetColumnSpan(b) == 1);
+
+            if (contentBorder != null)
+            {
+                // Ändere Background-Farbe für Changelog-Modus
+                contentBorder.Background = new SolidColorBrush(Color.FromArgb(242, 30, 30, 35)); // Dunklere Farbe
+                contentBorder.Width = 750;
+                contentBorder.HorizontalAlignment = HorizontalAlignment.Left;
+            }
+
             // Load changelog content
             await LoadChangelogContent();
             
@@ -2416,7 +2463,22 @@ namespace darts_hub
             SettingsScrollViewer.IsVisible = false;
             ChangelogScrollViewer.IsVisible = false;
             AboutScrollViewer.IsVisible = true;
-            
+
+            // *** Reset ChangelogScrollViewer positioning ***
+            Grid.SetColumn(ChangelogScrollViewer, 2);
+            Grid.SetColumnSpan(ChangelogScrollViewer, 1);
+
+            // *** Reset Border-Eigenschaften ***
+            var contentBorder = MainGrid.Children.OfType<Border>()
+                .FirstOrDefault(b => Grid.GetColumn(b) == 2 && Grid.GetColumnSpan(b) == 1);
+
+            if (contentBorder != null)
+            {
+                contentBorder.Background = new SolidColorBrush(Color.FromArgb(242, 37, 37, 38));
+                contentBorder.Width = double.NaN;
+                contentBorder.HorizontalAlignment = HorizontalAlignment.Stretch;
+            }
+
             // Update tooltip content
             TooltipTitle.Text = "Darts-Hub Info Area";
             TooltipDescription.Text = "This is your central hub for managing darts applications. Use the navigation panel to configure your apps, or explore the settings for detailed configuration options.";
@@ -2424,7 +2486,9 @@ namespace darts_hub
             // Update button states
             ButtonConsole.Background = Brushes.Transparent;
             ButtonChangelog.Background = Brushes.Transparent;
+
             
+
             // Update the about button appearance to show it's active
             var aboutButton = this.FindControl<Button>("Buttonabout");
             if (aboutButton != null)
@@ -2468,7 +2532,7 @@ namespace darts_hub
                     VisitHelpPage("https://discordapp.com/users/366537096414101504");
                     break;
                 case "AboutPaypal":
-                    VisitHelpPage("https://www.paypal.com/paypalme/wusaaa");
+                    VisitHelpPage("https://paypal.me/I3ull3t");
                     break;
                 case "AboutDonation":
                     var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
