@@ -1,4 +1,4 @@
-## B0.14.1
+## b1.0.0
 - Complete UI redesign
   - more user friendly
   - more modern
