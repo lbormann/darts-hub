@@ -278,6 +278,10 @@ jobs:
           name: Release ${{ github.ref }}
           body: |
             # Changes in this Release
+            - Complete UI redesign
+             - more user friendly
+             - more modern
+             - Tooltips for all arguments 
 
             ## WLED
             - nothing new
