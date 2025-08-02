@@ -263,12 +263,15 @@ namespace darts_hub
             // Stop the console update timer
             consoleUpdateTimer?.Stop();
             
-            // Hide console panel
+            // hide console panel
             ConsolePanel.IsVisible = false;
             
             // Hide changelog and about
             ChangelogScrollViewer.IsVisible = false;
             AboutScrollViewer.IsVisible = false;
+            
+            // Hide new settings panel explicitly
+            NewSettingsPanel.IsVisible = false;
             
             // Show appropriate settings mode based on configuration
             if (configurator.Settings.NewSettingsMode)
@@ -335,6 +338,9 @@ namespace darts_hub
             ChangelogScrollViewer.IsVisible = false;
             AboutScrollViewer.IsVisible = false;
             
+            // Hide new settings panel explicitly
+            NewSettingsPanel.IsVisible = false;
+            
             // Show console panel (spans across both content columns)
             ConsolePanel.IsVisible = true;
 
@@ -394,9 +400,12 @@ namespace darts_hub
             // Hide console panel
             ConsolePanel.IsVisible = false;
             
-            // Show changelog, hide others
+            // Hide settings and new settings panel
             SettingsScrollViewer.IsVisible = false;
             AboutScrollViewer.IsVisible = false;
+            NewSettingsPanel.IsVisible = false;
+            
+            // Show changelog
             ChangelogScrollViewer.IsVisible = true;
             // *** NEU: Changelog soll beide Spalten überlagern (Content + Tooltip) ***
             Grid.SetColumn(ChangelogScrollViewer, 2);
@@ -2005,9 +2014,12 @@ namespace darts_hub
             // Hide console panel
             ConsolePanel.IsVisible = false;
             
-            // Show about, hide others
+            // Hide settings and new settings panel
             SettingsScrollViewer.IsVisible = false;
             ChangelogScrollViewer.IsVisible = false;
+            NewSettingsPanel.IsVisible = false;
+            
+            // Show about
             AboutScrollViewer.IsVisible = true;
 
             // *** Reset ChangelogScrollViewer positioning ***
@@ -2336,8 +2348,7 @@ namespace darts_hub
             {
                 var inputContainer = new Grid
                 {
-                    HorizontalAlignment = HorizontalAlignment.Stretch
-                };
+                    HorizontalAlignment = HorizontalAlignment.Stretch                };
                 inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 

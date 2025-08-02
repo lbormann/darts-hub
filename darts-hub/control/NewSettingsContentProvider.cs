@@ -1,14 +1,14 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using darts_hub.model;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
 using Avalonia.Interactivity;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using System;
 
 namespace darts_hub.control
@@ -87,7 +87,7 @@ namespace darts_hub.control
 
             var titleBlock = new TextBlock
             {
-                Text = $"?? {app.CustomName} - New Settings Mode",
+                Text = $"🎯 {app.CustomName} - New Settings Mode",
                 FontSize = 20,
                 FontWeight = FontWeight.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
@@ -129,7 +129,7 @@ namespace darts_hub.control
 
             var statusTitle = new TextBlock
             {
-                Text = "?? Application Status",
+                Text = "Application Status",
                 FontSize = 16,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
@@ -139,7 +139,7 @@ namespace darts_hub.control
 
             var runningStatus = new TextBlock
             {
-                Text = app.AppRunningState ? "? Running" : "?? Stopped",
+                Text = app.AppRunningState ? "Running" : "Stopped",
                 FontSize = 14,
                 Foreground = app.AppRunningState ? 
                     new SolidColorBrush(Color.FromRgb(0, 255, 0)) : 
@@ -150,7 +150,7 @@ namespace darts_hub.control
 
             var configStatus = new TextBlock
             {
-                Text = app.IsConfigurable() ? "?? Configurable" : "?? Fixed Configuration",
+                Text = app.IsConfigurable() ? "Configurable" : "Fixed Configuration",
                 FontSize = 14,
                 Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
                 Margin = new Thickness(0, 0, 0, 5),
@@ -181,7 +181,7 @@ namespace darts_hub.control
 
             var actionsTitle = new TextBlock
             {
-                Text = "? Quick Actions",
+                Text = "Quick Actions",
                 FontSize = 16,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
@@ -198,7 +198,7 @@ namespace darts_hub.control
 
             var startStopButton = new Button
             {
-                Content = app.AppRunningState ? "?? Stop" : "?? Start",
+                Content = app.AppRunningState ? "⏹️ Stop" : "▶️ Start",
                 Background = app.AppRunningState ? 
                     new SolidColorBrush(Color.FromRgb(220, 53, 69)) : 
                     new SolidColorBrush(Color.FromRgb(40, 167, 69)),
@@ -212,7 +212,7 @@ namespace darts_hub.control
 
             var restartButton = new Button
             {
-                Content = "?? Restart",
+                Content = "🔄 Restart",
                 Background = new SolidColorBrush(Color.FromRgb(255, 193, 7)),
                 Foreground = new SolidColorBrush(Color.FromRgb(33, 37, 41)),
                 BorderThickness = new Thickness(0),
@@ -221,6 +221,43 @@ namespace darts_hub.control
                 FontWeight = FontWeight.Bold,
                 IsEnabled = app.AppRunningState,
                 MinWidth = 100
+            };
+
+            // Add event handlers for the buttons
+            startStopButton.Click += (s, e) =>
+            {
+                try
+                {
+                    if (app.AppRunningState)
+                    {
+                        app.Close();
+                    }
+                    else
+                    {
+                        app.Run();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error in start/stop button: {ex.Message}");
+                }
+            };
+
+            restartButton.Click += (s, e) =>
+            {
+                try
+                {
+                    if (app.AppRunningState)
+                    {
+                        app.Close();
+                        // Small delay to allow app to close
+                        System.Threading.Tasks.Task.Delay(1000).ContinueWith(_ => app.Run());
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error in restart button: {ex.Message}");
+                }
             };
 
             buttonsPanel.Children.Add(startStopButton);
@@ -273,7 +310,7 @@ namespace darts_hub.control
 
                 var configTitle = new TextBlock
                 {
-                    Text = "?? Configured Parameters",
+                    Text = "⚙️ Configured Parameters",
                     FontSize = 16,
                     FontWeight = FontWeight.Bold,
                     Foreground = Brushes.White,
@@ -316,7 +353,7 @@ namespace darts_hub.control
             // Section header
             var sectionTitle = new TextBlock
             {
-                Text = $"?? {sectionName}",
+                Text = $"{sectionName}",
                 FontSize = 16,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
@@ -417,19 +454,27 @@ namespace darts_hub.control
             // Remove button for non-required parameters
             if (!param.Required)
             {
+                var clearImage = new Image
+                {
+                    Width = 16,
+                    Height = 16,
+                    Source = new Bitmap(AssetLoader.Open(new Uri("avares://darts-hub/Assets/clear.png")))
+                };
+
                 var removeButton = new Button
                 {
-                    Content = "�",
+                    Content = clearImage,
                     Background = new SolidColorBrush(Color.FromRgb(220, 53, 69)),
                     Foreground = Brushes.White,
                     BorderThickness = new Thickness(0),
                     CornerRadius = new CornerRadius(3),
                     Width = 25,
                     Height = 25,
-                    FontSize = 10,
                     HorizontalAlignment = HorizontalAlignment.Right,
                     VerticalAlignment = VerticalAlignment.Top
                 };
+
+                ToolTip.SetTip(removeButton, "Remove parameter");
 
                 removeButton.Click += async (sender, e) =>
                 {
@@ -567,7 +612,7 @@ namespace darts_hub.control
 
                     var browseButton = new Button
                     {
-                        Content = "??",
+                        Content = "Select",
                         Background = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
                         Foreground = Brushes.White,
                         BorderThickness = new Thickness(0),
@@ -618,7 +663,7 @@ namespace darts_hub.control
 
             var addTitle = new TextBlock
             {
-                Text = "? Add Parameter",
+                Text = "➕ Add Parameter",
                 FontSize = 16,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
@@ -674,7 +719,7 @@ namespace darts_hub.control
             // Section title
             var sectionTitle = new TextBlock
             {
-                Text = $"?? {sectionName}",
+                Text = $"{sectionName}",
                 FontSize = 14,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
@@ -823,7 +868,7 @@ namespace darts_hub.control
 
             var configTitle = new TextBlock
             {
-                Text = "?? Configuration Preview",
+                Text = "📋 Configuration Preview",
                 FontSize = 16,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
@@ -834,10 +879,10 @@ namespace darts_hub.control
             var configInfo = new TextBlock
             {
                 Text = app.IsConfigurable() ? 
-                    $"?? App has {app.Configuration?.Arguments?.Count ?? 0} configurable options\n" +
-                    "??? Enhanced UI controls active\n" +
-                    "? Real-time parameter management\n" +
-                    "?? Advanced validation and tooltips" : 
+                    $"⚙️ App has {app.Configuration?.Arguments?.Count ?? 0} configurable options\n" +
+                    "🎛️ Enhanced UI controls active\n" +
+                    "⚡ Real-time parameter management\n" +
+                    "💡 Advanced validation and tooltips" : 
                     "This application has no configurable settings.",
                 FontSize = 13,
                 Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
@@ -866,7 +911,7 @@ namespace darts_hub.control
 
             var noticeText = new TextBlock
             {
-                Text = "?? Enhanced Configuration Mode\n\n" +
+                Text = "🧪 Enhanced Configuration Mode\n\n" +
                        "This new settings interface provides real-time parameter management. " +
                        "Add or remove parameters as needed, and see changes immediately. " +
                        "You can switch back to the classic settings mode in the About section.",
