@@ -205,10 +205,18 @@
 								<CheckBox x:Name="AboutCheckBoxSkipUpdateConfirmation"
 										  Content="Skip update confirmation"
 										  HorizontalAlignment="Left"
-										  Margin="0,0,0,20"
+										  Margin="0,0,0,10"
 										  Foreground="White"
 										  Checked="AboutCheckBoxSkipUpdateConfirmationChanged"
 										  Unchecked="AboutCheckBoxSkipUpdateConfirmationChanged"/>
+								
+								<CheckBox x:Name="AboutCheckBoxNewSettingsMode"
+										  Content="Enable new settings content mode (Beta)"
+										  HorizontalAlignment="Left"
+										  Margin="0,0,0,20"
+										  Foreground="White"
+										  Checked="AboutCheckBoxNewSettingsModeChanged"
+										  Unchecked="AboutCheckBoxNewSettingsModeChanged"/>
 							</StackPanel>
 							<StackPanel Margin="10,10,50,10" Spacing="5" MaxWidth="450">
 								<TextBlock Text="Information"
@@ -446,6 +454,59 @@
 				</Grid>
 			</Border>
 
+			<!-- New Settings Content - spans across Settings and Tooltip columns -->
+			<Border Grid.Column="2" Grid.ColumnSpan="3" Background="#FF252526" x:Name="NewSettingsPanel" IsVisible="False">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto"/>
+						<RowDefinition Height="*"/>
+					</Grid.RowDefinitions>
+					
+					<!-- New Settings Header -->
+					<Border Grid.Row="0" Background="#FF2D2D30" Padding="10,5">
+						<StackPanel Orientation="Horizontal">
+							<TextBlock Text="🎯 Enhanced Settings Mode" 
+									   Foreground="White" 
+									   FontSize="16" 
+									   FontWeight="Bold" 
+									   VerticalAlignment="Center"/>
+							<TextBlock Text="(Beta)" 
+									   Foreground="#FFFF9500" 
+									   FontSize="12" 
+									   FontStyle="Italic"
+									   VerticalAlignment="Center"
+									   Margin="5,0,0,0"/>
+							<Button x:Name="NewSettingsBackButton" 
+									Content="← Back to Classic Mode" 
+									Margin="20,0,0,0" 
+									Padding="8,4"
+									Background="#FF666666" 
+									Foreground="White"
+									BorderThickness="0"
+									CornerRadius="3"
+									Click="NewSettingsBackButton_Click"/>
+						</StackPanel>
+					</Border>
+					
+					<!-- New Settings Content Area -->
+					<ScrollViewer Grid.Row="1" 
+								  x:Name="NewSettingsScrollViewer"
+								  VerticalScrollBarVisibility="Auto" 
+								  HorizontalScrollBarVisibility="Hidden"
+								  Background="Transparent"
+								  Padding="0,0">
+						<StackPanel x:Name="NewSettingsContent">
+							<TextBlock Text="Enhanced settings will appear here..." 
+									   Foreground="#FF999999" 
+									   FontSize="16" 
+									   HorizontalAlignment="Center" 
+									   VerticalAlignment="Center" 
+									   Margin="20"/>
+						</StackPanel>
+					</ScrollViewer>
+				</Grid>
+			</Border>
+
 			<!-- Loading Overlay -->
 			<Border x:Name="LoadingOverlay" 
 					Grid.ColumnSpan="5" 
@@ -476,6 +537,3 @@
 				</StackPanel>
 			</Border>
 		</Grid>
-	</Viewbox>
-	<!-- Schließe Viewbox für automatische Skalierung -->
-</Window>

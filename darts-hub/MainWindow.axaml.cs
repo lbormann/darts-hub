@@ -264,11 +264,12 @@ namespace darts_hub
             consoleUpdateTimer?.Stop();
             
             // Show tooltip panel and splitter
-            MainGrid.ColumnDefinitions[4].Width = new GridLength(300, GridUnitType.Pixel);
+            MainGrid.ColumnDefinitions[4].Width = new GridLength(250, GridUnitType.Pixel);
             TooltipPanel.IsVisible = true;
             TooltipSplitter.IsVisible = true;
             TooltipTitle.Text = "Tooltips";
             TooltipDescription.Text = "";
+            
             // Hide console panel
             ConsolePanel.IsVisible = false;
             
@@ -323,6 +324,7 @@ namespace darts_hub
             
             // Hide tooltip panel and splitter
             MainGrid.ColumnDefinitions[4].Width = new GridLength(0);
+            MainGrid.ColumnDefinitions[3].Width = new GridLength(0);
             TooltipPanel.IsVisible = false;
             TooltipSplitter.IsVisible = false;
             
@@ -383,6 +385,7 @@ namespace darts_hub
             
             // Hide tooltip panel and splitter
             MainGrid.ColumnDefinitions[4].Width = new GridLength(0);
+            MainGrid.ColumnDefinitions[3].Width = new GridLength(0);
             TooltipPanel.IsVisible = false;
             TooltipSplitter.IsVisible = false;
             
@@ -719,17 +722,21 @@ namespace darts_hub
                     // Check common installation patterns
                     if (app.Name == "darts-caller")
                     {
-                        var commonPaths = new string[]
+                        var commonPaths = new string[][]
                         {
-                            System.IO.Path.Combine(basePath, "darts-caller.exe"),
-                            System.IO.Path.Combine(basePath, "darts-caller"),
-                            System.IO.Path.Combine(Environment.CurrentDirectory, "darts-caller.exe")
+                            new[] { "darts-caller.exe", "darts-caller" },
+                            new[] { System.IO.Path.Combine("darts-caller", "darts-caller.exe"), System.IO.Path.Combine("darts-caller", "darts-caller") },
+                            new[] { System.IO.Path.Combine("darts-caller.exe"), System.IO.Path.Combine("darts-caller") }
                         };
                         
-                        foreach (var path in commonPaths)
+                        foreach (var paths in commonPaths)
                         {
-                            if (System.IO.File.Exists(path))
-                                return path;
+                            foreach (var path in paths)
+                            {
+                                var fullPath = System.IO.Path.Combine(basePath, path);
+                                if (System.IO.File.Exists(fullPath))
+                                    return fullPath;
+                            }
                         }
                     }
                     
@@ -1104,7 +1111,7 @@ namespace darts_hub
 
         private void ProfileManager_AppDownloadFailed(object? sender, AppEventArgs e)
         {
-            SetWait(false, "Download " + e.App.Name + " failed. Please check your internet connection and try again. " + e.Message);
+            SetWait(false, "Download " + e.App.Name + " failed. Bitte überprüfe deine Internetverbindung und versuche es erneut. " + e.Message);
         }
 
         private void ProfileManager_AppDownloadProgressed(object? sender, DownloadProgressChangedEventArgs e)
@@ -1455,6 +1462,31 @@ namespace darts_hub
                 });
                 return;
             }
+
+            // Check if new settings mode is enabled
+            if (configurator.Settings.NewSettingsMode)
+            {
+                // Hide tooltip panel and splitter for new settings mode
+                MainGrid.ColumnDefinitions[4].Width = new GridLength(0); // Tooltip spalte
+                MainGrid.ColumnDefinitions[3].Width = new GridLength(0); // Splitter
+                TooltipPanel.IsVisible = false;
+                TooltipSplitter.IsVisible = false;
+
+                // Load new settings content with save callback and increased width
+                var newSettingsContent = await NewSettingsContentProvider.CreateNewSettingsContent(app, () => Save());
+                
+                // The NewSettingsContentProvider already handles the full width since MaxWidth constraint was removed
+                SettingsPanel.Children.Add(newSettingsContent);
+                return;
+            }
+
+            // Classic settings mode - show tooltip panel and splitter
+            MainGrid.ColumnDefinitions[4].Width = new GridLength(250, GridUnitType.Pixel);
+            MainGrid.ColumnDefinitions[3].Width = new GridLength(2, GridUnitType.Pixel);
+            TooltipPanel.IsVisible = true;
+            TooltipSplitter.IsVisible = true;
+            TooltipTitle.Text = "Tooltips";
+            TooltipDescription.Text = "";
 
             // Load tooltips for this app
             await LoadTooltipsForApp(app);
@@ -2214,7 +2246,7 @@ namespace darts_hub
             });
         }
 
-        private void Updater_ReleaseDownloadStarted(object? sender, ReleaseEventArgs e)
+        private async void Updater_ReleaseDownloadStarted(object? sender, ReleaseEventArgs e)
         {
             SetWait(true, "Downloading " + e.Version + "...");
         }
@@ -2452,7 +2484,8 @@ namespace darts_hub
             consoleUpdateTimer?.Stop();
             
             // Show tooltip panel and splitter
-            MainGrid.ColumnDefinitions[4].Width = new GridLength(300, GridUnitType.Pixel);
+            MainGrid.ColumnDefinitions[4].Width = new GridLength(250, GridUnitType.Pixel);
+            MainGrid.ColumnDefinitions[3].Width = new GridLength(2, GridUnitType.Pixel);
             TooltipPanel.IsVisible = true;
             TooltipSplitter.IsVisible = true;
             
@@ -2487,8 +2520,6 @@ namespace darts_hub
             ButtonConsole.Background = Brushes.Transparent;
             ButtonChangelog.Background = Brushes.Transparent;
 
-            
-
             // Update the about button appearance to show it's active
             var aboutButton = this.FindControl<Button>("Buttonabout");
             if (aboutButton != null)
@@ -2506,6 +2537,9 @@ namespace darts_hub
                 
                 // Set the skip update confirmation checkbox
                 AboutCheckBoxSkipUpdateConfirmation.IsChecked = configurator.Settings.SkipUpdateConfirmation;
+                
+                // Set the new settings mode checkbox
+                AboutCheckBoxNewSettingsMode.IsChecked = configurator.Settings.NewSettingsMode;
                 
                 // Show the About content by default
                 ShowAboutMode();
@@ -2556,6 +2590,12 @@ namespace darts_hub
         private void AboutCheckBoxSkipUpdateConfirmationChanged(object sender, RoutedEventArgs e)
         {
             configurator.Settings.SkipUpdateConfirmation = (bool)AboutCheckBoxSkipUpdateConfirmation.IsChecked;
+            configurator.SaveSettings();
+        }
+        
+        private void AboutCheckBoxNewSettingsModeChanged(object sender, RoutedEventArgs e)
+        {
+            configurator.Settings.NewSettingsMode = (bool)AboutCheckBoxNewSettingsMode.IsChecked;
             configurator.SaveSettings();
         }
 

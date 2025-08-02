@@ -9,6 +9,7 @@ namespace darts_hub.control
         public bool StartProfileOnStart { get; set; }
         public bool SkipUpdateConfirmation { get; set; }
         public bool IsBetaTester { get; set; } // Neue Eigenschaft für den Betatester-Status
+        public bool NewSettingsMode { get; set; } // Neue Eigenschaft für den neuen Settings-Modus
     }
 
 
@@ -43,13 +44,21 @@ namespace darts_hub.control
                 {
                     StartProfileOnStart = false,
                     SkipUpdateConfirmation = false,
-                    IsBetaTester = false
+                    IsBetaTester = false,
+                    NewSettingsMode = false
                 };
                 SaveSettings();
             }
 
             var json = File.ReadAllText(ConfigFilePath);
             Settings = JsonConvert.DeserializeObject<AppConfiguration>(json);
+            
+            // Ensure NewSettingsMode property exists (for backward compatibility)
+            if (Settings.NewSettingsMode == null)
+            {
+                Settings.NewSettingsMode = false;
+                SaveSettings();
+            }
         }
     }
 }
