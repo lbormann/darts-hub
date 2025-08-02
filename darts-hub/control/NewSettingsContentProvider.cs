@@ -670,6 +670,19 @@ namespace darts_hub.control
                      param.NameHuman.Contains("effects", StringComparison.OrdinalIgnoreCase)));
         }
 
+        private static bool IsPresetParameter(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return false;
+            
+            // Check for ps1, ps2, etc. format (with or without duration)
+            var parts = value.Split('|');
+            var presetPart = parts[0];
+            
+            return presetPart.StartsWith("ps", StringComparison.OrdinalIgnoreCase) && 
+                   presetPart.Length > 2 && 
+                   int.TryParse(presetPart.Substring(2), out _);
+        }
+
         private static Control CreateEffectParameterControl(Argument param, Action? saveCallback = null, AppBase? app = null)
         {
             var mainPanel = new StackPanel
@@ -719,7 +732,7 @@ namespace darts_hub.control
                 {
                     modeSelector.SelectedItem = effectsItem;
                 }
-                else if (WledApi.FallbackPresets.Contains(param.Value))
+                else if (IsPresetParameter(param.Value))
                 {
                     modeSelector.SelectedItem = presetsItem;
                 }
@@ -825,7 +838,7 @@ namespace darts_hub.control
 
         private static async Task<Control> CreateWledEffectsDropdown(Argument param, Action? saveCallback = null, AppBase? app = null)
         {
-            // Create a panel to hold dropdown and refresh button
+            // Create a panel to hold dropdown and refresh button (no duration for effects)
             var panel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -857,6 +870,9 @@ namespace darts_hub.control
             };
 
             ToolTip.SetTip(refreshButton, "Refresh effects from WLED controller");
+
+            // Parse current value (no duration parsing for effects)
+            string? selectedEffect = param.Value;
 
             // Function to populate effects
             async Task PopulateEffects()
@@ -893,7 +909,7 @@ namespace darts_hub.control
                         effectDropdown.Items.Add(effectItem);
                         
                         // Pre-select if this matches current value
-                        if (param.Value == effect)
+                        if (selectedEffect == effect)
                         {
                             effectDropdown.SelectedItem = effectItem;
                         }
@@ -917,7 +933,7 @@ namespace darts_hub.control
                         };
                         effectDropdown.Items.Add(effectItem);
                         
-                        if (param.Value == effect)
+                        if (selectedEffect == effect)
                         {
                             effectDropdown.SelectedItem = effectItem;
                         }
@@ -929,7 +945,7 @@ namespace darts_hub.control
             // Initial population
             await PopulateEffects();
 
-            // Refresh button event
+            // Event handlers
             refreshButton.Click += async (s, e) =>
             {
                 refreshButton.IsEnabled = false;
@@ -950,7 +966,7 @@ namespace darts_hub.control
                 if (effectDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is string effect)
                 {
-                    param.Value = effect;
+                    param.Value = effect; // Just the effect name, no duration
                     param.IsValueChanged = true;
                     saveCallback?.Invoke();
                 }
@@ -963,8 +979,14 @@ namespace darts_hub.control
 
         private static async Task<Control> CreateWledPresetsDropdown(Argument param, Action? saveCallback = null, AppBase? app = null)
         {
+            // Create a main panel to hold preset selection and duration
+            var mainPanel = new StackPanel
+            {
+                Spacing = 8
+            };
+
             // Create a panel to hold dropdown and refresh button
-            var panel = new StackPanel
+            var presetPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 5
@@ -979,7 +1001,7 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(3),
                 FontSize = 13,
                 PlaceholderText = "Loading WLED presets...",
-                MinWidth = 200
+                MinWidth = 180
             };
 
             var refreshButton = new Button
@@ -995,6 +1017,106 @@ namespace darts_hub.control
             };
 
             ToolTip.SetTip(refreshButton, "Refresh presets from WLED controller");
+
+            // Duration selection panel
+            var durationPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 5,
+                Margin = new Thickness(0, 5, 0, 0)
+            };
+
+            var durationLabel = new TextBlock
+            {
+                Text = "Duration:",
+                Foreground = Brushes.White,
+                FontSize = 13,
+                VerticalAlignment = VerticalAlignment.Center,
+                MinWidth = 60
+            };
+
+            var durationUpDown = new NumericUpDown
+            {
+                Value = 0, // Default 0 seconds
+                Minimum = 0m,
+                Maximum = 60m,
+                Increment = 1m,
+                FormatString = "F0", // Show whole numbers
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
+                Foreground = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(3),
+                FontSize = 13,
+                Width = 120, // Increased width to show value properly
+                MinWidth = 120
+            };
+
+            var secondsLabel = new TextBlock
+            {
+                Text = "sec",
+                Foreground = Brushes.White,
+                FontSize = 13,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(5, 0, 0, 0)
+            };
+
+            // Parse current value if it contains duration info
+            string? selectedPreset = null;
+            decimal selectedDuration = 0m; // Default to 0
+            
+            if (!string.IsNullOrEmpty(param.Value))
+            {
+                // Try to parse format: "ps1|duration" or just "ps1"
+                var parts = param.Value.Split('|');
+                selectedPreset = parts[0];
+                if (parts.Length > 1 && decimal.TryParse(parts[1], System.Globalization.NumberStyles.Float, 
+                    System.Globalization.CultureInfo.InvariantCulture, out var parsedDuration))
+                {
+                    selectedDuration = Math.Max(0m, Math.Min(60m, parsedDuration)); // Clamp to valid range
+                }
+                durationUpDown.Value = selectedDuration;
+            }
+
+            // Flag to prevent recursive updates
+            bool isUpdating = false;
+
+            // Function to update parameter value
+            void UpdateParameterValue()
+            {
+                if (isUpdating) return;
+                
+                if (presetDropdown.SelectedItem is ComboBoxItem selectedItem && 
+                    selectedItem.Tag is string preset &&
+                    durationUpDown.Value.HasValue)
+                {
+                    isUpdating = true;
+                    try
+                    {
+                        var durationValue = Math.Round(durationUpDown.Value.Value, 0); // Round to whole seconds
+                        
+                        // If duration is 0, save only the preset (e.g., "ps1")
+                        // If duration > 0, save preset with duration (e.g., "ps1|5")
+                        if (durationValue == 0)
+                        {
+                            param.Value = preset;
+                        }
+                        else
+                        {
+                            param.Value = $"{preset}|{durationValue.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+                        }
+                        
+                        param.IsValueChanged = true;
+                        saveCallback?.Invoke();
+                        
+                        System.Diagnostics.Debug.WriteLine($"Updated preset parameter: {param.Value}");
+                    }
+                    finally
+                    {
+                        isUpdating = false;
+                    }
+                }
+            }
 
             // Function to populate presets
             async Task PopulatePresets()
@@ -1019,13 +1141,13 @@ namespace darts_hub.control
                     };
                     presetDropdown.Items.Add(dynamicHeader);
 
-                    // Add presets
+                    // Add presets using ps1, ps2, etc. format
                     foreach (var preset in presets.OrderBy(p => p.Key))
                     {
                         var presetDisplayName = isLive ? 
                             $"Preset {preset.Key} - {preset.Value}" : 
                             preset.Value;
-                        var presetValue = isLive ? preset.Key.ToString() : preset.Value;
+                        var presetValue = $"ps{preset.Key}"; // Use ps1, ps2, etc.
                         
                         var presetItem = new ComboBoxItem
                         {
@@ -1036,7 +1158,7 @@ namespace darts_hub.control
                         presetDropdown.Items.Add(presetItem);
                         
                         // Pre-select if this matches current value
-                        if (param.Value == presetValue || param.Value == presetDisplayName)
+                        if (selectedPreset == presetValue)
                         {
                             presetDropdown.SelectedItem = presetItem;
                         }
@@ -1048,18 +1170,21 @@ namespace darts_hub.control
                 }
                 else
                 {
-                    // Just use fallback if no app provided
-                    foreach (var preset in WledApi.FallbackPresets)
+                    // Just use fallback if no app provided - create ps1, ps2, etc.
+                    for (int i = 1; i <= WledApi.FallbackPresets.Count; i++)
                     {
+                        var preset = WledApi.FallbackPresets[i - 1];
+                        var presetValue = $"ps{i}";
+                        
                         var presetItem = new ComboBoxItem
                         {
                             Content = preset,
-                            Tag = preset,
+                            Tag = presetValue,
                             Foreground = Brushes.White
                         };
                         presetDropdown.Items.Add(presetItem);
                         
-                        if (param.Value == preset)
+                        if (selectedPreset == presetValue)
                         {
                             presetDropdown.SelectedItem = presetItem;
                         }
@@ -1071,7 +1196,7 @@ namespace darts_hub.control
             // Initial population
             await PopulatePresets();
 
-            // Refresh button event
+            // Event handlers
             refreshButton.Click += async (s, e) =>
             {
                 refreshButton.IsEnabled = false;
@@ -1089,22 +1214,37 @@ namespace darts_hub.control
 
             presetDropdown.SelectionChanged += (s, e) =>
             {
-                if (presetDropdown.SelectedItem is ComboBoxItem selectedItem && 
-                    selectedItem.Tag is string preset)
+                if (!isUpdating && presetDropdown.SelectedItem is ComboBoxItem { Tag: string })
                 {
-                    param.Value = preset;
-                    param.IsValueChanged = true;
-                    saveCallback?.Invoke();
+                    UpdateParameterValue();
                 }
             };
 
-            panel.Children.Add(presetDropdown);
-            panel.Children.Add(refreshButton);
-            return panel;
+            durationUpDown.ValueChanged += (s, e) =>
+            {
+                if (!isUpdating && durationUpDown.Value.HasValue)
+                {
+                    UpdateParameterValue();
+                }
+            };
+
+            // Build the UI
+            presetPanel.Children.Add(presetDropdown);
+            presetPanel.Children.Add(refreshButton);
+
+            durationPanel.Children.Add(durationLabel);
+            durationPanel.Children.Add(durationUpDown);
+            durationPanel.Children.Add(secondsLabel);
+
+            mainPanel.Children.Add(presetPanel);
+            mainPanel.Children.Add(durationPanel);
+
+            return mainPanel;
         }
 
         private static Control CreateColorEffectsDropdown(Argument param, Action? saveCallback = null)
         {
+            // Simple dropdown without duration for color effects
             var colorDropdown = new ComboBox
             {
                 Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
@@ -1116,6 +1256,7 @@ namespace darts_hub.control
                 PlaceholderText = "Select color effect..."
             };
 
+            // Populate color effects
             foreach (var colorEffect in ColorEffects)
             {
                 var colorItem = new ComboBoxItem
@@ -1138,7 +1279,7 @@ namespace darts_hub.control
                 if (colorDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is string colorEffect)
                 {
-                    param.Value = colorEffect;
+                    param.Value = colorEffect; // Just the color effect name, no duration
                     param.IsValueChanged = true;
                     saveCallback?.Invoke();
                 }
@@ -1173,41 +1314,12 @@ namespace darts_hub.control
 
             contentPanel.Children.Add(addTitle);
 
-            // Debug: Let's check what arguments are being filtered out
-            var allArgs = app.Configuration.Arguments.ToList();
-            var effectArgs = allArgs.Where(arg => arg.Name.Contains("effect") || arg.Name.Contains("effects") || 
-                                                  (arg.NameHuman != null && (arg.NameHuman.Contains("_effect") || arg.NameHuman.Contains("_effects")))).ToList();
-            
             // Get available parameters (not configured and not runtime) grouped by section
             var availableParamsBySection = app.Configuration.Arguments
                 .Where(arg => !arg.IsRuntimeArgument && !arg.Required && string.IsNullOrEmpty(arg.Value))
                 .GroupBy(arg => arg.Section ?? "General")
                 .OrderBy(group => group.Key)
                 .ToList();
-
-            var availableEffectArgs = availableParamsBySection.SelectMany(section => section)
-                .Where(arg => arg.Name.Contains("effect") || arg.Name.Contains("effects") || 
-                             (arg.NameHuman != null && (arg.NameHuman.Contains("_effect") || arg.NameHuman.Contains("_effects"))))
-                .ToList();
-            
-            // Debug info panel
-            var debugPanel = new TextBlock
-            {
-                Text = $"Debug Info:\n" +
-                       $"Total arguments: {allArgs.Count}\n" +
-                       $"Effect arguments found: {effectArgs.Count}\n" +
-                       $"Effect args with IsRuntimeArgument=true: {effectArgs.Count(a => a.IsRuntimeArgument)}\n" +
-                       $"Effect args that are Required: {effectArgs.Count(a => a.Required)}\n" +
-                       $"Effect args that have Values: {effectArgs.Count(a => !string.IsNullOrEmpty(a.Value))}\n" +
-                       $"Available effect args (filtered): {availableEffectArgs.Count}\n" +
-                       $"Available sections: {availableParamsBySection.Count}\n" +
-                       $"Total available args: {availableParamsBySection.SelectMany(s => s).Count()}",
-                FontSize = 11,
-                Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
-                Margin = new Thickness(0, 0, 0, 10),
-                TextWrapping = TextWrapping.Wrap
-            };
-            contentPanel.Children.Add(debugPanel);
 
             if (availableParamsBySection.Any())
             {

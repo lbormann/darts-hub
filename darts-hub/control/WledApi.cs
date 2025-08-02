@@ -149,27 +149,49 @@ namespace darts_hub.control
             
             if (app.Configuration?.Arguments != null)
             {
+                // Debug output
+                System.Diagnostics.Debug.WriteLine($"Searching for WLED endpoints in {app.Configuration.Arguments.Count} arguments");
+                
                 // Look for WLED endpoints argument (WEPS in darts-wled)
                 var wepsArg = app.Configuration.Arguments.FirstOrDefault(arg => 
                     arg.Name.Equals("WEPS", StringComparison.OrdinalIgnoreCase) ||
                     arg.Name.Contains("wled_endpoint", StringComparison.OrdinalIgnoreCase) ||
                     (arg.NameHuman != null && arg.NameHuman.Contains("wled_endpoint", StringComparison.OrdinalIgnoreCase)));
                 
-                if (wepsArg != null && !string.IsNullOrWhiteSpace(wepsArg.Value))
+                if (wepsArg != null)
                 {
-                    // Split multiple endpoints (space or comma separated)
-                    var endpointValues = wepsArg.Value.Split(new[] { ' ', ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var endpoint in endpointValues)
+                    System.Diagnostics.Debug.WriteLine($"Found WEPS argument: Name='{wepsArg.Name}', Value='{wepsArg.Value}', NameHuman='{wepsArg.NameHuman}'");
+                    
+                    if (!string.IsNullOrWhiteSpace(wepsArg.Value))
                     {
-                        var cleanEndpoint = endpoint.Trim().Trim('"');
-                        if (!string.IsNullOrWhiteSpace(cleanEndpoint))
+                        // Split multiple endpoints (space or comma separated)
+                        var endpointValues = wepsArg.Value.Split(new[] { ' ', ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var endpoint in endpointValues)
                         {
-                            endpoints.Add(cleanEndpoint);
+                            var cleanEndpoint = endpoint.Trim().Trim('"');
+                            if (!string.IsNullOrWhiteSpace(cleanEndpoint))
+                            {
+                                endpoints.Add(cleanEndpoint);
+                                System.Diagnostics.Debug.WriteLine($"Added WLED endpoint: {cleanEndpoint}");
+                            }
                         }
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("WEPS argument found but value is empty");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("No WEPS argument found. Available arguments:");
+                    foreach (var arg in app.Configuration.Arguments.Take(10)) // Show first 10 for debugging
+                    {
+                        System.Diagnostics.Debug.WriteLine($"  - Name: '{arg.Name}', NameHuman: '{arg.NameHuman}', Value: '{arg.Value}'");
                     }
                 }
             }
             
+            System.Diagnostics.Debug.WriteLine($"Extracted {endpoints.Count} WLED endpoints");
             return endpoints;
         }
 
