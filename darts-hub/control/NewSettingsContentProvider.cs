@@ -2,7 +2,6 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using darts_hub.model;
 using System.Threading.Tasks;
@@ -454,16 +453,9 @@ namespace darts_hub.control
             // Remove button for non-required parameters
             if (!param.Required)
             {
-                var clearImage = new Image
-                {
-                    Width = 16,
-                    Height = 16,
-                    Source = new Bitmap(AssetLoader.Open(new Uri("avares://darts-hub/Assets/clear.png")))
-                };
-
                 var removeButton = new Button
                 {
-                    Content = clearImage,
+                    Content = "✖",
                     Background = new SolidColorBrush(Color.FromRgb(220, 53, 69)),
                     Foreground = Brushes.White,
                     BorderThickness = new Thickness(0),
@@ -471,7 +463,9 @@ namespace darts_hub.control
                     Width = 25,
                     Height = 25,
                     HorizontalAlignment = HorizontalAlignment.Right,
-                    VerticalAlignment = VerticalAlignment.Top
+                    VerticalAlignment = VerticalAlignment.Top,
+                    FontSize = 12,
+                    FontWeight = FontWeight.Bold
                 };
 
                 ToolTip.SetTip(removeButton, "Remove parameter");
@@ -673,12 +667,41 @@ namespace darts_hub.control
 
             contentPanel.Children.Add(addTitle);
 
+            // Debug: Let's check what arguments are being filtered out
+            var allArgs = app.Configuration.Arguments.ToList();
+            var effectArgs = allArgs.Where(arg => arg.Name.Contains("effect") || arg.Name.Contains("effects") || 
+                                                  (arg.NameHuman != null && (arg.NameHuman.Contains("_effect") || arg.NameHuman.Contains("_effects")))).ToList();
+            
             // Get available parameters (not configured and not runtime) grouped by section
             var availableParamsBySection = app.Configuration.Arguments
                 .Where(arg => !arg.IsRuntimeArgument && !arg.Required && string.IsNullOrEmpty(arg.Value))
                 .GroupBy(arg => arg.Section ?? "General")
                 .OrderBy(group => group.Key)
                 .ToList();
+
+            var availableEffectArgs = availableParamsBySection.SelectMany(section => section)
+                .Where(arg => arg.Name.Contains("effect") || arg.Name.Contains("effects") || 
+                             (arg.NameHuman != null && (arg.NameHuman.Contains("_effect") || arg.NameHuman.Contains("_effects"))))
+                .ToList();
+            
+            // Debug info panel
+            var debugPanel = new TextBlock
+            {
+                Text = $"Debug Info:\n" +
+                       $"Total arguments: {allArgs.Count}\n" +
+                       $"Effect arguments found: {effectArgs.Count}\n" +
+                       $"Effect args with IsRuntimeArgument=true: {effectArgs.Count(a => a.IsRuntimeArgument)}\n" +
+                       $"Effect args that are Required: {effectArgs.Count(a => a.Required)}\n" +
+                       $"Effect args that have Values: {effectArgs.Count(a => !string.IsNullOrEmpty(a.Value))}\n" +
+                       $"Available effect args (filtered): {availableEffectArgs.Count}\n" +
+                       $"Available sections: {availableParamsBySection.Count}\n" +
+                       $"Total available args: {availableParamsBySection.SelectMany(s => s).Count()}",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+                Margin = new Thickness(0, 0, 0, 10),
+                TextWrapping = TextWrapping.Wrap
+            };
+            contentPanel.Children.Add(debugPanel);
 
             if (availableParamsBySection.Any())
             {
@@ -779,9 +802,15 @@ namespace darts_hub.control
                 if (paramDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is Argument selectedParam)
                 {
+                    // Debug-Information für das Hinzufügen
+                    System.Diagnostics.Debug.WriteLine($"Adding parameter: {selectedParam.Name} ({selectedParam.NameHuman})");
+                    System.Diagnostics.Debug.WriteLine($"Before - IsRuntimeArgument: {selectedParam.IsRuntimeArgument}, Required: {selectedParam.Required}, Value: '{selectedParam.Value}'");
+                    
                     // Set a default value to make it "configured"
                     selectedParam.Value = GetDefaultValueForType(selectedParam.GetTypeClear());
                     selectedParam.IsValueChanged = true;
+
+                    System.Diagnostics.Debug.WriteLine($"After - Value: '{selectedParam.Value}', IsValueChanged: {selectedParam.IsValueChanged}");
 
                     // Trigger auto-save
                     saveCallback?.Invoke();
@@ -790,8 +819,17 @@ namespace darts_hub.control
                     var rootPanel = FindRootNewSettingsPanel(addButton);
                     if (rootPanel != null)
                     {
+                        System.Diagnostics.Debug.WriteLine("Refreshing settings content...");
                         await RefreshNewSettingsContent(app, rootPanel, saveCallback);
                     }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("ERROR: Could not find root panel for refresh!");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("ERROR: No parameter selected or invalid selection!");
                 }
             };
 
@@ -809,7 +847,7 @@ namespace darts_hub.control
                 Argument.TypeBool => "False",
                 Argument.TypeInt => "0",
                 Argument.TypeFloat => "0.0",
-                _ => "" // String, Password, File, Path get empty string
+                _ => "change to activate" // String, Password, File, Path get a non-empty default value
             };
         }
 
