@@ -17,6 +17,16 @@ namespace darts_hub.control
     /// </summary>
     public class NewSettingsContentProvider
     {
+        private static readonly List<string> ColorEffects = new List<string>
+        {
+            "Red Solid", "Green Solid", "Blue Solid", "White Solid", "Yellow Solid", "Orange Solid", "Pink Solid", "Purple Solid", "Cyan Solid", "Magenta Solid",
+            "Red Fade", "Green Fade", "Blue Fade", "Rainbow Fade", "Warm White Fade", "Cool White Fade",
+            "Red Pulse", "Green Pulse", "Blue Pulse", "White Pulse", "Rainbow Pulse",
+            "Red Strobe", "Green Strobe", "Blue Strobe", "White Strobe", "Rainbow Strobe",
+            "Team Color Red", "Team Color Blue", "Team Color Green", "Team Color Yellow",
+            "Victory Gold", "Victory Rainbow", "Celebration Multi"
+        };
+
         /// <summary>
         /// Creates the new settings content for an app
         /// </summary>
@@ -426,8 +436,8 @@ namespace darts_hub.control
 
             contentPanel.Children.Add(headerPanel);
 
-            // Parameter value display/input
-            var inputControl = CreateParameterInputControl(param, saveCallback);
+            // Parameter value display/input - now pass the app parameter
+            var inputControl = CreateParameterInputControl(param, saveCallback, app);
             if (inputControl != null)
             {
                 contentPanel.Children.Add(inputControl);
@@ -494,33 +504,43 @@ namespace darts_hub.control
             return paramPanel;
         }
 
-        private static Control? CreateParameterInputControl(Argument param, Action? saveCallback = null)
+        private static Control? CreateParameterInputControl(Argument param, Action? saveCallback = null, AppBase? app = null)
         {
             var type = param.GetTypeClear();
+            
+            // Check if this is an effect parameter
+            bool isEffectParameter = IsEffectParameter(param);
 
             switch (type)
             {
                 case Argument.TypeString:
                 case Argument.TypePassword:
-                    var textBox = new TextBox
+                    if (isEffectParameter)
                     {
-                        Text = param.Value ?? "",
-                        PasswordChar = type == Argument.TypePassword ? '*' : '\0',
-                        Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
-                        Foreground = Brushes.White,
-                        BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
-                        BorderThickness = new Thickness(1),
-                        Padding = new Thickness(8),
-                        CornerRadius = new CornerRadius(3),
-                        FontSize = 13
-                    };
-                    textBox.TextChanged += (s, e) =>
+                        return CreateEffectParameterControl(param, saveCallback, app);
+                    }
+                    else
                     {
-                        param.Value = textBox.Text;
-                        param.IsValueChanged = true;
-                        saveCallback?.Invoke();
-                    };
-                    return textBox;
+                        var textBox = new TextBox
+                        {
+                            Text = param.Value ?? "",
+                            PasswordChar = type == Argument.TypePassword ? '*' : '\0',
+                            Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
+                            Foreground = Brushes.White,
+                            BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(8),
+                            CornerRadius = new CornerRadius(3),
+                            FontSize = 13
+                        };
+                        textBox.TextChanged += (s, e) =>
+                        {
+                            param.Value = textBox.Text;
+                            param.IsValueChanged = true;
+                            saveCallback?.Invoke();
+                        };
+                        return textBox;
+                    }
 
                 case Argument.TypeBool:
                     var checkBox = new CheckBox
@@ -639,6 +659,492 @@ namespace darts_hub.control
                         FontStyle = string.IsNullOrEmpty(param.Value) ? FontStyle.Italic : FontStyle.Normal
                     };
             }
+        }
+
+        private static bool IsEffectParameter(Argument param)
+        {
+            return param.Name.Contains("effect", StringComparison.OrdinalIgnoreCase) || 
+                   param.Name.Contains("effects", StringComparison.OrdinalIgnoreCase) ||
+                   (param.NameHuman != null && 
+                    (param.NameHuman.Contains("effect", StringComparison.OrdinalIgnoreCase) || 
+                     param.NameHuman.Contains("effects", StringComparison.OrdinalIgnoreCase)));
+        }
+
+        private static Control CreateEffectParameterControl(Argument param, Action? saveCallback = null, AppBase? app = null)
+        {
+            var mainPanel = new StackPanel
+            {
+                Spacing = 8
+            };
+
+            // Input mode selector
+            var modeSelector = new ComboBox
+            {
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
+                Foreground = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(3),
+                FontSize = 13,
+                PlaceholderText = "Select input mode..."
+            };
+
+            var manualItem = new ComboBoxItem { Content = "🖊️ Manual Input", Tag = "manual", Foreground = Brushes.White };
+            var effectsItem = new ComboBoxItem { Content = "✨ WLED Effects", Tag = "effects", Foreground = Brushes.White };
+            var presetsItem = new ComboBoxItem { Content = "🎨 Presets", Tag = "presets", Foreground = Brushes.White };
+            var colorsItem = new ComboBoxItem { Content = "🌈 Color Effects", Tag = "colors", Foreground = Brushes.White };
+
+            modeSelector.Items.Add(manualItem);
+            modeSelector.Items.Add(effectsItem);
+            modeSelector.Items.Add(presetsItem);
+            modeSelector.Items.Add(colorsItem);
+
+            // Container for the input control
+            var inputContainer = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(20, 255, 255, 255)),
+                CornerRadius = new CornerRadius(3),
+                Padding = new Thickness(8),
+                Margin = new Thickness(0, 5, 0, 0)
+            };
+
+            // Create manual text input as default
+            var currentInputControl = CreateManualEffectInput(param, saveCallback);
+            inputContainer.Child = currentInputControl;
+
+            // Set default selection based on current value
+            if (!string.IsNullOrEmpty(param.Value))
+            {
+                if (WledApi.FallbackEffectCategories.SelectMany(kv => kv.Value).Contains(param.Value))
+                {
+                    modeSelector.SelectedItem = effectsItem;
+                }
+                else if (WledApi.FallbackPresets.Contains(param.Value))
+                {
+                    modeSelector.SelectedItem = presetsItem;
+                }
+                else if (ColorEffects.Contains(param.Value))
+                {
+                    modeSelector.SelectedItem = colorsItem;
+                }
+                else
+                {
+                    modeSelector.SelectedItem = manualItem;
+                }
+            }
+            else
+            {
+                modeSelector.SelectedItem = manualItem;
+            }
+
+            // Handle mode changes
+            modeSelector.SelectionChanged += async (s, e) =>
+            {
+                if (modeSelector.SelectedItem is ComboBoxItem selectedItem)
+                {
+                    var mode = selectedItem.Tag?.ToString();
+                    
+                    // Show loading indicator
+                    inputContainer.Child = new TextBlock 
+                    { 
+                        Text = "Loading...", 
+                        Foreground = Brushes.White,
+                        HorizontalAlignment = HorizontalAlignment.Center
+                    };
+                    
+                    Control newControl = mode switch
+                    {
+                        "manual" => CreateManualEffectInput(param, saveCallback),
+                        "effects" => await CreateWledEffectsDropdown(param, saveCallback, app),
+                        "presets" => await CreateWledPresetsDropdown(param, saveCallback, app),
+                        "colors" => CreateColorEffectsDropdown(param, saveCallback),
+                        _ => CreateManualEffectInput(param, saveCallback)
+                    };
+                    
+                    inputContainer.Child = newControl;
+                }
+            };
+
+            // Initialize with correct mode if not manual
+            if (modeSelector.SelectedItem != manualItem)
+            {
+                // Trigger the selection change to load the correct control
+                Task.Run(async () =>
+                {
+                    await Task.Delay(100); // Small delay to ensure UI is ready
+                    if (modeSelector.SelectedItem is ComboBoxItem selectedItem)
+                    {
+                        var mode = selectedItem.Tag?.ToString();
+                        Control newControl = mode switch
+                        {
+                            "effects" => await CreateWledEffectsDropdown(param, saveCallback, app),
+                            "presets" => await CreateWledPresetsDropdown(param, saveCallback, app),
+                            "colors" => CreateColorEffectsDropdown(param, saveCallback),
+                            _ => CreateManualEffectInput(param, saveCallback)
+                        };
+                        
+                        // Update UI on main thread
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            inputContainer.Child = newControl;
+                        });
+                    }
+                });
+            }
+
+            mainPanel.Children.Add(modeSelector);
+            mainPanel.Children.Add(inputContainer);
+
+            return mainPanel;
+        }
+
+        private static Control CreateManualEffectInput(Argument param, Action? saveCallback = null)
+        {
+            var textBox = new TextBox
+            {
+                Text = param.Value ?? "",
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
+                Foreground = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(8),
+                CornerRadius = new CornerRadius(3),
+                FontSize = 13,
+                Watermark = "Enter effect manually..."
+            };
+            
+            textBox.TextChanged += (s, e) =>
+            {
+                param.Value = textBox.Text;
+                param.IsValueChanged = true;
+                saveCallback?.Invoke();
+            };
+            
+            return textBox;
+        }
+
+        private static async Task<Control> CreateWledEffectsDropdown(Argument param, Action? saveCallback = null, AppBase? app = null)
+        {
+            // Create a panel to hold dropdown and refresh button
+            var panel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 5
+            };
+
+            var effectDropdown = new ComboBox
+            {
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
+                Foreground = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(3),
+                FontSize = 13,
+                PlaceholderText = "Loading WLED effects...",
+                MinWidth = 200
+            };
+
+            var refreshButton = new Button
+            {
+                Content = "🔄",
+                Background = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(3),
+                Width = 30,
+                Height = 30,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+
+            ToolTip.SetTip(refreshButton, "Refresh effects from WLED controller");
+
+            // Function to populate effects
+            async Task PopulateEffects()
+            {
+                effectDropdown.PlaceholderText = "Loading WLED effects...";
+                effectDropdown.Items.Clear();
+                
+                if (app != null)
+                {
+                    var (effects, source, isLive) = await WledApi.GetEffectsWithFallbackAsync(app);
+                    
+                    // Add info header
+                    var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
+                    var headerText = isLive ? $"─── Live from {source} ───" : "─── Fallback Effects ───";
+                    
+                    var dynamicHeader = new ComboBoxItem
+                    {
+                        Content = headerText,
+                        Foreground = new SolidColorBrush(headerColor),
+                        IsEnabled = false,
+                        FontWeight = FontWeight.Bold
+                    };
+                    effectDropdown.Items.Add(dynamicHeader);
+
+                    // Add effects
+                    foreach (var effect in effects)
+                    {
+                        var effectItem = new ComboBoxItem
+                        {
+                            Content = effect,
+                            Tag = effect,
+                            Foreground = Brushes.White
+                        };
+                        effectDropdown.Items.Add(effectItem);
+                        
+                        // Pre-select if this matches current value
+                        if (param.Value == effect)
+                        {
+                            effectDropdown.SelectedItem = effectItem;
+                        }
+                    }
+
+                    effectDropdown.PlaceholderText = isLive ? 
+                        "Select WLED effect (live data)..." : 
+                        "Select WLED effect (fallback data)...";
+                }
+                else
+                {
+                    // Just use fallback if no app provided
+                    var fallbackEffects = WledApi.FallbackEffectCategories.SelectMany(kv => kv.Value).ToList();
+                    foreach (var effect in fallbackEffects)
+                    {
+                        var effectItem = new ComboBoxItem
+                        {
+                            Content = effect,
+                            Tag = effect,
+                            Foreground = Brushes.White
+                        };
+                        effectDropdown.Items.Add(effectItem);
+                        
+                        if (param.Value == effect)
+                        {
+                            effectDropdown.SelectedItem = effectItem;
+                        }
+                    }
+                    effectDropdown.PlaceholderText = "Select WLED effect...";
+                }
+            }
+
+            // Initial population
+            await PopulateEffects();
+
+            // Refresh button event
+            refreshButton.Click += async (s, e) =>
+            {
+                refreshButton.IsEnabled = false;
+                refreshButton.Content = "⏳";
+                try
+                {
+                    await PopulateEffects();
+                }
+                finally
+                {
+                    refreshButton.Content = "🔄";
+                    refreshButton.IsEnabled = true;
+                }
+            };
+
+            effectDropdown.SelectionChanged += (s, e) =>
+            {
+                if (effectDropdown.SelectedItem is ComboBoxItem selectedItem && 
+                    selectedItem.Tag is string effect)
+                {
+                    param.Value = effect;
+                    param.IsValueChanged = true;
+                    saveCallback?.Invoke();
+                }
+            };
+
+            panel.Children.Add(effectDropdown);
+            panel.Children.Add(refreshButton);
+            return panel;
+        }
+
+        private static async Task<Control> CreateWledPresetsDropdown(Argument param, Action? saveCallback = null, AppBase? app = null)
+        {
+            // Create a panel to hold dropdown and refresh button
+            var panel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 5
+            };
+
+            var presetDropdown = new ComboBox
+            {
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
+                Foreground = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(3),
+                FontSize = 13,
+                PlaceholderText = "Loading WLED presets...",
+                MinWidth = 200
+            };
+
+            var refreshButton = new Button
+            {
+                Content = "🔄",
+                Background = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(3),
+                Width = 30,
+                Height = 30,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+
+            ToolTip.SetTip(refreshButton, "Refresh presets from WLED controller");
+
+            // Function to populate presets
+            async Task PopulatePresets()
+            {
+                presetDropdown.PlaceholderText = "Loading WLED presets...";
+                presetDropdown.Items.Clear();
+                
+                if (app != null)
+                {
+                    var (presets, source, isLive) = await WledApi.GetPresetsWithFallbackAsync(app);
+                    
+                    // Add info header
+                    var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
+                    var headerText = isLive ? $"─── Live from {source} ───" : "─── Fallback Presets ───";
+                    
+                    var dynamicHeader = new ComboBoxItem
+                    {
+                        Content = headerText,
+                        Foreground = new SolidColorBrush(headerColor),
+                        IsEnabled = false,
+                        FontWeight = FontWeight.Bold
+                    };
+                    presetDropdown.Items.Add(dynamicHeader);
+
+                    // Add presets
+                    foreach (var preset in presets.OrderBy(p => p.Key))
+                    {
+                        var presetDisplayName = isLive ? 
+                            $"Preset {preset.Key} - {preset.Value}" : 
+                            preset.Value;
+                        var presetValue = isLive ? preset.Key.ToString() : preset.Value;
+                        
+                        var presetItem = new ComboBoxItem
+                        {
+                            Content = presetDisplayName,
+                            Tag = presetValue,
+                            Foreground = Brushes.White
+                        };
+                        presetDropdown.Items.Add(presetItem);
+                        
+                        // Pre-select if this matches current value
+                        if (param.Value == presetValue || param.Value == presetDisplayName)
+                        {
+                            presetDropdown.SelectedItem = presetItem;
+                        }
+                    }
+
+                    presetDropdown.PlaceholderText = isLive ? 
+                        "Select preset (live data)..." : 
+                        "Select preset (fallback data)...";
+                }
+                else
+                {
+                    // Just use fallback if no app provided
+                    foreach (var preset in WledApi.FallbackPresets)
+                    {
+                        var presetItem = new ComboBoxItem
+                        {
+                            Content = preset,
+                            Tag = preset,
+                            Foreground = Brushes.White
+                        };
+                        presetDropdown.Items.Add(presetItem);
+                        
+                        if (param.Value == preset)
+                        {
+                            presetDropdown.SelectedItem = presetItem;
+                        }
+                    }
+                    presetDropdown.PlaceholderText = "Select preset...";
+                }
+            }
+
+            // Initial population
+            await PopulatePresets();
+
+            // Refresh button event
+            refreshButton.Click += async (s, e) =>
+            {
+                refreshButton.IsEnabled = false;
+                refreshButton.Content = "⏳";
+                try
+                {
+                    await PopulatePresets();
+                }
+                finally
+                {
+                    refreshButton.Content = "🔄";
+                    refreshButton.IsEnabled = true;
+                }
+            };
+
+            presetDropdown.SelectionChanged += (s, e) =>
+            {
+                if (presetDropdown.SelectedItem is ComboBoxItem selectedItem && 
+                    selectedItem.Tag is string preset)
+                {
+                    param.Value = preset;
+                    param.IsValueChanged = true;
+                    saveCallback?.Invoke();
+                }
+            };
+
+            panel.Children.Add(presetDropdown);
+            panel.Children.Add(refreshButton);
+            return panel;
+        }
+
+        private static Control CreateColorEffectsDropdown(Argument param, Action? saveCallback = null)
+        {
+            var colorDropdown = new ComboBox
+            {
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
+                Foreground = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(3),
+                FontSize = 13,
+                PlaceholderText = "Select color effect..."
+            };
+
+            foreach (var colorEffect in ColorEffects)
+            {
+                var colorItem = new ComboBoxItem
+                {
+                    Content = colorEffect,
+                    Tag = colorEffect,
+                    Foreground = Brushes.White
+                };
+                colorDropdown.Items.Add(colorItem);
+                
+                // Pre-select if this matches current value
+                if (param.Value == colorEffect)
+                {
+                    colorDropdown.SelectedItem = colorItem;
+                }
+            }
+
+            colorDropdown.SelectionChanged += (s, e) =>
+            {
+                if (colorDropdown.SelectedItem is ComboBoxItem selectedItem && 
+                    selectedItem.Tag is string colorEffect)
+                {
+                    param.Value = colorEffect;
+                    param.IsValueChanged = true;
+                    saveCallback?.Invoke();
+                }
+            };
+
+            return colorDropdown;
         }
 
         private static Control CreateAddParameterSection(AppBase app, StackPanel mainPanel, Action? saveCallback = null)
@@ -802,15 +1308,9 @@ namespace darts_hub.control
                 if (paramDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is Argument selectedParam)
                 {
-                    // Debug-Information für das Hinzufügen
-                    System.Diagnostics.Debug.WriteLine($"Adding parameter: {selectedParam.Name} ({selectedParam.NameHuman})");
-                    System.Diagnostics.Debug.WriteLine($"Before - IsRuntimeArgument: {selectedParam.IsRuntimeArgument}, Required: {selectedParam.Required}, Value: '{selectedParam.Value}'");
-                    
                     // Set a default value to make it "configured"
                     selectedParam.Value = GetDefaultValueForType(selectedParam.GetTypeClear());
                     selectedParam.IsValueChanged = true;
-
-                    System.Diagnostics.Debug.WriteLine($"After - Value: '{selectedParam.Value}', IsValueChanged: {selectedParam.IsValueChanged}");
 
                     // Trigger auto-save
                     saveCallback?.Invoke();
@@ -819,17 +1319,8 @@ namespace darts_hub.control
                     var rootPanel = FindRootNewSettingsPanel(addButton);
                     if (rootPanel != null)
                     {
-                        System.Diagnostics.Debug.WriteLine("Refreshing settings content...");
                         await RefreshNewSettingsContent(app, rootPanel, saveCallback);
                     }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine("ERROR: Could not find root panel for refresh!");
-                    }
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("ERROR: No parameter selected or invalid selection!");
                 }
             };
 
@@ -881,13 +1372,6 @@ namespace darts_hub.control
                     rootPanel.Children.Add(child);
                 }
             }
-        }
-
-        private static async void RefreshSettingsContent(AppBase app, StackPanel mainPanel, Action? saveCallback = null)
-        {
-            // This method is kept for backward compatibility but should not be used
-            // The new RefreshNewSettingsContent method should be used instead
-            await RefreshNewSettingsContent(app, mainPanel, saveCallback);
         }
 
         private static Control CreateConfigurationPreviewSection(AppBase app)
