@@ -28,8 +28,8 @@ namespace darts_hub.control
             var mainPanel = new StackPanel
             {
                 Margin = new Thickness(20),
-                HorizontalAlignment = HorizontalAlignment.Stretch
-                // Removed MaxWidth constraint to allow full width usage when tooltip panel is hidden
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MaxWidth = 700 // Limit width to fit properly in the new settings panel
             };
 
             // Store the save callback for later use
@@ -81,7 +81,8 @@ namespace darts_hub.control
             {
                 Orientation = Orientation.Vertical,
                 Margin = new Thickness(0, 0, 0, 20),
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MaxWidth = 650 // Ensure header fits within main panel width
             };
 
             var titleBlock = new TextBlock
@@ -91,7 +92,8 @@ namespace darts_hub.control
                 FontWeight = FontWeight.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
                 Margin = new Thickness(0, 0, 0, 10),
-                TextWrapping = TextWrapping.Wrap
+                TextWrapping = TextWrapping.Wrap,
+                MaxWidth = 650
             };
 
             var subtitleBlock = new TextBlock
@@ -101,7 +103,8 @@ namespace darts_hub.control
                 FontStyle = FontStyle.Italic,
                 Foreground = new SolidColorBrush(Color.FromRgb(153, 153, 153)),
                 Margin = new Thickness(0, 0, 0, 10),
-                TextWrapping = TextWrapping.Wrap
+                TextWrapping = TextWrapping.Wrap,
+                MaxWidth = 650
             };
 
             headerPanel.Children.Add(titleBlock);
@@ -118,7 +121,8 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
                 Margin = new Thickness(0, 0, 0, 15),
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MaxWidth = 650
             };
 
             var contentPanel = new StackPanel();
@@ -169,7 +173,8 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
                 Margin = new Thickness(0, 0, 0, 15),
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MaxWidth = 650
             };
 
             var contentPanel = new StackPanel();
@@ -232,7 +237,8 @@ namespace darts_hub.control
         {
             var mainPanel = new StackPanel
             {
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MaxWidth = 650
             };
 
             // Get configured and required parameters grouped by section
@@ -259,7 +265,8 @@ namespace darts_hub.control
                     CornerRadius = new CornerRadius(8),
                     Padding = new Thickness(15),
                     Margin = new Thickness(0, 0, 0, 15),
-                    HorizontalAlignment = HorizontalAlignment.Stretch
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    MaxWidth = 650
                 };
 
                 var contentPanel = new StackPanel();
@@ -300,7 +307,8 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
                 Margin = new Thickness(0, 0, 0, 15),
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MaxWidth = 650
             };
 
             var contentPanel = new StackPanel();
@@ -411,7 +419,7 @@ namespace darts_hub.control
             {
                 var removeButton = new Button
                 {
-                    Content = "?",
+                    Content = "×",
                     Background = new SolidColorBrush(Color.FromRgb(220, 53, 69)),
                     Foreground = Brushes.White,
                     BorderThickness = new Thickness(0),
@@ -423,15 +431,20 @@ namespace darts_hub.control
                     VerticalAlignment = VerticalAlignment.Top
                 };
 
-                removeButton.Click += (sender, e) =>
+                removeButton.Click += async (sender, e) =>
                 {
                     param.Value = null;
-                    // Remove the parameter panel from the parent
-                    parentPanel.Children.Remove(paramPanel);
                     // Mark as changed for saving
                     param.IsValueChanged = true;
                     // Trigger auto-save
                     saveCallback?.Invoke();
+                    
+                    // Find the root NewSettingsContent panel and refresh it to update dropdowns
+                    var rootPanel = FindRootNewSettingsPanel(removeButton);
+                    if (rootPanel != null)
+                    {
+                        await RefreshNewSettingsContent(app, rootPanel, saveCallback);
+                    }
                 };
 
                 Grid.SetColumn(removeButton, 1);
@@ -597,7 +610,8 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
                 Margin = new Thickness(0, 0, 0, 15),
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MaxWidth = 650
             };
 
             var contentPanel = new StackPanel();
@@ -715,7 +729,7 @@ namespace darts_hub.control
                 addButton.IsEnabled = paramDropdown.SelectedItem != null;
             };
 
-            addButton.Click += (s, e) =>
+            addButton.Click += async (s, e) =>
             {
                 if (paramDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is Argument selectedParam)
@@ -727,8 +741,12 @@ namespace darts_hub.control
                     // Trigger auto-save
                     saveCallback?.Invoke();
 
-                    // Refresh the entire settings content to show the new parameter
-                    RefreshSettingsContent(app, mainPanel, saveCallback);
+                    // Find the root NewSettingsContent panel and refresh it
+                    var rootPanel = FindRootNewSettingsPanel(addButton);
+                    if (rootPanel != null)
+                    {
+                        await RefreshNewSettingsContent(app, rootPanel, saveCallback);
+                    }
                 }
             };
 
@@ -750,22 +768,43 @@ namespace darts_hub.control
             };
         }
 
-        private static async void RefreshSettingsContent(AppBase app, StackPanel mainPanel, Action? saveCallback = null)
+        private static StackPanel? FindRootNewSettingsPanel(Control startControl)
+        {
+            var current = startControl.Parent;
+            while (current != null)
+            {
+                if (current is StackPanel panel && panel.Name == "NewSettingsContent")
+                {
+                    return panel;
+                }
+                current = current.Parent;
+            }
+            return null;
+        }
+
+        private static async Task RefreshNewSettingsContent(AppBase app, StackPanel rootPanel, Action? saveCallback = null)
         {
             // Clear and rebuild the settings content
-            mainPanel.Children.Clear();
+            rootPanel.Children.Clear();
             var newContent = await CreateNewSettingsContent(app, saveCallback);
             
-            // Copy children from new content to main panel
+            // Copy children from new content to root panel
             if (newContent is StackPanel newPanel)
             {
                 while (newPanel.Children.Count > 0)
                 {
                     var child = newPanel.Children[0];
                     newPanel.Children.RemoveAt(0);
-                    mainPanel.Children.Add(child);
+                    rootPanel.Children.Add(child);
                 }
             }
+        }
+
+        private static async void RefreshSettingsContent(AppBase app, StackPanel mainPanel, Action? saveCallback = null)
+        {
+            // This method is kept for backward compatibility but should not be used
+            // The new RefreshNewSettingsContent method should be used instead
+            await RefreshNewSettingsContent(app, mainPanel, saveCallback);
         }
 
         private static Control CreateConfigurationPreviewSection(AppBase app)
@@ -776,7 +815,8 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
                 Margin = new Thickness(0, 0, 0, 15),
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MaxWidth = 650
             };
 
             var contentPanel = new StackPanel();
@@ -795,7 +835,7 @@ namespace darts_hub.control
             {
                 Text = app.IsConfigurable() ? 
                     $"?? App has {app.Configuration?.Arguments?.Count ?? 0} configurable options\n" +
-                    "?? Enhanced UI controls active\n" +
+                    "??? Enhanced UI controls active\n" +
                     "? Real-time parameter management\n" +
                     "?? Advanced validation and tooltips" : 
                     "This application has no configurable settings.",
@@ -820,7 +860,8 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
                 Margin = new Thickness(0, 15, 0, 0),
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MaxWidth = 650
             };
 
             var noticeText = new TextBlock

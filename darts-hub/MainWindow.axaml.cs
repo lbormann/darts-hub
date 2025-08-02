@@ -263,20 +263,22 @@ namespace darts_hub
             // Stop the console update timer
             consoleUpdateTimer?.Stop();
             
-            // Show tooltip panel and splitter
-            MainGrid.ColumnDefinitions[4].Width = new GridLength(250, GridUnitType.Pixel);
-            TooltipPanel.IsVisible = true;
-            TooltipSplitter.IsVisible = true;
-            TooltipTitle.Text = "Tooltips";
-            TooltipDescription.Text = "";
-            
             // Hide console panel
             ConsolePanel.IsVisible = false;
             
-            // Show settings, hide others
-            SettingsScrollViewer.IsVisible = true;
+            // Hide changelog and about
             ChangelogScrollViewer.IsVisible = false;
             AboutScrollViewer.IsVisible = false;
+            
+            // Show appropriate settings mode based on configuration
+            if (configurator.Settings.NewSettingsMode)
+            {
+                ShowNewSettingsMode();
+            }
+            else
+            {
+                ShowClassicSettingsMode();
+            }
             
             // Reset to top button visibility based on current scroll position
             UpdateToTopButtonVisibility();
@@ -434,7 +436,18 @@ namespace darts_hub
                 if (currentContentMode == ContentMode.Settings)
                 {
                     const double showThreshold = 100.0;
-                    bool shouldShow = SettingsScrollViewer.Offset.Y > showThreshold;
+                    bool shouldShow = false;
+                    
+                    // Check scroll position based on current settings mode
+                    if (configurator.Settings.NewSettingsMode && NewSettingsScrollViewer != null)
+                    {
+                        shouldShow = NewSettingsScrollViewer.Offset.Y > showThreshold;
+                    }
+                    else if (SettingsScrollViewer != null)
+                    {
+                        shouldShow = SettingsScrollViewer.Offset.Y > showThreshold;
+                    }
+                    
                     toTopButton.IsVisible = shouldShow;
                     toTopButton.Opacity = shouldShow ? 0.9 : 0.0;
                 }
@@ -1448,46 +1461,64 @@ namespace darts_hub
         private async Task RenderAppSettings(AppBase app)
         {
             SettingsPanel.Children.Clear();
+            NewSettingsContent.Children.Clear();
             selectedApp = app;
             
             if (!app.IsConfigurable())
             {
-                SettingsPanel.Children.Add(new TextBlock
+                // For non-configurable apps, show in appropriate panel based on mode
+                var message = new TextBlock
                 {
                     Text = $"{app.CustomName} has no configurable settings.",
                     Foreground = new SolidColorBrush(Color.FromRgb(153, 153, 153)),
                     FontSize = 16,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     Margin = new Thickness(20)
-                });
+                };
+
+                if (configurator.Settings.NewSettingsMode)
+                {
+                    ShowNewSettingsMode();
+                    NewSettingsContent.Children.Add(message);
+                }
+                else
+                {
+                    ShowClassicSettingsMode();
+                    SettingsPanel.Children.Add(message);
+                }
                 return;
             }
 
             // Check if new settings mode is enabled
             if (configurator.Settings.NewSettingsMode)
             {
-                // Hide tooltip panel and splitter for new settings mode
-                MainGrid.ColumnDefinitions[4].Width = new GridLength(0); // Tooltip spalte
-                MainGrid.ColumnDefinitions[3].Width = new GridLength(0); // Splitter
-                TooltipPanel.IsVisible = false;
-                TooltipSplitter.IsVisible = false;
-
-                // Load new settings content with save callback and increased width
+                ShowNewSettingsMode();
+                
+                // Load new settings content with save callback
                 var newSettingsContent = await NewSettingsContentProvider.CreateNewSettingsContent(app, () => Save());
                 
-                // The NewSettingsContentProvider already handles the full width since MaxWidth constraint was removed
-                SettingsPanel.Children.Add(newSettingsContent);
+                // Clear existing content and add new content
+                NewSettingsContent.Children.Clear();
+                if (newSettingsContent is StackPanel newPanel)
+                {
+                    // Copy children from the created content to our NewSettingsContent panel
+                    while (newPanel.Children.Count > 0)
+                    {
+                        var child = newPanel.Children[0];
+                        newPanel.Children.RemoveAt(0);
+                        NewSettingsContent.Children.Add(child);
+                    }
+                }
+                else
+                {
+                    NewSettingsContent.Children.Add(newSettingsContent);
+                }
                 return;
             }
 
-            // Classic settings mode - show tooltip panel and splitter
-            MainGrid.ColumnDefinitions[4].Width = new GridLength(250, GridUnitType.Pixel);
-            MainGrid.ColumnDefinitions[3].Width = new GridLength(2, GridUnitType.Pixel);
-            TooltipPanel.IsVisible = true;
-            TooltipSplitter.IsVisible = true;
-            TooltipTitle.Text = "Tooltips";
-            TooltipDescription.Text = "";
-
+            // Classic settings mode
+            ShowClassicSettingsMode();
+            
             // Load tooltips for this app
             await LoadTooltipsForApp(app);
 
@@ -1752,6 +1783,315 @@ namespace darts_hub
             }
         }
 
+        private void ShowClassicSettingsMode()
+        {
+            // Show tooltip panel and splitter for classic mode
+            MainGrid.ColumnDefinitions[4].Width = new GridLength(250, GridUnitType.Pixel);
+            MainGrid.ColumnDefinitions[3].Width = new GridLength(2, GridUnitType.Pixel);
+            TooltipPanel.IsVisible = true;
+            TooltipSplitter.IsVisible = true;
+            
+            // Hide new settings panel, show classic settings
+            NewSettingsPanel.IsVisible = false;
+            SettingsScrollViewer.IsVisible = true;
+            
+            TooltipTitle.Text = "Tooltips";
+            TooltipDescription.Text = "";
+        }
+
+        private void ShowNewSettingsMode()
+        {
+            // Hide tooltip panel and splitter for new settings mode
+            MainGrid.ColumnDefinitions[4].Width = new GridLength(0);
+            MainGrid.ColumnDefinitions[3].Width = new GridLength(0);
+            TooltipPanel.IsVisible = false;
+            TooltipSplitter.IsVisible = false;
+            
+            // Hide classic settings, show new settings panel
+            SettingsScrollViewer.IsVisible = false;
+            NewSettingsPanel.IsVisible = true;
+        }
+
+        private void NewSettingsBackButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Switch back to classic mode
+            configurator.Settings.NewSettingsMode = false;
+            configurator.SaveSettings();
+            
+            // Update the checkbox in About section
+            AboutCheckBoxNewSettingsMode.IsChecked = false;
+            
+            // Re-render current app settings if any app is selected
+            if (selectedApp != null)
+            {
+                _ = Task.Run(async () =>
+                {
+                    await Dispatcher.UIThread.InvokeAsync(async () =>
+                    {
+                        await RenderAppSettings(selectedApp);
+                    });
+                });
+            }
+            else
+            {
+                // Just switch modes
+                ShowClassicSettingsMode();
+            }
+        }
+
+        private void ToTopButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (currentContentMode == ContentMode.Settings)
+            {
+                ScrollViewer scrollViewer;
+                if (configurator.Settings.NewSettingsMode)
+                {
+                    scrollViewer = NewSettingsScrollViewer;
+                }
+                else
+                {
+                    scrollViewer = SettingsScrollViewer;
+                }
+                
+                if (scrollViewer == null) return;
+                
+                var startOffset = scrollViewer.Offset.Y;
+                var duration = TimeSpan.FromMilliseconds(500);
+                var startTime = DateTime.Now;
+
+                var scrollTimer = new Timer(16); // ~60 FPS
+                scrollTimer.Elapsed += (s, args) =>
+                {
+                    var elapsed = DateTime.Now - startTime;
+                    var progress = Math.Min(elapsed.TotalMilliseconds / duration.TotalMilliseconds, 1.0);
+                    
+                    var easedProgress = 1 - Math.Pow(1 - progress, 3);
+                    var currentOffset = startOffset * (1 - easedProgress);
+                    
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        scrollViewer.Offset = scrollViewer.Offset.WithY(currentOffset);
+                        
+                        if (progress >= 1.0)
+                        {
+                            scrollTimer.Stop();
+                            scrollTimer.Dispose();
+                        }
+                    });
+                };
+                scrollTimer.Start();
+            }
+        }
+
+        private void SettingsScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            if (currentContentMode == ContentMode.Settings && sender is ScrollViewer scrollViewer)
+            {
+                const double showThreshold = 100.0;
+                bool shouldShow = scrollViewer.Offset.Y > showThreshold;
+                var toTopButton = this.FindControl<Button>("ToTopButton");
+                if (toTopButton != null)
+                {
+                    if (shouldShow && !toTopButton.IsVisible)
+                    {
+                        toTopButton.IsVisible = true;
+                        toTopButton.Opacity = 0.9;
+                    }
+                    else if (!shouldShow && toTopButton.IsVisible)
+                    {
+                        toTopButton.IsVisible = false;
+                        toTopButton.Opacity = 0.0;
+                    }
+                }
+            }
+        }
+
+        private void NewSettingsScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            if (currentContentMode == ContentMode.Settings && sender is ScrollViewer scrollViewer)
+            {
+                const double showThreshold = 100.0;
+                bool shouldShow = scrollViewer.Offset.Y > showThreshold;
+                var toTopButton = this.FindControl<Button>("ToTopButton");
+                if (toTopButton != null)
+                {
+                    if (shouldShow && !toTopButton.IsVisible)
+                    {
+                        toTopButton.IsVisible = true;
+                        toTopButton.Opacity = 0.9;
+                    }
+                    else if (!shouldShow && toTopButton.IsVisible)
+                    {
+                        toTopButton.IsVisible = false;
+                        toTopButton.Opacity = 0.0;
+                    }
+                }
+            }
+        }
+
+        // Missing essential methods - basic implementations
+        private void InitializeAboutContent()
+        {
+            try
+            {
+                // Set the app version
+                AboutAppVersion.Content = Updater.version;
+                
+                // Set the skip update confirmation checkbox
+                AboutCheckBoxSkipUpdateConfirmation.IsChecked = configurator.Settings.SkipUpdateConfirmation;
+                
+                // Set the new settings mode checkbox
+                AboutCheckBoxNewSettingsMode.IsChecked = configurator.Settings.NewSettingsMode;
+                
+                // Show the About content by default
+                ShowAboutMode();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error initializing About content: {ex.Message}");
+            }
+        }
+
+        private async Task<ButtonResult> RenderMessageBox(string title, string message, MsBox.Avalonia.Enums.Icon icon, ButtonEnum buttons = ButtonEnum.Ok, double? width = null, double? height = null, int autoCloseDelayInSeconds = 0)
+        {
+            var messageBoxParams = new MessageBoxStandardParams
+            {
+                ContentTitle = title,
+                ContentMessage = message,
+                Icon = icon,
+                ButtonDefinitions = buttons,
+                WindowIcon = Icon,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+
+            if (width.HasValue)
+                messageBoxParams.Width = width.Value;
+            if (height.HasValue)
+                messageBoxParams.Height = height.Value;
+
+            var messageBox = MessageBoxManager.GetMessageBoxStandard(messageBoxParams);
+            
+            if (autoCloseDelayInSeconds > 0)
+            {
+                _ = Task.Delay(TimeSpan.FromSeconds(autoCloseDelayInSeconds)).ContinueWith(_ =>
+                {
+                    // The MessageBox will auto-close on timeout
+                });
+            }
+
+            return await messageBox.ShowWindowDialogAsync(this);
+        }
+
+        private void ShowAboutMode()
+        {
+            currentContentMode = ContentMode.About;
+            
+            // Hide to top button when not in settings mode
+            var toTopButton = this.FindControl<Button>("ToTopButton");
+            if (toTopButton != null)
+            {
+                toTopButton.IsVisible = false;
+            }
+            
+            // Stop the console update timer
+            consoleUpdateTimer?.Stop();
+            
+            // Show tooltip panel and splitter
+            MainGrid.ColumnDefinitions[4].Width = new GridLength(250, GridUnitType.Pixel);
+            MainGrid.ColumnDefinitions[3].Width = new GridLength(2, GridUnitType.Pixel);
+            TooltipPanel.IsVisible = true;
+            TooltipSplitter.IsVisible = true;
+            
+            // Hide console panel
+            ConsolePanel.IsVisible = false;
+            
+            // Show about, hide others
+            SettingsScrollViewer.IsVisible = false;
+            ChangelogScrollViewer.IsVisible = false;
+            AboutScrollViewer.IsVisible = true;
+
+            // *** Reset ChangelogScrollViewer positioning ***
+            Grid.SetColumn(ChangelogScrollViewer, 2);
+            Grid.SetColumnSpan(ChangelogScrollViewer, 1);
+
+            // *** Reset Border-Eigenschaften ***
+            var contentBorder = MainGrid.Children.OfType<Border>()
+                .FirstOrDefault(b => Grid.GetColumn(b) == 2 && Grid.GetColumnSpan(b) == 1);
+
+            if (contentBorder != null)
+            {
+                contentBorder.Background = new SolidColorBrush(Color.FromArgb(242, 37, 37, 38));
+                contentBorder.Width = double.NaN;
+                contentBorder.HorizontalAlignment = HorizontalAlignment.Stretch;
+            }
+
+            // Update tooltip content
+            TooltipTitle.Text = "Darts-Hub Info Area";
+            TooltipDescription.Text = "This is your central hub for managing darts applications. Use the navigation panel to configure your apps, or explore the settings for detailed configuration options.";
+            
+            // Update button states
+            ButtonConsole.Background = Brushes.Transparent;
+            ButtonChangelog.Background = Brushes.Transparent;
+
+            // Update the about button appearance to show it's active
+            var aboutButton = this.FindControl<Button>("Buttonabout");
+            if (aboutButton != null)
+            {
+                aboutButton.Background = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+            }
+        }
+
+        private async Task LoadChangelogContent()
+        {
+            try
+            {
+                var changelogText = await Helper.AsyncHttpGet("https://raw.githubusercontent.com/lbormann/darts-hub/main/CHANGELOG.md", 4);
+                if (string.IsNullOrEmpty(changelogText))
+                    changelogText = "Changelog not available. Please try again later.";
+               
+                ChangelogContent.Text = changelogText;
+            }
+            catch (Exception ex)
+            {
+                ChangelogContent.Text = $"Failed to load changelog: {ex.Message}";
+            }
+        }
+
+        private async Task LoadTooltipsForApp(AppBase app)
+        {
+            try
+            {
+                string readmeUrl = GetReadmeUrlForApp(app.CustomName);
+                if (readmeUrl != "error")
+                {
+                    currentTooltips = await readmeParser.GetArgumentsFromReadme(readmeUrl);
+                }
+                else
+                {
+                    currentTooltips = new Dictionary<string, string>();
+                }
+            }
+            catch (Exception ex)
+            {
+                currentTooltips = new Dictionary<string, string>();
+                System.Diagnostics.Debug.WriteLine($"Error loading tooltips: {ex.Message}");
+            }
+        }
+
+        private string GetReadmeUrlForApp(string appName)
+        {
+            return appName switch
+            {
+                "darts-caller" => "https://raw.githubusercontent.com/lbormann/darts-caller/refs/heads/master/README.md",
+                "darts-wled" => "https://raw.githubusercontent.com/lbormann/darts-wled/refs/heads/main/README.md",
+                "darts-pixelit" => "https://raw.githubusercontent.com/lbormann/darts-pixelit/refs/heads/main/README.md",
+                "darts-gif" => "https://raw.githubusercontent.com/lbormann/darts-gif/refs/heads/main/README.md",
+                "darts-voice" => "https://raw.githubusercontent.com/lbormann/darts-voice/refs/heads/main/README.md",
+                "darts-extern" => "https://raw.githubusercontent.com/lbormann/darts-extern/refs/heads/master/README.md",
+                _ => "error"
+            };
+        }
+
         private Control CreateAutostartSection(AppBase app)
         {
             var expander = new Expander
@@ -1886,7 +2226,6 @@ namespace darts_hub
                     
                     inputControl = new CheckBox
                     {
-                        //Content = argument.NameHuman,
                         IsChecked = isChecked,
                         FontSize = 14,
                         Foreground = Brushes.White,
@@ -2142,26 +2481,6 @@ namespace darts_hub
             }
         }
 
-        //private void ShowTooltip(Argument argument)
-        //{
-        //    try
-        //    {
-        //        if (currentTooltips != null && currentTooltips.TryGetValue(argument.Name, out var tooltip))
-        //        {
-        //            TooltipDescription.Text = tooltip;
-        //        }
-        //        else
-        //        {
-        //            TooltipDescription.Text = argument.Description ?? "No description available.";
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        TooltipDescription.Text = "Error loading tooltip.";
-        //        System.Diagnostics.Debug.WriteLine($"Error showing tooltip: {ex.Message}");
-        //    }
-        //}
-        // In der ShowTooltip-Methode:
         private void ShowTooltip(Argument argument)
         {
             try
@@ -2271,37 +2590,6 @@ namespace darts_hub
             Close();
         }
 
-        // Message box and utility methods
-        private async Task<ButtonResult> RenderMessageBox(string title, string message, MsBox.Avalonia.Enums.Icon icon, ButtonEnum buttons = ButtonEnum.Ok, double? width = null, double? height = null, int autoCloseDelayInSeconds = 0)
-        {
-            var messageBoxParams = new MessageBoxStandardParams
-            {
-                ContentTitle = title,
-                ContentMessage = message,
-                Icon = icon,
-                ButtonDefinitions = buttons,
-                WindowIcon = Icon,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            };
-
-            if (width.HasValue)
-                messageBoxParams.Width = width.Value;
-            if (height.HasValue)
-                messageBoxParams.Height = height.Value;
-
-            var messageBox = MessageBoxManager.GetMessageBoxStandard(messageBoxParams);
-            
-            if (autoCloseDelayInSeconds > 0)
-            {
-                _ = Task.Delay(TimeSpan.FromSeconds(autoCloseDelayInSeconds)).ContinueWith(_ =>
-                {
-                    // The MessageBox will auto-close on timeout
-                });
-            }
-
-            return await messageBox.ShowWindowDialogAsync(this);
-        }
-
         private async void ShowCorruptedConfigHandlingBox(ConfigurationException ex)
         {
             var result = await RenderMessageBox("Configuration Error", 
@@ -2325,24 +2613,6 @@ namespace darts_hub
             else
             {
                 Environment.Exit(1);
-            }
-        }
-
-        private async Task LoadChangelogContent()
-        {
-            try
-            {
-               
-                var changelogText = await Helper.AsyncHttpGet("https://raw.githubusercontent.com/lbormann/darts-hub/main/CHANGELOG.md", 4);
-                if (string.IsNullOrEmpty(changelogText))
-                    changelogText = "Changelog not available. Please try again later.";
-               
-                //var changelogText = "Changelog not available yet.";
-                ChangelogContent.Text = changelogText;
-            }
-            catch (Exception ex)
-            {
-                ChangelogContent.Text = $"Failed to load changelog: {ex.Message}";
             }
         }
 
@@ -2376,178 +2646,6 @@ namespace darts_hub
         private void ConsoleAutoScrollCheckBox_Changed(object sender, RoutedEventArgs e)
         {
             isAutoScrollEnabled = ConsoleAutoScrollCheckBox.IsChecked == true;
-        }
-
-        private void SettingsScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
-        {
-            if (currentContentMode == ContentMode.Settings && sender is ScrollViewer scrollViewer)
-            {
-                const double showThreshold = 100.0;
-                bool shouldShow = scrollViewer.Offset.Y > showThreshold;
-                var toTopButton = this.FindControl<Button>("ToTopButton");
-                if (toTopButton != null)
-                {
-                    if (shouldShow && !toTopButton.IsVisible)
-                    {
-                        toTopButton.IsVisible = true;
-                        toTopButton.Opacity = 0.9;
-                    }
-                    else if (!shouldShow && toTopButton.IsVisible)
-                    {
-                        toTopButton.IsVisible = false;
-                        toTopButton.Opacity = 0.0;
-                    }
-                }
-            }
-        }
-
-        private void ToTopButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (currentContentMode == ContentMode.Settings)
-            {
-                var scrollViewer = SettingsScrollViewer;
-                var startOffset = scrollViewer.Offset.Y;
-                var duration = TimeSpan.FromMilliseconds(500);
-                var startTime = DateTime.Now;
-
-                var scrollTimer = new Timer(16); // ~60 FPS
-                scrollTimer.Elapsed += (s, args) =>
-                {
-                    var elapsed = DateTime.Now - startTime;
-                    var progress = Math.Min(elapsed.TotalMilliseconds / duration.TotalMilliseconds, 1.0);
-                    
-                    var easedProgress = 1 - Math.Pow(1 - progress, 3);
-                    var currentOffset = startOffset * (1 - easedProgress);
-                    
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        scrollViewer.Offset = scrollViewer.Offset.WithY(currentOffset);
-                        
-                        if (progress >= 1.0)
-                        {
-                            scrollTimer.Stop();
-                            scrollTimer.Dispose();
-                        }
-                    });
-                };
-                scrollTimer.Start();
-            }
-        }
-
-        private async Task LoadTooltipsForApp(AppBase app)
-        {
-            try
-            {
-                string readmeUrl = GetReadmeUrlForApp(app.CustomName);
-                if (readmeUrl != "error")
-                {
-                    currentTooltips = await readmeParser.GetArgumentsFromReadme(readmeUrl);
-                }
-                else
-                {
-                    currentTooltips = new Dictionary<string, string>();
-                }
-            }
-            catch (Exception ex)
-            {
-                currentTooltips = new Dictionary<string, string>();
-                System.Diagnostics.Debug.WriteLine($"Error loading tooltips: {ex.Message}");
-            }
-        }
-
-        private string GetReadmeUrlForApp(string appName)
-        {
-            return appName switch
-            {
-                "darts-caller" => "https://raw.githubusercontent.com/lbormann/darts-caller/refs/heads/master/README.md",
-                "darts-wled" => "https://raw.githubusercontent.com/lbormann/darts-wled/refs/heads/main/README.md",
-                "darts-pixelit" => "https://raw.githubusercontent.com/lbormann/darts-pixelit/refs/heads/main/README.md",
-                "darts-gif" => "https://raw.githubusercontent.com/lbormann/darts-gif/refs/heads/main/README.md",
-                "darts-voice" => "https://raw.githubusercontent.com/lbormann/darts-voice/refs/heads/main/README.md",
-                "darts-extern" => "https://raw.githubusercontent.com/lbormann/darts-extern/refs/heads/master/README.md",
-                _ => "error"
-            };
-        }
-
-        private void ShowAboutMode()
-        {
-            currentContentMode = ContentMode.About;
-            
-            // Hide to top button when not in settings mode
-            var toTopButton = this.FindControl<Button>("ToTopButton");
-            if ( toTopButton != null)
-            {
-                toTopButton.IsVisible = false;
-            }
-            
-            // Stop the console update timer
-            consoleUpdateTimer?.Stop();
-            
-            // Show tooltip panel and splitter
-            MainGrid.ColumnDefinitions[4].Width = new GridLength(250, GridUnitType.Pixel);
-            MainGrid.ColumnDefinitions[3].Width = new GridLength(2, GridUnitType.Pixel);
-            TooltipPanel.IsVisible = true;
-            TooltipSplitter.IsVisible = true;
-            
-            // Hide console panel
-            ConsolePanel.IsVisible = false;
-            
-            // Show about, hide others
-            SettingsScrollViewer.IsVisible = false;
-            ChangelogScrollViewer.IsVisible = false;
-            AboutScrollViewer.IsVisible = true;
-
-            // *** Reset ChangelogScrollViewer positioning ***
-            Grid.SetColumn(ChangelogScrollViewer, 2);
-            Grid.SetColumnSpan(ChangelogScrollViewer, 1);
-
-            // *** Reset Border-Eigenschaften ***
-            var contentBorder = MainGrid.Children.OfType<Border>()
-                .FirstOrDefault(b => Grid.GetColumn(b) == 2 && Grid.GetColumnSpan(b) == 1);
-
-            if (contentBorder != null)
-            {
-                contentBorder.Background = new SolidColorBrush(Color.FromArgb(242, 37, 37, 38));
-                contentBorder.Width = double.NaN;
-                contentBorder.HorizontalAlignment = HorizontalAlignment.Stretch;
-            }
-
-            // Update tooltip content
-            TooltipTitle.Text = "Darts-Hub Info Area";
-            TooltipDescription.Text = "This is your central hub for managing darts applications. Use the navigation panel to configure your apps, or explore the settings for detailed configuration options.";
-            
-            // Update button states
-            ButtonConsole.Background = Brushes.Transparent;
-            ButtonChangelog.Background = Brushes.Transparent;
-
-            // Update the about button appearance to show it's active
-            var aboutButton = this.FindControl<Button>("Buttonabout");
-            if (aboutButton != null)
-            {
-                aboutButton.Background = new SolidColorBrush(Color.FromRgb(0, 122, 204));
-            }
-        }
-
-        private void InitializeAboutContent()
-        {
-            try
-            {
-                // Set the app version
-                AboutAppVersion.Content = Updater.version;
-                
-                // Set the skip update confirmation checkbox
-                AboutCheckBoxSkipUpdateConfirmation.IsChecked = configurator.Settings.SkipUpdateConfirmation;
-                
-                // Set the new settings mode checkbox
-                AboutCheckBoxNewSettingsMode.IsChecked = configurator.Settings.NewSettingsMode;
-                
-                // Show the About content by default
-                ShowAboutMode();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error initializing About content: {ex.Message}");
-            }
         }
 
         private async void AboutButton_Click(object sender, RoutedEventArgs e)

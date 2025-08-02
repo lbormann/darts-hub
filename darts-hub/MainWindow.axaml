@@ -494,7 +494,8 @@
 								  VerticalScrollBarVisibility="Auto" 
 								  HorizontalScrollBarVisibility="Hidden"
 								  Background="Transparent"
-								  Padding="0,0">
+								  Padding="20,0,0,0"
+								  ScrollChanged="NewSettingsScrollViewer_ScrollChanged">
 						<StackPanel x:Name="NewSettingsContent">
 							<TextBlock Text="Enhanced settings will appear here..." 
 									   Foreground="#FF999999" 
@@ -537,3 +538,5 @@
 				</StackPanel>
 			</Border>
 		</Grid>
+	</Viewbox>
+</Window>
