@@ -115,7 +115,7 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(3),
                 Padding = new Thickness(8),
                 Margin = new Thickness(0, 5, 0, 0),
-                IsVisible = false // Hidden until mode is selected
+                IsVisible = true // Always visible initially
             };
 
             // Parse current value if exists (format: "from-to effect" or manual format)
@@ -124,12 +124,28 @@ namespace darts_hub.control
             string? effectPart = null;
             bool isManualMode = false;
 
+            System.Diagnostics.Debug.WriteLine($"=== SCORE AREA PARSING START ===");
+            System.Diagnostics.Debug.WriteLine($"Parameter Value: '{param.Value}'");
+            System.Diagnostics.Debug.WriteLine($"Parameter Name: '{param.Name}'");
+
             if (!string.IsNullOrEmpty(param.Value))
             {
                 var mainParts = param.Value.Split(' ', 2);
+                System.Diagnostics.Debug.WriteLine($"Main parts count: {mainParts.Length}");
+                for (int i = 0; i < mainParts.Length; i++)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Main part {i}: '{mainParts[i]}'");
+                }
+
                 if (mainParts.Length >= 2)
                 {
                     var rangeParts = mainParts[0].Split('-');
+                    System.Diagnostics.Debug.WriteLine($"Range parts count: {rangeParts.Length}");
+                    for (int i = 0; i < rangeParts.Length; i++)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Range part {i}: '{rangeParts[i]}'");
+                    }
+
                     if (rangeParts.Length == 2 && 
                         int.TryParse(rangeParts[0], out var from) && 
                         int.TryParse(rangeParts[1], out var to))
@@ -139,12 +155,18 @@ namespace darts_hub.control
                         selectedTo = to;
                         effectPart = mainParts[1];
                         
+                        System.Diagnostics.Debug.WriteLine($"AUTOMATIC MODE DETECTED:");
+                        System.Diagnostics.Debug.WriteLine($"  From: {selectedFrom}");
+                        System.Diagnostics.Debug.WriteLine($"  To: {selectedTo}");
+                        System.Diagnostics.Debug.WriteLine($"  Effect Part: '{effectPart}'");
+                        
                         // Set range dropdowns
                         foreach (ComboBoxItem item in fromDropdown.Items)
                         {
                             if (item.Tag is int value && value == from)
                             {
                                 fromDropdown.SelectedItem = item;
+                                System.Diagnostics.Debug.WriteLine($"  Selected FROM dropdown: {value}");
                                 break;
                             }
                         }
@@ -154,27 +176,34 @@ namespace darts_hub.control
                             if (item.Tag is int value && value == to)
                             {
                                 toDropdown.SelectedItem = item;
+                                System.Diagnostics.Debug.WriteLine($"  Selected TO dropdown: {value}");
                                 break;
                             }
                         }
                         
                         // Set mode based on effect type
+                        System.Diagnostics.Debug.WriteLine($"  Determining mode for effect: '{effectPart}'");
+                        
                         if (IsPresetParameter(effectPart))
                         {
                             modeSelector.SelectedItem = presetsItem;
+                            System.Diagnostics.Debug.WriteLine($"  MODE: PRESETS (detected preset parameter)");
                         }
                         else if (WledApi.FallbackEffectCategories.SelectMany(kv => kv.Value).Contains(effectPart))
                         {
                             modeSelector.SelectedItem = effectsItem;
+                            System.Diagnostics.Debug.WriteLine($"  MODE: EFFECTS");
                         }
                         else if (NewSettingsContentProvider.ColorEffects.Contains(effectPart))
                         {
                             modeSelector.SelectedItem = colorsItem;
+                            System.Diagnostics.Debug.WriteLine($"  MODE: COLORS");
                         }
                         else
                         {
                             modeSelector.SelectedItem = manualItem;
                             isManualMode = true;
+                            System.Diagnostics.Debug.WriteLine($"  MODE: MANUAL (fallback)");
                         }
                     }
                     else
@@ -182,6 +211,7 @@ namespace darts_hub.control
                         // This is manual format - entire value goes to manual input
                         isManualMode = true;
                         modeSelector.SelectedItem = manualItem;
+                        System.Diagnostics.Debug.WriteLine($"MANUAL MODE: Invalid range format");
                     }
                 }
                 else
@@ -189,6 +219,7 @@ namespace darts_hub.control
                     // Single value - manual mode
                     isManualMode = true;
                     modeSelector.SelectedItem = manualItem;
+                    System.Diagnostics.Debug.WriteLine($"MANUAL MODE: Single value");
                 }
             }
             else
@@ -196,11 +227,39 @@ namespace darts_hub.control
                 // Default to manual mode for empty values
                 modeSelector.SelectedItem = manualItem;
                 isManualMode = true;
+                System.Diagnostics.Debug.WriteLine($"MANUAL MODE: Empty value");
             }
 
             // Show/hide panels based on current mode
             rangePanel.IsVisible = !isManualMode;
-            effectContainer.IsVisible = true; // Always show initially
+            
+            System.Diagnostics.Debug.WriteLine($"=== UI VISIBILITY SETUP ===");
+            System.Diagnostics.Debug.WriteLine($"Manual Mode: {isManualMode}");
+            System.Diagnostics.Debug.WriteLine($"Range Panel Visible: {rangePanel.IsVisible}");
+            
+            // For automatic modes, validate range immediately
+            if (!isManualMode)
+            {
+                var fromItem = fromDropdown.SelectedItem as ComboBoxItem;
+                var toItem = toDropdown.SelectedItem as ComboBoxItem;
+                
+                bool isValidRange = fromItem?.Tag is int fromValue && 
+                                   toItem?.Tag is int toValue && 
+                                   fromValue < toValue;
+                
+                effectContainer.IsVisible = isValidRange;
+                
+                System.Diagnostics.Debug.WriteLine($"Range Validation:");
+                System.Diagnostics.Debug.WriteLine($"  From Item: {fromItem?.Tag}");
+                System.Diagnostics.Debug.WriteLine($"  To Item: {toItem?.Tag}");
+                System.Diagnostics.Debug.WriteLine($"  Is Valid Range: {isValidRange}");
+                System.Diagnostics.Debug.WriteLine($"  Effect Container Visible: {effectContainer.IsVisible}");
+            }
+            else
+            {
+                effectContainer.IsVisible = true; // Always visible for manual mode
+                System.Diagnostics.Debug.WriteLine($"Manual mode - Effect Container Visible: {effectContainer.IsVisible}");
+            }
 
             // Store effect part for range-based modes, or use full value for manual mode
             if (isManualMode)
@@ -227,8 +286,6 @@ namespace darts_hub.control
                         param.Value = effectPart;
                         param.IsValueChanged = true;
                         saveCallback?.Invoke();
-                        
-                        System.Diagnostics.Debug.WriteLine($"Updated manual score area effect parameter: {param.Value}");
                     }
                     finally
                     {
@@ -252,8 +309,6 @@ namespace darts_hub.control
                             param.Value = $"{fromValue}-{toValue} {effectPart}";
                             param.IsValueChanged = true;
                             saveCallback?.Invoke();
-                            
-                            System.Diagnostics.Debug.WriteLine($"Updated automatic score area effect parameter: {param.Value}");
                         }
                         finally
                         {
@@ -386,7 +441,7 @@ namespace darts_hub.control
                             saveCallback?.Invoke();
                         }),
                         "effects" => await CreateWledEffectsDropdown(tempParam, () => { effectPart = tempParam.Value; UpdateParameterValue(); }, app),
-                        "presets" => await CreateWledPresetsDropdown(tempParam, () => { effectPart = tempParam.Value; UpdateParameterValue(); }, app),
+                        "presets" => await CreateWledPresetsDropdownWithState(tempParam, () => { effectPart = tempParam.Value; UpdateParameterValue(); }, app, ExtractPresetFromEffectPart(effectPart), selectedTo ?? 0, selectedFrom ?? 0),
                         "colors" => CreateColorEffectsDropdown(tempParam, () => { effectPart = tempParam.Value; UpdateParameterValue(); }),
                         _ => CreateManualEffectInput(tempParam, () => { 
                             effectPart = tempParam.Value; 
@@ -400,55 +455,194 @@ namespace darts_hub.control
                 }
             };
 
-            // Initialize effect container immediately for manual mode and when existing data exists
+            // Initialize effect container for existing data
+            System.Diagnostics.Debug.WriteLine($"=== INITIALIZATION START ===");
+            System.Diagnostics.Debug.WriteLine($"Mode Selector Selected Item: {modeSelector.SelectedItem}");
+            
             if (modeSelector.SelectedItem != null)
             {
                 var currentMode = (modeSelector.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+                System.Diagnostics.Debug.WriteLine($"Current Mode: '{currentMode}'");
+                System.Diagnostics.Debug.WriteLine($"Is Manual Mode: {isManualMode}");
+                System.Diagnostics.Debug.WriteLine($"Effect Part: '{effectPart}'");
+                System.Diagnostics.Debug.WriteLine($"Effect Container Visible: {effectContainer.IsVisible}");
                 
-                if (currentMode == "manual")
+                if (isManualMode)
                 {
-                    // For manual mode, immediately create the text input
+                    System.Diagnostics.Debug.WriteLine($"INITIALIZING: Manual mode");
+                    // Default manual mode
                     var tempParam = new Argument("temp", Argument.TypeString, false) { Value = param.Value };
-                    var manualControl = CreateManualEffectInput(tempParam, () => { 
+                    effectContainer.Child = CreateManualEffectInput(tempParam, () => { 
                         effectPart = tempParam.Value; 
                         param.Value = tempParam.Value;
                         param.IsValueChanged = true;
                         saveCallback?.Invoke();
                     });
-                    effectContainer.Child = manualControl;
+                    System.Diagnostics.Debug.WriteLine($"INITIALIZED: Manual text input created");
                 }
-                else if (effectContainer.IsVisible)
+                else if (currentMode == "presets" && !string.IsNullOrEmpty(effectPart))
                 {
-                    // For automatic modes, use async initialization
-                    Task.Run(async () =>
+                    System.Diagnostics.Debug.WriteLine($"INITIALIZING: Preset mode with effect part");
+                    
+                    // Check if container is visible before proceeding
+                    if (!effectContainer.IsVisible)
                     {
-                        await Task.Delay(100);
-                        if (modeSelector.SelectedItem is ComboBoxItem selectedItem)
+                        System.Diagnostics.Debug.WriteLine($"ERROR: Effect container not visible - cannot initialize presets!");
+                        System.Diagnostics.Debug.WriteLine($"  This means range validation failed");
+                        System.Diagnostics.Debug.WriteLine($"  From dropdown: {fromDropdown.SelectedItem}");
+                        System.Diagnostics.Debug.WriteLine($"  To dropdown: {toDropdown.SelectedItem}");
+                        
+                        // Force visibility for debugging
+                        effectContainer.IsVisible = true;
+                        System.Diagnostics.Debug.WriteLine($"  FORCED container visibility to true");
+                    }
+                    
+                    // Show loading indicator initially
+                    effectContainer.Child = new TextBlock 
+                    { 
+                        Text = "Loading presets...", 
+                        Foreground = Brushes.White,
+                        HorizontalAlignment = HorizontalAlignment.Center
+                    };
+                    System.Diagnostics.Debug.WriteLine($"LOADING: Showing 'Loading presets...' indicator");
+                    
+                    // For presets, initialize on UI thread with async population
+                    System.Diagnostics.Debug.WriteLine($"UI THREAD: Starting preset initialization");
+                    
+                    var tempParam = new Argument("temp", Argument.TypeString, false) { Value = effectPart };
+                    var extractedPreset = ExtractPresetFromEffectPart(effectPart);
+                    
+                    System.Diagnostics.Debug.WriteLine($"UI THREAD: ExtractPresetFromEffectPart('{effectPart}') = '{extractedPreset}'");
+                    
+                    // Create preset control on UI thread asynchronously
+                    _ = Task.Run(async () =>
+                    {
+                        try
                         {
-                            var mode = selectedItem.Tag?.ToString();
-                            var tempParam = new Argument("temp", Argument.TypeString, false) { Value = effectPart };
+                            System.Diagnostics.Debug.WriteLine($"BACKGROUND: Starting async preset creation");
                             
-                            Control newControl = mode switch
+                            // Create the preset control on UI thread
+                            var presetControl = await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
                             {
-                                "effects" => await CreateWledEffectsDropdown(tempParam, () => { effectPart = tempParam.Value; UpdateParameterValue(); }, app),
-                                "presets" => await CreateWledPresetsDropdown(tempParam, () => { effectPart = tempParam.Value; UpdateParameterValue(); }, app),
-                                "colors" => CreateColorEffectsDropdown(tempParam, () => { effectPart = tempParam.Value; UpdateParameterValue(); }),
-                                _ => CreateManualEffectInput(tempParam, () => { 
-                                    effectPart = tempParam.Value; 
-                                    param.Value = tempParam.Value;
-                                    param.IsValueChanged = true;
-                                    saveCallback?.Invoke();
-                                })
-                            };
+                                System.Diagnostics.Debug.WriteLine($"UI THREAD: Creating preset control");
+                                return await CreateWledPresetsDropdownWithState(
+                                    tempParam, 
+                                    () => { effectPart = tempParam.Value; UpdateParameterValue(); }, 
+                                    app, 
+                                    extractedPreset, 
+                                    selectedTo ?? 0, 
+                                    selectedFrom ?? 0
+                                );
+                            });
                             
-                            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                            System.Diagnostics.Debug.WriteLine($"BACKGROUND: Preset control created successfully");
+                            
+                            // Set the control on UI thread
+                            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
                             {
-                                effectContainer.Child = newControl;
+                                effectContainer.Child = presetControl;
+                                System.Diagnostics.Debug.WriteLine($"UI THREAD: Preset control set to container");
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"BACKGROUND ERROR: {ex.Message}");
+                            System.Diagnostics.Debug.WriteLine($"BACKGROUND STACK: {ex.StackTrace}");
+                            
+                            // Fallback to manual input on error
+                            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                            {
+                                var fallbackParam = new Argument("temp", Argument.TypeString, false) { Value = effectPart };
+                                effectContainer.Child = CreateManualEffectInput(fallbackParam, () => { 
+                                    effectPart = fallbackParam.Value; 
+                                    UpdateParameterValue();
+                                });
+                                System.Diagnostics.Debug.WriteLine($"UI THREAD: Fallback manual input created due to error");
                             });
                         }
                     });
                 }
+                else if (currentMode == "effects" && !string.IsNullOrEmpty(effectPart))
+                {
+                    System.Diagnostics.Debug.WriteLine($"INITIALIZING: Effects mode");
+                    // Show loading indicator initially
+                    effectContainer.Child = new TextBlock 
+                    { 
+                        Text = "Loading effects...", 
+                        Foreground = Brushes.White,
+                        HorizontalAlignment = HorizontalAlignment.Center
+                    };
+                    
+                    // For effects, initialize with existing data
+                    Task.Run(async () =>
+                    {
+                        try
+                        {
+                            var tempParam = new Argument("temp", Argument.TypeString, false) { Value = effectPart };
+                            var effectControl = await CreateWledEffectsDropdown(
+                                tempParam, 
+                                () => { effectPart = tempParam.Value; UpdateParameterValue(); }, 
+                                app
+                            );
+                            
+                            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                            {
+                                effectContainer.Child = effectControl;
+                            });
+                        }
+                        catch
+                        {
+                            // Fallback to manual input on error
+                            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                            {
+                                var tempParam = new Argument("temp", Argument.TypeString, false) { Value = effectPart };
+                                effectContainer.Child = CreateManualEffectInput(tempParam, () => { 
+                                    effectPart = tempParam.Value; 
+                                    UpdateParameterValue();
+                                });
+                            });
+                        }
+                    });
+                }
+                else if (currentMode == "colors" && !string.IsNullOrEmpty(effectPart))
+                {
+                    System.Diagnostics.Debug.WriteLine($"INITIALIZING: Colors mode");
+                    // For colors, create immediately (synchronous)
+                    var tempParam = new Argument("temp", Argument.TypeString, false) { Value = effectPart };
+                    effectContainer.Child = CreateColorEffectsDropdown(tempParam, () => { 
+                        effectPart = tempParam.Value; 
+                        UpdateParameterValue(); 
+                    });
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"INITIALIZING: Default fallback to manual");
+                    System.Diagnostics.Debug.WriteLine($"  Reason: currentMode='{currentMode}', effectPart='{effectPart}', isEmpty={string.IsNullOrEmpty(effectPart)}");
+                    
+                    // Default to manual mode if no specific mode matched
+                    var tempParam = new Argument("temp", Argument.TypeString, false) { Value = param.Value };
+                    effectContainer.Child = CreateManualEffectInput(tempParam, () => { 
+                        effectPart = tempParam.Value; 
+                        param.Value = tempParam.Value;
+                        param.IsValueChanged = true;
+                        saveCallback?.Invoke();
+                    });
+                }
             }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"INITIALIZING: No mode selected - default fallback");
+                // Default fallback
+                var tempParam = new Argument("temp", Argument.TypeString, false) { Value = param.Value };
+                effectContainer.Child = CreateManualEffectInput(tempParam, () => { 
+                    effectPart = tempParam.Value; 
+                    param.Value = tempParam.Value;
+                    param.IsValueChanged = true;
+                    saveCallback?.Invoke();
+                });
+            }
+
+            System.Diagnostics.Debug.WriteLine($"=== INITIALIZATION COMPLETE ===");
 
             // Build the UI
             rangePanel.Children.Add(rangeLabel);
@@ -489,14 +683,43 @@ namespace darts_hub.control
 
         private static bool IsPresetParameter(string value)
         {
-            if (string.IsNullOrEmpty(value)) return false;
+            if (string.IsNullOrEmpty(value)) 
+            {
+                System.Diagnostics.Debug.WriteLine($"IsPresetParameter('{value}') = false (null/empty)");
+                return false;
+            }
             
             // Check for ps|1, ps|2, etc. format (with or without duration)
             var parts = value.Split('|');
             
-            return parts.Length >= 2 && 
-                   parts[0].Equals("ps", StringComparison.OrdinalIgnoreCase) && 
-                   int.TryParse(parts[1], out _);
+            bool isPreset = parts.Length >= 2 && 
+                           parts[0].Equals("ps", StringComparison.OrdinalIgnoreCase) && 
+                           int.TryParse(parts[1], out _);
+            
+            System.Diagnostics.Debug.WriteLine($"IsPresetParameter('{value}') = {isPreset}");
+            System.Diagnostics.Debug.WriteLine($"  Parts: [{string.Join(", ", parts)}]");
+            System.Diagnostics.Debug.WriteLine($"  Parts count: {parts.Length}");
+            if (parts.Length >= 1) System.Diagnostics.Debug.WriteLine($"  First part: '{parts[0]}'");
+            if (parts.Length >= 2) System.Diagnostics.Debug.WriteLine($"  Second part: '{parts[1]}' (is int: {int.TryParse(parts[1], out _)})");
+            
+            return isPreset;
+        }
+
+        private static string? ExtractPresetFromEffectPart(string? effectPart)
+        {
+            if (string.IsNullOrEmpty(effectPart)) return null;
+            
+            // Check if effectPart is a preset format (ps|1, ps|1|5, etc.)
+            var parts = effectPart.Split('|');
+            if (parts.Length >= 2 && 
+                parts[0].Equals("ps", StringComparison.OrdinalIgnoreCase) && 
+                int.TryParse(parts[1], out _))
+            {
+                // Return just the preset part (ps|1)
+                return $"ps|{parts[1]}";
+            }
+            
+            return null;
         }
 
         private static Control CreateManualEffectInput(Argument param, Action? saveCallback = null)
@@ -665,7 +888,7 @@ namespace darts_hub.control
             return panel;
         }
 
-        private static async Task<Control> CreateWledPresetsDropdown(Argument param, Action? saveCallback = null, AppBase? app = null)
+        private static async Task<Control> CreateWledPresetsDropdownWithState(Argument param, Action? saveCallback = null, AppBase? app = null, string? initialSelectedPreset = null, int initialToRange = 0, int initialFromRange = 0)
         {
             // Create a main panel to hold preset selection and duration
             var mainPanel = new StackPanel
@@ -749,9 +972,9 @@ namespace darts_hub.control
                 Margin = new Thickness(5, 0, 0, 0)
             };
 
-            // Parse current value if it contains duration info
-            string? selectedPreset = null;
-            decimal selectedDuration = 0m;
+            // Parse current value to determine what should be selected
+            string? targetPreset = initialSelectedPreset; // Use initialSelectedPreset first
+            decimal targetDuration = 0m;
             
             if (!string.IsNullOrEmpty(param.Value))
             {
@@ -759,23 +982,31 @@ namespace darts_hub.control
                 var parts = param.Value.Split('|');
                 if (parts.Length >= 2 && parts[0].Equals("ps", StringComparison.OrdinalIgnoreCase))
                 {
-                    selectedPreset = $"ps|{parts[1]}"; // Reconstruct ps|number format
+                    // Only override targetPreset if initialSelectedPreset wasn't provided
+                    if (string.IsNullOrEmpty(targetPreset))
+                    {
+                        targetPreset = $"ps|{parts[1]}"; // Reconstruct ps|number format
+                    }
+                    
                     if (parts.Length > 2 && decimal.TryParse(parts[2], System.Globalization.NumberStyles.Float, 
                         System.Globalization.CultureInfo.InvariantCulture, out var parsedDuration))
                     {
-                        selectedDuration = Math.Max(0m, Math.Min(60m, parsedDuration));
+                        targetDuration = Math.Max(0m, Math.Min(60m, parsedDuration));
                     }
                 }
-                durationUpDown.Value = selectedDuration;
             }
+            
+            // Set the duration immediately to preserve state
+            durationUpDown.Value = targetDuration;
 
             // Flag to prevent recursive updates
             bool isUpdating = false;
+            bool isInitializing = true; // Flag to prevent updates during initialization
 
             // Function to update parameter value
             void UpdateParameterValue()
             {
-                if (isUpdating) return;
+                if (isUpdating || isInitializing) return;
                 
                 if (presetDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is string preset &&
@@ -811,6 +1042,8 @@ namespace darts_hub.control
                 presetDropdown.PlaceholderText = "Loading WLED presets...";
                 presetDropdown.Items.Clear();
                 
+                ComboBoxItem? itemToSelect = null; // Track which item should be selected
+                
                 if (app != null)
                 {
                     var (presets, source, isLive) = await WledApi.GetPresetsWithFallbackAsync(app);
@@ -844,9 +1077,10 @@ namespace darts_hub.control
                         };
                         presetDropdown.Items.Add(presetItem);
                         
-                        if (selectedPreset == presetValue)
+                        // Check if this should be selected
+                        if (targetPreset == presetValue)
                         {
-                            presetDropdown.SelectedItem = presetItem;
+                            itemToSelect = presetItem;
                         }
                     }
 
@@ -869,13 +1103,22 @@ namespace darts_hub.control
                         };
                         presetDropdown.Items.Add(presetItem);
                         
-                        if (selectedPreset == presetValue)
+                        if (targetPreset == presetValue)
                         {
-                            presetDropdown.SelectedItem = presetItem;
+                            itemToSelect = presetItem;
                         }
                     }
                     presetDropdown.PlaceholderText = "Select preset...";
                 }
+                
+                // Set selection AFTER all items have been added
+                if (itemToSelect != null)
+                {
+                    presetDropdown.SelectedItem = itemToSelect;
+                }
+                
+                // Allow updates after initial population and selection
+                isInitializing = false;
             }
 
             // Initial population
@@ -888,6 +1131,7 @@ namespace darts_hub.control
                 refreshButton.Content = "⏳";
                 try
                 {
+                    isInitializing = true; // Prevent updates during refresh
                     await PopulatePresets();
                 }
                 finally
@@ -899,7 +1143,7 @@ namespace darts_hub.control
 
             presetDropdown.SelectionChanged += (s, e) =>
             {
-                if (!isUpdating && presetDropdown.SelectedItem is ComboBoxItem { Tag: string })
+                if (!isUpdating && !isInitializing && presetDropdown.SelectedItem is ComboBoxItem { Tag: string })
                 {
                     UpdateParameterValue();
                 }
@@ -907,7 +1151,7 @@ namespace darts_hub.control
 
             durationUpDown.ValueChanged += (s, e) =>
             {
-                if (!isUpdating && durationUpDown.Value.HasValue)
+                if (!isUpdating && !isInitializing && durationUpDown.Value.HasValue)
                 {
                     UpdateParameterValue();
                 }

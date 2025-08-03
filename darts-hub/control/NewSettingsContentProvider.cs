@@ -399,7 +399,8 @@ namespace darts_hub.control
                 Background = new SolidColorBrush(Color.FromArgb(30, 255, 255, 255)),
                 CornerRadius = new CornerRadius(5),
                 Padding = new Thickness(10),
-                Margin = new Thickness(0, 5, 0, 0)
+                Margin = new Thickness(0, 5, 0, 0),
+                Width = 550 // Fixed width for consistency
             };
 
             var grid = new Grid();
@@ -468,18 +469,38 @@ namespace darts_hub.control
             {
                 var removeButton = new Button
                 {
-                    Content = "✖",
                     Background = new SolidColorBrush(Color.FromRgb(220, 53, 69)),
-                    Foreground = Brushes.White,
                     BorderThickness = new Thickness(0),
                     CornerRadius = new CornerRadius(3),
                     Width = 25,
                     Height = 25,
                     HorizontalAlignment = HorizontalAlignment.Right,
                     VerticalAlignment = VerticalAlignment.Top,
-                    FontSize = 12,
-                    FontWeight = FontWeight.Bold
+                    Padding = new Thickness(0)
                 };
+
+                // Try to use clear.png icon, fallback to text
+                try
+                {
+                    var image = new Avalonia.Controls.Image
+                    {
+                        Source = new Avalonia.Media.Imaging.Bitmap(
+                            Avalonia.Platform.AssetLoader.Open(new Uri("avares://darts-hub/Assets/clear.png"))),
+                        Width = 16,
+                        Height = 16,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center
+                    };
+                    removeButton.Content = image;
+                }
+                catch
+                {
+                    // Fallback to text if image not found
+                    removeButton.Content = "✖";
+                    removeButton.Foreground = Brushes.White;
+                    removeButton.FontSize = 12;
+                    removeButton.FontWeight = FontWeight.Bold;
+                }
 
                 ToolTip.SetTip(removeButton, "Remove parameter");
 
