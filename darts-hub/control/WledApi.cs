@@ -272,5 +272,289 @@ namespace darts_hub.control
             
             return (fallbackPresets, "Fallback Data", false);
         }
+
+        /// <summary>
+        /// Tests an effect by sending it to the first reachable WLED endpoint
+        /// </summary>
+        /// <param name="app">The app containing WLED configuration</param>
+        /// <param name="effectName">Name of the effect to test</param>
+        /// <returns>True if effect was sent successfully, false otherwise</returns>
+        public static async Task<bool> TestEffectAsync(AppBase app, string effectName)
+        {
+            var endpoints = ExtractWledEndpoints(app);
+            
+            foreach (var endpoint in endpoints)
+            {
+                // First get the effect ID from the effects list
+                var effects = await QueryEffectsAsync(endpoint);
+                if (effects == null) continue;
+                
+                var effectId = effects.IndexOf(effectName);
+                if (effectId < 0) continue; // Effect not found
+                
+                try
+                {
+                    // Ensure proper URL format
+                    string endpointUrl = endpoint;
+                    if (!endpointUrl.StartsWith("http://") && !endpointUrl.StartsWith("https://"))
+                    {
+                        endpointUrl = "http://" + endpointUrl;
+                    }
+
+                    var url = $"{endpointUrl}/json/state";
+                    
+                    // Create JSON payload to set the effect
+                    var payload = new
+                    {
+                        on = true,
+                        fx = effectId,
+                        bri = 128 // Medium brightness for testing
+                    };
+                    
+                    var json = JsonConvert.SerializeObject(payload);
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                    
+                    var response = await httpClient.PostAsync(url, content);
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Successfully sent effect '{effectName}' (ID: {effectId}) to {endpoint}");
+                        return true;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to send effect to {endpoint}: {response.StatusCode}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error sending effect to {endpoint}: {ex.Message}");
+                }
+            }
+            
+            return false;
+        }
+
+        /// <summary>
+        /// Tests a preset by sending it to the first reachable WLED endpoint
+        /// </summary>
+        /// <param name="app">The app containing WLED configuration</param>
+        /// <param name="presetId">ID of the preset to test (1-based)</param>
+        /// <returns>True if preset was sent successfully, false otherwise</returns>
+        public static async Task<bool> TestPresetAsync(AppBase app, int presetId)
+        {
+            var endpoints = ExtractWledEndpoints(app);
+            
+            foreach (var endpoint in endpoints)
+            {
+                if (!await IsEndpointReachableAsync(endpoint)) continue;
+                
+                try
+                {
+                    // Ensure proper URL format
+                    string endpointUrl = endpoint;
+                    if (!endpointUrl.StartsWith("http://") && !endpointUrl.StartsWith("https://"))
+                    {
+                        endpointUrl = "http://" + endpointUrl;
+                    }
+
+                    var url = $"{endpointUrl}/json/state";
+                    
+                    // Create JSON payload to activate the preset
+                    var payload = new
+                    {
+                        on = true,
+                        ps = presetId,
+                        bri = 128 // Medium brightness for testing
+                    };
+                    
+                    var json = JsonConvert.SerializeObject(payload);
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                    
+                    var response = await httpClient.PostAsync(url, content);
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Successfully sent preset {presetId} to {endpoint}");
+                        return true;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to send preset to {endpoint}: {response.StatusCode}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error sending preset to {endpoint}: {ex.Message}");
+                }
+            }
+            
+            return false;
+        }
+
+        /// <summary>
+        /// Tests a color effect by sending it to the first reachable WLED endpoint
+        /// </summary>
+        /// <param name="app">The app containing WLED configuration</param>
+        /// <param name="colorEffect">Color effect string (e.g., "red", "green", "#FF0000")</param>
+        /// <returns>True if color was sent successfully, false otherwise</returns>
+        public static async Task<bool> TestColorAsync(AppBase app, string colorEffect)
+        {
+            var endpoints = ExtractWledEndpoints(app);
+            
+            foreach (var endpoint in endpoints)
+            {
+                if (!await IsEndpointReachableAsync(endpoint)) continue;
+                
+                try
+                {
+                    // Ensure proper URL format
+                    string endpointUrl = endpoint;
+                    if (!endpointUrl.StartsWith("http://") && !endpointUrl.StartsWith("https://"))
+                    {
+                        endpointUrl = "http://" + endpointUrl;
+                    }
+
+                    var url = $"{endpointUrl}/json/state";
+                    
+                    // Parse color effect to RGB values
+                    var (r, g, b) = ParseColorEffect(colorEffect);
+                    
+                    // Create JSON payload to set solid color
+                    var payload = new
+                    {
+                        on = true,
+                        fx = 0, // Solid color effect
+                        col = new[] { new[] { r, g, b } },
+                        bri = 128 // Medium brightness for testing
+                    };
+                    
+                    var json = JsonConvert.SerializeObject(payload);
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                    
+                    var response = await httpClient.PostAsync(url, content);
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Successfully sent color '{colorEffect}' (RGB: {r},{g},{b}) to {endpoint}");
+                        return true;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to send color to {endpoint}: {response.StatusCode}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error sending color to {endpoint}: {ex.Message}");
+                }
+            }
+            
+            return false;
+        }
+
+        /// <summary>
+        /// Stops all effects on the first reachable WLED endpoint (turns off)
+        /// </summary>
+        /// <param name="app">The app containing WLED configuration</param>
+        /// <returns>True if stop command was sent successfully, false otherwise</returns>
+        public static async Task<bool> StopEffectsAsync(AppBase app)
+        {
+            var endpoints = ExtractWledEndpoints(app);
+            
+            foreach (var endpoint in endpoints)
+            {
+                if (!await IsEndpointReachableAsync(endpoint)) continue;
+                
+                try
+                {
+                    // Ensure proper URL format
+                    string endpointUrl = endpoint;
+                    if (!endpointUrl.StartsWith("http://") && !endpointUrl.StartsWith("https://"))
+                    {
+                        endpointUrl = "http://" + endpointUrl;
+                    }
+
+                    var url = $"{endpointUrl}/json/state";
+                    
+                    // Create JSON payload to turn off WLED
+                    var payload = new
+                    {
+                        on = false
+                    };
+                    
+                    var json = JsonConvert.SerializeObject(payload);
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                    
+                    var response = await httpClient.PostAsync(url, content);
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Successfully stopped effects on {endpoint}");
+                        return true;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to stop effects on {endpoint}: {response.StatusCode}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error stopping effects on {endpoint}: {ex.Message}");
+                }
+            }
+            
+            return false;
+        }
+
+        /// <summary>
+        /// Parses a color effect string to RGB values
+        /// </summary>
+        /// <param name="colorEffect">Color effect string</param>
+        /// <returns>RGB values as tuple</returns>
+        private static (int r, int g, int b) ParseColorEffect(string colorEffect)
+        {
+            if (string.IsNullOrEmpty(colorEffect))
+                return (255, 255, 255); // Default white
+
+            colorEffect = colorEffect.ToLowerInvariant().Trim();
+
+            // Handle hex colors
+            if (colorEffect.StartsWith("#"))
+            {
+                try
+                {
+                    var hex = colorEffect.Substring(1);
+                    if (hex.Length == 6)
+                    {
+                        var r = Convert.ToInt32(hex.Substring(0, 2), 16);
+                        var g = Convert.ToInt32(hex.Substring(2, 2), 16);
+                        var b = Convert.ToInt32(hex.Substring(4, 2), 16);
+                        return (r, g, b);
+                    }
+                }
+                catch
+                {
+                    // Fall through to default colors
+                }
+            }
+
+            // Handle named colors
+            return colorEffect switch
+            {
+                "red" => (255, 0, 0),
+                "green" => (0, 255, 0),
+                "blue" => (0, 0, 255),
+                "yellow" => (255, 255, 0),
+                "cyan" => (0, 255, 255),
+                "magenta" => (255, 0, 255),
+                "orange" => (255, 165, 0),
+                "purple" => (128, 0, 128),
+                "pink" => (255, 192, 203),
+                "white" => (255, 255, 255),
+                "black" => (0, 0, 0),
+                _ => (255, 255, 255) // Default white
+            };
+        }
     }
 }

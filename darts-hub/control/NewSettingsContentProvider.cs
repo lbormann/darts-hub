@@ -872,7 +872,33 @@ namespace darts_hub.control
                 VerticalAlignment = VerticalAlignment.Top
             };
 
+            var testButton = new Button
+            {
+                Content = "▶️",
+                Background = new SolidColorBrush(Color.FromRgb(0, 150, 0)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(3),
+                Width = 30,
+                Height = 30,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+
+            var stopButton = new Button
+            {
+                Content = "⏹️",
+                Background = new SolidColorBrush(Color.FromRgb(150, 0, 0)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(3),
+                Width = 30,
+                Height = 30,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+
             ToolTip.SetTip(refreshButton, "Refresh effects from WLED controller");
+            ToolTip.SetTip(testButton, "Test selected effect on WLED controller");
+            ToolTip.SetTip(stopButton, "Stop effects on WLED controller");
 
             // Parse current value (no duration parsing for effects)
             string? selectedEffect = param.Value;
@@ -964,6 +990,64 @@ namespace darts_hub.control
                 }
             };
 
+            testButton.Click += async (s, e) =>
+            {
+                if (effectDropdown.SelectedItem is ComboBoxItem selectedItem && 
+                    selectedItem.Tag is string effect && 
+                    app != null)
+                {
+                    testButton.IsEnabled = false;
+                    testButton.Content = "⏳";
+                    try
+                    {
+                        var success = await WledApi.TestEffectAsync(app, effect);
+                        if (success)
+                        {
+                            testButton.Content = "✅";
+                            await Task.Delay(1000);
+                        }
+                        else
+                        {
+                            testButton.Content = "❌";
+                            await Task.Delay(1000);
+                        }
+                    }
+                    finally
+                    {
+                        testButton.Content = "▶️";
+                        testButton.IsEnabled = true;
+                    }
+                }
+            };
+
+            stopButton.Click += async (s, e) =>
+            {
+                if (app != null)
+                {
+                    stopButton.IsEnabled = false;
+                    stopButton.Content = "⏳";
+                    try
+                    {
+                        var success = await WledApi.StopEffectsAsync(app);
+                        if (success)
+                        {
+                            stopButton.Content = "✅";
+                            await Task.Delay(1000);
+                        }
+                        else
+                        {
+                            stopButton.Content = "❌";
+                            await Task.Delay(1000);
+                        }
+                    }
+                    finally
+                    {
+                        stopButton.Content = "⏹️";
+                        stopButton.IsEnabled = true;
+                    }
+                }
+            };
+
             effectDropdown.SelectionChanged += (s, e) =>
             {
                 if (effectDropdown.SelectedItem is ComboBoxItem selectedItem && 
@@ -977,6 +1061,8 @@ namespace darts_hub.control
 
             panel.Children.Add(effectDropdown);
             panel.Children.Add(refreshButton);
+            panel.Children.Add(testButton);
+            panel.Children.Add(stopButton);
             return panel;
         }
 
@@ -1019,7 +1105,33 @@ namespace darts_hub.control
                 VerticalAlignment = VerticalAlignment.Top
             };
 
+            var testButton = new Button
+            {
+                Content = "▶️",
+                Background = new SolidColorBrush(Color.FromRgb(0, 150, 0)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(3),
+                Width = 30,
+                Height = 30,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+
+            var stopButton = new Button
+            {
+                Content = "⏹️",
+                Background = new SolidColorBrush(Color.FromRgb(150, 0, 0)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(3),
+                Width = 30,
+                Height = 30,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+
             ToolTip.SetTip(refreshButton, "Refresh presets from WLED controller");
+            ToolTip.SetTip(testButton, "Test selected preset on WLED controller");
+            ToolTip.SetTip(stopButton, "Stop effects on WLED controller");
 
             // Duration selection panel
             var durationPanel = new StackPanel
@@ -1233,6 +1345,69 @@ namespace darts_hub.control
                 }
             };
 
+            testButton.Click += async (s, e) =>
+            {
+                if (presetDropdown.SelectedItem is ComboBoxItem selectedItem && 
+                    selectedItem.Tag is string presetTag && 
+                    app != null)
+                {
+                    // Extract preset ID from "ps|X" format
+                    var parts = presetTag.Split('|');
+                    if (parts.Length >= 2 && int.TryParse(parts[1], out var presetId))
+                    {
+                        testButton.IsEnabled = false;
+                        testButton.Content = "⏳";
+                        try
+                        {
+                            var success = await WledApi.TestPresetAsync(app, presetId);
+                            if (success)
+                            {
+                                testButton.Content = "✅";
+                                await Task.Delay(1000);
+                            }
+                            else
+                            {
+                                testButton.Content = "❌";
+                                await Task.Delay(1000);
+                            }
+                        }
+                        finally
+                        {
+                            testButton.Content = "▶️";
+                            testButton.IsEnabled = true;
+                        }
+                    }
+                }
+            };
+
+            stopButton.Click += async (s, e) =>
+            {
+                if (app != null)
+                {
+                    stopButton.IsEnabled = false;
+                    stopButton.Content = "⏳";
+                    try
+                    {
+                        var success = await WledApi.StopEffectsAsync(app);
+                        if (success)
+                        {
+                            stopButton.Content = "✅";
+                            await Task.Delay(1000);
+                        }
+                        else
+                        {
+                            stopButton.Content = "❌";
+                            await Task.Delay(1000);
+                        }
+                    }
+                    finally
+                    {
+                        stopButton.Content = "⏹️";
+                        stopButton.IsEnabled = true;
+                    }
+                }
+            };
+
             presetDropdown.SelectionChanged += (s, e) =>
             {
                 if (!isUpdating && presetDropdown.SelectedItem is ComboBoxItem { Tag: string })
@@ -1252,6 +1427,8 @@ namespace darts_hub.control
             // Build the UI
             presetPanel.Children.Add(presetDropdown);
             presetPanel.Children.Add(refreshButton);
+            presetPanel.Children.Add(testButton);
+            presetPanel.Children.Add(stopButton);
 
             durationPanel.Children.Add(durationLabel);
             durationPanel.Children.Add(durationUpDown);
@@ -1263,8 +1440,14 @@ namespace darts_hub.control
             return mainPanel;
         }
 
-        private static Control CreateColorEffectsDropdown(Argument param, Action? saveCallback = null)
+        private static Control CreateColorEffectsDropdown(Argument param, Action? saveCallback = null, AppBase? app = null)
         {
+            var panel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 5
+            };
+
             // Simple dropdown without duration for color effects
             var colorDropdown = new ComboBox
             {
@@ -1274,8 +1457,36 @@ namespace darts_hub.control
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(3),
                 FontSize = 13,
-                PlaceholderText = "Select color effect..."
+                PlaceholderText = "Select color effect...",
+                MinWidth = 200
             };
+
+            var testButton = new Button
+            {
+                Content = "▶️",
+                Background = new SolidColorBrush(Color.FromRgb(0, 150, 0)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(3),
+                Width = 30,
+                Height = 30,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+
+            var stopButton = new Button
+            {
+                Content = "⏹️",
+                Background = new SolidColorBrush(Color.FromRgb(150, 0, 0)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(3),
+                Width = 30,
+                Height = 30,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+
+            ToolTip.SetTip(testButton, "Test selected color on WLED controller");
+            ToolTip.SetTip(stopButton, "Stop effects on WLED controller");
 
             // Populate color effects
             foreach (var colorEffect in ColorEffects)
@@ -1295,6 +1506,65 @@ namespace darts_hub.control
                 }
             }
 
+            // Event handlers
+            testButton.Click += async (s, e) =>
+            {
+                if (colorDropdown.SelectedItem is ComboBoxItem selectedItem && 
+                    selectedItem.Tag is string colorEffect && 
+                    app != null)
+                {
+                    testButton.IsEnabled = false;
+                    testButton.Content = "⏳";
+                    try
+                    {
+                        var success = await WledApi.TestColorAsync(app, colorEffect);
+                        if (success)
+                        {
+                            testButton.Content = "✅";
+                            await Task.Delay(1000);
+                        }
+                        else
+                        {
+                            testButton.Content = "❌";
+                            await Task.Delay(1000);
+                        }
+                    }
+                    finally
+                    {
+                        testButton.Content = "▶️";
+                        testButton.IsEnabled = true;
+                    }
+                }
+            };
+
+            stopButton.Click += async (s, e) =>
+            {
+                if (app != null)
+                {
+                    stopButton.IsEnabled = false;
+                    stopButton.Content = "⏳";
+                    try
+                    {
+                        var success = await WledApi.StopEffectsAsync(app);
+                        if (success)
+                        {
+                            stopButton.Content = "✅";
+                            await Task.Delay(1000);
+                        }
+                        else
+                        {
+                            stopButton.Content = "❌";
+                            await Task.Delay(1000);
+                        }
+                    }
+                    finally
+                    {
+                        stopButton.Content = "⏹️";
+                        stopButton.IsEnabled = true;
+                    }
+                }
+            };
+
             colorDropdown.SelectionChanged += (s, e) =>
             {
                 if (colorDropdown.SelectedItem is ComboBoxItem selectedItem && 
@@ -1306,7 +1576,10 @@ namespace darts_hub.control
                 }
             };
 
-            return colorDropdown;
+            panel.Children.Add(colorDropdown);
+            panel.Children.Add(testButton);
+            panel.Children.Add(stopButton);
+            return panel;
         }
 
         private static Control CreateAddParameterSection(AppBase app, StackPanel mainPanel, Action? saveCallback = null)
