@@ -17,7 +17,7 @@ namespace darts_hub.control
     /// </summary>
     public class NewSettingsContentProvider
     {
-        private static readonly List<string> ColorEffects = new List<string>
+        public static readonly List<string> ColorEffects = new List<string>
         {
             "Red Solid", "Green Solid", "Blue Solid", "White Solid", "Yellow Solid", "Orange Solid", "Pink Solid", "Purple Solid", "Cyan Solid", "Magenta Solid",
             "Red Fade", "Green Fade", "Blue Fade", "Rainbow Fade", "Warm White Fade", "Cool White Fade",
@@ -29,6 +29,9 @@ namespace darts_hub.control
 
         /// <summary>
         /// Creates the new settings content for an app
+        /// /// <remarks>
+        ///  - Enhanced validation and tooltips."/>
+        /// </remarks>
         /// </summary>
         /// <param name="app">The app to create settings for</param>
         /// <returns>A control containing the new settings UI</returns>
@@ -508,14 +511,21 @@ namespace darts_hub.control
         {
             var type = param.GetTypeClear();
             
-            // Check if this is an effect parameter
-            bool isEffectParameter = IsEffectParameter(param);
+            // Check if this is a score area effect parameter (has special handling with range dropdowns)
+            bool isScoreAreaEffectParameter = WledScoreAreaHelper.IsScoreAreaEffectParameter(param);
+            
+            // Check if this is a regular effect parameter
+            bool isEffectParameter = IsEffectParameter(param) && !isScoreAreaEffectParameter;
 
             switch (type)
             {
                 case Argument.TypeString:
                 case Argument.TypePassword:
-                    if (isEffectParameter)
+                    if (isScoreAreaEffectParameter)
+                    {
+                        return WledScoreAreaHelper.CreateScoreAreaEffectParameterControl(param, saveCallback, app);
+                    }
+                    else if (isEffectParameter)
                     {
                         return CreateEffectParameterControl(param, saveCallback, app);
                     }
@@ -674,13 +684,12 @@ namespace darts_hub.control
         {
             if (string.IsNullOrEmpty(value)) return false;
             
-            // Check for ps1, ps2, etc. format (with or without duration)
+            // Check for ps|1, ps|2, etc. format (with or without duration)
             var parts = value.Split('|');
-            var presetPart = parts[0];
             
-            return presetPart.StartsWith("ps", StringComparison.OrdinalIgnoreCase) && 
-                   presetPart.Length > 2 && 
-                   int.TryParse(presetPart.Substring(2), out _);
+            return parts.Length >= 2 && 
+                   parts[0].Equals("ps", StringComparison.OrdinalIgnoreCase) && 
+                   int.TryParse(parts[1], out _);
         }
 
         private static Control CreateEffectParameterControl(Argument param, Action? saveCallback = null, AppBase? app = null)
@@ -777,33 +786,6 @@ namespace darts_hub.control
                     inputContainer.Child = newControl;
                 }
             };
-
-            // Initialize with correct mode if not manual
-            if (modeSelector.SelectedItem != manualItem)
-            {
-                // Trigger the selection change to load the correct control
-                Task.Run(async () =>
-                {
-                    await Task.Delay(100); // Small delay to ensure UI is ready
-                    if (modeSelector.SelectedItem is ComboBoxItem selectedItem)
-                    {
-                        var mode = selectedItem.Tag?.ToString();
-                        Control newControl = mode switch
-                        {
-                            "effects" => await CreateWledEffectsDropdown(param, saveCallback, app),
-                            "presets" => await CreateWledPresetsDropdown(param, saveCallback, app),
-                            "colors" => CreateColorEffectsDropdown(param, saveCallback),
-                            _ => CreateManualEffectInput(param, saveCallback)
-                        };
-                        
-                        // Update UI on main thread
-                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                        {
-                            inputContainer.Child = newControl;
-                        });
-                    }
-                });
-            }
 
             mainPanel.Children.Add(modeSelector);
             mainPanel.Children.Add(inputContainer);
@@ -1067,13 +1049,16 @@ namespace darts_hub.control
             
             if (!string.IsNullOrEmpty(param.Value))
             {
-                // Try to parse format: "ps1|duration" or just "ps1"
+                // Try to parse format: "ps|1|duration" or just "ps|1"
                 var parts = param.Value.Split('|');
-                selectedPreset = parts[0];
-                if (parts.Length > 1 && decimal.TryParse(parts[1], System.Globalization.NumberStyles.Float, 
-                    System.Globalization.CultureInfo.InvariantCulture, out var parsedDuration))
+                if (parts.Length >= 2 && parts[0].Equals("ps", StringComparison.OrdinalIgnoreCase))
                 {
-                    selectedDuration = Math.Max(0m, Math.Min(60m, parsedDuration)); // Clamp to valid range
+                    selectedPreset = $"ps|{parts[1]}"; // Reconstruct ps|number format
+                    if (parts.Length > 2 && decimal.TryParse(parts[2], System.Globalization.NumberStyles.Float, 
+                        System.Globalization.CultureInfo.InvariantCulture, out var parsedDuration))
+                    {
+                        selectedDuration = Math.Max(0m, Math.Min(60m, parsedDuration)); // Clamp to valid range
+                    }
                 }
                 durationUpDown.Value = selectedDuration;
             }
@@ -1095,8 +1080,8 @@ namespace darts_hub.control
                     {
                         var durationValue = Math.Round(durationUpDown.Value.Value, 0); // Round to whole seconds
                         
-                        // If duration is 0, save only the preset (e.g., "ps1")
-                        // If duration > 0, save preset with duration (e.g., "ps1|5")
+                        // If duration is 0, save only the preset (e.g., "ps|1")
+                        // If duration > 0, save preset with duration (e.g., "ps|1|5")
                         if (durationValue == 0)
                         {
                             param.Value = preset;
@@ -1110,6 +1095,21 @@ namespace darts_hub.control
                         saveCallback?.Invoke();
                         
                         System.Diagnostics.Debug.WriteLine($"Updated preset parameter: {param.Value}");
+                    }
+                    finally
+                    {
+                        isUpdating = false;
+                    }
+                }
+                else if (presetDropdown.SelectedItem is ComboBoxItem && durationUpDown.Value.HasValue)
+                {
+                    // If preset is selected but duration is invalid, clear the value
+                    isUpdating = true;
+                    try
+                    {
+                        param.Value = null;
+                        param.IsValueChanged = true;
+                        saveCallback?.Invoke();
                     }
                     finally
                     {
@@ -1141,13 +1141,13 @@ namespace darts_hub.control
                     };
                     presetDropdown.Items.Add(dynamicHeader);
 
-                    // Add presets using ps1, ps2, etc. format
+                    // Add presets using ps|1, ps|2, etc. format
                     foreach (var preset in presets.OrderBy(p => p.Key))
                     {
                         var presetDisplayName = isLive ? 
                             $"Preset {preset.Key} - {preset.Value}" : 
                             preset.Value;
-                        var presetValue = $"ps{preset.Key}"; // Use ps1, ps2, etc.
+                        var presetValue = $"ps|{preset.Key}"; // Use ps|1, ps|2, etc.
                         
                         var presetItem = new ComboBoxItem
                         {
@@ -1170,11 +1170,11 @@ namespace darts_hub.control
                 }
                 else
                 {
-                    // Just use fallback if no app provided - create ps1, ps2, etc.
+                    // Just use fallback if no app provided - create ps|1, ps|2, etc.
                     for (int i = 1; i <= WledApi.FallbackPresets.Count; i++)
                     {
                         var preset = WledApi.FallbackPresets[i - 1];
-                        var presetValue = $"ps{i}";
+                        var presetValue = $"ps|{i}";
                         
                         var presetItem = new ComboBoxItem
                         {
