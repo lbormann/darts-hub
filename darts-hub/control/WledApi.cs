@@ -31,6 +31,27 @@ namespace darts_hub.control
             public string? QuickLabel { get; set; }
         }
 
+        public class WledState
+        {
+            [JsonProperty("seg")]
+            public List<WledSegment>? Segments { get; set; }
+        }
+
+        public class WledSegment
+        {
+            [JsonProperty("id")]
+            public int Id { get; set; }
+            
+            [JsonProperty("start")]
+            public int Start { get; set; }
+            
+            [JsonProperty("stop")]
+            public int Stop { get; set; }
+            
+            [JsonProperty("len")]
+            public int Length { get; set; }
+        }
+
         // Fallback effect categories
         public static readonly Dictionary<string, List<string>> FallbackEffectCategories = new()
         {
@@ -393,7 +414,7 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Tests a color effect by sending it to the first reachable WLED endpoint
+        /// Tests a color effect by sending it to all segments of the first reachable WLED endpoint
         /// </summary>
         /// <param name="app">The app containing WLED configuration</param>
         /// <param name="colorEffect">Color effect string (e.g., "red", "green", "#FF0000")</param>
@@ -420,28 +441,69 @@ namespace darts_hub.control
                     // Parse color effect to RGB values
                     var (r, g, b) = ParseColorEffect(colorEffect);
                     
-                    // Create JSON payload to set solid color
-                    var payload = new
+                    // Query available segments
+                    var segmentIds = await QuerySegmentsAsync(endpoint);
+                    
+                    if (segmentIds == null || segmentIds.Count == 0)
                     {
-                        on = true,
-                        fx = 0, // Solid color effect
-                        col = new[] { new[] { r, g, b } },
-                        bri = 128 // Medium brightness for testing
-                    };
-                    
-                    var json = JsonConvert.SerializeObject(payload);
-                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-                    
-                    var response = await httpClient.PostAsync(url, content);
-                    
-                    if (response.IsSuccessStatusCode)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Successfully sent color '{colorEffect}' (RGB: {r},{g},{b}) to {endpoint}");
-                        return true;
+                        System.Diagnostics.Debug.WriteLine($"No segments found on {endpoint}, using fallback method");
+                        
+                        // Fallback to old method if no segments found
+                        var fallbackPayload = new
+                        {
+                            on = true,
+                            fx = 0, // Solid color effect
+                            col = new[] { new[] { r, g, b } },
+                            bri = 128 // Medium brightness for testing
+                        };
+                        
+                        var fallbackJson = JsonConvert.SerializeObject(fallbackPayload);
+                        var fallbackContent = new StringContent(fallbackJson, System.Text.Encoding.UTF8, "application/json");
+                        
+                        System.Diagnostics.Debug.WriteLine($"Sending fallback color command to {endpoint}: {fallbackJson}");
+                        
+                        var fallbackResponse = await httpClient.PostAsync(url, fallbackContent);
+                        
+                        if (fallbackResponse.IsSuccessStatusCode)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Successfully sent color '{colorEffect}' (RGB: {r},{g},{b}) to {endpoint} using fallback method");
+                            return true;
+                        }
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine($"Failed to send color to {endpoint}: {response.StatusCode}");
+                        // Create segment array with the same color for all segments
+                        var segments = segmentIds.Select(segmentId => new
+                        {
+                            id = segmentId,
+                            col = new[] { new[] { r, g, b } },
+                            fx = 0 // Solid color effect for each segment
+                        }).ToArray();
+                        
+                        // Create JSON payload with segments
+                        var payload = new
+                        {
+                            on = true,
+                            seg = segments,
+                            bri = 128 // Medium brightness for testing
+                        };
+                        
+                        var json = JsonConvert.SerializeObject(payload);
+                        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                        
+                        System.Diagnostics.Debug.WriteLine($"Sending segment-based color command to {endpoint}: {json}");
+                        
+                        var response = await httpClient.PostAsync(url, content);
+                        
+                        if (response.IsSuccessStatusCode)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Successfully sent color '{colorEffect}' (RGB: {r},{g},{b}) to {segmentIds.Count} segments on {endpoint}");
+                            return true;
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Failed to send color to {endpoint}: {response.StatusCode}");
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -1020,6 +1082,50 @@ namespace darts_hub.control
                 // Default fallback
                 _ => (255, 255, 255) // Default white
             };
+        }
+
+        /// <summary>
+        /// Queries a WLED controller for segment information
+        /// </summary>
+        /// <param name="wledEndpoint">WLED IP address or hostname</param>
+        /// <returns>List of segment IDs or null if query failed</returns>
+        public static async Task<List<int>?> QuerySegmentsAsync(string wledEndpoint)
+        {
+            try
+            {
+                // Ensure proper URL format
+                if (!wledEndpoint.StartsWith("http://") && !wledEndpoint.StartsWith("https://"))
+                {
+                    wledEndpoint = "http://" + wledEndpoint;
+                }
+
+                var url = $"{wledEndpoint}/json/state";
+                var response = await httpClient.GetStringAsync(url);
+                
+                // Parse as dynamic object to extract segment IDs
+                dynamic? state = JsonConvert.DeserializeObject(response);
+                var segmentIds = new List<int>();
+                
+                if (state?.seg != null)
+                {
+                    foreach (var segment in state.seg)
+                    {
+                        if (segment?.id != null)
+                        {
+                            segmentIds.Add((int)segment.id);
+                        }
+                    }
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"Found {segmentIds.Count} segments on {wledEndpoint}: [{string.Join(", ", segmentIds)}]");
+                
+                return segmentIds.Count > 0 ? segmentIds : null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to query WLED segments from {wledEndpoint}: {ex.Message}");
+                return null;
+            }
         }
     }
 }
