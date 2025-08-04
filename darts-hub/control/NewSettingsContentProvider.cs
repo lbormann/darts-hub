@@ -22,12 +22,37 @@ namespace darts_hub.control
 
         public static readonly List<string> ColorEffects = new List<string>
         {
-            "Red Solid", "Green Solid", "Blue Solid", "White Solid", "Yellow Solid", "Orange Solid", "Pink Solid", "Purple Solid", "Cyan Solid", "Magenta Solid",
-            "Red Fade", "Green Fade", "Blue Fade", "Rainbow Fade", "Warm White Fade", "Cool White Fade",
-            "Red Pulse", "Green Pulse", "Blue Pulse", "White Pulse", "Rainbow Pulse",
-            "Red Strobe", "Green Strobe", "Blue Strobe", "White Strobe", "Rainbow Strobe",
-            "Team Color Red", "Team Color Blue", "Team Color Green", "Team Color Yellow",
-            "Victory Gold", "Victory Rainbow", "Celebration Multi"
+            // Basic solid colors
+            "red", "green", "blue", "white", "black", "yellow", "orange", "purple", "pink", "cyan", "magenta",
+            
+            // Extended color variations
+            "red1", "red2", "red3", "red4",
+            "green1", "green2", "green3", "green4", 
+            "blue1", "blue2", "blue3", "blue4",
+            "yellow1", "yellow2", "yellow3", "yellow4",
+            "cyan2", "cyan3", "cyan4",
+            "magenta2", "magenta3", "magenta4",
+            "orange1", "orange2", "orange3", "orange4",
+            "purple1", "purple2", "purple3", "purple4",
+            "pink1", "pink2", "pink3", "pink4",
+            
+            // Named colors (most commonly used)
+            "aliceblue", "antiquewhite", "aqua", "beige", "brown", "coral", "crimson", "darkgreen", "darkblue", "darkred",
+            "emeraldgreen", "firebrick", "forestgreen", "gold1", "gold2", "goldenrod", "gray", "greenyellow",
+            "hotpink", "indianred", "indigo", "ivory1", "khaki", "lavender", "lightblue", "lightcoral", "lightgreen",
+            "lime", "limegreen", "maroon", "mint", "navy", "olive", "orchid", "salmon", "seagreen1", "silver", 
+            "skyblue", "steelblue", "tan", "teal", "turquoise", "violet", "wheat",
+            
+            // Special colors
+            "banana", "brick", "chocolate", "cobalt", "eggshell", "flesh", "mint", "peacock", "raspberry",
+            
+            // Grayscale variations  
+            "gray1", "gray10", "gray20", "gray30", "gray40", "gray50", "gray60", "gray70", "gray80", "gray90", "gray99",
+            "dimgray", "darkgray", "lightgrey", "whitesmoke",
+            
+            // Additional web colors
+            "fuchsia", "aquamarine1", "cornflowerblue", "darkorchid", "deeppink1", "dodgerblue1", "mediumorchid",
+            "palegreen", "royalblue", "springgreen", "violetred"
         };
 
         /// <summary>
