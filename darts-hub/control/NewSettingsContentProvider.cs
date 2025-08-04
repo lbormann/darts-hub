@@ -17,6 +17,9 @@ namespace darts_hub.control
     /// </summary>
     public class NewSettingsContentProvider
     {
+        private static readonly ReadmeParser readmeParser = new ReadmeParser();
+        private static readonly Dictionary<string, Dictionary<string, string>> argumentDescriptionsCache = new();
+
         public static readonly List<string> ColorEffects = new List<string>
         {
             "Red Solid", "Green Solid", "Blue Solid", "White Solid", "Yellow Solid", "Orange Solid", "Pink Solid", "Purple Solid", "Cyan Solid", "Magenta Solid",
@@ -28,6 +31,27 @@ namespace darts_hub.control
         };
 
         /// <summary>
+        /// Clears the argument descriptions cache for debugging purposes
+        /// </summary>
+        public static void ClearDescriptionsCache()
+        {
+            argumentDescriptionsCache.Clear();
+            System.Diagnostics.Debug.WriteLine("Cleared argument descriptions cache");
+        }
+
+        /// <summary>
+        /// Clears the cache for a specific app
+        /// </summary>
+        public static void ClearDescriptionsCacheForApp(string appName)
+        {
+            if (argumentDescriptionsCache.ContainsKey(appName))
+            {
+                argumentDescriptionsCache.Remove(appName);
+                System.Diagnostics.Debug.WriteLine($"Cleared cache for {appName}");
+            }
+        }
+
+        /// <summary>
         /// Creates the new settings content for an app
         /// /// <remarks>
         ///  - Enhanced validation and tooltips."/>
@@ -37,6 +61,10 @@ namespace darts_hub.control
         /// <returns>A control containing the new settings UI</returns>
         public static async Task<Control> CreateNewSettingsContent(AppBase app, Action? saveCallback = null)
         {
+            System.Diagnostics.Debug.WriteLine($"=== CREATE NEW SETTINGS CONTENT START ===");
+            System.Diagnostics.Debug.WriteLine($"App: {app.Name} ({app.CustomName})");
+            System.Diagnostics.Debug.WriteLine($"App type: {app.GetType().Name}");
+            
             var mainPanel = new StackPanel
             {
                 Margin = new Thickness(20),
@@ -49,6 +77,13 @@ namespace darts_hub.control
             {
                 mainPanel.Tag = saveCallback;
             }
+
+            System.Diagnostics.Debug.WriteLine($"About to load argument descriptions...");
+            
+            // Load argument descriptions for this app
+            await LoadArgumentDescriptionsForApp(app);
+            
+            System.Diagnostics.Debug.WriteLine($"Argument descriptions loaded, creating UI components...");
 
             // Header with app info
             var headerPanel = CreateHeaderPanel(app);
@@ -65,6 +100,8 @@ namespace darts_hub.control
             // Configuration sections - replace the preview with actual configuration
             if (app.IsConfigurable() && app.Configuration != null)
             {
+                System.Diagnostics.Debug.WriteLine($"App is configurable, creating parameter sections...");
+                
                 // Configured parameters section
                 var configuredSection = CreateConfiguredParametersSection(app, saveCallback);
                 mainPanel.Children.Add(configuredSection);
@@ -75,6 +112,8 @@ namespace darts_hub.control
             }
             else
             {
+                System.Diagnostics.Debug.WriteLine($"App is not configurable, creating preview section...");
+                
                 // Fallback for non-configurable apps
                 var configSection = CreateConfigurationPreviewSection(app);
                 mainPanel.Children.Add(configSection);
@@ -84,7 +123,124 @@ namespace darts_hub.control
             var betaNotice = CreateBetaNotice();
             mainPanel.Children.Add(betaNotice);
 
+            System.Diagnostics.Debug.WriteLine($"=== CREATE NEW SETTINGS CONTENT COMPLETE ===");
             return mainPanel;
+        }
+
+        /// <summary>
+        /// Loads argument descriptions from README for the given app
+        /// </summary>
+        private static async Task LoadArgumentDescriptionsForApp(AppBase app)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"=== LOAD DESCRIPTIONS START for {app.Name} ===");
+                System.Diagnostics.Debug.WriteLine($"App CustomName: {app.CustomName}");
+                System.Diagnostics.Debug.WriteLine($"App Type: {app.GetType().Name}");
+                
+                // Check if we already have descriptions cached for this app
+                if (argumentDescriptionsCache.ContainsKey(app.Name))
+                {
+                    System.Diagnostics.Debug.WriteLine($"Found cached descriptions for {app.Name}, but forcing reload to get latest README data");
+                    // Remove from cache to force fresh reload
+                    argumentDescriptionsCache.Remove(app.Name);
+                }
+
+                // Determine the README URL based on app name
+                string? readmeUrl = GetReadmeUrlForApp(app.Name);
+                System.Diagnostics.Debug.WriteLine($"README URL for {app.Name}: {readmeUrl ?? "NULL"}");
+                
+                if (!string.IsNullOrEmpty(readmeUrl))
+                {
+                    System.Diagnostics.Debug.WriteLine($"Loading descriptions for {app.Name} from {readmeUrl}");
+                    var argumentDescriptions = await readmeParser.GetArgumentsFromReadme(readmeUrl);
+                    
+                    System.Diagnostics.Debug.WriteLine($"Parser returned {argumentDescriptions.Count} descriptions");
+                    
+                    // Cache the descriptions
+                    argumentDescriptionsCache[app.Name] = argumentDescriptions;
+                    System.Diagnostics.Debug.WriteLine($"Cached {argumentDescriptions.Count} descriptions for {app.Name}");
+                    
+                    // Update the app's argument descriptions
+                    if (app.Configuration?.Arguments != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"App has {app.Configuration.Arguments.Count} arguments to update");
+                        int updatedCount = 0;
+                        
+                        foreach (var argument in app.Configuration.Arguments)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Checking argument: {argument.Name} (current description: '{argument.Description}')");
+                            
+                            if (argumentDescriptions.TryGetValue(argument.Name, out var description))
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Found description for {argument.Name} in parsed data: {description?.Substring(0, Math.Min(50, description?.Length ?? 0))}...");
+                                
+                                if (!string.IsNullOrEmpty(description))
+                                {
+                                    // Always update description with parsed one, even if existing description exists
+                                    var oldDescription = argument.Description;
+                                    argument.Description = description;
+                                    updatedCount++;
+                                    System.Diagnostics.Debug.WriteLine($"✓ Updated description for argument {argument.Name}");
+                                    System.Diagnostics.Debug.WriteLine($"  Old: '{oldDescription}'");
+                                    System.Diagnostics.Debug.WriteLine($"  New: '{description}'");
+                                }
+                                else
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"✗ Skipped update for {argument.Name} (empty parsed description)");
+                                }
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine($"✗ No description found for argument {argument.Name} in parsed data");
+                            }
+                        }
+                        
+                        System.Diagnostics.Debug.WriteLine($"Updated {updatedCount} argument descriptions for {app.Name}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"App {app.Name} has no Configuration.Arguments to update");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"No README URL configured for {app.Name}");
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"=== LOAD DESCRIPTIONS COMPLETE for {app.Name} ===");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ERROR in LoadArgumentDescriptionsForApp for {app.Name}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                
+                // Remove from cache if there was an error
+                if (argumentDescriptionsCache.ContainsKey(app.Name))
+                {
+                    argumentDescriptionsCache.Remove(app.Name);
+                }
+                
+                // Continue without descriptions if loading fails
+            }
+        }
+
+        /// <summary>
+        /// Returns the README URL for a given app name
+        /// </summary>
+        private static string? GetReadmeUrlForApp(string appName)
+        {
+            return appName switch
+            {
+                "darts-caller" => "https://raw.githubusercontent.com/lbormann/darts-caller/refs/heads/master/README.md",
+                "darts-extern" => "https://raw.githubusercontent.com/lbormann/darts-extern/refs/heads/master/README.md",
+                "darts-wled" => "https://raw.githubusercontent.com/lbormann/darts-wled/refs/heads/main/README.md",
+                "darts-pixelit" => "https://raw.githubusercontent.com/lbormann/darts-pixelit/refs/heads/main/README.md",
+                "darts-gif" => "https://raw.githubusercontent.com/lbormann/darts-gif/refs/heads/main/README.md",
+                "darts-voice" => "https://raw.githubusercontent.com/lbormann/darts-voice/refs/heads/main/README.md",
+                "cam-loader" => "https://raw.githubusercontent.com/lbormann/cam-loader/refs/heads/master/README.md",
+                _ => null
+            };
         }
 
         private static Control CreateHeaderPanel(AppBase app)
@@ -447,18 +603,51 @@ namespace darts_hub.control
                 contentPanel.Children.Add(inputControl);
             }
 
-            // Description if available
+            // Description if available - enhanced with README parsing
+            System.Diagnostics.Debug.WriteLine($"Creating description for parameter {param.Name}:");
+            System.Diagnostics.Debug.WriteLine($"  param.Description: '{param.Description}'");
+            
             if (!string.IsNullOrEmpty(param.Description))
             {
-                var descText = new TextBlock
-                {
-                    Text = param.Description,
-                    FontSize = 12,
-                    Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(0, 5, 0, 0)
-                };
+                System.Diagnostics.Debug.WriteLine($"  Using param.Description directly");
+                var descText = CreateDescriptionTextBlock(param.Description);
                 contentPanel.Children.Add(descText);
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"  param.Description is empty, checking cache...");
+                
+                // Try to get description from cache if not already set
+                if (argumentDescriptionsCache.TryGetValue(app.Name, out var appDescriptions))
+                {
+                    System.Diagnostics.Debug.WriteLine($"  Found cache entry for {app.Name} with {appDescriptions.Count} descriptions");
+                    
+                    if (appDescriptions.TryGetValue(param.Name, out var cachedDescription))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"  Found cached description for {param.Name}: '{cachedDescription?.Substring(0, Math.Min(50, cachedDescription?.Length ?? 0))}...'");
+                        
+                        if (!string.IsNullOrEmpty(cachedDescription))
+                        {
+                            var descText = CreateDescriptionTextBlock(cachedDescription);
+                            contentPanel.Children.Add(descText);
+                            System.Diagnostics.Debug.WriteLine($"  ✓ Added description TextBlock for {param.Name}");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"  ✗ Cached description for {param.Name} is empty");
+                        }
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"  ✗ No cached description found for parameter {param.Name}");
+                        System.Diagnostics.Debug.WriteLine($"  Available cached parameters: {string.Join(", ", appDescriptions.Keys)}");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"  ✗ No cache entry found for app {app.Name}");
+                    System.Diagnostics.Debug.WriteLine($"  Available cached apps: {string.Join(", ", argumentDescriptionsCache.Keys)}");
+                }
             }
 
             Grid.SetColumn(contentPanel, 0);
@@ -526,6 +715,31 @@ namespace darts_hub.control
 
             paramPanel.Child = grid;
             return paramPanel;
+        }
+
+        /// <summary>
+        /// Creates a formatted description TextBlock with enhanced styling
+        /// </summary>
+        private static Control CreateDescriptionTextBlock(string description)
+        {
+            var border = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(30, 135, 206, 235)),
+                CornerRadius = new CornerRadius(3),
+                Padding = new Thickness(8, 4),
+                Margin = new Thickness(0, 5, 0, 0)
+            };
+
+            var textBlock = new TextBlock
+            {
+                Text = $"💡 {description}",
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.FromRgb(220, 240, 255)),
+                TextWrapping = TextWrapping.Wrap
+            };
+
+            border.Child = textBlock;
+            return border;
         }
 
         private static Control? CreateParameterInputControl(Argument param, Action? saveCallback = null, AppBase? app = null)
@@ -827,7 +1041,7 @@ namespace darts_hub.control
             // Initialize with correct control based on detected mode
             System.Diagnostics.Debug.WriteLine($"=== INITIALIZATION START ===");
             System.Diagnostics.Debug.WriteLine($"Mode Selector Selected Item: {modeSelector.SelectedItem}");
-            
+
             if (modeSelector.SelectedItem != null)
             {
                 var currentMode = (modeSelector.SelectedItem as ComboBoxItem)?.Tag?.ToString();
@@ -1992,7 +2206,7 @@ namespace darts_hub.control
             var noticeText = new TextBlock
             {
                 Text = "🧪 Enhanced Configuration Mode\n\n" +
-                       "This new settings interface provides real-time parameter management. " +
+                       "This new settings interface provides real-time parameter management with enhanced descriptions from README files. " +
                        "Add or remove parameters as needed, and see changes immediately. " +
                        "You can switch back to the classic settings mode in the About section.",
                 FontSize = 12,
