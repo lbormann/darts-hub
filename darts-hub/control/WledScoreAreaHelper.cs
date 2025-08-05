@@ -801,7 +801,7 @@ namespace darts_hub.control
 
             var stopButton = new Button
             {
-                Content = "⏹️",
+                Content = "■",
                 Background = new SolidColorBrush(Color.FromRgb(150, 0, 0)),
                 Foreground = Brushes.White,
                 BorderThickness = new Thickness(0),
@@ -1226,7 +1226,7 @@ namespace darts_hub.control
                     }
                     finally
                     {
-                        stopButton.Content = "⏹️";
+                        stopButton.Content = "■";
                         stopButton.IsEnabled = true;
                     }
                 }
@@ -1346,7 +1346,7 @@ namespace darts_hub.control
 
             var stopButton = new Button
             {
-                Content = "⏹️",
+                Content = "■",
                 Background = new SolidColorBrush(Color.FromRgb(150, 0, 0)),
                 Foreground = Brushes.White,
                 BorderThickness = new Thickness(0),
@@ -1629,7 +1629,7 @@ namespace darts_hub.control
                     }
                     finally
                     {
-                        stopButton.Content = "⏹️";
+                        stopButton.Content = "■";
                         stopButton.IsEnabled = true;
                     }
                 }
@@ -1701,7 +1701,7 @@ namespace darts_hub.control
 
             var stopButton = new Button
             {
-                Content = "⏹️",
+                Content = "■",
                 Background = new SolidColorBrush(Color.FromRgb(150, 0, 0)),
                 Foreground = Brushes.White,
                 BorderThickness = new Thickness(0),
@@ -1784,7 +1784,7 @@ namespace darts_hub.control
                     }
                     finally
                     {
-                        stopButton.Content = "⏹️";
+                        stopButton.Content = "■";
                         stopButton.IsEnabled = true;
                     }
                 }

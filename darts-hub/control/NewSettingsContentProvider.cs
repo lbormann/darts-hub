@@ -206,18 +206,18 @@ namespace darts_hub.control
                                     var oldDescription = argument.Description;
                                     argument.Description = description;
                                     updatedCount++;
-                                    System.Diagnostics.Debug.WriteLine($"✓ Updated description for argument {argument.Name}");
+                                    System.Diagnostics.Debug.WriteLine($"? Updated description for argument {argument.Name}");
                                     System.Diagnostics.Debug.WriteLine($"  Old: '{oldDescription}'");
                                     System.Diagnostics.Debug.WriteLine($"  New: '{description}'");
                                 }
                                 else
                                 {
-                                    System.Diagnostics.Debug.WriteLine($"✗ Skipped update for {argument.Name} (empty parsed description)");
+                                    System.Diagnostics.Debug.WriteLine($"? Skipped update for {argument.Name} (empty parsed description)");
                                 }
                             }
                             else
                             {
-                                System.Diagnostics.Debug.WriteLine($"✗ No description found for argument {argument.Name} in parsed data");
+                                System.Diagnostics.Debug.WriteLine($"? No description found for argument {argument.Name} in parsed data");
                             }
                         }
                         
@@ -280,7 +280,7 @@ namespace darts_hub.control
 
             var titleBlock = new TextBlock
             {
-                Text = $"🎯 {app.CustomName} - New Settings Mode",
+                Text = $"{app.CustomName} - New Settings Mode",
                 FontSize = 20,
                 FontWeight = FontWeight.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
@@ -391,7 +391,7 @@ namespace darts_hub.control
 
             var startStopButton = new Button
             {
-                Content = app.AppRunningState ? "⏹️ Stop" : "▶️ Start",
+                Content = app.AppRunningState ? "■ Stop" : "▶️ Start",
                 Background = app.AppRunningState ? 
                     new SolidColorBrush(Color.FromRgb(220, 53, 69)) : 
                     new SolidColorBrush(Color.FromRgb(40, 167, 69)),
@@ -503,7 +503,7 @@ namespace darts_hub.control
 
                 var configTitle = new TextBlock
                 {
-                    Text = "⚙️ Configured Parameters",
+                    Text = "Configured Parameters",
                     FontSize = 16,
                     FontWeight = FontWeight.Bold,
                     Foreground = Brushes.White,
@@ -655,22 +655,22 @@ namespace darts_hub.control
                         {
                             var descText = CreateDescriptionTextBlock(cachedDescription);
                             contentPanel.Children.Add(descText);
-                            System.Diagnostics.Debug.WriteLine($"  ✓ Added description TextBlock for {param.Name}");
+                            System.Diagnostics.Debug.WriteLine($"  ? Added description TextBlock for {param.Name}");
                         }
                         else
                         {
-                            System.Diagnostics.Debug.WriteLine($"  ✗ Cached description for {param.Name} is empty");
+                            System.Diagnostics.Debug.WriteLine($"  ? Cached description for {param.Name} is empty");
                         }
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine($"  ✗ No cached description found for parameter {param.Name}");
+                        System.Diagnostics.Debug.WriteLine($"  ? No cached description found for parameter {param.Name}");
                         System.Diagnostics.Debug.WriteLine($"  Available cached parameters: {string.Join(", ", appDescriptions.Keys)}");
                     }
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"  ✗ No cache entry found for app {app.Name}");
+                    System.Diagnostics.Debug.WriteLine($"  ? No cache entry found for app {app.Name}");
                     System.Diagnostics.Debug.WriteLine($"  Available cached apps: {string.Join(", ", argumentDescriptionsCache.Keys)}");
                 }
             }
@@ -710,7 +710,7 @@ namespace darts_hub.control
                 catch
                 {
                     // Fallback to text if image not found
-                    removeButton.Content = "✖";
+                    removeButton.Content = "X";
                     removeButton.Foreground = Brushes.White;
                     removeButton.FontSize = 12;
                     removeButton.FontWeight = FontWeight.Bold;
@@ -757,7 +757,7 @@ namespace darts_hub.control
 
             var textBlock = new TextBlock
             {
-                Text = $"💡 {description}",
+                Text = $"{description}",
                 FontSize = 12,
                 Foreground = new SolidColorBrush(Color.FromRgb(220, 240, 255)),
                 TextWrapping = TextWrapping.Wrap
@@ -1271,7 +1271,7 @@ namespace darts_hub.control
 
             var stopButton = new Button
             {
-                Content = "⏹️",
+                Content = "■",
                 Background = new SolidColorBrush(Color.FromRgb(150, 0, 0)),
                 Foreground = Brushes.White,
                 BorderThickness = new Thickness(0),
@@ -1464,7 +1464,7 @@ namespace darts_hub.control
                     
                     // Add info header
                     var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
-                    var headerText = isLive ? $"─── Live from {source} ───" : "─── Fallback Effects ───";
+                    var headerText = isLive ? $"--- Live from {source} ---" : "--- Fallback Effects ---";
                     
                     var dynamicHeader = new ComboBoxItem
                     {
@@ -1553,7 +1553,7 @@ namespace darts_hub.control
                     
                     // Add info header
                     var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
-                    var headerText = isLive ? $"─── Live from {source} ───" : "─── Fallback Palettes ───";
+                    var headerText = isLive ? $"--- Live from {source} ---" : "--- Fallback Palettes ---";
                     
                     var dynamicHeader = new ComboBoxItem
                     {
@@ -1624,7 +1624,7 @@ namespace darts_hub.control
             refreshButton.Click += async (s, e) =>
             {
                 refreshButton.IsEnabled = false;
-                refreshButton.Content = "⏳";
+                refreshButton.Content = "🔄";
                 try
                 {
                     isInitializing = true;
@@ -1646,7 +1646,7 @@ namespace darts_hub.control
                     app != null)
                 {
                     testButton.IsEnabled = false;
-                    testButton.Content = "⏳";
+                    testButton.Content = "▶️";
                     try
                     {
                         var palette = (paletteDropdown.SelectedItem as ComboBoxItem)?.Tag?.ToString();
@@ -1657,12 +1657,12 @@ namespace darts_hub.control
                             string.IsNullOrEmpty(palette) ? null : palette, speed, intensity);
                         if (success)
                         {
-                            testButton.Content = "✅";
+                            testButton.Content = "▶️";
                             await Task.Delay(1000);
                         }
                         else
                         {
-                            testButton.Content = "❌";
+                            testButton.Content = "▶️";
                             await Task.Delay(1000);
                         }
                     }
@@ -1679,24 +1679,24 @@ namespace darts_hub.control
                 if (app != null)
                 {
                     stopButton.IsEnabled = false;
-                    stopButton.Content = "⏳";
+                    stopButton.Content = "■";
                     try
                     {
                         var success = await WledApi.StopEffectsAsync(app);
                         if (success)
                         {
-                            stopButton.Content = "✅";
+                            stopButton.Content = "■";
                             await Task.Delay(1000);
                         }
                         else
                         {
-                            stopButton.Content = "❌";
+                            stopButton.Content = "■";
                             await Task.Delay(1000);
                         }
                     }
                     finally
                     {
-                        stopButton.Content = "⏹️";
+                        stopButton.Content = "■";
                         stopButton.IsEnabled = true;
                     }
                 }
@@ -1816,7 +1816,7 @@ namespace darts_hub.control
 
             var stopButton = new Button
             {
-                Content = "⏹️",
+                Content = "■",
                 Background = new SolidColorBrush(Color.FromRgb(150, 0, 0)),
                 Foreground = Brushes.White,
                 BorderThickness = new Thickness(0),
@@ -1963,7 +1963,7 @@ namespace darts_hub.control
                     
                     // Add info header
                     var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
-                    var headerText = isLive ? $"─── Live from {source} ───" : "─── Fallback Presets ───";
+                    var headerText = isLive ? $"--- Live from {source} ---" : "--- Fallback Presets ---";
                     
                     var dynamicHeader = new ComboBoxItem
                     {
@@ -2041,7 +2041,7 @@ namespace darts_hub.control
             refreshButton.Click += async (s, e) =>
             {
                 refreshButton.IsEnabled = false;
-                refreshButton.Content = "⏳";
+                refreshButton.Content = "🔄";
                 try
                 {
                     isInitializing = true; // Prevent updates during refresh
@@ -2065,18 +2065,18 @@ namespace darts_hub.control
                     if (parts.Length >= 2 && int.TryParse(parts[1], out var presetId))
                     {
                         testButton.IsEnabled = false;
-                        testButton.Content = "⏳";
+                        testButton.Content = "▶️";
                         try
                         {
                             var success = await WledApi.TestPresetAsync(app, presetId);
                             if (success)
                             {
-                                testButton.Content = "✅";
+                                testButton.Content = "▶️";
                                 await Task.Delay(1000);
                             }
                             else
                             {
-                                testButton.Content = "❌";
+                                testButton.Content = "▶️";
                                 await Task.Delay(1000);
                             }
                         }
@@ -2094,24 +2094,24 @@ namespace darts_hub.control
                 if (app != null)
                 {
                     stopButton.IsEnabled = false;
-                    stopButton.Content = "⏳";
+                    stopButton.Content = "■";
                     try
                     {
                         var success = await WledApi.StopEffectsAsync(app);
                         if (success)
                         {
-                            stopButton.Content = "✅";
+                            stopButton.Content = "■";
                             await Task.Delay(1000);
                         }
                         else
                         {
-                            stopButton.Content = "❌";
+                            stopButton.Content = "■";
                             await Task.Delay(1000);
                         }
                     }
                     finally
                     {
-                        stopButton.Content = "⏹️";
+                        stopButton.Content = "■";
                         stopButton.IsEnabled = true;
                     }
                 }
@@ -2184,7 +2184,7 @@ namespace darts_hub.control
 
             var stopButton = new Button
             {
-                Content = "⏹️",
+                Content = "■",
                 Background = new SolidColorBrush(Color.FromRgb(150, 0, 0)),
                 Foreground = Brushes.White,
                 BorderThickness = new Thickness(0),
@@ -2223,18 +2223,18 @@ namespace darts_hub.control
                     app != null)
                 {
                     testButton.IsEnabled = false;
-                    testButton.Content = "⏳";
+                    testButton.Content = "▶️";
                     try
                     {
                         var success = await WledApi.TestColorAsync(app, colorEffect);
                         if (success)
                         {
-                            testButton.Content = "✅";
+                            testButton.Content = "▶️";
                             await Task.Delay(1000);
                         }
                         else
                         {
-                            testButton.Content = "❌";
+                            testButton.Content = "▶️";
                             await Task.Delay(1000);
                         }
                     }
@@ -2251,24 +2251,24 @@ namespace darts_hub.control
                 if (app != null)
                 {
                     stopButton.IsEnabled = false;
-                    stopButton.Content = "⏳";
+                    stopButton.Content = "■";
                     try
                     {
                         var success = await WledApi.StopEffectsAsync(app);
                         if (success)
                         {
-                            stopButton.Content = "✅";
+                            stopButton.Content = "■";
                             await Task.Delay(1000);
                         }
                         else
                         {
-                            stopButton.Content = "❌";
+                            stopButton.Content = "■";
                             await Task.Delay(1000);
                         }
                     }
                     finally
                     {
-                        stopButton.Content = "⏹️";
+                        stopButton.Content = "■";
                         stopButton.IsEnabled = true;
                     }
                 }
@@ -2307,7 +2307,7 @@ namespace darts_hub.control
 
             var addTitle = new TextBlock
             {
-                Text = "➕ Add Parameter",
+                Text = "+ Add Parameter",
                 FontSize = 16,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
@@ -2505,7 +2505,7 @@ namespace darts_hub.control
 
             var configTitle = new TextBlock
             {
-                Text = "📋 Configuration Preview",
+                Text = "Configuration Preview",
                 FontSize = 16,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
@@ -2516,10 +2516,10 @@ namespace darts_hub.control
             var configInfo = new TextBlock
             {
                 Text = app.IsConfigurable() ? 
-                    $"⚙️ App has {app.Configuration?.Arguments?.Count ?? 0} configurable options\n" +
-                    "🎛️ Enhanced UI controls active\n" +
-                    "⚡ Real-time parameter management\n" +
-                    "💡 Advanced validation and tooltips" : 
+                    $"App has {app.Configuration?.Arguments?.Count ?? 0} configurable options\n" +
+                    "Enhanced UI controls active\n" +
+                    "Real-time parameter management\n" +
+                    "Advanced validation and tooltips" : 
                     "This application has no configurable settings.",
                 FontSize = 13,
                 Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
@@ -2548,7 +2548,7 @@ namespace darts_hub.control
 
             var noticeText = new TextBlock
             {
-                Text = "🧪 Enhanced Configuration Mode\n\n" +
+                Text = "Enhanced Configuration Mode\n\n" +
                        "This new settings interface provides real-time parameter management with enhanced descriptions from README files. " +
                        "Add or remove parameters as needed, and see changes immediately. " +
                        "You can switch back to the classic settings mode in the About section.",
