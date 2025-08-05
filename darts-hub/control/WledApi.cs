@@ -361,13 +361,13 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Tests an effect by sending it to the first reachable WLED endpoint
+        /// Tests an effect by sending it to all segments of the first reachable WLED endpoint
         /// </summary>
         /// <param name="app">The app containing WLED configuration</param>
         /// <param name="effectName">Name of the effect to test</param>
         /// <param name="palette">Optional palette to test with</param>
-        /// <param name="speed">Optional speed (0-255)</param>
-        /// <param name="intensity">Optional intensity (0-255)</param>
+        /// <param name="speed">Optional speed (1-255)</param>
+        /// <param name="intensity">Optional intensity (1-255)</param>
         /// <returns>True if effect was sent successfully, false otherwise</returns>
         public static async Task<bool> TestEffectAsync(AppBase app, string effectName, string? palette = null, int? speed = null, int? intensity = null)
         {
@@ -394,6 +394,9 @@ namespace darts_hub.control
                     }
                 }
                 
+                // Query available segments
+                var segmentIds = await QuerySegmentsAsync(endpoint);
+                
                 try
                 {
                     // Ensure proper URL format
@@ -405,41 +408,97 @@ namespace darts_hub.control
 
                     var url = $"{endpointUrl}/json/state";
                     
-                    // Create JSON payload to set the effect
+                    // Create segments array - apply effect to all available segments
+                    var segments = new List<object>();
+                    
+                    if (segmentIds != null && segmentIds.Count > 0)
+                    {
+                        // Create segment configuration for each available segment
+                        foreach (var segmentId in segmentIds)
+                        {
+                            var segment = new
+                            {
+                                id = segmentId,                            // Segment ID
+                                fx = effectId,                             // Effect ID
+                                sx = speed ?? 180,                         // Speed (default 180 if not specified)
+                                ix = intensity ?? 100,                     // Intensity (default 100 if not specified)  
+                                pal = paletteId ?? 6,                      // Palette ID (default 6 = Party if not specified)
+                                col = new int[][]                          // Color array with primary, secondary, background
+                                {
+                                    new int[] { 255, 0, 0 },               // Primary color (red)
+                                    new int[] { 0, 255, 0 },               // Secondary color (green)
+                                    new int[] { 0, 0, 255 }                // Background color (blue)
+                                }
+                            };
+                            segments.Add(segment);
+                        }
+                    }
+                    else
+                    {
+                        // Fallback: create default segment if no segments found
+                        System.Diagnostics.Debug.WriteLine($"No segments found on {endpoint}, creating default segment 0");
+                        
+                        var defaultSegment = new
+                        {
+                            id = 0,                                        // Default segment ID
+                            fx = effectId,                                 // Effect ID
+                            sx = speed ?? 180,                             // Speed (default 180 if not specified)
+                            ix = intensity ?? 100,                         // Intensity (default 100 if not specified)
+                            pal = paletteId ?? 6,                          // Palette ID (default 6 = Party if not specified)
+                            col = new int[][]                              // Color array with primary, secondary, background
+                            {
+                                new int[] { 255, 0, 0 },                   // Primary color (red)
+                                new int[] { 0, 255, 0 },                   // Secondary color (green)
+                                new int[] { 0, 0, 255 }                    // Background color (blue)
+                            }
+                        };
+                        segments.Add(defaultSegment);
+                    }
+                    
+                    // Create the complete JSON payload according to specification
                     var payload = new
                     {
-                        on = true,
-                        fx = effectId,
-                        pal = paletteId,
-                        sx = speed,
-                        ix = intensity,
-                        bri = 128 // Medium brightness for testing
+                        on = true,                                         // Turn on WLED
+                        bri = 255,                                         // Brightness (max for testing)
+                        seg = segments.ToArray(),                          // Segments array
+                        transition = 7,                                    // Transition duration in 100ms steps (700ms)
+                        tt = 7,                                            // Alternative transition property (WLED 0.14+)
+                        ps = -1                                            // No preset save/activate
                     };
                     
                     var json = JsonConvert.SerializeObject(payload, new JsonSerializerSettings
                     {
-                        NullValueHandling = NullValueHandling.Ignore
+                        NullValueHandling = NullValueHandling.Include,
+                        Formatting = Formatting.Indented
                     });
+                    
+                    System.Diagnostics.Debug.WriteLine($"Sending WLED effect test payload to {endpoint} for {segments.Count} segment(s):");
+                    System.Diagnostics.Debug.WriteLine(json);
+                    
                     var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
                     
                     var response = await httpClient.PostAsync(url, content);
                     
                     if (response.IsSuccessStatusCode)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Successfully sent effect '{effectName}' (ID: {effectId}) to {endpoint}");
+                        System.Diagnostics.Debug.WriteLine($"Successfully sent effect '{effectName}' (ID: {effectId}) to {segments.Count} segment(s) on {endpoint}");
                         if (paletteId.HasValue) System.Diagnostics.Debug.WriteLine($"  with palette '{palette}' (ID: {paletteId})");
-                        if (speed.HasValue) System.Diagnostics.Debug.WriteLine($"  with speed: {speed}");
-                        if (intensity.HasValue) System.Diagnostics.Debug.WriteLine($"  with intensity: {intensity}");
+                        System.Diagnostics.Debug.WriteLine($"  with speed: {speed ?? 180}");
+                        System.Diagnostics.Debug.WriteLine($"  with intensity: {intensity ?? 100}");
+                        if (segmentIds != null) System.Diagnostics.Debug.WriteLine($"  applied to segments: [{string.Join(", ", segmentIds)}]");
                         return true;
                     }
                     else
                     {
+                        var responseBody = await response.Content.ReadAsStringAsync();
                         System.Diagnostics.Debug.WriteLine($"Failed to send effect to {endpoint}: {response.StatusCode}");
+                        System.Diagnostics.Debug.WriteLine($"Response body: {responseBody}");
                     }
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error sending effect to {endpoint}: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
                 }
             }
             
@@ -471,15 +530,25 @@ namespace darts_hub.control
 
                     var url = $"{endpointUrl}/json/state";
                     
-                    // Create JSON payload to activate the preset
+                    // Create the JSON payload to activate the preset according to specification
                     var payload = new
                     {
-                        on = true,
-                        ps = presetId,
-                        bri = 128 // Medium brightness for testing
+                        on = true,                                         // Turn on WLED
+                        bri = 255,                                         // Brightness (max for testing)
+                        ps = presetId,                                     // Preset ID to activate
+                        transition = 7,                                    // Transition duration in 100ms steps (700ms)
+                        tt = 7                                             // Alternative transition property (WLED 0.14+)
                     };
                     
-                    var json = JsonConvert.SerializeObject(payload);
+                    var json = JsonConvert.SerializeObject(payload, new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Include,
+                        Formatting = Formatting.Indented
+                    });
+                    
+                    System.Diagnostics.Debug.WriteLine($"Sending WLED preset test payload to {endpoint}:");
+                    System.Diagnostics.Debug.WriteLine(json);
+                    
                     var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
                     
                     var response = await httpClient.PostAsync(url, content);
@@ -491,12 +560,15 @@ namespace darts_hub.control
                     }
                     else
                     {
+                        var responseBody = await response.Content.ReadAsStringAsync();
                         System.Diagnostics.Debug.WriteLine($"Failed to send preset to {endpoint}: {response.StatusCode}");
+                        System.Diagnostics.Debug.WriteLine($"Response body: {responseBody}");
                     }
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error sending preset to {endpoint}: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
                 }
             }
             
@@ -534,71 +606,94 @@ namespace darts_hub.control
                     // Query available segments
                     var segmentIds = await QuerySegmentsAsync(endpoint);
                     
-                    if (segmentIds == null || segmentIds.Count == 0)
+                    // Create segments array - apply color to all available segments
+                    var segments = new List<object>();
+                    
+                    if (segmentIds != null && segmentIds.Count > 0)
                     {
-                        System.Diagnostics.Debug.WriteLine($"No segments found on {endpoint}, using fallback method");
-                        
-                        // Fallback to old method if no segments found
-                        var fallbackPayload = new
+                        // Create segment configuration for each available segment
+                        foreach (var segmentId in segmentIds)
                         {
-                            on = true,
-                            fx = 0, // Solid color effect
-                            col = new[] { new[] { r, g, b } },
-                            bri = 128 // Medium brightness for testing
-                        };
-                        
-                        var fallbackJson = JsonConvert.SerializeObject(fallbackPayload);
-                        var fallbackContent = new StringContent(fallbackJson, System.Text.Encoding.UTF8, "application/json");
-                        
-                        System.Diagnostics.Debug.WriteLine($"Sending fallback color command to {endpoint}: {fallbackJson}");
-                        
-                        var fallbackResponse = await httpClient.PostAsync(url, fallbackContent);
-                        
-                        if (fallbackResponse.IsSuccessStatusCode)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Successfully sent color '{colorEffect}' (RGB: {r},{g},{b}) to {endpoint} using fallback method");
-                            return true;
+                            var segment = new
+                            {
+                                id = segmentId,                            // Segment ID
+                                fx = 0,                                    // Solid color effect
+                                sx = 128,                                  // Speed (not really used for solid color)
+                                ix = 255,                                  // Intensity (max for solid color)
+                                pal = 0,                                   // Default palette for solid color
+                                col = new int[][]                          // Color array with the selected color
+                                {
+                                    new int[] { r, g, b },                 // Primary color (selected color)
+                                    new int[] { 0, 0, 0 },                 // Secondary color (black)
+                                    new int[] { 0, 0, 0 }                  // Background color (black)
+                                }
+                            };
+                            segments.Add(segment);
                         }
                     }
                     else
                     {
-                        // Create segment array with the same color for all segments
-                        var segments = segmentIds.Select(segmentId => new
-                        {
-                            id = segmentId,
-                            col = new[] { new[] { r, g, b } },
-                            fx = 0 // Solid color effect for each segment
-                        }).ToArray();
+                        // Fallback: create default segment if no segments found
+                        System.Diagnostics.Debug.WriteLine($"No segments found on {endpoint}, creating default segment 0");
                         
-                        // Create JSON payload with segments
-                        var payload = new
+                        var defaultSegment = new
                         {
-                            on = true,
-                            seg = segments,
-                            bri = 128 // Medium brightness for testing
+                            id = 0,                                        // Default segment ID
+                            fx = 0,                                        // Solid color effect
+                            sx = 128,                                      // Speed (not really used for solid color)
+                            ix = 255,                                      // Intensity (max for solid color)
+                            pal = 0,                                       // Default palette for solid color
+                            col = new int[][]                              // Color array with the selected color
+                            {
+                                new int[] { r, g, b },                     // Primary color (selected color)
+                                new int[] { 0, 0, 0 },                     // Secondary color (black)
+                                new int[] { 0, 0, 0 }                      // Background color (black)
+                            }
                         };
-                        
-                        var json = JsonConvert.SerializeObject(payload);
-                        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-                        
-                        System.Diagnostics.Debug.WriteLine($"Sending segment-based color command to {endpoint}: {json}");
-                        
-                        var response = await httpClient.PostAsync(url, content);
-                        
-                        if (response.IsSuccessStatusCode)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Successfully sent color '{colorEffect}' (RGB: {r},{g},{b}) to {segmentIds.Count} segments on {endpoint}");
-                            return true;
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Failed to send color to {endpoint}: {response.StatusCode}");
-                        }
+                        segments.Add(defaultSegment);
+                    }
+                    
+                    // Create the complete JSON payload according to specification
+                    var payload = new
+                    {
+                        on = true,                                         // Turn on WLED
+                        bri = 255,                                         // Brightness (max for testing)
+                        seg = segments.ToArray(),                          // Segments array
+                        transition = 7,                                    // Transition duration in 100ms steps (700ms)
+                        tt = 7,                                            // Alternative transition property (WLED 0.14+)
+                        ps = -1                                            // No preset save/activate
+                    };
+                    
+                    var json = JsonConvert.SerializeObject(payload, new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Include,
+                        Formatting = Formatting.Indented
+                    });
+                    
+                    System.Diagnostics.Debug.WriteLine($"Sending WLED color test payload to {endpoint} for {segments.Count} segment(s):");
+                    System.Diagnostics.Debug.WriteLine(json);
+                    
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                    
+                    var response = await httpClient.PostAsync(url, content);
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Successfully sent color '{colorEffect}' (RGB: {r},{g},{b}) to {segments.Count} segment(s) on {endpoint}");
+                        if (segmentIds != null) System.Diagnostics.Debug.WriteLine($"  applied to segments: [{string.Join(", ", segmentIds)}]");
+                        return true;
+                    }
+                    else
+                    {
+                        var responseBody = await response.Content.ReadAsStringAsync();
+                        System.Diagnostics.Debug.WriteLine($"Failed to send color to {endpoint}: {response.StatusCode}");
+                        System.Diagnostics.Debug.WriteLine($"Response body: {responseBody}");
                     }
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error sending color to {endpoint}: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
                 }
             }
             
@@ -629,13 +724,23 @@ namespace darts_hub.control
 
                     var url = $"{endpointUrl}/json/state";
                     
-                    // Create JSON payload to turn off WLED
+                    // Create JSON payload to turn off WLED with transition
                     var payload = new
                     {
-                        on = false
+                        on = false,                                        // Turn off WLED
+                        transition = 7,                                    // Transition duration in 100ms steps (700ms)
+                        tt = 7                                             // Alternative transition property (WLED 0.14+)
                     };
                     
-                    var json = JsonConvert.SerializeObject(payload);
+                    var json = JsonConvert.SerializeObject(payload, new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Include,
+                        Formatting = Formatting.Indented
+                    });
+                    
+                    System.Diagnostics.Debug.WriteLine($"Sending WLED stop payload to {endpoint}:");
+                    System.Diagnostics.Debug.WriteLine(json);
+                    
                     var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
                     
                     var response = await httpClient.PostAsync(url, content);
@@ -647,12 +752,15 @@ namespace darts_hub.control
                     }
                     else
                     {
+                        var responseBody = await response.Content.ReadAsStringAsync();
                         System.Diagnostics.Debug.WriteLine($"Failed to stop effects on {endpoint}: {response.StatusCode}");
+                        System.Diagnostics.Debug.WriteLine($"Response body: {responseBody}");
                     }
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error stopping effects on {endpoint}: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
                 }
             }
             
