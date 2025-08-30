@@ -771,26 +771,48 @@ namespace darts_hub.control
         {
             var type = param.GetTypeClear();
             
-            // Check if this is a score area effect parameter (has special handling with range dropdowns)
-            bool isScoreAreaEffectParameter = WledScoreAreaHelper.IsScoreAreaEffectParameter(param);
+            System.Diagnostics.Debug.WriteLine($"=== PARAMETER INPUT CONTROL CREATION ===");
+            System.Diagnostics.Debug.WriteLine($"App Name: {app?.Name ?? "NULL"}");
+            System.Diagnostics.Debug.WriteLine($"Parameter Name: {param.Name}");
+            System.Diagnostics.Debug.WriteLine($"Parameter Type: {type}");
             
-            // Check if this is a regular effect parameter
-            bool isEffectParameter = WledSettings.IsEffectParameter(param) && !isScoreAreaEffectParameter;
+            // Check if this is a Pixelit effect parameter (includes both regular and score area effects for darts-pixelit)
+            bool isPixelitEffectParameter = PixelitSettings.IsPixelitEffectParameter(param, app);
+            System.Diagnostics.Debug.WriteLine($"Is Pixelit Effect Parameter: {isPixelitEffectParameter}");
+            
+            // Check if this is a WLED score area effect parameter (only for darts-wled, not darts-pixelit)
+            bool isWledScoreAreaEffectParameter = app?.Name == "darts-wled" && 
+                                                 WledScoreAreaHelper.IsScoreAreaEffectParameter(param);
+            System.Diagnostics.Debug.WriteLine($"Is WLED Score Area Effect Parameter: {isWledScoreAreaEffectParameter}");
+            
+            // Check if this is a WLED regular effect parameter (only for darts-wled, not darts-pixelit, and not score area)
+            bool isWledEffectParameter = app?.Name == "darts-wled" && 
+                                       WledSettings.IsEffectParameter(param) && 
+                                       !isWledScoreAreaEffectParameter;
+            System.Diagnostics.Debug.WriteLine($"Is WLED Effect Parameter: {isWledEffectParameter}");
 
             switch (type)
             {
                 case Argument.TypeString:
                 case Argument.TypePassword:
-                    if (isScoreAreaEffectParameter)
+                    if (isPixelitEffectParameter)
                     {
+                        System.Diagnostics.Debug.WriteLine($"CREATING: Pixelit Effect Parameter Control");
+                        return PixelitSettings.CreateAdvancedPixelitParameterControl(param, saveCallback, app);
+                    }
+                    else if (isWledScoreAreaEffectParameter)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"CREATING: WLED Score Area Effect Parameter Control");
                         return WledScoreAreaHelper.CreateScoreAreaEffectParameterControl(param, saveCallback, app);
                     }
-                    else if (isEffectParameter)
+                    else if (isWledEffectParameter)
                     {
+                        System.Diagnostics.Debug.WriteLine($"CREATING: WLED Effect Parameter Control");
                         return WledSettings.CreateAdvancedEffectParameterControl(param, saveCallback, app);
                     }
                     else
                     {
+                        System.Diagnostics.Debug.WriteLine($"CREATING: Standard TextBox Control");
                         var textBox = new TextBox
                         {
                             Text = param.Value ?? "",
