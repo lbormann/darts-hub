@@ -1859,7 +1859,7 @@ namespace darts_hub.control
                 if (colorDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is string colorEffect)
                 {
-                    param.Value = colorEffect;
+                    param.Value = $"solid|{colorEffect}";
                     param.IsValueChanged = true;
                     saveCallback?.Invoke();
                 }

@@ -579,7 +579,7 @@ namespace darts_hub.control
         /// Tests a color effect by sending it to all segments of the first reachable WLED endpoint
         /// </summary>
         /// <param name="app">The app containing WLED configuration</param>
-        /// <param name="colorEffect">Color effect string (e.g., "red", "green", "#FF0000")</param>
+        /// <param name="colorEffect">Color effect string (e.g., "red", "solid|green", "#FF0000")</param>
         /// <returns>True if color was sent successfully, false otherwise</returns>
         public static async Task<bool> TestColorAsync(AppBase app, string colorEffect)
         {
@@ -600,8 +600,11 @@ namespace darts_hub.control
 
                     var url = $"{endpointUrl}/json/state";
                     
-                    // Parse color effect to RGB values using the extracted color definitions
-                    var (r, g, b) = WledColorDefinitions.ParseColorEffect(colorEffect);
+                    // For testing, use the original color name without "solid|" prefix
+                    var originalColorName = WledColorDefinitions.GetOriginalColorName(colorEffect);
+                    
+                    // Parse color effect to RGB values using the original color name
+                    var (r, g, b) = WledColorDefinitions.ParseColorEffect(originalColorName);
                     
                     // Query available segments
                     var segmentIds = await QuerySegmentsAsync(endpoint);
@@ -671,6 +674,7 @@ namespace darts_hub.control
                     });
                     
                     System.Diagnostics.Debug.WriteLine($"Sending WLED color test payload to {endpoint} for {segments.Count} segment(s):");
+                    System.Diagnostics.Debug.WriteLine($"Original color input: '{colorEffect}' -> Test color name: '{originalColorName}' -> RGB: ({r},{g},{b})");
                     System.Diagnostics.Debug.WriteLine(json);
                     
                     var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
@@ -679,7 +683,7 @@ namespace darts_hub.control
                     
                     if (response.IsSuccessStatusCode)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Successfully sent color '{colorEffect}' (RGB: {r},{g},{b}) to {segments.Count} segment(s) on {endpoint}");
+                        System.Diagnostics.Debug.WriteLine($"Successfully sent color '{originalColorName}' (RGB: {r},{g},{b}) to {segments.Count} segment(s) on {endpoint}");
                         if (segmentIds != null) System.Diagnostics.Debug.WriteLine($"  applied to segments: [{string.Join(", ", segmentIds)}]");
                         return true;
                     }

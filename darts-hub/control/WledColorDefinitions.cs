@@ -19,6 +19,12 @@ namespace darts_hub.control
 
             colorEffect = colorEffect.ToLowerInvariant().Trim();
 
+            // Handle solid|color format - remove "solid|" prefix for parsing
+            if (colorEffect.StartsWith("solid|"))
+            {
+                colorEffect = colorEffect.Substring(6); // Remove "solid|" prefix
+            }
+
             // Handle hex colors
             if (colorEffect.StartsWith("#"))
             {
@@ -520,6 +526,26 @@ namespace darts_hub.control
                 // Default fallback
                 _ => (255, 255, 255) // Default white
             };
+        }
+        
+        /// <summary>
+        /// Extracts the original color name from a color effect string (removes "solid|" prefix if present)
+        /// Used for testing purposes where the original color name is needed
+        /// </summary>
+        /// <param name="colorEffect">Color effect string (may include "solid|" prefix)</param>
+        /// <returns>Original color name without prefix</returns>
+        public static string GetOriginalColorName(string colorEffect)
+        {
+            if (string.IsNullOrEmpty(colorEffect))
+                return colorEffect ?? "";
+
+            // Remove "solid|" prefix if present
+            if (colorEffect.StartsWith("solid|", StringComparison.OrdinalIgnoreCase))
+            {
+                return colorEffect.Substring(6);
+            }
+
+            return colorEffect;
         }
     }
 }
