@@ -5,11 +5,12 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using darts_hub.model;
+using System.IO;
 
 namespace darts_hub.control
 {
     /// <summary>
-    /// WLED API client for querying effects and presets from WLED controllers
+    /// WLED API client for reading effects and presets from local data file or fallback to WLED controllers
     /// </summary>
     public class WledApi
     {
@@ -53,6 +54,55 @@ namespace darts_hub.control
             
             [JsonProperty("len")]
             public int Length { get; set; }
+        }
+
+        // Data model for the darts-wled JSON file
+        public class WledDataFile
+        {
+            [JsonProperty("endpoint")]
+            public string? Endpoint { get; set; }
+
+            [JsonProperty("effects")]
+            public WledDataEffects? Effects { get; set; }
+
+            [JsonProperty("presets")]
+            public Dictionary<string, object>? Presets { get; set; }
+
+            [JsonProperty("palettes")]
+            public WledDataPalettes? Palettes { get; set; }
+
+            [JsonProperty("info")]
+            public object? Info { get; set; }
+
+            [JsonProperty("state")]
+            public object? State { get; set; }
+
+            [JsonProperty("segments")]
+            public object? Segments { get; set; }
+
+            [JsonProperty("last_updated")]
+            public string? LastUpdated { get; set; }
+
+            [JsonProperty("data_hash")]
+            public string? DataHash { get; set; }
+        }
+
+        public class WledDataEffects
+        {
+            [JsonProperty("names")]
+            public List<string>? Names { get; set; }
+
+            [JsonProperty("ids")]
+            public List<int>? Ids { get; set; }
+        }
+
+        public class WledDataPalettes
+        {
+            [JsonProperty("names")]
+            public List<string>? Names { get; set; }
+
+            [JsonProperty("ids")]
+            public List<int>? Ids { get; set; }
         }
 
         // Fallback effect categories
@@ -105,6 +155,44 @@ namespace darts_hub.control
             "Cyane", "Light Pink", "Autumn", "Magenta", "Magred", "Yelmag", "Yelblu", "Orange & Teal",
             "Tiamat", "April Night", "Orangery", "C9", "Sakura", "Aurora", "Atlantica"
         };
+
+        /// <summary>
+        /// Loads WLED data from the local JSON file created by darts-wled
+        /// </summary>
+        /// <returns>WledDataFile object or null if file doesn't exist or is invalid</returns>
+        public static WledDataFile? LoadWledDataFile()
+        {
+            try
+            {
+                var dataFilePath = Path.Combine("darts-wled", "wled_data.json");
+                
+                if (!File.Exists(dataFilePath))
+                {
+                    System.Diagnostics.Debug.WriteLine($"WLED data file not found at: {dataFilePath}");
+                    return null;
+                }
+
+                var jsonContent = File.ReadAllText(dataFilePath);
+                var wledData = JsonConvert.DeserializeObject<WledDataFile>(jsonContent);
+                
+                if (wledData != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Successfully loaded WLED data from: {dataFilePath}");
+                    System.Diagnostics.Debug.WriteLine($"Endpoint: {wledData.Endpoint}");
+                    System.Diagnostics.Debug.WriteLine($"Effects count: {wledData.Effects?.Names?.Count ?? 0}");
+                    System.Diagnostics.Debug.WriteLine($"Palettes count: {wledData.Palettes?.Names?.Count ?? 0}");
+                    System.Diagnostics.Debug.WriteLine($"Presets count: {wledData.Presets?.Count ?? 0}");
+                    System.Diagnostics.Debug.WriteLine($"Last updated: {wledData.LastUpdated}");
+                    return wledData;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading WLED data file: {ex.Message}");
+            }
+
+            return null;
+        }
 
         /// <summary>
         /// Queries a WLED controller for available effects
@@ -285,72 +373,91 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Gets all effects from the first reachable endpoint or fallback data
+        /// Gets all effects from local data file or fallback data
         /// </summary>
         /// <param name="app">The app containing WLED configuration</param>
         /// <returns>Tuple of (effects list, source description, is live data)</returns>
         public static async Task<(List<string> effects, string source, bool isLive)> GetEffectsWithFallbackAsync(AppBase app)
         {
-            var endpoints = ExtractWledEndpoints(app);
-            
-            // Try live data first
-            foreach (var endpoint in endpoints)
+            // Try to load from local data file first
+            var wledData = LoadWledDataFile();
+            if (wledData?.Effects?.Names != null && wledData.Effects.Names.Count > 0)
             {
-                var liveEffects = await QueryEffectsAsync(endpoint);
-                if (liveEffects != null && liveEffects.Count > 0)
-                {
-                    return (liveEffects, endpoint, true);
-                }
+                System.Diagnostics.Debug.WriteLine($"Loaded {wledData.Effects.Names.Count} effects from local data file");
+                return (wledData.Effects.Names.Where(e => !string.IsNullOrWhiteSpace(e)).ToList(), 
+                       $"Local Data ({wledData.Endpoint})", true);
             }
             
-            // Fallback to static data
+            // Fallback to static data if local data not available
+            System.Diagnostics.Debug.WriteLine("Local WLED data not available, using fallback effects");
             var fallbackEffects = FallbackEffectCategories.SelectMany(kv => kv.Value).ToList();
             return (fallbackEffects, "Fallback Data", false);
         }
 
         /// <summary>
-        /// Gets all palettes from the first reachable endpoint or fallback data
+        /// Gets all palettes from local data file or fallback data
         /// </summary>
         /// <param name="app">The app containing WLED configuration</param>
         /// <returns>Tuple of (palettes list, source description, is live data)</returns>
         public static async Task<(List<string> palettes, string source, bool isLive)> GetPalettesWithFallbackAsync(AppBase app)
         {
-            var endpoints = ExtractWledEndpoints(app);
-            
-            // Try live data first
-            foreach (var endpoint in endpoints)
+            // Try to load from local data file first
+            var wledData = LoadWledDataFile();
+            if (wledData?.Palettes?.Names != null && wledData.Palettes.Names.Count > 0)
             {
-                var livePalettes = await QueryPalettesAsync(endpoint);
-                if (livePalettes != null && livePalettes.Count > 0)
-                {
-                    return (livePalettes, endpoint, true);
-                }
+                System.Diagnostics.Debug.WriteLine($"Loaded {wledData.Palettes.Names.Count} palettes from local data file");
+                return (wledData.Palettes.Names.Where(p => !string.IsNullOrWhiteSpace(p)).ToList(),
+                       $"Local Data ({wledData.Endpoint})", true);
             }
             
-            // Fallback to static data
+            // Fallback to static data if local data not available
+            System.Diagnostics.Debug.WriteLine("Local WLED data not available, using fallback palettes");
             return (FallbackPalettes, "Fallback Data", false);
         }
 
         /// <summary>
-        /// Gets all presets from the first reachable endpoint or fallback data
+        /// Gets all presets from local data file or fallback data
         /// </summary>
         /// <param name="app">The app containing WLED configuration</param>
         /// <returns>Tuple of (presets dictionary, source description, is live data)</returns>
         public static async Task<(Dictionary<int, string> presets, string source, bool isLive)> GetPresetsWithFallbackAsync(AppBase app)
         {
-            var endpoints = ExtractWledEndpoints(app);
-            
-            // Try live data first
-            foreach (var endpoint in endpoints)
+            // Try to load from local data file first
+            var wledData = LoadWledDataFile();
+            if (wledData?.Presets != null && wledData.Presets.Count > 0)
             {
-                var livePresets = await QueryPresetsAsync(endpoint);
-                if (livePresets != null && livePresets.Count > 0)
+                var presets = new Dictionary<int, string>();
+                
+                // Convert preset data from local file
+                foreach (var kvp in wledData.Presets)
                 {
-                    return (livePresets, endpoint, true);
+                    if (int.TryParse(kvp.Key, out var presetId) && presetId > 0)
+                    {
+                        // Try to extract name from preset object or use generic name
+                        string presetName = $"Preset {presetId}";
+                        
+                        if (kvp.Value is Newtonsoft.Json.Linq.JObject presetObj)
+                        {
+                            var nameToken = presetObj["n"];
+                            if (nameToken != null && !string.IsNullOrWhiteSpace(nameToken.ToString()))
+                            {
+                                presetName = nameToken.ToString();
+                            }
+                        }
+                        
+                        presets[presetId] = presetName;
+                    }
+                }
+                
+                if (presets.Count > 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Loaded {presets.Count} presets from local data file");
+                    return (presets, $"Local Data ({wledData.Endpoint})", true);
                 }
             }
             
-            // Fallback to static data - convert to dictionary
+            // Fallback to static data if local data not available
+            System.Diagnostics.Debug.WriteLine("Local WLED data not available, using fallback presets");
             var fallbackPresets = new Dictionary<int, string>();
             for (int i = 0; i < FallbackPresets.Count; i++)
             {
@@ -371,7 +478,21 @@ namespace darts_hub.control
         /// <returns>True if effect was sent successfully, false otherwise</returns>
         public static async Task<bool> TestEffectAsync(AppBase app, string effectName, string? palette = null, int? speed = null, int? intensity = null)
         {
-            var endpoints = ExtractWledEndpoints(app);
+            // First try to get endpoint from local data file
+            var wledData = LoadWledDataFile();
+            var endpoints = new List<string>();
+            
+            if (wledData?.Endpoint != null)
+            {
+                endpoints.Add(wledData.Endpoint);
+                System.Diagnostics.Debug.WriteLine($"Using endpoint from local data file: {wledData.Endpoint}");
+            }
+            else
+            {
+                // Fallback to extracting from app configuration
+                endpoints = ExtractWledEndpoints(app);
+                System.Diagnostics.Debug.WriteLine($"Using endpoints from app configuration: {string.Join(", ", endpoints)}");
+            }
             
             foreach (var endpoint in endpoints)
             {
@@ -513,7 +634,21 @@ namespace darts_hub.control
         /// <returns>True if preset was sent successfully, false otherwise</returns>
         public static async Task<bool> TestPresetAsync(AppBase app, int presetId)
         {
-            var endpoints = ExtractWledEndpoints(app);
+            // First try to get endpoint from local data file
+            var wledData = LoadWledDataFile();
+            var endpoints = new List<string>();
+            
+            if (wledData?.Endpoint != null)
+            {
+                endpoints.Add(wledData.Endpoint);
+                System.Diagnostics.Debug.WriteLine($"Using endpoint from local data file: {wledData.Endpoint}");
+            }
+            else
+            {
+                // Fallback to extracting from app configuration
+                endpoints = ExtractWledEndpoints(app);
+                System.Diagnostics.Debug.WriteLine($"Using endpoints from app configuration: {string.Join(", ", endpoints)}");
+            }
             
             foreach (var endpoint in endpoints)
             {
@@ -583,7 +718,21 @@ namespace darts_hub.control
         /// <returns>True if color was sent successfully, false otherwise</returns>
         public static async Task<bool> TestColorAsync(AppBase app, string colorEffect)
         {
-            var endpoints = ExtractWledEndpoints(app);
+            // First try to get endpoint from local data file
+            var wledData = LoadWledDataFile();
+            var endpoints = new List<string>();
+            
+            if (wledData?.Endpoint != null)
+            {
+                endpoints.Add(wledData.Endpoint);
+                System.Diagnostics.Debug.WriteLine($"Using endpoint from local data file: {wledData.Endpoint}");
+            }
+            else
+            {
+                // Fallback to extracting from app configuration
+                endpoints = ExtractWledEndpoints(app);
+                System.Diagnostics.Debug.WriteLine($"Using endpoints from app configuration: {string.Join(", ", endpoints)}");
+            }
             
             foreach (var endpoint in endpoints)
             {
@@ -711,7 +860,21 @@ namespace darts_hub.control
         /// <returns>True if stop command was sent successfully, false otherwise</returns>
         public static async Task<bool> StopEffectsAsync(AppBase app)
         {
-            var endpoints = ExtractWledEndpoints(app);
+            // First try to get endpoint from local data file
+            var wledData = LoadWledDataFile();
+            var endpoints = new List<string>();
+            
+            if (wledData?.Endpoint != null)
+            {
+                endpoints.Add(wledData.Endpoint);
+                System.Diagnostics.Debug.WriteLine($"Using endpoint from local data file: {wledData.Endpoint}");
+            }
+            else
+            {
+                // Fallback to extracting from app configuration
+                endpoints = ExtractWledEndpoints(app);
+                System.Diagnostics.Debug.WriteLine($"Using endpoints from app configuration: {string.Join(", ", endpoints)}");
+            }
             
             foreach (var endpoint in endpoints)
             {

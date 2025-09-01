@@ -1,3 +1,16 @@
+## b1.0.4
+- Beta tester functionality
+  - Add support for beta release checking and downloading
+  - Users can opt-in to receive pre-release versions
+  - Separate handling for stable and beta version checking
+  - Enhanced version detection for pre-release versions
+
+- WLED Extension
+  - Updated WLED extension components
+  - Improved WLED API integration
+  - Enhanced color definitions and score area handling
+  - Better WLED settings management
+
 ## b1.0.0
 - Complete UI redesign
   - more user friendly
@@ -105,7 +118,7 @@
 - Checkbox removed
 - IF YOU WANT TO BE A BETA TESTER YOU CAN ACTIVATE THE BETA TESTER CHECKBOX, 
   THE LATEST PRE RELEASE WILL BE DOWNLOADED AUTOMATICALLY. 
-  PLEASE BE CAREFUL AND BACKUP YOUR darts-hub FOLDER COMPLETELY BEFORE YOU DO IT!!!!
+  PLEASE BE CAREFUL AND BACKUP YOUR darts-hub FOLDER COMPLETELY BEFORE YOU DO IT!!!
 
 
 - update darts-pixel to version 1.2.2

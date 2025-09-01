@@ -387,19 +387,7 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(3),
                 FontSize = 13,
                 PlaceholderText = "Loading WLED effects...",
-                MinWidth = 180
-            };
-
-            var refreshButton = new Button
-            {
-                Content = "🔄",
-                Background = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
-                Foreground = Brushes.White,
-                BorderThickness = new Thickness(0),
-                CornerRadius = new CornerRadius(3),
-                Width = 30,
-                Height = 30,
-                VerticalAlignment = VerticalAlignment.Top
+                MinWidth = 220
             };
 
             var testButton = new Button
@@ -426,7 +414,6 @@ namespace darts_hub.control
                 VerticalAlignment = VerticalAlignment.Top
             };
 
-            ToolTip.SetTip(refreshButton, "Refresh effects from WLED controller");
             ToolTip.SetTip(testButton, "Test selected effect on WLED controller");
             ToolTip.SetTip(stopButton, "Stop effects on WLED controller");
 
@@ -701,66 +688,42 @@ namespace darts_hub.control
                 
                 ComboBoxItem? effectToSelect = null;
                 
-                if (app != null)
+                var (effects, source, isLive) = await WledApi.GetEffectsWithFallbackAsync(app);
+                
+                // Add info header
+                var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
+                var headerText = isLive ? $"--- {source} ---" : "--- Fallback Effects ---";
+                
+                var dynamicHeader = new ComboBoxItem
                 {
-                    var (effects, source, isLive) = await WledApi.GetEffectsWithFallbackAsync(app);
-                    
-                    // Add info header
-                    var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
-                    var headerText = isLive ? $"--- Live from {source} ---" : "--- Fallback Effects ---";
-                    
-                    var dynamicHeader = new ComboBoxItem
+                    Content = headerText,
+                    Foreground = new SolidColorBrush(headerColor),
+                    IsEnabled = false,
+                    FontWeight = FontWeight.Bold
+                };
+                effectDropdown.Items.Add(dynamicHeader);
+
+                // Add effects
+                foreach (var effect in effects)
+                {
+                    var effectItem = new ComboBoxItem
                     {
-                        Content = headerText,
-                        Foreground = new SolidColorBrush(headerColor),
-                        IsEnabled = false,
-                        FontWeight = FontWeight.Bold
+                        Content = effect,
+                        Tag = effect,
+                        Foreground = Brushes.White
                     };
-                    effectDropdown.Items.Add(dynamicHeader);
-
-                    // Add effects
-                    foreach (var effect in effects)
+                    effectDropdown.Items.Add(effectItem);
+                    
+                    // Pre-select if this matches current value
+                    if (selectedEffect == effect)
                     {
-                        var effectItem = new ComboBoxItem
-                        {
-                            Content = effect,
-                            Tag = effect,
-                            Foreground = Brushes.White
-                        };
-                        effectDropdown.Items.Add(effectItem);
-                        
-                        // Pre-select if this matches current value
-                        if (selectedEffect == effect)
-                        {
-                            effectToSelect = effectItem;
-                        }
+                        effectToSelect = effectItem;
                     }
+                }
 
-                    effectDropdown.PlaceholderText = isLive ? 
-                        "Select WLED effect (live data)..." : 
-                        "Select WLED effect (fallback data)...";
-                }
-                else
-                {
-                    // Just use fallback if no app provided
-                    var fallbackEffects = WledApi.FallbackEffectCategories.SelectMany(kv => kv.Value).ToList();
-                    foreach (var effect in fallbackEffects)
-                    {
-                        var effectItem = new ComboBoxItem
-                        {
-                            Content = effect,
-                            Tag = effect,
-                            Foreground = Brushes.White
-                        };
-                        effectDropdown.Items.Add(effectItem);
-                        
-                        if (selectedEffect == effect)
-                        {
-                            effectToSelect = effectItem;
-                        }
-                    }
-                    effectDropdown.PlaceholderText = "Select WLED effect...";
-                }
+                effectDropdown.PlaceholderText = isLive ? 
+                    "Select WLED effect (local data)..." : 
+                    "Select WLED effect (fallback data)...";
                 
                 if (effectToSelect != null)
                 {
@@ -790,67 +753,43 @@ namespace darts_hub.control
                     paletteToSelect = noneItem;
                 }
                 
-                if (app != null)
+                var (palettes, source, isLive) = await WledApi.GetPalettesWithFallbackAsync(app);
+                
+                // Add info header
+                var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
+                var headerText = isLive ? $"--- {source} ---" : "--- Fallback Palettes ---";
+                
+                var dynamicHeader = new ComboBoxItem
                 {
-                    var (palettes, source, isLive) = await WledApi.GetPalettesWithFallbackAsync(app);
-                    
-                    // Add info header
-                    var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
-                    var headerText = isLive ? $"--- Live from {source} ---" : "--- Fallback Palettes ---";
-                    
-                    var dynamicHeader = new ComboBoxItem
+                    Content = headerText,
+                    Foreground = new SolidColorBrush(headerColor),
+                    IsEnabled = false,
+                    FontWeight = FontWeight.Bold
+                };
+                paletteDropdown.Items.Add(dynamicHeader);
+
+                // Add palettes with their index as value (for p{palette-ID} format)
+                for (int i = 0; i < palettes.Count; i++)
+                {
+                    var palette = palettes[i];
+                    var paletteItem = new ComboBoxItem
                     {
-                        Content = headerText,
-                        Foreground = new SolidColorBrush(headerColor),
-                        IsEnabled = false,
-                        FontWeight = FontWeight.Bold
+                        Content = palette,
+                        Tag = i.ToString(), // Use index as the palette ID
+                        Foreground = Brushes.White
                     };
-                    paletteDropdown.Items.Add(dynamicHeader);
-
-                    // Add palettes with their index as value (for p{palette-ID} format)
-                    for (int i = 0; i < palettes.Count; i++)
+                    paletteDropdown.Items.Add(paletteItem);
+                    
+                    // Pre-select if this matches current value (by index or name)
+                    if (selectedPalette == i.ToString() || selectedPalette == palette)
                     {
-                        var palette = palettes[i];
-                        var paletteItem = new ComboBoxItem
-                        {
-                            Content = palette,
-                            Tag = i.ToString(), // Use index as the palette ID
-                            Foreground = Brushes.White
-                        };
-                        paletteDropdown.Items.Add(paletteItem);
-                        
-                        // Pre-select if this matches current value (by index or name)
-                        if (selectedPalette == i.ToString() || selectedPalette == palette)
-                        {
-                            paletteToSelect = paletteItem;
-                        }
+                        paletteToSelect = paletteItem;
                     }
+                }
 
-                    paletteDropdown.PlaceholderText = isLive ? 
-                        "Select palette (live data)..." : 
-                        "Select palette (fallback data)...";
-                }
-                else
-                {
-                    // Just use fallback if no app provided
-                    for (int i = 0; i < WledApi.FallbackPalettes.Count; i++)
-                    {
-                        var palette = WledApi.FallbackPalettes[i];
-                        var paletteItem = new ComboBoxItem
-                        {
-                            Content = palette,
-                            Tag = i.ToString(), // Use index as the palette ID
-                            Foreground = Brushes.White
-                        };
-                        paletteDropdown.Items.Add(paletteItem);
-                        
-                        if (selectedPalette == i.ToString() || selectedPalette == palette)
-                        {
-                            paletteToSelect = paletteItem;
-                        }
-                    }
-                    paletteDropdown.PlaceholderText = "Select palette...";
-                }
+                paletteDropdown.PlaceholderText = isLive ? 
+                    "Select palette (local data)..." : 
+                    "Select palette (fallback data)...";
                 
                 if (paletteToSelect != null)
                 {
@@ -866,24 +805,6 @@ namespace darts_hub.control
             isInitializing = false;
 
             // Event handlers
-            refreshButton.Click += async (s, e) =>
-            {
-                refreshButton.IsEnabled = false;
-                refreshButton.Content = "🔄";
-                try
-                {
-                    isInitializing = true;
-                    await PopulateEffects();
-                    await PopulatePalettes();
-                    isInitializing = false;
-                }
-                finally
-                {
-                    refreshButton.Content = "🔄";
-                    refreshButton.IsEnabled = true;
-                }
-            };
-
             testButton.Click += async (s, e) =>
             {
                 if (effectDropdown.SelectedItem is ComboBoxItem selectedItem && 
@@ -1004,7 +925,6 @@ namespace darts_hub.control
 
             // Build the UI
             effectPanel.Children.Add(effectDropdown);
-            effectPanel.Children.Add(refreshButton);
             effectPanel.Children.Add(testButton);
             effectPanel.Children.Add(stopButton);
 
@@ -1043,7 +963,7 @@ namespace darts_hub.control
                 Spacing = 8
             };
 
-            // Create a panel to hold dropdown and refresh button
+            // Create a panel to hold dropdown and test buttons
             var presetPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -1059,19 +979,7 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(3),
                 FontSize = 13,
                 PlaceholderText = "Loading WLED presets...",
-                MinWidth = 180
-            };
-
-            var refreshButton = new Button
-            {
-                Content = "🔄",
-                Background = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
-                Foreground = Brushes.White,
-                BorderThickness = new Thickness(0),
-                CornerRadius = new CornerRadius(3),
-                Width = 30,
-                Height = 30,
-                VerticalAlignment = VerticalAlignment.Top
+                MinWidth = 220
             };
 
             var testButton = new Button
@@ -1098,7 +1006,6 @@ namespace darts_hub.control
                 VerticalAlignment = VerticalAlignment.Top
             };
 
-            ToolTip.SetTip(refreshButton, "Refresh presets from WLED controller");
             ToolTip.SetTip(testButton, "Test selected preset on WLED controller");
             ToolTip.SetTip(stopButton, "Stop effects on WLED controller");
 
@@ -1238,72 +1145,46 @@ namespace darts_hub.control
                 
                 ComboBoxItem? itemToSelect = null;
                 
-                if (app != null)
+                var (presets, source, isLive) = await WledApi.GetPresetsWithFallbackAsync(app);
+                
+                // Add info header
+                var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
+                var headerText = isLive ? $"--- {source} ---" : "--- Fallback Presets ---";
+                
+                var dynamicHeader = new ComboBoxItem
                 {
-                    var (presets, source, isLive) = await WledApi.GetPresetsWithFallbackAsync(app);
-                    
-                    // Add info header
-                    var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
-                    var headerText = isLive ? $"--- Live from {source} ---" : "--- Fallback Presets ---";
-                    
-                    var dynamicHeader = new ComboBoxItem
-                    {
-                        Content = headerText,
-                        Foreground = new SolidColorBrush(headerColor),
-                        IsEnabled = false,
-                        FontWeight = FontWeight.Bold
-                    };
-                    presetDropdown.Items.Add(dynamicHeader);
+                    Content = headerText,
+                    Foreground = new SolidColorBrush(headerColor),
+                    IsEnabled = false,
+                    FontWeight = FontWeight.Bold
+                };
+                presetDropdown.Items.Add(dynamicHeader);
 
-                    // Add presets using ps|1, ps|2, etc. format
-                    foreach (var preset in presets.OrderBy(p => p.Key))
-                    {
-                        var presetDisplayName = isLive ? 
-                            $"Preset {preset.Key} - {preset.Value}" : 
-                            preset.Value;
-                        var presetValue = $"ps|{preset.Key}"; // Use ps|1, ps|2, etc.
-                        
-                        var presetItem = new ComboBoxItem
-                        {
-                            Content = presetDisplayName,
-                            Tag = presetValue,
-                            Foreground = Brushes.White
-                        };
-                        presetDropdown.Items.Add(presetItem);
-                        
-                        // Pre-select if this matches current value
-                        if (selectedPreset == presetValue)
-                        {
-                            itemToSelect = presetItem;
-                        }
-                    }
-                    presetDropdown.PlaceholderText = isLive ? 
-                        "Select preset (live data)..." : 
-                        "Select preset (fallback data)...";
-                }
-                else
+                // Add presets using ps|1, ps|2, etc. format
+                foreach (var preset in presets.OrderBy(p => p.Key))
                 {
-                    // Just use fallback if no app provided - create ps|1, ps|2, etc.
-                    for (int i = 1; i <= WledApi.FallbackPresets.Count; i++)
+                    var presetDisplayName = isLive ? 
+                        $"Preset {preset.Key} - {preset.Value}" : 
+                        preset.Value;
+                    var presetValue = $"ps|{preset.Key}"; // Use ps|1, ps|2, etc.
+                    
+                    var presetItem = new ComboBoxItem
                     {
-                        var preset = WledApi.FallbackPresets[i - 1];
-                        var presetValue = $"ps|{i}";
-                        
-                        var presetItem = new ComboBoxItem
-                        {
-                            Content = preset,
-                            Tag = presetValue,
-                            Foreground = Brushes.White
-                        };
-                        presetDropdown.Items.Add(presetItem);
-                        
-                        if (selectedPreset == presetValue)
-                        {
-                            itemToSelect = presetItem;
-                        }
+                        Content = presetDisplayName,
+                        Tag = presetValue,
+                        Foreground = Brushes.White
+                    };
+                    presetDropdown.Items.Add(presetItem);
+                    
+                    // Pre-select if this matches current value
+                    if (selectedPreset == presetValue)
+                    {
+                        itemToSelect = presetItem;
                     }
-                    presetDropdown.PlaceholderText = "Select preset...";
                 }
+                presetDropdown.PlaceholderText = isLive ? 
+                    "Select preset (local data)..." : 
+                    "Select preset (fallback data)...";
                 
                 // Set selection AFTER all items have been added
                 if (itemToSelect != null)
@@ -1319,22 +1200,6 @@ namespace darts_hub.control
             await PopulatePresets();
 
             // Event handlers
-            refreshButton.Click += async (s, e) =>
-            {
-                refreshButton.IsEnabled = false;
-                refreshButton.Content = "🔄";
-                try
-                {
-                    isInitializing = true; // Prevent updates during refresh
-                    await PopulatePresets();
-                }
-                finally
-                {
-                    refreshButton.Content = "🔄";
-                    refreshButton.IsEnabled = true;
-                }
-            };
-
             testButton.Click += async (s, e) =>
             {
                 if (presetDropdown.SelectedItem is ComboBoxItem selectedItem && 
@@ -1416,7 +1281,6 @@ namespace darts_hub.control
 
             // Build the UI
             presetPanel.Children.Add(presetDropdown);
-            presetPanel.Children.Add(refreshButton);
             presetPanel.Children.Add(testButton);
             presetPanel.Children.Add(stopButton);
 
