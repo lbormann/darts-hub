@@ -164,12 +164,30 @@ namespace darts_hub.control
         {
             try
             {
-                var dataFilePath = Path.Combine("darts-wled", "wled_data.json");
+                // Get the directory where the executable is located
+                var executableDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? 
+                                         Directory.GetCurrentDirectory();
+                
+                var dataFilePath = Path.Combine(executableDirectory, "darts-wled", "wled_data.json");
+                
+                System.Diagnostics.Debug.WriteLine($"Looking for WLED data file at: {dataFilePath}");
                 
                 if (!File.Exists(dataFilePath))
                 {
                     System.Diagnostics.Debug.WriteLine($"WLED data file not found at: {dataFilePath}");
-                    return null;
+                    
+                    // Also try relative to current working directory as fallback
+                    var fallbackPath = Path.Combine("darts-wled", "wled_data.json");
+                    System.Diagnostics.Debug.WriteLine($"Trying fallback path: {fallbackPath}");
+                    
+                    if (!File.Exists(fallbackPath))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"WLED data file also not found at fallback path: {fallbackPath}");
+                        return null;
+                    }
+                    
+                    dataFilePath = fallbackPath;
+                    System.Diagnostics.Debug.WriteLine($"Using fallback path: {dataFilePath}");
                 }
 
                 var jsonContent = File.ReadAllText(dataFilePath);
@@ -189,6 +207,7 @@ namespace darts_hub.control
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading WLED data file: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
             }
 
             return null;
