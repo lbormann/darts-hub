@@ -1,0 +1,339 @@
+﻿{
+  "extensions": {
+    "darts-caller": {
+      "displayName": "Darts-Caller",
+      "icon": "🎯",
+      "description": "Core dart recognition and throwing detection system",
+      "primaryArguments": [
+        "U",
+        "P", 
+        "B",
+        "M",
+        "C",
+        "V",
+        "E"
+      ],
+      "sections": {
+        "Essential Setup": {
+          "priority": 1,
+          "expanded": true,
+          "arguments": ["U", "P", "B", "M"]
+        },
+        "Voice & Audio": {
+          "priority": 2,
+          "expanded": true,
+          "arguments": ["C", "V", "A", "BAV", "LPB"]
+        },
+        "Calling Options": {
+          "priority": 3,
+          "expanded": true,
+          "arguments": ["E", "ETS", "CCP", "CBA", "PCC", "PCCYO", "CRL"]
+        },
+        "Downloads & Updates": {
+          "priority": 4,
+          "expanded": false,
+          "arguments": ["DL", "DLLA", "DLN", "ROVP"]
+        },
+        "Network & Service": {
+          "priority": 5,
+          "expanded": false,
+          "arguments": ["WEBDH", "HP", "CC", "DEB"]
+        }
+      }
+    },
+    "darts-wled": {
+      "displayName": "WLED Integration",
+      "icon": "💡",
+      "description": "LED strip control with dynamic effects and dart game feedback",
+      "primaryArguments": [
+        "WEPS",
+        "BRI",
+        "IDE",
+        "HF",
+        "G",
+        "M",
+        "B"
+      ],
+      "sections": {
+        "Connection Settings": {
+          "priority": 1,
+          "expanded": true,
+          "arguments": ["CON", "WEPS", "BRI", "OFF", "SOFF"]
+        },
+        "Idle & Player Effects": {
+          "priority": 2,
+          "expanded": true,
+          "arguments": ["IDE", "IDE2", "IDE3", "IDE4", "IDE5", "IDE6", "DU"]
+        },
+        "Game Effects": {
+          "priority": 3,
+          "expanded": true,
+          "arguments": ["HFO", "HF", "G", "M", "B"]
+        },
+        "Board Status Effects": {
+          "priority": 4,
+          "expanded": false,
+          "arguments": ["BSS", "BSW", "BSE", "TOE", "CE"]
+        },
+        "Lobby Effects": {
+          "priority": 5,
+          "expanded": false,
+          "arguments": ["PJ", "PL"]
+        },
+        "Score Effects": {
+          "priority": 6,
+          "expanded": false,
+          "arguments": ["S0", "S1", "S2", "S3", "S4", "S5", "S10", "S15", "S20", "S25", "S30", "S40", "S50", "S60", "S80", "S100", "S120", "S140", "S160", "S180"]
+        },
+        "Area Effects": {
+          "priority": 7,
+          "expanded": false,
+          "arguments": ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12"]
+        },
+        "Advanced": {
+          "priority": 8,
+          "expanded": false,
+          "arguments": ["DEB"]
+        }
+      }
+    },
+    "darts-pixelit": {
+      "displayName": "Pixelit Display",
+      "icon": "📱", 
+      "description": "Smart LED matrix display for scores, animations, and game information",
+      "primaryArguments": [
+        "PEPS",
+        "TP",
+        "BRI",
+        "AS",
+        "IDE",
+        "G",
+        "M"
+      ],
+      "sections": {
+        "Connection Settings": {
+          "priority": 1,
+          "expanded": true,
+          "arguments": ["CON", "PEPS", "TP", "BRI"]
+        },
+        "Display Effects": {
+          "priority": 2,
+          "expanded": true,
+          "arguments": ["AS", "IDE", "GS", "MS"]
+        },
+        "Game Effects": {
+          "priority": 3,
+          "expanded": true,
+          "arguments": ["HFO", "HF", "G", "M", "B"]
+        },
+        "Lobby Effects": {
+          "priority": 4,
+          "expanded": false,
+          "arguments": ["PJ", "PL"]
+        },
+        "Score Effects": {
+          "priority": 5,
+          "expanded": false,
+          "arguments": ["S0", "S1", "S2", "S3", "S4", "S5", "S10", "S15", "S20", "S25", "S30", "S40", "S50", "S60", "S80", "S100", "S120", "S140", "S160", "S180"]
+        },
+        "Area Effects": {
+          "priority": 6,
+          "expanded": false,
+          "arguments": ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12"]
+        },
+        "Advanced": {
+          "priority": 7,
+          "expanded": false,
+          "arguments": ["DEB"]
+        }
+      }
+    },
+    "darts-voice": {
+      "displayName": "Voice Announcements",
+      "icon": "🗣️",
+      "description": "Audio feedback and voice announcements for enhanced dart game experience",
+      "primaryArguments": [
+        "CON",
+        "MP",
+        "L",
+        "KNG",
+        "KN",
+        "KU"
+      ],
+      "sections": {
+        "Connection Settings": {
+          "priority": 1,
+          "expanded": true,
+          "arguments": ["CON"]
+        },
+        "Voice Recognition": {
+          "priority": 2,
+          "expanded": true,
+          "arguments": ["MP", "L"]
+        },
+        "Game Control Keywords": {
+          "priority": 3,
+          "expanded": true,
+          "arguments": ["KNG", "KN", "KU", "KBC", "KCC"]
+        },
+        "Board Control Keywords": {
+          "priority": 4,
+          "expanded": false,
+          "arguments": ["KSB", "KSPB", "KRB", "KCB"]
+        },
+        "Dart Keywords": {
+          "priority": 5,
+          "expanded": false,
+          "arguments": ["KFD", "KSD", "KTD", "KS", "KD", "KT"]
+        },
+        "Number Keywords": {
+          "priority": 6,
+          "expanded": false,
+          "arguments": ["KZERO", "KONE", "KTWO", "KTHREE", "KFOUR", "KFIVE", "KSIX", "KSEVEN", "KEIGHT", "KNINE", "KTEN", "KELEVEN", "KTWELVE", "KTHIRTEEN", "KFOURTEEN", "KFIFTEEN", "KSIXTEEN", "KSEVENTEEN", "KEIGHTEEN", "KNINETEEN", "KTWENTY", "KTWENTYFIVE", "KFIFTY"]
+        },
+        "Advanced": {
+          "priority": 7,
+          "expanded": false,
+          "arguments": ["DEB"]
+        }
+      }
+    },
+    "darts-gif": {
+      "displayName": "GIF Display",
+      "icon": "🎬",
+      "description": "Animated GIF display during dart games for entertainment",
+      "primaryArguments": [
+        "MP",
+        "CON",
+        "HF",
+        "G",
+        "M",
+        "B"
+      ],
+      "sections": {
+        "Connection Settings": {
+          "priority": 1,
+          "expanded": true,
+          "arguments": ["CON", "MP"]
+        },
+        "Game Effects": {
+          "priority": 2,
+          "expanded": true,
+          "arguments": ["HFO", "HF", "G", "M", "B"]
+        },
+        "Score Effects": {
+          "priority": 3,
+          "expanded": false,
+          "arguments": ["S0", "S1", "S2", "S3", "S4", "S5", "S10", "S15", "S20", "S25", "S30", "S40", "S50", "S60", "S80", "S100", "S120", "S140", "S160", "S180"]
+        },
+        "Area Effects": {
+          "priority": 4,
+          "expanded": false,
+          "arguments": ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12"]
+        },
+        "Web Display": {
+          "priority": 5,
+          "expanded": false,
+          "arguments": ["WEB", "WEBP"]
+        },
+        "Advanced": {
+          "priority": 6,
+          "expanded": false,
+          "arguments": ["DEB"]
+        }
+      }
+    },
+    "darts-extern": {
+      "displayName": "External Integration",
+      "icon": "🔗",
+      "description": "Integration with external services and APIs for extended functionality",
+      "primaryArguments": [
+        "connection",
+        "browser_path",
+        "autodarts_user",
+        "autodarts_password",
+        "autodarts_board_id",
+        "extern_platform"
+      ],
+      "sections": {
+        "Essential Setup": {
+          "priority": 1,
+          "expanded": true,
+          "arguments": ["connection", "browser_path", "time_before_exit"]
+        },
+        "Autodarts Connection": {
+          "priority": 2,
+          "expanded": true,
+          "arguments": ["autodarts_user", "autodarts_password", "autodarts_board_id"]
+        },
+        "Platform Selection": {
+          "priority": 3,
+          "expanded": true,
+          "arguments": ["extern_platform"]
+        },
+        "Lidarts Settings": {
+          "priority": 4,
+          "expanded": false,
+          "arguments": ["lidarts_user", "lidarts_password", "lidarts_skip_dart_modals", "lidarts_chat_message_start", "lidarts_chat_message_end", "lidarts_cam_fullscreen"]
+        },
+        "Nakka Settings": {
+          "priority": 5,
+          "expanded": false,
+          "arguments": ["nakka_skip_dart_modals"]
+        },
+        "Dartboards Settings": {
+          "priority": 6,
+          "expanded": false,
+          "arguments": ["dartboards_user", "dartboards_password", "dartboards_skip_dart_modals"]
+        }
+      }
+    }
+  },
+  "commonDefaults": {
+    "CON": "localhost:8080",
+    "caller-ip": "localhost",
+    "caller-port": "8080",
+    "websocket-port": "8080",
+    "wled-ip": "192.168.1.100",
+    "WEPS": "http://192.168.1.100",
+    "PEPS": "http://192.168.1.100",
+    "led-count": "144",
+    "led-brightness": "128",
+    "BRI": "128",
+    "brightness": "128",
+    "volume": "0.8",
+    "V": "0.8",
+    "voice-speed": "1.0",
+    "display-duration": "3000",
+    "throw-line-tolerance": "50",
+    "coordinates-size": "8",
+    "HP": "8090",
+    "L": "0",
+    "DEB": "False",
+    "OFF": "False",
+    "SOFF": "False",
+    "BSW": "False",
+    "E": "0",
+    "ETS": "False",
+    "CCP": "0",
+    "CBA": "False",
+    "PCC": "0",
+    "PCCYO": "False",
+    "CRL": "False",
+    "A": "0.2",
+    "AAC": "False",
+    "DL": "0",
+    "DLLA": "0",
+    "ROVP": "False",
+    "BAV": "0.3",
+    "LPB": "False",
+    "WEBDH": "False",
+    "CC": "True",
+    "HFO": "100",
+    "DU": "3",
+    "BSS": "0.0",
+    "WEB": "0",
+    "WEBP": "8080",
+    "extern_platform": "lidarts"
+  }
+}

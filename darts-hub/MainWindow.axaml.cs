@@ -12,6 +12,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using darts_hub.control;
+using darts_hub.control.wizard;
 using darts_hub.model;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Base;
@@ -182,6 +183,9 @@ namespace darts_hub
                 Updater.ReleaseDownloadProgressed += Updater_ReleaseDownloadProgressed;
                 Updater.CheckNewVersion();
                 SetWait(true, "Checking for update...");
+
+                // Check if wizard should be shown
+                await CheckAndShowWizard();
             }
             catch (ConfigurationException ex)
             {
@@ -2533,7 +2537,19 @@ namespace darts_hub
             await Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 SetWait(false);
-                if (configurator.Settings.StartProfileOnStart) RunSelectedProfile();
+                
+                // Check if wizard should be shown first
+                if (!configurator.Settings.WizardCompleted && selectedProfile != null)
+                {
+                    // Don't auto-start profile if wizard needs to be shown
+                    return;
+                }
+                
+                // Only auto-start if no wizard is needed
+                if (configurator.Settings.StartProfileOnStart) 
+                {
+                    RunSelectedProfile();
+                }
             });
         }
 
@@ -2570,7 +2586,19 @@ namespace darts_hub
                     await Dispatcher.UIThread.InvokeAsync(async () =>
                     {
                         SetWait(false);
-                        if (configurator.Settings.StartProfileOnStart) RunSelectedProfile();
+                        
+                        // Check if wizard should be shown first
+                        if (!configurator.Settings.WizardCompleted && selectedProfile != null)
+                        {
+                            // Don't auto-start profile if wizard needs to be shown
+                            return;
+                        }
+                        
+                        // Only auto-start if no wizard is needed
+                        if (configurator.Settings.StartProfileOnStart) 
+                        {
+                            RunSelectedProfile();
+                        }
                     });
                 }
             });
@@ -2721,6 +2749,95 @@ namespace darts_hub
             {
                 RenderMessageBox("Error", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
             }
+        }
+
+        /// <summary>
+        /// Checks if the setup wizard should be shown and displays it if needed
+        /// </summary>
+        private async Task CheckAndShowWizard()
+        {
+            // Show wizard if it hasn't been completed and we have profiles loaded
+            if (!configurator.Settings.WizardCompleted && selectedProfile != null)
+            {
+                // Check if there are any configurable apps in the profile
+                bool hasConfigurableApps = selectedProfile.Apps.Values.Any(appState => 
+                    appState.App.IsConfigurable() || 
+                    appState.App.CustomName.ToLower().Contains("caller"));
+
+                if (hasConfigurableApps)
+                {
+                    // Show the wizard and prevent auto-minimizing
+                    await ShowSetupWizard();
+                    return; // Don't continue with normal startup flow
+                }
+            }
+        }
+
+        /// <summary>
+        /// Shows the setup wizard
+        /// </summary>
+        private async Task ShowSetupWizard()
+        {
+            try
+            {
+                if (selectedProfile == null)
+                {
+                    await RenderMessageBox("Setup Wizard", 
+                        "Please select a profile before running the setup wizard.", 
+                        MsBox.Avalonia.Enums.Icon.Warning);
+                    return;
+                }
+
+                var wizardManager = new SetupWizardManager(profileManager, configurator);
+                wizardManager.InitializeWizardSteps(selectedProfile);
+                
+                var result = await wizardManager.ShowWizard(this);
+                
+                if (result)
+                {
+                    // Wizard completed successfully
+                    await RenderMessageBox("Setup Complete", 
+                        "Your darts applications have been configured successfully!", 
+                        MsBox.Avalonia.Enums.Icon.Success);
+                    
+                    // Refresh the UI
+                    RenderAppNavigation();
+                    
+                    // Re-render current app settings if any app is selected
+                    if (selectedApp != null)
+                    {
+                        await RenderAppSettings(selectedApp);
+                    }
+                }
+                else
+                {
+                    // Wizard was cancelled - ask if they want to run it again later
+                    var laterResult = await RenderMessageBox("Setup Wizard", 
+                        "Setup wizard was cancelled. You can run it again anytime from the About section.\n\nWould you like to mark the wizard as completed anyway?", 
+                        MsBox.Avalonia.Enums.Icon.Question, 
+                        ButtonEnum.YesNo);
+                    
+                    if (laterResult == ButtonResult.Yes)
+                    {
+                        configurator.Settings.WizardCompleted = true;
+                        configurator.SaveSettings();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await RenderMessageBox("Setup Wizard Error", 
+                    $"An error occurred while running the setup wizard:\n{ex.Message}", 
+                    MsBox.Avalonia.Enums.Icon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Event handler for the Setup Wizard button click
+        /// </summary>
+        private async void SetupWizardButton_Click(object sender, RoutedEventArgs e)
+        {
+            await ShowSetupWizard();
         }
     }
 }
