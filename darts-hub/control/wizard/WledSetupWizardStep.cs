@@ -2,6 +2,7 @@
 using Avalonia.Layout;
 using Avalonia.Media;
 using darts_hub.model;
+using darts_hub.control.wizard.wled;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -41,6 +42,16 @@ namespace darts_hub.control.wizard
         private static readonly HttpClient httpClient = new HttpClient();
         private CancellationTokenSource scanCancellationTokenSource;
 
+        // Guided configuration steps
+        private StackPanel guidedConfigPanel;
+        private WledEssentialSettingsStep essentialSettingsStep;
+        private WledPlayerColorsStep playerColorsStep;
+        private WledGameWinEffectsStep gameWinEffectsStep;
+        private WledScoreEffectsStep scoreEffectsStep;
+        
+        // Score areas configuration
+        private int currentAreaCount = 2; // Start with area 1 and 2
+
         public string Title => "Configure WLED Integration";
         public string Description => "Set up LED strip control and visual effects";
         public string IconName => "darts";
@@ -59,6 +70,29 @@ namespace darts_hub.control.wizard
             // Find the WLED app
             wledApp = profile.Apps.Values.FirstOrDefault(a => 
                 a.App.CustomName.ToLower().Contains("wled"))?.App;
+
+            // Initialize guided configuration steps
+            InitializeGuidedSteps();
+        }
+
+        private void InitializeGuidedSteps()
+        {
+            if (wledApp == null) return;
+
+            essentialSettingsStep = new WledEssentialSettingsStep(wledApp, wizardConfig, argumentControls);
+
+            playerColorsStep = new WledPlayerColorsStep(wledApp, wizardConfig, argumentControls,
+                onPlayerColorsSelected: () => ShowNextStep("GameWinCard"),
+                onPlayerColorsSkipped: () => ShowNextStep("GameWinCard"));
+
+            gameWinEffectsStep = new WledGameWinEffectsStep(wledApp, wizardConfig, argumentControls,
+                onGameWinEffectsSelected: () => ShowNextStep("ScoreEffectsCard"),
+                onGameWinEffectsSkipped: () => ShowNextStep("ScoreEffectsCard"));
+
+            scoreEffectsStep = new WledScoreEffectsStep(wledApp, wizardConfig, argumentControls,
+                onScoreEffectsSelected: () => ShowNextStep("ScoreSelectionCard"),
+                onScoreEffectsSkipped: CompleteGuidedSetup,
+                onScoreEffectsCompleted: (selectedScores) => ShowSelectedScoreArgumentsAndAreas(selectedScores));
         }
 
         public async Task<Control> CreateContent()
@@ -88,7 +122,6 @@ namespace darts_hub.control.wizard
 
             // Configuration Panel (initially hidden)
             configurationPanel = new StackPanel { Spacing = 20, IsVisible = false };
-            await CreateConfigurationSections();
             mainPanel.Children.Add(configurationPanel);
 
             // Load existing IP if available
@@ -201,7 +234,7 @@ namespace darts_hub.control.wizard
                 TextAlignment = TextAlignment.Center
             });
 
-            // Network Scan Section (moved to top)
+            // Network Scan Section
             var scanSection = new StackPanel { Spacing = 15 };
 
             scanNetworkButton = new Button
@@ -263,7 +296,7 @@ namespace darts_hub.control.wizard
                 HorizontalAlignment = HorizontalAlignment.Center
             });
 
-            // IP Input Section (moved below scan section)
+            // IP Input Section
             var inputSection = new StackPanel { Spacing = 15 };
 
             var inputContainer = new StackPanel
@@ -558,6 +591,12 @@ namespace darts_hub.control.wizard
             };
         }
 
+        private Control CreateSimpleArgumentControl(Argument argument)
+        {
+            // Use the factory method instead of duplicating code
+            return WledArgumentControlFactory.CreateSimpleArgumentControl(argument, argumentControls, GetArgumentDescription);
+        }
+
         private Control CreateTextBox(Argument argument)
         {
             var textBox = new TextBox
@@ -805,6 +844,21 @@ namespace darts_hub.control.wizard
             return card;
         }
 
+        public async Task<WizardValidationResult> ValidateStep()
+        {
+            if (wledApp == null)
+            {
+                return WizardValidationResult.Success(); // Skip if not available
+            }
+
+            if (!isConnected)
+            {
+                return WizardValidationResult.Error("Please test the WLED connection before proceeding. A successful connection is required to configure WLED integration.");
+            }
+
+            return WizardValidationResult.Success();
+        }
+
         private async void TestConnection_Click(object sender, RoutedEventArgs e)
         {
             var ipAddress = wledIpTextBox.Text?.Trim();
@@ -827,80 +881,18 @@ namespace darts_hub.control.wizard
                     isConnected = true;
                     UpdateConnectionStatus("✅ Connected! Found " + result.LedCount + " LEDs", new SolidColorBrush(Color.FromRgb(40, 167, 69)));
                     
-                    // Update WLED endpoint in configuration (WEPS argument)
-                    var wledEndpointsArg = wledApp.Configuration?.Arguments?.FirstOrDefault(a => a.Name == "WEPS");
-                    if (wledEndpointsArg != null)
-                    {
-                        var url = ipAddress.StartsWith("http") ? ipAddress : $"http://{ipAddress}";
-                        wledEndpointsArg.Value = url;
-                        wledEndpointsArg.IsValueChanged = true;
-                        System.Diagnostics.Debug.WriteLine($"[WLED] Updated WEPS argument: {url}");
-                    }
-
-                    // Update LED brightness to a reasonable default if not set
-                    var briArg = wledApp.Configuration?.Arguments?.FirstOrDefault(a => a.Name == "BRI");
-                    if (briArg != null && string.IsNullOrEmpty(briArg.Value))
-                    {
-                        briArg.Value = "128";
-                        briArg.IsValueChanged = true;
-                        System.Diagnostics.Debug.WriteLine($"[WLED] Set BRI argument to default: 128");
-                    }
-
-                    // Load existing argument values from the app configuration
+                    // Update WLED endpoint in configuration
+                    UpdateWledConfiguration(ipAddress);
+                    
+                    // Load existing argument values
                     LoadExistingArgumentValues();
                     
-                    // Try to start WLED extension for proper wled_data.json creation
-                    await TryStartWledExtension(ipAddress);
-                    
-                    // Show configuration panel
+                    // Show configuration panel with guided setup
                     configurationPanel.IsVisible = true;
-                    
-                    // Create/update sections after successful connection
                     configurationPanel.Children.Clear();
-                    await CreateConfigurationSections();
+                    await CreateGuidedConfiguration();
                     
-                    // Add autostart section
-                    var autostartCard = CreateAutostartSection();
-                    configurationPanel.Children.Add(autostartCard);
-                    
-                    // Only create wled_data.json manually if it doesn't exist or is empty
-                    var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-                    var wledDataPath = Path.Combine(baseDirectory, "darts-wled", "wled_data.json");
-                    
-                    var needsManualCreation = false;
-                    if (!File.Exists(wledDataPath))
-                    {
-                        needsManualCreation = true;
-                        System.Diagnostics.Debug.WriteLine($"[WLED] wled_data.json does not exist, creating manually");
-                    }
-                    else
-                    {
-                        try
-                        {
-                            var content = await File.ReadAllTextAsync(wledDataPath);
-                            if (string.IsNullOrWhiteSpace(content))
-                            {
-                                needsManualCreation = true;
-                                System.Diagnostics.Debug.WriteLine($"[WLED] wled_data.json is empty, creating manually");
-                            }
-                            else
-                            {
-                                System.Diagnostics.Debug.WriteLine($"[WLED] wled_data.json already exists with {content.Length} chars, keeping existing file");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            needsManualCreation = true;
-                            System.Diagnostics.Debug.WriteLine($"[WLED] Error reading wled_data.json: {ex.Message}, creating manually");
-                        }
-                    }
-                    
-                    if (needsManualCreation)
-                    {
-                        await CreateWledDataFile(ipAddress, result);
-                    }
-                    
-                    System.Diagnostics.Debug.WriteLine($"[WLED] Configuration panel updated with {configurationPanel.Children.Count} sections");
+                    System.Diagnostics.Debug.WriteLine($"[WLED] Guided configuration panel created");
                 }
                 else
                 {
@@ -933,7 +925,7 @@ namespace darts_hub.control.wizard
             scanNetworkButton.IsEnabled = false;
             testConnectionButton.IsEnabled = false;
             scanNetworkButton.Content = "⏹️ Cancel Scan";
-            UpdateConnectionStatus("🔍 Scanning network for WLED devices (looking for 'WLED' title)...", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
+            UpdateConnectionStatus("🔍 Scanning network for WLED devices...", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
 
             try
             {
@@ -981,6 +973,88 @@ namespace darts_hub.control.wizard
             scanNetworkButton.Content = "🔍 Scan Network for WLED Devices";
         }
 
+        private async Task CreateGuidedConfiguration()
+        {
+            guidedConfigPanel = new StackPanel { Spacing = 20 };
+
+            // Step 1: Essential Settings
+            var essentialCard = essentialSettingsStep.CreateEssentialSettingsCard();
+            guidedConfigPanel.Children.Add(essentialCard);
+
+            // Step 2: Player-specific colors question
+            var playerColorsCard = playerColorsStep.CreatePlayerColorsQuestionCard();
+            guidedConfigPanel.Children.Add(playerColorsCard);
+
+            // Step 3: Game win effects question (initially hidden)
+            var gameWinCard = gameWinEffectsStep.CreateGameWinEffectsQuestionCard();
+            gameWinCard.IsVisible = false;
+            guidedConfigPanel.Children.Add(gameWinCard);
+
+            // Step 4: Score effects question (initially hidden)
+            var scoreEffectsCard = scoreEffectsStep.CreateScoreEffectsQuestionCard();
+            scoreEffectsCard.IsVisible = false;
+            guidedConfigPanel.Children.Add(scoreEffectsCard);
+
+            // Step 5: Score selection (initially hidden)
+            var scoreSelectionCard = scoreEffectsStep.CreateScoreSelectionCard();
+            scoreSelectionCard.IsVisible = false;
+            guidedConfigPanel.Children.Add(scoreSelectionCard);
+
+            // Add autostart section
+            var autostartCard = CreateAutostartSection();
+            guidedConfigPanel.Children.Add(autostartCard);
+
+            // Add to main configuration panel
+            configurationPanel.Children.Add(guidedConfigPanel);
+        }
+
+        private void ShowNextStep(string stepName)
+        {
+            var stepCard = guidedConfigPanel.Children
+                .OfType<Border>()
+                .FirstOrDefault(b => b.Name == stepName);
+            
+            if (stepCard != null)
+            {
+                stepCard.IsVisible = true;
+            }
+        }
+
+        private void CompleteGuidedSetup()
+        {
+            var completionStep = new WledCompletionStep(
+                playerColorsStep.ShowPlayerSpecificColors,
+                gameWinEffectsStep.ShowGameWinEffects,
+                scoreEffectsStep.ShowScoreEffects,
+                scoreEffectsStep.SelectedScores.Count);
+
+            var completionCard = completionStep.CreateCompletionCard();
+            guidedConfigPanel.Children.Add(completionCard);
+        }
+
+        private void UpdateWledConfiguration(string ipAddress)
+        {
+            // Update WLED endpoint in configuration (WEPS argument)
+            var wledEndpointsArg = wledApp.Configuration?.Arguments?.FirstOrDefault(a => a.Name == "WEPS");
+            if (wledEndpointsArg != null)
+            {
+                var url = ipAddress.StartsWith("http") ? ipAddress : $"http://{ipAddress}";
+                wledEndpointsArg.Value = url;
+                wledEndpointsArg.IsValueChanged = true;
+                System.Diagnostics.Debug.WriteLine($"[WLED] Updated WEPS argument: {url}");
+            }
+
+            // Update LED brightness to a reasonable default if not set
+            var briArg = wledApp.Configuration?.Arguments?.FirstOrDefault(a => a.Name == "BRI");
+            if (briArg != null && string.IsNullOrEmpty(briArg.Value))
+            {
+                briArg.Value = "128";
+                briArg.IsValueChanged = true;
+                System.Diagnostics.Debug.WriteLine($"[WLED] Set BRI argument to default: 128");
+            }
+        }
+
+        // Helper methods moved from original implementation
         private void LoadExistingArgumentValues()
         {
             try
@@ -991,14 +1065,12 @@ namespace darts_hub.control.wizard
                 
                 foreach (var argument in wledApp.Configuration.Arguments)
                 {
-                    // If argument already has a value, keep it
                     if (!string.IsNullOrEmpty(argument.Value))
                     {
                         System.Diagnostics.Debug.WriteLine($"  {argument.Name}: {argument.Value} (existing)");
                         continue;
                     }
                     
-                    // Otherwise try to get default value from config
                     var defaultValue = wizardConfig.GetDefaultValue(argument.Name);
                     if (!string.IsNullOrEmpty(defaultValue))
                     {
@@ -1024,7 +1096,6 @@ namespace darts_hub.control.wizard
                 var wledIpArg = wledApp.Configuration.Arguments.FirstOrDefault(a => a.Name == "WEPS");
                 if (wledIpArg != null && !string.IsNullOrEmpty(wledIpArg.Value))
                 {
-                    // Extract IP from URL format
                     var url = wledIpArg.Value;
                     if (url.StartsWith("http://"))
                     {
@@ -1049,10 +1120,7 @@ namespace darts_hub.control.wizard
         {
             try
             {
-                // Ensure HTTP prefix
                 var url = ipAddress.StartsWith("http") ? ipAddress : $"http://{ipAddress}";
-                
-                // Test basic connectivity
                 var infoUrl = $"{url}/json/info";
                 using var response = await httpClient.GetAsync(infoUrl);
                 
@@ -1094,317 +1162,6 @@ namespace darts_hub.control.wizard
                     ErrorMessage = $"Unexpected error: {ex.Message}"
                 };
             }
-        }
-
-        private async Task CreateWledDataFile(string ipAddress, WledConnectionResult connectionResult)
-        {
-            try
-            {
-                // Create WLED data file in the darts-wled extension directory
-                var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-                var wledAppDirectory = Path.Combine(baseDirectory, "darts-wled");
-                
-                System.Diagnostics.Debug.WriteLine($"[WLED] Base directory: {baseDirectory}");
-                System.Diagnostics.Debug.WriteLine($"[WLED] WLED app directory: {wledAppDirectory}");
-                
-                if (!Directory.Exists(wledAppDirectory))
-                {
-                    Directory.CreateDirectory(wledAppDirectory);
-                    System.Diagnostics.Debug.WriteLine($"[WLED] Created WLED directory: {wledAppDirectory}");
-                }
-
-                var wledData = new
-                {
-                    device = new
-                    {
-                        ip = ipAddress,
-                        name = connectionResult.Name,
-                        version = connectionResult.Version,
-                        ledCount = connectionResult.LedCount
-                    },
-                    connection = new
-                    {
-                        tested = DateTime.Now,
-                        success = true
-                    },
-                    configuration = new
-                    {
-                        brightness = 128,
-                        effects = true,
-                        scoreArea = true
-                    }
-                };
-
-                var json = JsonConvert.SerializeObject(wledData, Formatting.Indented);
-                var wledDataPath = Path.Combine(wledAppDirectory, "wled_data.json");
-                await File.WriteAllTextAsync(wledDataPath, json);
-                
-                System.Diagnostics.Debug.WriteLine($"[WLED] Created wled_data.json at: {wledDataPath}");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[WLED] Failed to create wled_data.json: {ex.Message}");
-            }
-        }
-
-        private async Task TryStartWledExtension(string ipAddress)
-        {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine($"[WLED] Attempting to download and start WLED extension for proper configuration");
-                
-                // Check if WLED app exists and is downloaded
-                var wledAppDownloadable = profileManager.AppsDownloadable.FirstOrDefault(a => a.Name == "darts-wled");
-                if (wledAppDownloadable == null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[WLED] WLED app not found in downloadable apps");
-                    return;
-                }
-
-                // Check if WLED app needs to be downloaded
-                var wledExecutablePath = wledAppDownloadable.GetExecutablePath();
-                if (string.IsNullOrEmpty(wledExecutablePath) || !File.Exists(wledExecutablePath))
-                {
-                    System.Diagnostics.Debug.WriteLine($"[WLED] WLED app not downloaded, starting download...");
-                    UpdateConnectionStatus("📥 Downloading WLED extension...", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
-                    
-                    var downloadSuccess = await DownloadWledExtension(wledAppDownloadable);
-                    if (!downloadSuccess)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[WLED] Failed to download WLED extension");
-                        return;
-                    }
-                }
-
-                // Prepare arguments for WLED startup
-                var wledUrl = ipAddress.StartsWith("http") ? ipAddress : $"http://{ipAddress}";
-                var runtimeArgs = new Dictionary<string, string>
-                {
-                    { "WEPS", wledUrl }
-                };
-
-                System.Diagnostics.Debug.WriteLine($"[WLED] Starting WLED extension with WEPS={wledUrl}");
-                UpdateConnectionStatus("🚀 Starting WLED extension to create config file...", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
-
-                // Start WLED app with the IP address
-                var started = wledAppDownloadable.Run(runtimeArgs);
-                if (started)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[WLED] WLED extension started successfully");
-                    
-                    // Wait for the extension to initialize and create wled_data.json with timeout
-                    UpdateConnectionStatus("⏳ Waiting for WLED extension to create wled_data.json...", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
-                    
-                    var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-                    var wledDataPath = Path.Combine(baseDirectory, "darts-wled", "wled_data.json");
-                    
-                    // Wait for wled_data.json to be created or timeout after 20 seconds
-                    var maxWaitTime = TimeSpan.FromSeconds(20);
-                    var startTime = DateTime.Now;
-                    var dataFileCreated = false;
-                    
-                    System.Diagnostics.Debug.WriteLine($"[WLED] Watching for wled_data.json at: {wledDataPath}");
-                    
-                    while (DateTime.Now - startTime < maxWaitTime)
-                    {
-                        if (File.Exists(wledDataPath))
-                        {
-                            // File exists, but check if it has content (not just empty file)
-                            try
-                            {
-                                var content = await File.ReadAllTextAsync(wledDataPath);
-                                if (!string.IsNullOrWhiteSpace(content))
-                                {
-                                    dataFileCreated = true;
-                                    System.Diagnostics.Debug.WriteLine($"[WLED] ✅ wled_data.json created successfully with content ({content.Length} chars)");
-                                    break;
-                                }
-                            }
-                            catch
-                            {
-                                // File might be locked, continue waiting
-                            }
-                        }
-                        
-                        // Wait 500ms before checking again
-                        await Task.Delay(500);
-                    }
-                    
-                    if (!dataFileCreated)
-                    {
-                        var elapsed = DateTime.Now - startTime;
-                        System.Diagnostics.Debug.WriteLine($"[WLED] ⚠️ Timeout after {elapsed.TotalSeconds:F1}s - wled_data.json not created");
-                    }
-                    
-                    // Stop the extension - either because file was created or timeout reached
-                    try
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[WLED] Stopping WLED extension after {(DateTime.Now - startTime).TotalSeconds:F1} seconds");
-                        wledAppDownloadable.Close();
-                        System.Diagnostics.Debug.WriteLine($"[WLED] WLED extension stopped");
-                        
-                        // Wait a moment for clean shutdown
-                        await Task.Delay(1000);
-                        
-                        // Final check and status update
-                        if (dataFileCreated)
-                        {
-                            UpdateConnectionStatus("✅ WLED extension configured successfully!", new SolidColorBrush(Color.FromRgb(40, 167, 69)));
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[WLED] Creating wled_data.json manually as fallback");
-                            UpdateConnectionStatus("⚠️ Timeout reached, creating config manually...", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
-
-                            // Create manually as fallback
-                            await CreateWledDataFile(ipAddress, new WledConnectionResult
-                            {
-                                Success = true,
-                                Name = "WLED Device",
-                                Version = "Unknown",
-                                LedCount = 144
-                            });
-                            
-                            UpdateConnectionStatus("✅ WLED configuration created!", new SolidColorBrush(Color.FromRgb(40, 167, 69)));
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[WLED] Error stopping WLED extension: {ex.Message}");
-                        
-                        // Create data file manually as fallback
-                        if (!dataFileCreated)
-                        {
-                            await CreateWledDataFile(ipAddress, new WledConnectionResult
-                            {
-                                Success = true,
-                                Name = "WLED Device",
-                                Version = "Unknown",
-                                LedCount = 144
-                            });
-                        }
-                        
-                        UpdateConnectionStatus("✅ WLED configuration completed!", new SolidColorBrush(Color.FromRgb(40, 167, 69)));
-                    }
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"[WLED] Failed to start WLED extension, creating wled_data.json manually");
-                    UpdateConnectionStatus("⚠️ Could not start extension, creating config manually...", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
-                    
-                    // Create data file manually if we can't start the extension
-                    await CreateWledDataFile(ipAddress, new WledConnectionResult
-                    {
-                        Success = true,
-                        Name = "WLED Device",
-                        Version = "Unknown",
-                        LedCount = 144
-                    });
-                    
-                    UpdateConnectionStatus("✅ WLED configuration created manually!", new SolidColorBrush(Color.FromRgb(40, 167, 69)));
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[WLED] Error in TryStartWledExtension: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"[WLED] Stack trace: {ex.StackTrace}");
-                
-                UpdateConnectionStatus("⚠️ Extension error, creating config manually...", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
-                
-                // Create data file manually as fallback
-                await CreateWledDataFile(ipAddress, new WledConnectionResult
-                {
-                    Success = true,
-                    Name = "WLED Device",
-                    Version = "Unknown",
-                    LedCount = 144
-                });
-                
-                UpdateConnectionStatus("✅ WLED configuration completed!", new SolidColorBrush(Color.FromRgb(40, 167, 69)));
-            }
-        }
-
-        private async Task<bool> DownloadWledExtension(AppDownloadable wledApp)
-        {
-            try
-            {
-                var tcs = new TaskCompletionSource<bool>();
-                
-                // Subscribe to download events
-                EventHandler<AppEventArgs> onDownloadFinished = null;
-                EventHandler<AppEventArgs> onDownloadFailed = null;
-                
-                onDownloadFinished = (sender, args) =>
-                {
-                    if (args.App == wledApp)
-                    {
-                        profileManager.AppDownloadFinished -= onDownloadFinished;
-                        profileManager.AppDownloadFailed -= onDownloadFailed;
-                        System.Diagnostics.Debug.WriteLine($"[WLED] WLED extension download completed successfully");
-                        tcs.TrySetResult(true);
-                    }
-                };
-                
-                onDownloadFailed = (sender, args) =>
-                {
-                    if (args.App == wledApp)
-                    {
-                        profileManager.AppDownloadFinished -= onDownloadFinished;
-                        profileManager.AppDownloadFailed -= onDownloadFailed;
-                        System.Diagnostics.Debug.WriteLine($"[WLED] WLED extension download failed: {args.Message}");
-                        tcs.TrySetResult(false);
-                    }
-                };
-                
-                profileManager.AppDownloadFinished += onDownloadFinished;
-                profileManager.AppDownloadFailed += onDownloadFailed;
-                
-                // Start the download using Install method
-                var downloadStarted = wledApp.Install();
-                if (!downloadStarted)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[WLED] WLED extension download not started (already up to date?)");
-                    profileManager.AppDownloadFinished -= onDownloadFinished;
-                    profileManager.AppDownloadFailed -= onDownloadFailed;
-                    return true; // Already downloaded
-                }
-                
-                // Wait for download to complete (with timeout)
-                var downloadTask = tcs.Task;
-                var timeoutTask = Task.Delay(60000); // 60 seconds timeout
-                
-                var completedTask = await Task.WhenAny(downloadTask, timeoutTask);
-                
-                if (completedTask == timeoutTask)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[WLED] WLED extension download timed out");
-                    profileManager.AppDownloadFinished -= onDownloadFinished;
-                    profileManager.AppDownloadFailed -= onDownloadFailed;
-                    return false;
-                }
-                
-                return await downloadTask;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[WLED] Error downloading WLED extension: {ex.Message}");
-                return false;
-            }
-        }
-
-        public async Task<WizardValidationResult> ValidateStep()
-        {
-            if (wledApp == null)
-            {
-                return WizardValidationResult.Success(); // Skip if not available
-            }
-
-            if (!isConnected)
-            {
-                return WizardValidationResult.Error("Please test the WLED connection before proceeding. A successful connection is required to configure WLED integration.");
-            }
-
-            return WizardValidationResult.Success();
         }
 
         public async Task ApplyConfiguration()
@@ -1466,6 +1223,417 @@ namespace darts_hub.control.wizard
             
             UpdateConnectionStatus("Use network scan to auto-discover or enter IP address manually", 
                 new SolidColorBrush(Color.FromRgb(180, 180, 180)));
+        }
+
+        private void ApplySelectedScores()
+        {
+            if (scoreEffectsStep.SelectedScores.Count == 0) return;
+
+            // Find score-related arguments and set them based on selection
+            var scoreArgs = wledApp.Configuration?.Arguments?
+                .Where(a => a.Name.StartsWith("S") && int.TryParse(a.Name.Substring(1), out _))
+                .ToList();
+
+            if (scoreArgs != null)
+            {
+                foreach (var arg in scoreArgs)
+                {
+                    var scoreNumber = int.Parse(arg.Name.Substring(1));
+                    if (scoreEffectsStep.SelectedScores.Contains(scoreNumber))
+                    {
+                        // Set a default effect for selected scores
+                        if (string.IsNullOrEmpty(arg.Value))
+                        {
+                            arg.Value = "solid,#00FF00,1000"; // Green solid for 1 second as example
+                            arg.IsValueChanged = true;
+                        }
+                    }
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[WLED] Applied effects for {scoreEffectsStep.SelectedScores.Count} selected scores");
+        }
+
+        private void ShowSelectedScoreArgumentsAndAreas(HashSet<int> selectedScores)
+        {
+            // Show the selected score arguments directly in the existing score selection card
+            // and automatically include score areas question - everything in one flow
+            var scoreSelectionCard = guidedConfigPanel.Children
+                .OfType<Border>()
+                .FirstOrDefault(b => b.Name == "ScoreSelectionCard");
+
+            if (scoreSelectionCard?.Child is StackPanel scoreSelectionContent)
+            {
+                // Add separator to the existing score selection card
+                scoreSelectionContent.Children.Add(new Border
+                {
+                    Height = 1,
+                    Background = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                    Margin = new Avalonia.Thickness(20, 20)
+                });
+
+                // Add header for score configuration
+                scoreSelectionContent.Children.Add(new TextBlock
+                {
+                    Text = "🎯 Configure Selected Score Effects",
+                    FontSize = 16,
+                    FontWeight = FontWeight.Bold,
+                    Foreground = Brushes.White,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Avalonia.Thickness(0, 10, 0, 0)
+                });
+
+                scoreSelectionContent.Children.Add(new TextBlock
+                {
+                    Text = $"Configure effects for your {selectedScores.Count} selected scores using the enhanced WLED effect controls:",
+                    FontSize = 14,
+                    Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Avalonia.Thickness(0, 0, 0, 10)
+                });
+
+                // Show arguments for selected scores using enhanced controls
+                var scoreArgsPanel = new StackPanel { Spacing = 10 };
+
+                foreach (var score in selectedScores.OrderBy(s => s))
+                {
+                    var argName = $"S{score}";
+                    var argument = wledApp.Configuration?.Arguments?.FirstOrDefault(a => 
+                        a.Name.Equals(argName, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (argument != null)
+                    {
+                        // Use enhanced control for score effects - these are effect parameters
+                        var control = WledArgumentControlFactory.CreateEnhancedArgumentControl(argument, argumentControls, 
+                            arg => $"Effect for score {score} - select from available WLED effects, colors, and durations", wledApp);
+                        scoreArgsPanel.Children.Add(control);
+                        System.Diagnostics.Debug.WriteLine($"[WLED] Added enhanced control for score {score} argument: {argName}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[WLED] Score argument not found: {argName}");
+                    }
+                }
+
+                scoreSelectionContent.Children.Add(scoreArgsPanel);
+
+                // Add Score Areas question directly here (part of same score-based effects container)
+                ShowScoreAreasQuestionInline(scoreSelectionContent);
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[WLED] Extended score selection card with {selectedScores.Count} score argument controls and inline score areas question");
+        }
+
+        private void ShowSelectedScoreArguments(HashSet<int> selectedScores)
+        {
+            // Redirect to the combined method
+            ShowSelectedScoreArgumentsAndAreas(selectedScores);
+        }
+
+        private void ShowSelectedScoreArguments()
+        {
+            // Legacy method that uses scoreEffectsStep.SelectedScores
+            ShowSelectedScoreArgumentsAndAreas(scoreEffectsStep.SelectedScores);
+        }
+
+        private void ShowScoreAreasQuestionInline(StackPanel parentContent)
+        {
+            // Add another separator for score areas section
+            parentContent.Children.Add(new Border
+            {
+                Height = 1,
+                Background = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                Margin = new Avalonia.Thickness(20, 20)
+            });
+
+            // Score Areas Question Header
+            parentContent.Children.Add(new TextBlock
+            {
+                Text = "🎯 Score Area Effects",
+                FontSize = 16,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Avalonia.Thickness(0, 10, 0, 0)
+            });
+
+            parentContent.Children.Add(new TextBlock
+            {
+                Text = "Would you like different effects for specific areas/regions on your LED strip?",
+                FontSize = 14,
+                Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
+                TextWrapping = TextWrapping.Wrap,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextAlignment = TextAlignment.Center
+            });
+
+            // Yes/No buttons for Score Areas
+            var areasButtonPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 20,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Avalonia.Thickness(0, 10, 0, 0),
+                Name = "AreasButtonPanel"
+            };
+
+            var yesAreasButton = new Button
+            {
+                Content = "🎯 Yes, configure score areas",
+                Padding = new Avalonia.Thickness(20, 10),
+                Background = new SolidColorBrush(Color.FromRgb(40, 167, 69)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(34, 142, 58)),
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Foreground = Brushes.White,
+                FontWeight = FontWeight.Bold
+            };
+
+            var noAreasButton = new Button
+            {
+                Content = "❌ No area effects needed",
+                Padding = new Avalonia.Thickness(20, 10),
+                Background = new SolidColorBrush(Color.FromRgb(108, 117, 125)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(90, 98, 104)),
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Foreground = Brushes.White,
+                FontWeight = FontWeight.Bold
+            };
+
+            yesAreasButton.Click += (s, e) =>
+            {
+                ShowScoreAreasConfigurationInline(parentContent, areasButtonPanel);
+            };
+
+            noAreasButton.Click += (s, e) =>
+            {
+                CompleteGuidedSetup();
+            };
+
+            areasButtonPanel.Children.Add(yesAreasButton);
+            areasButtonPanel.Children.Add(noAreasButton);
+            parentContent.Children.Add(areasButtonPanel);
+        }
+
+        private void ShowScoreAreasConfigurationInline(StackPanel parentContent, StackPanel buttonsToHide)
+        {
+            // Hide the Yes/No buttons
+            buttonsToHide.IsVisible = false;
+
+            // Add separator for configuration section
+            parentContent.Children.Add(new Border
+            {
+                Height = 1,
+                Background = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                Margin = new Avalonia.Thickness(20, 15)
+            });
+
+            // Configuration header
+            parentContent.Children.Add(new TextBlock
+            {
+                Text = "🎯 Configure Score Areas",
+                FontSize = 16,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Avalonia.Thickness(0, 10, 0, 0)
+            });
+
+            parentContent.Children.Add(new TextBlock
+            {
+                Text = "Configure effects for different areas/segments of your LED strip (A1-A12) with range selection:",
+                FontSize = 14,
+                Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Avalonia.Thickness(0, 0, 0, 10)
+            });
+
+            // Areas panel - will be populated dynamically
+            var areasPanel = new StackPanel { Spacing = 15 };
+            areasPanel.Name = "AreasPanel";
+
+            // Show initial areas (A1 and A2) with enhanced score area controls
+            for (int i = 1; i <= currentAreaCount; i++)
+            {
+                AddScoreAreaControlWithRangeSelection(areasPanel, i);
+            }
+
+            parentContent.Children.Add(areasPanel);
+
+            // Add Area button
+            var addAreaButton = new Button
+            {
+                Content = "➕ Add Another Score Area",
+                Padding = new Avalonia.Thickness(15, 8),
+                Background = new SolidColorBrush(Color.FromRgb(70, 130, 180)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(60, 110, 150)),
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Foreground = Brushes.White,
+                FontWeight = FontWeight.Bold,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Avalonia.Thickness(0, 10, 0, 0)
+            };
+
+            addAreaButton.Click += (s, e) =>
+            {
+                currentAreaCount++;
+                AddScoreAreaControlWithRangeSelection(areasPanel, currentAreaCount);
+            };
+
+            parentContent.Children.Add(addAreaButton);
+
+            // Complete button
+            var completeButton = new Button
+            {
+                Content = "✅ Complete WLED Setup",
+                Padding = new Avalonia.Thickness(20, 10),
+                Background = new SolidColorBrush(Color.FromRgb(40, 167, 69)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(34, 142, 58)),
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Foreground = Brushes.White,
+                FontWeight = FontWeight.Bold,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Avalonia.Thickness(0, 15, 0, 0)
+            };
+
+            completeButton.Click += (s, e) =>
+            {
+                CompleteGuidedSetup();
+            };
+
+            parentContent.Children.Add(completeButton);
+        }
+
+        private void AddScoreAreaControlWithRangeSelection(StackPanel parentPanel, int areaNumber)
+        {
+            var argName = $"A{areaNumber}";
+            var argument = wledApp.Configuration?.Arguments?.FirstOrDefault(a => 
+                a.Name.Equals(argName, StringComparison.OrdinalIgnoreCase));
+            
+            if (argument != null)
+            {
+                // Check if this is a score area effect parameter using the helper
+                if (WledScoreAreaHelper.IsScoreAreaEffectParameter(argument))
+                {
+                    // Use the enhanced score area control with range selection
+                    var control = CreateScoreAreaContainer(argument, areaNumber);
+                    parentPanel.Children.Add(control);
+                    System.Diagnostics.Debug.WriteLine($"[WLED] Added enhanced score area control for area {areaNumber} argument: {argName}");
+                }
+                else
+                {
+                    // Fallback to regular enhanced control
+                    var control = WledArgumentControlFactory.CreateEnhancedArgumentControl(argument, argumentControls, 
+                        arg => $"Effects for score area {areaNumber} (A{areaNumber}) - configure LED strip region effects with WLED controls", wledApp);
+                    parentPanel.Children.Add(control);
+                    System.Diagnostics.Debug.WriteLine($"[WLED] Added fallback enhanced control for area {areaNumber} argument: {argName}");
+                }
+            }
+            else
+            {
+                // If argument doesn't exist, create a placeholder
+                var infoPanel = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromArgb(60, 70, 70, 70)),
+                    CornerRadius = new Avalonia.CornerRadius(6),
+                    Padding = new Avalonia.Thickness(15),
+                    Margin = new Avalonia.Thickness(0, 8)
+                };
+
+                var infoContent = new StackPanel { Spacing = 10 };
+
+                var titleLabel = new TextBlock
+                {
+                    Text = $"Score Area {areaNumber} Effects (A{areaNumber})",
+                    FontSize = 14,
+                    FontWeight = FontWeight.Bold,
+                    Foreground = Brushes.White
+                };
+                infoContent.Children.Add(titleLabel);
+
+                var descLabel = new TextBlock
+                {
+                    Text = $"Configuration for {argName} (argument not found in current WLED configuration)",
+                    FontSize = 12,
+                    Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                    TextWrapping = TextWrapping.Wrap
+                };
+                infoContent.Children.Add(descLabel);
+
+                var textBox = new TextBox
+                {
+                    Text = "",
+                    FontSize = 13,
+                    Background = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
+                    Foreground = Brushes.White,
+                    BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
+                    BorderThickness = new Avalonia.Thickness(1),
+                    CornerRadius = new Avalonia.CornerRadius(4),
+                    Padding = new Avalonia.Thickness(10, 8),
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    Watermark = "Enter effect configuration (e.g., 1-50 solid,#FF0000,2000)..."
+                };
+
+                infoContent.Children.Add(textBox);
+                infoPanel.Child = infoContent;
+                parentPanel.Children.Add(infoPanel);
+                
+                System.Diagnostics.Debug.WriteLine($"[WLED] Added placeholder for area {areaNumber} argument: {argName} (not found)");
+            }
+        }
+
+        private Control CreateScoreAreaContainer(Argument argument, int areaNumber)
+        {
+            var container = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(60, 70, 70, 70)),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Padding = new Avalonia.Thickness(15),
+                Margin = new Avalonia.Thickness(0, 8)
+            };
+
+            var content = new StackPanel { Spacing = 10 };
+
+            // Label and Description
+            var labelPanel = new StackPanel { Spacing = 5 };
+
+            var titleLabel = new TextBlock
+            {
+                Text = $"Score Area {areaNumber} Effects (A{areaNumber})" + (argument.Required ? " *" : ""),
+                FontSize = 14,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White
+            };
+            labelPanel.Children.Add(titleLabel);
+
+            var descLabel = new TextBlock
+            {
+                Text = $"Configure LED effects for score area {areaNumber} with range selection and effect parameters",
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                TextWrapping = TextWrapping.Wrap
+            };
+            labelPanel.Children.Add(descLabel);
+
+            content.Children.Add(labelPanel);
+
+            // Use the WledScoreAreaHelper to create the advanced control with range dropdowns
+            var scoreAreaControl = WledScoreAreaHelper.CreateScoreAreaEffectParameterControl(
+                argument, 
+                () => { argument.IsValueChanged = true; }, 
+                wledApp
+            );
+
+            content.Children.Add(scoreAreaControl);
+            
+            // Store control reference
+            argumentControls[argument.Name] = scoreAreaControl;
+
+            container.Child = content;
+            return container;
         }
     }
 

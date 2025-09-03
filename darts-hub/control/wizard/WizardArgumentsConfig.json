@@ -47,6 +47,7 @@
       "description": "LED strip control with dynamic effects and dart game feedback",
       "primaryArguments": [
         "WEPS",
+        "BSW",
         "BRI",
         "IDE",
         "HF",
@@ -58,12 +59,12 @@
         "Connection Settings": {
           "priority": 1,
           "expanded": true,
-          "arguments": ["CON", "WEPS", "BRI", "OFF", "SOFF"]
+          "arguments": [ "WEPS", "CON", "BRI", "OFF", "SOFF" ]
         },
         "Idle & Player Effects": {
           "priority": 2,
           "expanded": true,
-          "arguments": ["IDE", "IDE2", "IDE3", "IDE4", "IDE5", "IDE6", "DU"]
+          "arguments": ["IDE", "IDE2", "IDE3", "IDE4", "IDE5", "IDE6"]
         },
         "Game Effects": {
           "priority": 3,
@@ -73,7 +74,7 @@
         "Board Status Effects": {
           "priority": 4,
           "expanded": false,
-          "arguments": ["BSS", "BSW", "BSE", "TOE", "CE"]
+          "arguments": ["BSS", "BSE", "TOE", "CE"]
         },
         "Lobby Effects": {
           "priority": 5,

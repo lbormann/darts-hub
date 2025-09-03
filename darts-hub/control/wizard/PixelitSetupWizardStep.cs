@@ -2,22 +2,20 @@
 using Avalonia.Layout;
 using Avalonia.Media;
 using darts_hub.model;
+using darts_hub.control.wizard.pixelit;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System;
 using Avalonia.Interactivity;
 using System.Net.Http;
-using System.IO;
 using Newtonsoft.Json;
-using System.Net.NetworkInformation;
-using System.Net;
 using System.Threading;
 
 namespace darts_hub.control.wizard
 {
     /// <summary>
-    /// Specialized wizard step for Pixelit configuration with connection testing and network scanning
+    /// Specialized wizard step for Pixelit configuration with connection testing and guided setup
     /// </summary>
     public class PixelitSetupWizardStep : IWizardStep
     {
@@ -43,6 +41,12 @@ namespace darts_hub.control.wizard
         private static readonly HttpClient httpClient = new HttpClient() { Timeout = TimeSpan.FromSeconds(5) };
         private CancellationTokenSource scanCancellationTokenSource;
 
+        // Guided configuration steps
+        private StackPanel guidedConfigPanel;
+        private PixelitEssentialSettingsStep essentialSettingsStep;
+        private PixelitGameAnimationsStep gameAnimationsStep;
+        private PixelitPlayerAnimationsStep playerAnimationsStep;
+
         public string Title => "Configure Pixelit Integration";
         public string Description => "Set up LED matrix display and animations";
         public string IconName => "darts";
@@ -61,6 +65,24 @@ namespace darts_hub.control.wizard
             // Find the Pixelit app
             pixelitApp = profile.Apps.Values.FirstOrDefault(a => 
                 a.App.CustomName.ToLower().Contains("pixelit"))?.App;
+
+            // Initialize guided configuration steps
+            InitializeGuidedSteps();
+        }
+
+        private void InitializeGuidedSteps()
+        {
+            if (pixelitApp == null) return;
+
+            essentialSettingsStep = new PixelitEssentialSettingsStep(pixelitApp, wizardConfig, argumentControls);
+
+            gameAnimationsStep = new PixelitGameAnimationsStep(pixelitApp, wizardConfig, argumentControls,
+                onGameAnimationsSelected: () => ShowNextStep("PlayerAnimationsCard"),
+                onGameAnimationsSkipped: () => ShowNextStep("PlayerAnimationsCard"));
+
+            playerAnimationsStep = new PixelitPlayerAnimationsStep(pixelitApp, wizardConfig, argumentControls,
+                onPlayerAnimationsSelected: CompleteGuidedSetup,
+                onPlayerAnimationsSkipped: CompleteGuidedSetup);
         }
 
         public async Task<Control> CreateContent()
@@ -90,11 +112,10 @@ namespace darts_hub.control.wizard
 
             // Configuration Panel (initially hidden)
             configurationPanel = new StackPanel { Spacing = 20, IsVisible = false };
-            await CreateConfigurationSections();
             mainPanel.Children.Add(configurationPanel);
 
             // Load existing IP if available
-            await LoadExistingConfiguration();
+            LoadExistingConfiguration();
 
             return mainPanel;
         }
@@ -158,7 +179,7 @@ namespace darts_hub.control.wizard
 
             panel.Children.Add(new TextBlock
             {
-                Text = "Connect to your Pixelit device automatically via network scan or manually enter the IP address.",
+                Text = "First, we'll connect to your Pixelit device, then configure the display settings and animations.",
                 FontSize = 14,
                 Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
                 TextWrapping = TextWrapping.Wrap,
@@ -322,183 +343,147 @@ namespace darts_hub.control.wizard
             return panel;
         }
 
-        private async Task CreateConfigurationSections()
+        private void LoadExistingConfiguration()
         {
-            if (pixelitApp?.Configuration?.Arguments == null) 
+            if (pixelitApp?.Configuration?.Arguments != null)
             {
-                System.Diagnostics.Debug.WriteLine("No Pixelit arguments found");
+                var pixelitIpArg = pixelitApp.Configuration.Arguments.FirstOrDefault(a => a.Name == "PEPS");
+                if (pixelitIpArg != null && !string.IsNullOrEmpty(pixelitIpArg.Value))
+                {
+                    var url = pixelitIpArg.Value;
+                    if (url.StartsWith("http://"))
+                    {
+                        url = url.Substring(7);
+                    }
+                    else if (url.StartsWith("https://"))
+                    {
+                        url = url.Substring(8);
+                    }
+                    pixelitIpTextBox.Text = url;
+                }
+            }
+        }
+
+        private async void TestConnection_Click(object sender, RoutedEventArgs e)
+        {
+            var ipAddress = pixelitIpTextBox.Text?.Trim();
+            if (string.IsNullOrEmpty(ipAddress))
+            {
+                UpdateConnectionStatus("❌ Please enter an IP address", new SolidColorBrush(Color.FromRgb(220, 53, 69)));
                 return;
             }
 
-            var extensionConfig = wizardConfig.GetExtensionConfig("darts-pixelit");
-            if (extensionConfig?.Sections == null) 
+            testConnectionButton.IsEnabled = false;
+            testConnectionButton.Content = "🔄 Testing...";
+            UpdateConnectionStatus("Testing connection...", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
+
+            try
             {
-                System.Diagnostics.Debug.WriteLine("No Pixelit extension config found for 'darts-pixelit'");
-                return;
-            }
-
-            System.Diagnostics.Debug.WriteLine($"Creating {extensionConfig.Sections.Count} Pixelit sections");
-
-            // Create enhanced settings style sections
-            foreach (var sectionKvp in extensionConfig.Sections.OrderBy(s => s.Value.Priority))
-            {
-                var sectionName = sectionKvp.Key;
-                var sectionConfig = sectionKvp.Value;
-
-                var sectionCard = new Border
+                var result = await TestPixelitConnection(ipAddress);
+                if (result.Success)
                 {
-                    Background = new SolidColorBrush(Color.FromArgb(80, 45, 45, 48)),
-                    CornerRadius = new Avalonia.CornerRadius(8),
-                    Padding = new Avalonia.Thickness(20),
-                    Margin = new Avalonia.Thickness(0, 8)
-                };
-
-                var sectionContent = new StackPanel { Spacing = 12 };
-
-                // Section Header with expand/collapse
-                var headerPanel = CreateSectionHeader(sectionName, sectionConfig.Expanded);
-                sectionContent.Children.Add(headerPanel);
-
-                // Section Arguments (initially visible based on expanded state)
-                var argumentsPanel = new StackPanel { Spacing = 12, IsVisible = sectionConfig.Expanded };
-
-                System.Diagnostics.Debug.WriteLine($"  Section '{sectionName}' with {sectionConfig.Arguments.Count} arguments");
-
-                foreach (var argumentName in sectionConfig.Arguments)
-                {
-                    var argument = pixelitApp.Configuration.Arguments.FirstOrDefault(a => 
-                        a.Name.Equals(argumentName, StringComparison.OrdinalIgnoreCase));
+                    isConnected = true;
+                    UpdateConnectionStatus("✅ Connected! Pixelit device ready", new SolidColorBrush(Color.FromRgb(40, 167, 69)));
                     
-                    if (argument != null)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"    Creating control for Pixelit argument: {argument.Name} = '{argument.Value}'");
-                        var argumentControl = await CreateEnhancedArgumentControl(argument);
-                        if (argumentControl != null)
-                        {
-                            argumentsPanel.Children.Add(argumentControl);
-                        }
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"    Pixelit argument '{argumentName}' not found in app configuration");
-                    }
+                    // Update Pixelit endpoint in configuration
+                    UpdatePixelitConfiguration(ipAddress);
+                    
+                    // Load existing argument values
+                    LoadExistingArgumentValues();
+                    
+                    // Show configuration panel with guided setup
+                    configurationPanel.IsVisible = true;
+                    configurationPanel.Children.Clear();
+                    await CreateGuidedConfiguration();
+                    
+                    System.Diagnostics.Debug.WriteLine($"[Pixelit] Guided configuration panel created");
                 }
-
-                // Add toggle functionality
-                if (headerPanel.Children[0] is Button toggleButton)
+                else
                 {
-                    toggleButton.Click += (s, e) =>
-                    {
-                        argumentsPanel.IsVisible = !argumentsPanel.IsVisible;
-                        toggleButton.Content = argumentsPanel.IsVisible ? "▼" : "▶";
-                    };
+                    isConnected = false;
+                    UpdateConnectionStatus("❌ Connection failed: " + result.ErrorMessage, new SolidColorBrush(Color.FromRgb(220, 53, 69)));
+                    configurationPanel.IsVisible = false;
                 }
-
-                sectionContent.Children.Add(argumentsPanel);
-                sectionCard.Child = sectionContent;
-                configurationPanel.Children.Add(sectionCard);
-                
-                System.Diagnostics.Debug.WriteLine($"  Added section '{sectionName}' with {argumentsPanel.Children.Count} controls");
             }
+            catch (Exception ex)
+            {
+                isConnected = false;
+                UpdateConnectionStatus("❌ Error: " + ex.Message, new SolidColorBrush(Color.FromRgb(220, 53, 69)));
+                configurationPanel.IsVisible = false;
+                System.Diagnostics.Debug.WriteLine($"[Pixelit] Connection error: {ex}");
+            }
+
+            testConnectionButton.IsEnabled = true;
+            testConnectionButton.Content = "🔌 Test Connection";
+        }
+
+        private async Task CreateGuidedConfiguration()
+        {
+            guidedConfigPanel = new StackPanel { Spacing = 20 };
+
+            // Step 1: Essential Settings
+            var essentialCard = essentialSettingsStep.CreateEssentialSettingsCard();
+            guidedConfigPanel.Children.Add(essentialCard);
+
+            // Step 2: Game animations question
+            var gameAnimationsCard = gameAnimationsStep.CreateGameAnimationsQuestionCard();
+            guidedConfigPanel.Children.Add(gameAnimationsCard);
+
+            // Step 3: Player animations question (initially hidden)
+            var playerAnimationsCard = playerAnimationsStep.CreatePlayerAnimationsQuestionCard();
+            playerAnimationsCard.IsVisible = false;
+            guidedConfigPanel.Children.Add(playerAnimationsCard);
+
+            // Add autostart section
+            var autostartCard = CreateAutostartSection();
+            guidedConfigPanel.Children.Add(autostartCard);
+
+            // Add to main configuration panel
+            configurationPanel.Children.Add(guidedConfigPanel);
+        }
+
+        private void ShowNextStep(string stepName)
+        {
+            var stepCard = guidedConfigPanel.Children
+                .OfType<Border>()
+                .FirstOrDefault(b => b.Name == stepName);
             
-            System.Diagnostics.Debug.WriteLine($"Total Pixelit configuration sections created: {configurationPanel.Children.Count}");
+            if (stepCard != null)
+            {
+                stepCard.IsVisible = true;
+            }
         }
 
-        private StackPanel CreateSectionHeader(string sectionName, bool expanded)
+        private void CompleteGuidedSetup()
         {
-            var headerPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 10
-            };
+            var completionStep = new PixelitCompletionStep(
+                gameAnimationsStep.ShowGameAnimations,
+                playerAnimationsStep.ShowPlayerAnimations);
 
-            var toggleButton = new Button
-            {
-                Content = expanded ? "▼" : "▶",
-                FontSize = 16,
-                Background = Brushes.Transparent,
-                BorderThickness = new Avalonia.Thickness(0),
-                Foreground = Brushes.White,
-                VerticalAlignment = VerticalAlignment.Center,
-                Padding = new Avalonia.Thickness(5)
-            };
-
-            headerPanel.Children.Add(toggleButton);
-
-            headerPanel.Children.Add(new TextBlock
-            {
-                Text = sectionName,
-                FontSize = 16,
-                FontWeight = FontWeight.Bold,
-                Foreground = Brushes.White,
-                VerticalAlignment = VerticalAlignment.Center
-            });
-
-            return headerPanel;
+            var completionCard = completionStep.CreateCompletionCard();
+            guidedConfigPanel.Children.Add(completionCard);
         }
 
-        private async Task<Control> CreateEnhancedArgumentControl(Argument argument)
+        private void UpdatePixelitConfiguration(string ipAddress)
         {
-            var container = new Border
+            // Update Pixelit endpoint in configuration (PEPS argument)
+            var pixelitEndpointsArg = pixelitApp.Configuration?.Arguments?.FirstOrDefault(a => a.Name == "PEPS");
+            if (pixelitEndpointsArg != null)
             {
-                Background = new SolidColorBrush(Color.FromArgb(60, 70, 70, 70)),
-                CornerRadius = new Avalonia.CornerRadius(6),
-                Padding = new Avalonia.Thickness(15),
-                Margin = new Avalonia.Thickness(0, 8)
-            };
-
-            var content = new StackPanel { Spacing = 10 };
-
-            // Label and Description
-            var labelPanel = new StackPanel { Spacing = 5 };
-
-            var titleLabel = new TextBlock
-            {
-                Text = argument.NameHuman + (argument.Required ? " *" : ""),
-                FontSize = 14,
-                FontWeight = FontWeight.Bold,
-                Foreground = Brushes.White
-            };
-            labelPanel.Children.Add(titleLabel);
-
-            // Description
-            string description = GetArgumentDescription(argument);
-            if (!string.IsNullOrEmpty(description))
-            {
-                var descLabel = new TextBlock
-                {
-                    Text = description,
-                    FontSize = 12,
-                    Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
-                    TextWrapping = TextWrapping.Wrap
-                };
-                labelPanel.Children.Add(descLabel);
+                var url = ipAddress.StartsWith("http") ? ipAddress : $"http://{ipAddress}";
+                pixelitEndpointsArg.Value = url;
+                pixelitEndpointsArg.IsValueChanged = true;
+                System.Diagnostics.Debug.WriteLine($"[Pixelit] Updated PEPS argument: {url}");
             }
 
-            content.Children.Add(labelPanel);
-
-            // Input Control
-            var inputControl = CreateInputControl(argument);
-            if (inputControl != null)
+            // Update display brightness to a reasonable default if not set
+            var briArg = pixelitApp.Configuration?.Arguments?.FirstOrDefault(a => a.Name == "BRI");
+            if (briArg != null && string.IsNullOrEmpty(briArg.Value))
             {
-                var inputContainer = new Grid();
-                inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-                Grid.SetColumn(inputControl, 0);
-                inputContainer.Children.Add(inputControl);
-
-                // Clear button
-                var clearButton = CreateClearButton(argument, inputControl);
-                Grid.SetColumn(clearButton, 1);
-                inputContainer.Children.Add(clearButton);
-
-                content.Children.Add(inputContainer);
-                argumentControls[argument.Name] = inputControl;
+                briArg.Value = "128";
+                briArg.IsValueChanged = true;
+                System.Diagnostics.Debug.WriteLine($"[Pixelit] Set BRI argument to default: 128");
             }
-
-            container.Child = content;
-            return container;
         }
 
         private string GetArgumentDescription(Argument argument)
@@ -532,262 +517,6 @@ namespace darts_hub.control.wizard
                 "pl" => "Animations played when a player leaves the lobby",
                 _ => $"Pixelit configuration setting: {argument.NameHuman}"
             };
-        }
-
-        private Control CreateInputControl(Argument argument)
-        {
-            string type = argument.GetTypeClear();
-
-            // Set default values from config
-            if (string.IsNullOrEmpty(argument.Value))
-            {
-                var defaultValue = wizardConfig.GetDefaultValue(argument.Name);
-                if (!string.IsNullOrEmpty(defaultValue))
-                {
-                    argument.Value = defaultValue;
-                }
-            }
-
-            return type switch
-            {
-                Argument.TypeString or Argument.TypePassword => CreateTextBox(argument),
-                Argument.TypeBool => CreateCheckBox(argument),
-                Argument.TypeInt => CreateNumericUpDown(argument, false),
-                Argument.TypeFloat => CreateNumericUpDown(argument, true),
-                Argument.TypePath => CreatePathSelector(argument),
-                _ => CreateTextBox(argument)
-            };
-        }
-
-        private Control CreateTextBox(Argument argument)
-        {
-            var textBox = new TextBox
-            {
-                Text = argument.Value ?? "",
-                FontSize = 13,
-                Background = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
-                Foreground = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Padding = new Avalonia.Thickness(10, 8),
-                HorizontalAlignment = HorizontalAlignment.Stretch
-            };
-
-            textBox.TextChanged += (s, e) =>
-            {
-                argument.Value = textBox.Text;
-                argument.IsValueChanged = true;
-            };
-
-            return textBox;
-        }
-
-        private Control CreateCheckBox(Argument argument)
-        {
-            bool isChecked = false;
-            if (!string.IsNullOrEmpty(argument.Value))
-            {
-                isChecked = argument.Value.Equals("True", StringComparison.OrdinalIgnoreCase) ||
-                           argument.Value == "1";
-            }
-
-            var checkBox = new CheckBox
-            {
-                Content = "Enable this feature",
-                IsChecked = isChecked,
-                FontSize = 13,
-                Foreground = Brushes.White
-            };
-
-            checkBox.Checked += (s, e) =>
-            {
-                argument.Value = "True";
-                argument.IsValueChanged = true;
-            };
-
-            checkBox.Unchecked += (s, e) =>
-            {
-                argument.Value = "False";
-                argument.IsValueChanged = true;
-            };
-
-            return checkBox;
-        }
-
-        private Control CreateNumericUpDown(Argument argument, bool isFloat)
-        {
-            var numericUpDown = new NumericUpDown
-            {
-                FontSize = 13,
-                Background = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
-                Foreground = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Padding = new Avalonia.Thickness(10, 8),
-                Width = 150,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Increment = isFloat ? 0.1m : 1m,
-                FormatString = isFloat ? "F1" : "F0"
-            };
-
-            // Set value and limits
-            if (isFloat)
-            {
-                if (double.TryParse(argument.Value, System.Globalization.NumberStyles.Float,
-                    System.Globalization.CultureInfo.InvariantCulture, out var doubleVal))
-                {
-                    numericUpDown.Value = (decimal)doubleVal;
-                }
-            }
-            else
-            {
-                if (int.TryParse(argument.Value, out var intVal))
-                {
-                    numericUpDown.Value = intVal;
-                }
-            }
-
-            // Set appropriate limits
-            switch (argument.Name.ToLower())
-            {
-                case "bri" or "brightness":
-                    numericUpDown.Minimum = 1;
-                    numericUpDown.Maximum = 255;
-                    break;
-                case "hfo":
-                    numericUpDown.Minimum = 2;
-                    numericUpDown.Maximum = 170;
-                    break;
-                default:
-                    numericUpDown.Minimum = isFloat ? -9999.9m : -9999;
-                    numericUpDown.Maximum = isFloat ? 9999.9m : 9999;
-                    break;
-            }
-
-            numericUpDown.ValueChanged += (s, e) =>
-            {
-                argument.Value = numericUpDown.Value?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
-                argument.IsValueChanged = true;
-            };
-
-            return numericUpDown;
-        }
-
-        private Control CreatePathSelector(Argument argument)
-        {
-            var panel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 10
-            };
-
-            var textBox = new TextBox
-            {
-                Text = argument.Value ?? "",
-                FontSize = 13,
-                Background = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
-                Foreground = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Padding = new Avalonia.Thickness(10, 8),
-                Width = 250
-            };
-
-            var browseButton = new Button
-            {
-                Content = "Browse...",
-                Padding = new Avalonia.Thickness(15, 8),
-                Background = new SolidColorBrush(Color.FromRgb(156, 39, 176)),
-                BorderBrush = new SolidColorBrush(Color.FromRgb(126, 31, 141)),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Foreground = Brushes.White,
-                FontWeight = FontWeight.Bold
-            };
-
-            textBox.TextChanged += (s, e) =>
-            {
-                argument.Value = textBox.Text;
-                argument.IsValueChanged = true;
-            };
-
-            browseButton.Click += async (s, e) =>
-            {
-                Window parentWindow = null;
-                var topLevel = TopLevel.GetTopLevel(browseButton);
-                if (topLevel is Window window)
-                {
-                    parentWindow = window;
-                }
-
-                var dialog = new OpenFolderDialog();
-                var result = await dialog.ShowAsync(parentWindow);
-                if (!string.IsNullOrEmpty(result))
-                {
-                    textBox.Text = result;
-                    argument.Value = result;
-                    argument.IsValueChanged = true;
-                }
-            };
-
-            panel.Children.Add(textBox);
-            panel.Children.Add(browseButton);
-
-            return panel;
-        }
-
-        private Control CreateClearButton(Argument argument, Control inputControl)
-        {
-            var clearButton = new Button
-            {
-                Content = "🗑️",
-                Width = 28,
-                Height = 28,
-                Background = Brushes.Transparent,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
-                FontSize = 10,
-                Margin = new Avalonia.Thickness(10, 0, 0, 0),
-                VerticalAlignment = VerticalAlignment.Top
-            };
-
-            clearButton.Click += (s, e) =>
-            {
-                ResetArgumentToDefault(argument, inputControl);
-            };
-
-            return clearButton;
-        }
-
-        private void ResetArgumentToDefault(Argument argument, Control inputControl)
-        {
-            var defaultValue = wizardConfig.GetDefaultValue(argument.Name);
-            argument.Value = defaultValue;
-            argument.IsValueChanged = true;
-
-            switch (inputControl)
-            {
-                case TextBox textBox:
-                    textBox.Text = defaultValue;
-                    break;
-                case CheckBox checkBox:
-                    checkBox.IsChecked = defaultValue.Equals("True", StringComparison.OrdinalIgnoreCase);
-                    break;
-                case NumericUpDown numericUpDown:
-                    if (decimal.TryParse(defaultValue, out var decimalVal))
-                        numericUpDown.Value = decimalVal;
-                    else
-                        numericUpDown.Value = 0;
-                    break;
-                case StackPanel panel when panel.Children.OfType<TextBox>().FirstOrDefault() is TextBox pathTextBox:
-                    pathTextBox.Text = defaultValue;
-                    break;
-            }
         }
 
         private Control CreateAutostartSection()
@@ -865,73 +594,38 @@ namespace darts_hub.control.wizard
             return card;
         }
 
-        private async void TestConnection_Click(object sender, RoutedEventArgs e)
+        private void LoadExistingArgumentValues()
         {
-            var ipAddress = pixelitIpTextBox.Text?.Trim();
-            if (string.IsNullOrEmpty(ipAddress))
-            {
-                UpdateConnectionStatus("❌ Please enter an IP address", new SolidColorBrush(Color.FromRgb(220, 53, 69)));
-                return;
-            }
-
-            testConnectionButton.IsEnabled = false;
-            testConnectionButton.Content = "🔄 Testing...";
-            UpdateConnectionStatus("Testing connection...", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
-
             try
             {
-                var result = await TestPixelitConnection(ipAddress);
-                if (result.Success)
+                if (pixelitApp?.Configuration?.Arguments == null) return;
+                
+                System.Diagnostics.Debug.WriteLine("Loading existing Pixelit argument values:");
+                
+                foreach (var argument in pixelitApp.Configuration.Arguments)
                 {
-                    isConnected = true;
-                    UpdateConnectionStatus("✅ Connected! Pixelit device ready", new SolidColorBrush(Color.FromRgb(40, 167, 69)));
-                    
-                    // Update Pixelit endpoint in configuration (PEPS argument)
-                    var pixelitEndpointsArg = pixelitApp.Configuration?.Arguments?.FirstOrDefault(a => a.Name == "PEPS");
-                    if (pixelitEndpointsArg != null)
+                    if (!string.IsNullOrEmpty(argument.Value))
                     {
-                        var url = ipAddress.StartsWith("http") ? ipAddress : $"http://{ipAddress}";
-                        pixelitEndpointsArg.Value = url;
-                        pixelitEndpointsArg.IsValueChanged = true;
-                        System.Diagnostics.Debug.WriteLine($"[Pixelit] Updated PEPS argument: {url}");
+                        System.Diagnostics.Debug.WriteLine($"  {argument.Name}: {argument.Value} (existing)");
+                        continue;
                     }
-
-                    // Update display brightness to a reasonable default if not set
-                    var briArg = pixelitApp.Configuration?.Arguments?.FirstOrDefault(a => a.Name == "BRI");
-                    if (briArg != null && string.IsNullOrEmpty(briArg.Value))
+                    
+                    var defaultValue = wizardConfig.GetDefaultValue(argument.Name);
+                    if (!string.IsNullOrEmpty(defaultValue))
                     {
-                        briArg.Value = "128";
-                        briArg.IsValueChanged = true;
-                        System.Diagnostics.Debug.WriteLine($"[Pixelit] Set BRI argument to default: 128");
+                        argument.Value = defaultValue;
+                        System.Diagnostics.Debug.WriteLine($"  {argument.Name}: {defaultValue} (default)");
                     }
-
-                    LoadExistingArgumentValues();
-                    configurationPanel.IsVisible = true;
-                    configurationPanel.Children.Clear();
-                    await CreateConfigurationSections();
-                    
-                    var autostartCard = CreateAutostartSection();
-                    configurationPanel.Children.Add(autostartCard);
-                    
-                    System.Diagnostics.Debug.WriteLine($"[Pixelit] Configuration panel updated with {configurationPanel.Children.Count} sections");
-                }
-                else
-                {
-                    isConnected = false;
-                    UpdateConnectionStatus("❌ Connection failed: " + result.ErrorMessage, new SolidColorBrush(Color.FromRgb(220, 53, 69)));
-                    configurationPanel.IsVisible = false;
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"  {argument.Name}: (empty)");
+                    }
                 }
             }
             catch (Exception ex)
             {
-                isConnected = false;
-                UpdateConnectionStatus("❌ Error: " + ex.Message, new SolidColorBrush(Color.FromRgb(220, 53, 69)));
-                configurationPanel.IsVisible = false;
-                System.Diagnostics.Debug.WriteLine($"[Pixelit] Connection error: {ex}");
+                System.Diagnostics.Debug.WriteLine($"Error loading existing Pixelit argument values: {ex.Message}");
             }
-
-            testConnectionButton.IsEnabled = true;
-            testConnectionButton.Content = "🔌 Test Connection";
         }
 
         private async void ScanNetwork_Click(object sender, RoutedEventArgs e)
@@ -993,242 +687,6 @@ namespace darts_hub.control.wizard
         private async Task<List<PixelitDevice>> ScanNetworkForPixelitDevices(CancellationToken cancellationToken)
         {
             return await NetworkDeviceScanner.ScanForPixelitDevices(cancellationToken);
-        }
-
-        private async Task<PixelitDevice?> TestPixelitDevice(string ipAddress, CancellationToken cancellationToken)
-        {
-            try
-            {
-                // Test if device responds to ping first (quick check)
-                var ping = new Ping();
-                var reply = await ping.SendPingAsync(ipAddress, 1000);
-                
-                if (reply.Status != IPStatus.Success) 
-                {
-                    System.Diagnostics.Debug.WriteLine($"[Pixelit] {ipAddress} - Ping failed: {reply.Status}");
-                    return null;
-                }
-
-                System.Diagnostics.Debug.WriteLine($"[Pixelit] {ipAddress} - Ping successful, testing HTTP endpoints");
-
-                // Test Pixelit specific endpoints - root page is most likely to have the title
-                var testUrls = new[]
-                {
-                    $"http://{ipAddress}/",          // Root page - most likely to have PixelIt WebUI title
-                    $"http://{ipAddress}/config",    // Config page
-                    $"http://{ipAddress}/api",       // API endpoint
-                    $"http://{ipAddress}/status"     // Status page
-                };
-
-                using var client = new HttpClient() { Timeout = TimeSpan.FromSeconds(5) };
-
-                foreach (var testUrl in testUrls)
-                {
-                    try
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[Pixelit] Testing URL: {testUrl}");
-                        
-                        using var response = await client.GetAsync(testUrl, cancellationToken);
-                        if (response.IsSuccessStatusCode)
-                        {
-                            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-                            
-                            System.Diagnostics.Debug.WriteLine($"[Pixelit] {testUrl} - Response length: {content.Length} chars");
-                            
-                            // Check if response contains Pixelit-specific content
-                            if (IsPixelitDevice(content, response.Headers))
-                            {
-                                var deviceName = ExtractDeviceName(content) ?? $"Pixelit-{ipAddress.Split('.').Last()}";
-                                
-                                System.Diagnostics.Debug.WriteLine($"[Pixelit] ✅ Confirmed Pixelit device: {deviceName} at {ipAddress}");
-                                
-                                return new PixelitDevice
-                                {
-                                    IpAddress = ipAddress,
-                                    Name = deviceName,
-                                    Endpoint = testUrl,
-                                    ResponseContent = content
-                                };
-                            }
-                            else
-                            {
-                                System.Diagnostics.Debug.WriteLine($"[Pixelit] {testUrl} - Response doesn't match Pixelit indicators");
-                            }
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[Pixelit] {testUrl} - HTTP {response.StatusCode}");
-                        }
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[Pixelit] {testUrl} - Request cancelled");
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[Pixelit] {testUrl} - Exception: {ex.Message}");
-                        continue;
-                    }
-                }
-
-                System.Diagnostics.Debug.WriteLine($"[Pixelit] {ipAddress} - No Pixelit device detected on any endpoint");
-            }
-            catch (OperationCanceledException)
-            {
-                throw; // Re-throw cancellation
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Pixelit] {ipAddress} - Device test failed: {ex.Message}");
-            }
-
-            return null;
-        }
-
-        private bool IsPixelitDevice(string content, System.Net.Http.Headers.HttpResponseHeaders headers)
-        {
-            // Specific check for PixelIt WebUI title tag
-            var hasPixelitWebUI = content.Contains("<title>PixelIt WebUI</title>", StringComparison.OrdinalIgnoreCase);
-            
-            if (hasPixelitWebUI)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Pixelit] Found PixelIt WebUI title tag - confirmed Pixelit device");
-                return true;
-            }
-
-            // Fallback checks for other potential indicators (less specific)
-            var pixelitIndicators = new[]
-            {
-                "pixelit", "PixelIt", "PIXELIT"
-            };
-
-            var contentLower = content.ToLower();
-            var hasPixelitIndicator = pixelitIndicators.Any(indicator => contentLower.Contains(indicator.ToLower()));
-
-            if (hasPixelitIndicator)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Pixelit] Found Pixelit indicator in content");
-                return true;
-            }
-
-            // Check headers for device identification
-            var serverHeader = headers.Server?.ToString()?.ToLower();
-            var hasPixelitHeader = serverHeader != null && pixelitIndicators.Any(indicator => 
-                serverHeader.Contains(indicator.ToLower()));
-
-            if (hasPixelitHeader)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Pixelit] Found Pixelit indicator in server header");
-                return true;
-            }
-
-            return false;
-        }
-
-        private string? ExtractDeviceName(string content)
-        {
-            try
-            {
-                // First check for the specific PixelIt WebUI title
-                if (content.Contains("<title>PixelIt WebUI</title>", StringComparison.OrdinalIgnoreCase))
-                {
-                    return "PixelIt WebUI";
-                }
-
-                // Try to extract device name from JSON response
-                if (content.TrimStart().StartsWith("{"))
-                {
-                    dynamic json = JsonConvert.DeserializeObject(content);
-                    var jsonName = json?.name ?? json?.device_name ?? json?.hostname ?? json?.title;
-                    if (jsonName != null)
-                    {
-                        return jsonName;
-                    }
-                }
-
-                // Try to extract from any HTML title
-                if (content.Contains("<title>"))
-                {
-                    var titleStart = content.IndexOf("<title>") + 7;
-                    var titleEnd = content.IndexOf("</title>", titleStart);
-                    if (titleEnd > titleStart)
-                    {
-                        var title = content.Substring(titleStart, titleEnd - titleStart).Trim();
-                        if (!string.IsNullOrEmpty(title))
-                        {
-                            return title;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Pixelit] Error extracting device name: {ex.Message}");
-            }
-
-            return null;
-        }
-
-        private void LoadExistingArgumentValues()
-        {
-            try
-            {
-                if (pixelitApp?.Configuration?.Arguments == null) return;
-                
-                System.Diagnostics.Debug.WriteLine("Loading existing Pixelit argument values:");
-                
-                foreach (var argument in pixelitApp.Configuration.Arguments)
-                {
-                    if (!string.IsNullOrEmpty(argument.Value))
-                    {
-                        System.Diagnostics.Debug.WriteLine($"  {argument.Name}: {argument.Value} (existing)");
-                        continue;
-                    }
-                    
-                    var defaultValue = wizardConfig.GetDefaultValue(argument.Name);
-                    if (!string.IsNullOrEmpty(defaultValue))
-                    {
-                        argument.Value = defaultValue;
-                        System.Diagnostics.Debug.WriteLine($"  {argument.Name}: {defaultValue} (default)");
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"  {argument.Name}: (empty)");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading existing Pixelit argument values: {ex.Message}");
-            }
-        }
-
-        private async Task LoadExistingConfiguration()
-        {
-            if (pixelitApp?.Configuration?.Arguments != null)
-            {
-                var pixelitIpArg = pixelitApp.Configuration.Arguments.FirstOrDefault(a => a.Name == "PEPS");
-                if (pixelitIpArg != null && !string.IsNullOrEmpty(pixelitIpArg.Value))
-                {
-                    var url = pixelitIpArg.Value;
-                    if (url.StartsWith("http://"))
-                    {
-                        url = url.Substring(7);
-                    }
-                    else if (url.StartsWith("https://"))
-                    {
-                        url = url.Substring(8);
-                    }
-                    pixelitIpTextBox.Text = url;
-                }
-            }
-        }
-
-        private void UpdateConnectionStatus(string message, SolidColorBrush color)
-        {
-            connectionStatusText.Text = message;
-            connectionStatusText.Foreground = color;
         }
 
         private async Task<PixelitConnectionResult> TestPixelitConnection(string ipAddress)
@@ -1293,6 +751,52 @@ namespace darts_hub.control.wizard
                     ErrorMessage = $"Unexpected error: {ex.Message}"
                 };
             }
+        }
+
+        private bool IsPixelitDevice(string content, System.Net.Http.Headers.HttpResponseHeaders headers)
+        {
+            // Specific check for PixelIt WebUI title tag
+            var hasPixelitWebUI = content.Contains("<title>PixelIt WebUI</title>", StringComparison.OrdinalIgnoreCase);
+            
+            if (hasPixelitWebUI)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Pixelit] Found PixelIt WebUI title tag - confirmed Pixelit device");
+                return true;
+            }
+
+            // Fallback checks for other potential indicators (less specific)
+            var pixelitIndicators = new[]
+            {
+                "pixelit", "PixelIt", "PIXELIT"
+            };
+
+            var contentLower = content.ToLower();
+            var hasPixelitIndicator = pixelitIndicators.Any(indicator => contentLower.Contains(indicator.ToLower()));
+
+            if (hasPixelitIndicator)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Pixelit] Found Pixelit indicator in content");
+                return true;
+            }
+
+            // Check headers for device identification
+            var serverHeader = headers.Server?.ToString()?.ToLower();
+            var hasPixelitHeader = serverHeader != null && pixelitIndicators.Any(indicator => 
+                serverHeader.Contains(indicator.ToLower()));
+
+            if (hasPixelitHeader)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Pixelit] Found Pixelit indicator in server header");
+                return true;
+            }
+
+            return false;
+        }
+
+        private void UpdateConnectionStatus(string message, SolidColorBrush color)
+        {
+            connectionStatusText.Text = message;
+            connectionStatusText.Foreground = color;
         }
 
         public async Task<WizardValidationResult> ValidateStep()

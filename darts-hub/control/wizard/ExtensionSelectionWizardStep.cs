@@ -227,6 +227,7 @@ namespace darts_hub.control.wizard
 
             var checkBox = new CheckBox
             {
+                Content = GetExtensionDisplayName(extensionKey, app), // Add the extension name here
                 FontSize = 14,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
@@ -311,6 +312,32 @@ namespace darts_hub.control.wizard
                 var key when key.Contains("extern") => "Integrate with external services and APIs for extended functionality.",
                 _ => "Additional functionality and customization options for your dart setup."
             };
+        }
+
+        private string GetExtensionDisplayName(string extensionKey, AppBase app)
+        {
+            // First try to get a nice display name from the extension key
+            var displayName = extensionKey switch
+            {
+                var key when key.Contains("wled") => "WLED LED Strip Control",
+                var key when key.Contains("pixelit") => "Pixelit LED Matrix Display",
+                var key when key.Contains("voice") => "Voice Announcements",
+                var key when key.Contains("gif") => "GIF Display & Media",
+                var key when key.Contains("extern") => "External Integrations",
+                _ => null
+            };
+
+            // If no specific display name found, use the app's custom name or name
+            if (displayName == null)
+            {
+                displayName = !string.IsNullOrEmpty(app.CustomName) ? app.CustomName : app.Name;
+                
+                // Clean up the name for better display
+                displayName = displayName.Replace("darts-", "").Replace("_", " ");
+                displayName = char.ToUpper(displayName[0]) + displayName.Substring(1);
+            }
+
+            return displayName;
         }
 
         private Control CreateInfoSection()
