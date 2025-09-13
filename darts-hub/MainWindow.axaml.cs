@@ -14,6 +14,8 @@ using Avalonia.Threading;
 using darts_hub.control;
 using darts_hub.control.wizard;
 using darts_hub.model;
+using darts_hub.UI;
+using darts_hub.ViewModels;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Base;
 using MsBox.Avalonia.Dto;
@@ -34,75 +36,27 @@ using System.Timers;
 
 namespace darts_hub
 {
-    public class UpdaterViewModel : INotifyPropertyChanged
-    {
-        private bool _isBetaTester;
-
-        public bool IsBetaTester
-        {
-            get => _isBetaTester;
-            set
-            {
-                if (_isBetaTester != value)
-                {
-                    _isBetaTester = value;
-                    OnPropertyChanged(nameof(IsBetaTester));
-                    Updater.IsBetaTester = value;
-                    SaveBetaTesterStatus(value);
-                }
-            }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        private void SaveBetaTesterStatus(bool isBetaTester)
-        {
-            var configurator = new Configurator("config.json");
-            configurator.Settings.IsBetaTester = isBetaTester;
-            configurator.SaveSettings();
-        }
-    }
-
     public partial class MainWindow : Window
     {
-        // ATTRIBUTES
+        #region Constants and Fields
         private const string ConfigPath = "config.json";
-
-        // Originales Seitenverhältnis für proportionales Resizing
         private readonly double originalAspectRatio = 1004.0 / 800.0;
 
+        // Core managers
+        private readonly ConsoleManager consoleManager;
+        private readonly NavigationManager navigationManager;
+        private readonly ContentModeManager contentModeManager;
+        
+        // Core components
         private ProfileManager profileManager;
         private Profile? selectedProfile;
         private AppBase? selectedApp;
         private Configurator configurator;
         private ReadmeParser readmeParser;
         private Dictionary<string, string>? currentTooltips;
-        private bool isAutoScrollEnabled = true;
-        private bool isUserScrolling = false;
-        private Timer? consoleUpdateTimer;
-        private Timer? navigationUpdateTimer;
-        private Dictionary<string, TabItem> consoleTabs = new Dictionary<string, TabItem>();
-        private string? currentConsoleTab;
-        
-        // Track app running states to detect changes
-        private Dictionary<string, bool> lastKnownRunningStates = new Dictionary<string, bool>();
+        #endregion
 
-        private enum ContentMode
-        {
-            Settings,
-            Console,
-            Changelog,
-            About
-        }
-
-        private ContentMode currentContentMode = ContentMode.About; // Start with About mode
-
-        // METHODS
+        #region Constructor and Initialization
         public MainWindow()
         {
             InitializeComponent();
@@ -110,82 +64,84 @@ namespace darts_hub
             configurator = new Configurator("config.json");
             readmeParser = new ReadmeParser();
             
+            // Initialize managers
+            consoleManager = new ConsoleManager();
+            navigationManager = new NavigationManager();
+            contentModeManager = new ContentModeManager(configurator);
+            
+            InitializeViewModel();
+            InitializeWindowSettings();
+            InitializeManagers();
+            SetupEventHandlers();
+        }
+
+        private void InitializeViewModel()
+        {
             var viewModel = new UpdaterViewModel
             {
                 IsBetaTester = configurator.Settings.IsBetaTester
             };
             DataContext = viewModel;
+        }
 
-            // DEAKTIVIERT: Setup viewport with MainWindow-specific dimensions
-            // WindowHelper.SetupMainWindowViewport(this);
-            
-            // Verwende stattdessen nur die normale Zentrierung
+        private void InitializeWindowSettings()
+        {
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            
-            // Initialize console update timer
-            consoleUpdateTimer = new Timer(2000); // Update every 2 seconds
-            consoleUpdateTimer.Elapsed += ConsoleUpdateTimer_Elapsed;
-            consoleUpdateTimer.AutoReset = true;
-            
-            // Initialize navigation update timer
-            navigationUpdateTimer = new Timer(3000); // Update every 3 seconds
-            navigationUpdateTimer.Elapsed += NavigationUpdateTimer_Elapsed;
-            navigationUpdateTimer.AutoReset = true;
-            navigationUpdateTimer.Start(); // Always running to update app states
-            
-            Opened += MainWindow_Opened;
-            Closing += Window_Closing;
-            
-            // Setup proportional resize mit Viewbox-Unterstützung für MainWindow
-            // Die Viewbox im XAML sorgt für automatische Skalierung
-            // Das proportionale Resizing sorgt für korrektes Seitenverhältnis
             WindowResizeHelper.SetupProportionalResize(this, originalAspectRatio, true, false);
         }
 
+        private void InitializeManagers()
+        {
+            // Initialize console manager
+            consoleManager.Initialize();
+            consoleManager.ConsoleTabControl = ConsoleTabControl;
+            
+            // Initialize navigation manager
+            navigationManager.Initialize(
+                refreshSettings: () => RefreshCurrentAppSettings(),
+                appSelected: async (app) => await OnAppSelected(app),
+                save: () => Save()
+            );
+            navigationManager.AppNavigationPanel = AppNavigationPanel;
+            
+            // Initialize content mode manager
+            InitializeContentModeManager();
+        }
+
+        private void InitializeContentModeManager()
+        {
+            contentModeManager.MainGrid = MainGrid;
+            contentModeManager.ConsolePanel = ConsolePanel;
+            contentModeManager.ChangelogScrollViewer = ChangelogScrollViewer;
+            contentModeManager.AboutScrollViewer = AboutScrollViewer;
+            contentModeManager.SettingsScrollViewer = SettingsScrollViewer;
+            contentModeManager.NewSettingsPanel = NewSettingsPanel;
+            contentModeManager.TooltipPanel = TooltipPanel;
+            contentModeManager.TooltipSplitter = TooltipSplitter;
+            contentModeManager.TooltipTitle = TooltipTitle;
+            contentModeManager.TooltipDescription = TooltipDescription;
+            contentModeManager.NewSettingsScrollViewer = NewSettingsScrollViewer;
+            contentModeManager.ButtonConsole = ButtonConsole;
+            contentModeManager.ButtonChangelog = ButtonChangelog;
+            contentModeManager.ButtonAbout = this.FindControl<Button>("Buttonabout");
+        }
+
+        private void SetupEventHandlers()
+        {
+            Opened += MainWindow_Opened;
+            Closing += Window_Closing;
+            
+            // Console events
+            ConsoleTabControl.SelectionChanged += (s, e) => consoleManager.OnTabSelectionChanged(s, e);
+        }
+        #endregion
+
+        #region Window Event Handlers
         private async void MainWindow_Opened(object sender, EventArgs e)
         {
             try
             {
-                configurator = new(ConfigPath);
-                CheckBoxStartProfileOnProgramStart.IsChecked = configurator.Settings.StartProfileOnStart;
-                
-                // Initialize About content with app version and settings
-                InitializeAboutContent();
-
-                profileManager = new ProfileManager();
-                profileManager.AppDownloadStarted += ProfileManager_AppDownloadStarted;
-                profileManager.AppDownloadFinished += ProfileManager_AppDownloadFinished;
-                profileManager.AppDownloadFailed += ProfileManager_AppDownloadFailed;
-                profileManager.AppDownloadProgressed += ProfileManager_AppDownloadProgressed;
-                profileManager.AppInstallStarted += ProfileManager_AppInstallStarted;
-                profileManager.AppInstallFinished += ProfileManager_AppInstallFinished;
-                profileManager.AppInstallFailed += ProfileManager_AppInstallFailed;
-                profileManager.AppConfigurationRequired += ProfileManager_AppConfigurationRequired;
-
-                profileManager.LoadAppsAndProfiles();
-
-                try
-                {
-                    profileManager.CloseApps();
-                }
-                catch (Exception ex)
-                {
-                    await RenderMessageBox("", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
-                }
-
-                RenderProfiles();
-
-                Updater.NewReleaseFound += Updater_NewReleaseFound;
-                Updater.NoNewReleaseFound += Updater_NoNewReleaseFound;
-                Updater.ReleaseInstallInitialized += Updater_ReleaseInstallInitialized;
-                Updater.ReleaseDownloadStarted += Updater_ReleaseDownloadStarted;
-                Updater.ReleaseDownloadFailed += Updater_ReleaseDownloadFailed;
-                Updater.ReleaseDownloadProgressed += Updater_ReleaseDownloadProgressed;
-                Updater.CheckNewVersion();
-                SetWait(true, "Checking for update...");
-
-                // Check if wizard should be shown
-                await CheckAndShowWizard();
+                await InitializeApplication();
             }
             catch (ConfigurationException ex)
             {
@@ -203,14 +159,8 @@ namespace darts_hub
         {
             try
             {
-                // Stop and dispose the console update timer
-                consoleUpdateTimer?.Stop();
-                consoleUpdateTimer?.Dispose();
-                
-                // Stop and dispose the navigation update timer
-                navigationUpdateTimer?.Stop();
-                navigationUpdateTimer?.Dispose();
-                
+                consoleManager?.Dispose();
+                navigationManager?.Dispose();
                 profileManager?.CloseApps();
             }
             catch (Exception ex)
@@ -218,7 +168,74 @@ namespace darts_hub
                 RenderMessageBox("", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
             }
         }
+        #endregion
 
+        #region Application Initialization
+        private async Task InitializeApplication()
+        {
+            configurator = new(ConfigPath);
+            CheckBoxStartProfileOnProgramStart.IsChecked = configurator.Settings.StartProfileOnStart;
+            
+            // Initialize About content with app version and settings
+            InitializeAboutContent();
+
+            await InitializeProfileManager();
+            await InitializeUpdater();
+            
+            // Check if wizard should be shown
+            await CheckAndShowWizard();
+        }
+
+        private void InitializeAboutContent()
+        {
+            try
+            {
+                // Set the app version
+                AboutAppVersion.Content = Updater.version;
+                
+                // Set the skip update confirmation checkbox
+                AboutCheckBoxSkipUpdateConfirmation.IsChecked = configurator.Settings.SkipUpdateConfirmation;
+                
+                // Set the new settings mode checkbox
+                AboutCheckBoxNewSettingsMode.IsChecked = configurator.Settings.NewSettingsMode;
+                
+                // Show the About content by default
+                contentModeManager.ShowAboutMode();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error initializing About content: {ex.Message}");
+            }
+        }
+
+        private async Task InitializeProfileManager()
+        {
+            profileManager = new ProfileManager();
+            SetupProfileManagerEvents();
+
+            profileManager.LoadAppsAndProfiles();
+
+            try
+            {
+                profileManager.CloseApps();
+            }
+            catch (Exception ex)
+            {
+                await RenderMessageBox("", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
+            }
+
+            RenderProfiles();
+        }
+
+        private async Task InitializeUpdater()
+        {
+            SetupUpdaterEvents();
+            Updater.CheckNewVersion();
+            SetWait(true, "Checking for update...");
+        }
+        #endregion
+
+        #region Button Event Handlers
         private void Buttonstart_Click(object sender, RoutedEventArgs e)
         {
             RunSelectedProfile(true);
@@ -226,833 +243,255 @@ namespace darts_hub
 
         private async void Buttonabout_Click(object sender, RoutedEventArgs e)
         {
-            if (currentContentMode == ContentMode.About)
+            if (contentModeManager.CurrentContentMode == ContentModeManager.ContentMode.About)
             {
-                ShowSettingsMode();
+                contentModeManager.ShowSettingsMode();
+                consoleManager.Stop();
             }
             else
             {
-                ShowAboutMode();
+                contentModeManager.ShowAboutMode();
+                consoleManager.Stop();
             }
         }
 
         private void ButtonConsole_Click(object sender, RoutedEventArgs e)
         {
-            if (currentContentMode == ContentMode.Console)
+            if (contentModeManager.CurrentContentMode == ContentModeManager.ContentMode.Console)
             {
-                ShowSettingsMode();
+                contentModeManager.ShowSettingsMode();
+                consoleManager.Stop();
             }
             else
             {
-                ShowConsoleMode();
+                contentModeManager.ShowConsoleMode();
+                consoleManager.Start();
+                consoleManager.SetSelectedProfile(selectedProfile);
             }
         }
 
         private async void ButtonChangelog_Click(object sender, RoutedEventArgs e)
         {
-            if (currentContentMode == ContentMode.Changelog)
+            if (contentModeManager.CurrentContentMode == ContentModeManager.ContentMode.Changelog)
             {
-                ShowSettingsMode();
+                contentModeManager.ShowSettingsMode();
+                consoleManager.Stop();
             }
             else
             {
-                await ShowChangelogMode();
+                contentModeManager.ShowChangelogMode();
+                consoleManager.Stop();
+                await LoadChangelogContent();
             }
         }
 
-        private void ShowSettingsMode()
+        private void CheckBoxStartProfileOnProgramStartChanged(object sender, RoutedEventArgs e)
         {
-            currentContentMode = ContentMode.Settings;
-            
-            // Stop the console update timer
-            consoleUpdateTimer?.Stop();
-            
-            // hide console panel
-            ConsolePanel.IsVisible = false;
-            
-            // Hide changelog and about
-            ChangelogScrollViewer.IsVisible = false;
-            AboutScrollViewer.IsVisible = false;
-            
-            // Hide new settings panel explicitly
-            NewSettingsPanel.IsVisible = false;
-            
-            // Show appropriate settings mode based on configuration
-            if (configurator.Settings.NewSettingsMode)
+            if (CheckBoxStartProfileOnProgramStart.IsChecked.HasValue)
             {
-                ShowNewSettingsMode();
-            }
-            else
-            {
-                ShowClassicSettingsMode();
-            }
-            
-            // Reset to top button visibility based on current scroll position
-            UpdateToTopButtonVisibility();
-            
-            // Update button states
-            ButtonConsole.Background = Brushes.Transparent;
-            ButtonChangelog.Background = Brushes.Transparent;
-
-            // *** Reset ChangelogScrollViewer positioning ***
-            Grid.SetColumn(ChangelogScrollViewer, 2);
-            Grid.SetColumnSpan(ChangelogScrollViewer, 1);
-
-            // *** Reset Border-Eigenschaften zu Standardwerten ***
-            var contentBorder = MainGrid.Children.OfType<Border>()
-                .FirstOrDefault(b => Grid.GetColumn(b) == 2 && Grid.GetColumnSpan(b) == 1);
-
-            if (contentBorder != null)
-            {
-                // Zurück zu Original-Werten
-                contentBorder.Background = new SolidColorBrush(Color.FromArgb(242, 37, 37, 38)); // #F2252526 (Original)
-
-                // Zurück zu Avalonia-Standardwerten (da diese nicht im XAML definiert waren)
-                contentBorder.Width = double.NaN;  // NaN = Auto-Größe (Standard)
-                contentBorder.HorizontalAlignment = HorizontalAlignment.Stretch; // Standard-Wert
-            }
-
-            // Update the about button appearance
-            var aboutButton = this.FindControl<Button>("Buttonabout");
-            if (aboutButton != null)
-            {
-                aboutButton.Background = Brushes.Transparent;
+                configurator.Settings.StartProfileOnStart = CheckBoxStartProfileOnProgramStart.IsChecked.Value;
+                configurator.SaveSettings();
             }
         }
 
-        private void ShowConsoleMode()
+        private async void AboutButton_Click(object sender, RoutedEventArgs e)
         {
-            currentContentMode = ContentMode.Console;
-            
-            // Hide to top button when not in settings mode
-            var toTopButton = this.FindControl<Button>("ToTopButton");
-            if (toTopButton != null)
+            if (sender is not Button helpButton) return;
+
+            switch (helpButton.Name)
             {
-                toTopButton.IsVisible = false;
-            }
-            
-            // Hide tooltip panel and splitter
-            MainGrid.ColumnDefinitions[4].Width = new GridLength(0);
-            MainGrid.ColumnDefinitions[3].Width = new GridLength(0);
-            TooltipPanel.IsVisible = false;
-            TooltipSplitter.IsVisible = false;
-            
-            // Hide settings, changelog and about
-            SettingsScrollViewer.IsVisible = false;
-            ChangelogScrollViewer.IsVisible = false;
-            AboutScrollViewer.IsVisible = false;
-            
-            // Hide new settings panel explicitly
-            NewSettingsPanel.IsVisible = false;
-            
-            // Show console panel (spans across both content columns)
-            ConsolePanel.IsVisible = true;
-
-            // *** Reset ChangelogScrollViewer positioning ***
-            Grid.SetColumn(ChangelogScrollViewer, 2);
-            Grid.SetColumnSpan(ChangelogScrollViewer, 1);
-
-            // *** Reset Border-Eigenschaften ***
-            var contentBorder = MainGrid.Children.OfType<Border>()
-                .FirstOrDefault(b => Grid.GetColumn(b) == 2 && Grid.GetColumnSpan(b) == 1);
-
-            if (contentBorder != null)
-            {
-                contentBorder.Background = new SolidColorBrush(Color.FromArgb(242, 37, 37, 38));
-                contentBorder.Width = double.NaN;
-                contentBorder.HorizontalAlignment = HorizontalAlignment.Stretch;
-            }
-
-            // Initialize console tabs
-            InitializeConsoleTabs();
-            
-            // Start the console update timer
-            consoleUpdateTimer?.Start();
-            
-            // Update button states
-            ButtonConsole.Background = new SolidColorBrush(Color.FromRgb(0, 122, 204));
-            ButtonChangelog.Background = Brushes.Transparent;
-            
-            // Update the about button appearance
-            var aboutButton = this.FindControl<Button>("Buttonabout");
-            if (aboutButton != null)
-            {
-                aboutButton.Background = Brushes.Transparent;
+                case "AboutContact1":
+                    VisitHelpPage("https://discordapp.com/users/Reepa86#1149");
+                    break;
+                case "AboutContact2":
+                    VisitHelpPage("https://discordapp.com/users/wusaaa#0578");
+                    break;
+                case "AboutContact3":
+                    VisitHelpPage("https://discordapp.com/users/366537096414101504");
+                    break;
+                case "AboutPaypal":
+                    VisitHelpPage("https://paypal.me/I3ull3t");
+                    break;
+                case "AboutDonation":
+                    await HandleBitcoinDonation();
+                    break;
+                case "AboutBug":
+                    VisitHelpPage("https://github.com/lbormann/darts-hub/issues");
+                    break;
+                case "AboutChangelog":
+                    contentModeManager.ShowChangelogMode();
+                    consoleManager.Stop();
+                    await LoadChangelogContent();
+                    break;
             }
         }
 
-        private async Task ShowChangelogMode()
+        private async Task HandleBitcoinDonation()
         {
-            currentContentMode = ContentMode.Changelog;
-            
-            // Hide to top button when not in settings mode
-            var toTopButton = this.FindControl<Button>("ToTopButton");
-            if (toTopButton != null)
+            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+            if (clipboard != null)
             {
-                toTopButton.IsVisible = false;
-            }
-            
-            // Stop the console update timer
-            consoleUpdateTimer?.Stop();
-            
-            // Hide tooltip panel and splitter
-            MainGrid.ColumnDefinitions[4].Width = new GridLength(0);
-            MainGrid.ColumnDefinitions[3].Width = new GridLength(0);
-            TooltipPanel.IsVisible = false;
-            TooltipSplitter.IsVisible = false;
-            
-            // Hide console panel
-            ConsolePanel.IsVisible = false;
-            
-            // Hide settings and new settings panel
-            SettingsScrollViewer.IsVisible = false;
-            AboutScrollViewer.IsVisible = false;
-            NewSettingsPanel.IsVisible = false;
-            
-            // Show changelog
-            ChangelogScrollViewer.IsVisible = true;
-            // *** NEU: Changelog soll beide Spalten überlagern (Content + Tooltip) ***
-            Grid.SetColumn(ChangelogScrollViewer, 2);
-            Grid.SetColumnSpan(ChangelogScrollViewer, 3); // Überlagert Spalten 2, 3 und 4
-                                                          // *** NEU: Finde und ändere das übergeordnete Border-Element ***
-            var contentBorder = MainGrid.Children.OfType<Border>()
-                .FirstOrDefault(b => Grid.GetColumn(b) == 2 && Grid.GetColumnSpan(b) == 1);
-
-            if (contentBorder != null)
-            {
-                // Ändere Background-Farbe für Changelog-Modus
-                contentBorder.Background = new SolidColorBrush(Color.FromArgb(242, 30, 30, 35)); // Dunklere Farbe
-                contentBorder.Width = 750;
-                contentBorder.HorizontalAlignment = HorizontalAlignment.Left;
-            }
-
-            // Load changelog content
-            await LoadChangelogContent();
-            
-            // Update button states
-            ButtonConsole.Background = Brushes.Transparent;
-            ButtonChangelog.Background = new SolidColorBrush(Color.FromRgb(0, 122, 204));
-            
-            // Update the about button appearance
-            var aboutButton = this.FindControl<Button>("Buttonabout");
-            if (aboutButton != null)
-            {
-                aboutButton.Background = Brushes.Transparent;
+                const string donationAddress = "bc1qr7wsvmmgaj6dle8gae2dl0dcxu5yh8vqlv34x4";
+                await clipboard.SetTextAsync(donationAddress);
+                await MessageBoxManager.GetMessageBoxStandard("Bitcoin donation address copied", 
+                    $"Address copied to clipboard:\n{donationAddress}").ShowWindowAsync();
             }
         }
 
-        private void UpdateToTopButtonVisibility()
+        private void AboutCheckBoxSkipUpdateConfirmationChanged(object sender, RoutedEventArgs e)
         {
-            var toTopButton = this.FindControl<Button>("ToTopButton");
-            if (toTopButton != null)
-            {
-                if (currentContentMode == ContentMode.Settings)
-                {
-                    const double showThreshold = 100.0;
-                    bool shouldShow = false;
-                    
-                    // Check scroll position based on current settings mode
-                    if (configurator.Settings.NewSettingsMode && NewSettingsScrollViewer != null)
-                    {
-                        shouldShow = NewSettingsScrollViewer.Offset.Y > showThreshold;
-                    }
-                    else if (SettingsScrollViewer != null)
-                    {
-                        shouldShow = SettingsScrollViewer.Offset.Y > showThreshold;
-                    }
-                    
-                    toTopButton.IsVisible = shouldShow;
-                    toTopButton.Opacity = shouldShow ? 0.9 : 0.0;
-                }
-                else
-                {
-                    toTopButton.IsVisible = false;
-                }
-            }
-        }
-
-        private void UpdateButtonState(Button button, bool isActive)
-        {
-            if (isActive)
-            {
-                button.Background = new SolidColorBrush(Color.FromRgb(0, 122, 204));
-                button.Foreground = Brushes.White;
-            }
-            else
-            {
-                button.Background = Brushes.Transparent;
-                button.Foreground = Brushes.Black;
-            }
-        }
-
-        private void UpdateConsoleContent()
-        {
-            // Update all console tabs
-            if (selectedProfile != null && consoleTabs.Any())
-            {
-                foreach (var app in selectedProfile.Apps.Values.OrderBy(a => a.App.CustomName))
-                {
-                    UpdateConsoleTab(app.App);
-                }
-            }
-        }
-
-        private void InitializeConsoleTabs()
-        {
-            // Clear existing tabs
-            ConsoleTabControl.Items.Clear();
-            consoleTabs.Clear();
-            currentConsoleTab = null;
-
-            if (selectedProfile == null) return;
-
-            // Create Overview tab
-            var overviewTab = CreateOverviewTab();
-            ConsoleTabControl.Items.Add(overviewTab);
-            consoleTabs.Add("Overview", overviewTab);
-
-            // Create tabs for each app
-            foreach (var app in selectedProfile.Apps.Values.OrderBy(a => a.App.CustomName))
-            {
-                var tab = CreateConsoleTab(app.App);
-                ConsoleTabControl.Items.Add(tab);
-                consoleTabs.Add(app.App.CustomName, tab);
-            }
-
-            // Select overview tab by default
-            if (ConsoleTabControl.Items.Count > 0)
-            {
-                ConsoleTabControl.SelectedIndex = 0;
-                currentConsoleTab = "Overview";
-            }
-        }
-
-        private TabItem CreateOverviewTab()
-        {
-            var tab = new TabItem
-            {
-                Header = "Overview",
-                FontSize = 11
-            };
-
-            var scrollViewer = new ScrollViewer
-            {
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-                Padding = new Thickness(10)
-            };
-
-            var textBox = new TextBox
-            {
-                Name = "OverviewConsoleOutput",
-                Text = "Overview of all applications...",
-                Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
-                Background = Brushes.Transparent,
-                TextWrapping = TextWrapping.NoWrap, // Änderung: NoWrap für besseres horizontales Scrolling
-                IsReadOnly = true,
-                BorderThickness = new Thickness(0),
-                FontFamily = "Consolas,Monaco,Courier New,monospace",
-                FontSize = 12,
-                AcceptsReturn = true,
-                UseLayoutRounding = true // Verbessert das Rendering
-            };
-
-            scrollViewer.Content = textBox;
-            tab.Content = scrollViewer;
-
-            return tab;
-        }
-
-        private TabItem CreateConsoleTab(AppBase app)
-        {
-            var tab = new TabItem
-            {
-                Header = app.CustomName,
-                FontSize = 11
-            };
-
-            // Add running indicator to tab header if app is running
-            if (app.AppRunningState)
-            {
-                var headerPanel = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal
-                };
-
-                headerPanel.Children.Add(new TextBlock 
-                { 
-                    Text = app.CustomName, 
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(0, 0, 5, 0),
-                    FontSize = 11
-                });
-
-                headerPanel.Children.Add(new Ellipse
-                {
-                    Width = 8,
-                    Height = 8,
-                    Fill = new SolidColorBrush(Color.FromRgb(0, 255, 0)),
-                    VerticalAlignment = VerticalAlignment.Center
-                });
-
-                tab.Header = headerPanel;
-            }
-
-            var scrollViewer = new ScrollViewer
-            {
-                Name = $"{app.CustomName}ScrollViewer",
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-                Padding = new Thickness(10)
-            };
-
-            var textBox = new TextBox
-            {
-                Name = $"{app.CustomName}ConsoleOutput",
-                Text = $"Console output for {app.CustomName}...",
-                Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
-                Background = Brushes.Transparent,
-                TextWrapping = TextWrapping.NoWrap, // Änderung: NoWrap für besseres horizontales Scrolling
-                IsReadOnly = true,
-                BorderThickness = new Thickness(0),
-                FontFamily = "Consolas,Monaco,Courier New,monospace",
-                FontSize = 12,
-                AcceptsReturn = true,
-                UseLayoutRounding = true // Verbessert das Rendering
-            };
-
-            // Add scroll change tracking for this specific app
-            scrollViewer.ScrollChanged += (s, e) => ConsoleScrollViewer_ScrollChanged(s, e, app.CustomName);
-
-            scrollViewer.Content = textBox;
-            tab.Content = scrollViewer;
-
-            return tab;
-        }
-
-        private void UpdateConsoleTab(AppBase app)
-        {
-            if (!consoleTabs.TryGetValue(app.CustomName, out var tab)) return;
-
-            var scrollViewer = tab.Content as ScrollViewer;
-            var textBox = scrollViewer?.Content as TextBox;
-            if (textBox == null) return;
-
-            var consoleText = new StringBuilder();
-            consoleText.AppendLine($"=== {app.CustomName} Console Output ===");
-            consoleText.AppendLine($"Status: {(app.AppRunningState ? "RUNNING" : "STOPPED")}");
-            consoleText.AppendLine($"Last updated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-            consoleText.AppendLine();
-            
-            // Add startup command information
-            if (app.AppRunningState || !string.IsNullOrEmpty(app.AppMonitor))
-            {
-                consoleText.AppendLine("=== STARTUP COMMAND ===");
-                
-                // Get executable path
-                var executable = GetAppExecutable(app);
-                if (!string.IsNullOrEmpty(executable))
-                {
-                    consoleText.AppendLine($"Executable: {executable}");
-                }
-                
-                // Get composed arguments
-                var arguments = GetAppArguments(app);
-                if (!string.IsNullOrEmpty(arguments))
-                {
-                    consoleText.AppendLine($"Arguments: {arguments}");
-                }
-                else
-                {
-                    consoleText.AppendLine("Arguments: (none)");
-                }
-                
-                // Show full command line
-                var fullCommand = !string.IsNullOrEmpty(executable) ? 
-                    $"\"{executable}\"" + (!string.IsNullOrEmpty(arguments) ? $" {arguments}" : "") : 
-                    "(executable not determined)";
-                consoleText.AppendLine($"Full Command: {fullCommand}");
-                consoleText.AppendLine();
-                consoleText.AppendLine("=== CONSOLE OUTPUT ===");
-            }
-
-            if (!string.IsNullOrEmpty(app.AppMonitor))
-            {
-                var lines = app.AppMonitor.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var line in lines)
-                {
-                    var trimmedLine = line.Trim();
-                    if (!string.IsNullOrEmpty(trimmedLine))
-                    {
-                        consoleText.AppendLine(trimmedLine);
-                    }
-                }
-            }
-            else
-            {
-                consoleText.AppendLine("No console output available yet.");
-                if (app.AppRunningState)
-                {
-                    consoleText.AppendLine("Application is running but hasn't produced output yet.");
-                }
-                else
-                {
-                    consoleText.AppendLine("Start the application to see console output.");
-                }
-            }
-
-            textBox.Text = consoleText.ToString();
-
-            // Update tab header with running indicator
-            UpdateTabHeader(tab, app);
-
-            // Auto-scroll to bottom if enabled and this is the current tab
-            if (isAutoScrollEnabled && !isUserScrolling && currentConsoleTab == app.CustomName)
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    scrollViewer?.ScrollToEnd();
-                });
-            }
-        }
-
-        // Helper methods for getting app execution information
-        private string GetAppExecutable(AppBase app)
-        {
-            try
-            {
-                // For most apps, we can get the executable info from configuration or derive it
-                if (app.Configuration != null && app.Configuration.Arguments.Count > 0)
-                {
-                    // Check if first argument is path-to-executable or file for AppLocal/AppOpen
-                    var firstArg = app.Configuration.Arguments[0];
-                    if (firstArg.Name == "path-to-executable" || firstArg.Name == "file")
-                    {
-                        return !string.IsNullOrEmpty(firstArg.Value) ? firstArg.Value : "Not configured";
-                    }
-                }
-                
-                // For downloadable apps, try to construct typical path
-                if (app.GetType().Name.Contains("Downloadable"))
-                {
-                    var basePath = System.IO.Path.Combine(Environment.CurrentDirectory, "apps", app.Name);
-                    var exePath = System.IO.Path.Combine(basePath, $"{app.Name}.exe");
-                    if (System.IO.File.Exists(exePath))
-                        return exePath;
-                    
-                    // Try without .exe for Linux/Mac
-                    exePath = System.IO.Path.Combine(basePath, app.Name);
-                    if (System.IO.File.Exists(exePath))
-                        return exePath;
-                        
-                    // Check common installation patterns
-                    if (app.Name == "darts-caller")
-                    {
-                        var commonPaths = new string[][]
-                        {
-                            new[] { "darts-caller.exe", "darts-caller" },
-                            new[] { System.IO.Path.Combine("darts-caller", "darts-caller.exe"), System.IO.Path.Combine("darts-caller", "darts-caller") },
-                            new[] { System.IO.Path.Combine("darts-caller.exe"), System.IO.Path.Combine("darts-caller") }
-                        };
-                        
-                        foreach (var paths in commonPaths)
-                        {
-                            foreach (var path in paths)
-                            {
-                                var fullPath = System.IO.Path.Combine(basePath, path);
-                                if (System.IO.File.Exists(fullPath))
-                                    return fullPath;
-                            }
-                        }
-                    }
-                    
-                    return $"Expected: {exePath}";
-                }
-                
-                return $"{app.GetType().Name} executable";
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error getting executable for {app.CustomName}: {ex.Message}");
-                return "Error determining executable";
-            }
+            configurator.Settings.SkipUpdateConfirmation = (bool)AboutCheckBoxSkipUpdateConfirmation.IsChecked;
+            configurator.SaveSettings();
         }
         
-        private string GetAppArguments(AppBase app)
+        private void AboutCheckBoxNewSettingsModeChanged(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                if (app.Configuration == null)
-                    return "";
-                
-                // Use the Configuration.GenerateArgumentString method
-                var arguments = app.Configuration.GenerateArgumentString(app, null);
-                return arguments?.Trim() ?? "";
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error getting arguments for {app.CustomName}: {ex.Message}");
-                return "Error determining arguments";
-            }
+            configurator.Settings.NewSettingsMode = (bool)AboutCheckBoxNewSettingsMode.IsChecked;
+            configurator.SaveSettings();
         }
 
-        private void UpdateTabHeader(TabItem tab, AppBase app)
+        private void NewSettingsBackButton_Click(object sender, RoutedEventArgs e)
         {
-            if (app.AppRunningState)
-            {
-                if (tab.Header is not StackPanel)
-                {
-                    var headerPanel = new StackPanel { Orientation = Orientation.Horizontal };
-                    headerPanel.Children.Add(new TextBlock 
-                    { 
-                        Text = app.CustomName, 
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Margin = new Thickness(0, 0, 5, 0),
-                        FontSize = 11
-                    });
-                    headerPanel.Children.Add(new Ellipse
-                    {
-                        Width = 8,
-                        Height = 8,
-                        Fill = new SolidColorBrush(Color.FromRgb(0, 255, 0)),
-                        VerticalAlignment = VerticalAlignment.Center
-                    });
-                    tab.Header = headerPanel;
-                }
-            }
-            else
-            {
-                if (tab.Header is StackPanel)
-                {
-                    tab.Header = app.CustomName;
-                }
-            }
-        }
-
-        private int GetAppSortPriority(string appName)
-        {
-            // darts-caller gets highest priority (0)
-            if (appName == "darts-caller") return 0;
+            // Switch back to classic mode
+            configurator.Settings.NewSettingsMode = false;
+            configurator.SaveSettings();
             
-            // Other darts-apps get priority 1-10
-            if (appName.StartsWith("darts-")) return GetDartsAppPriority(appName);
+            // Update the checkbox in About section
+            AboutCheckBoxNewSettingsMode.IsChecked = false;
             
-            // All other apps get priority 100+
-            return 100;
-        }
-
-        private int GetDartsAppPriority(string appName)
-        {
-            return appName switch
+            // Re-render current app settings if any app is selected
+            if (selectedApp != null)
             {
-                "darts-caller" => 1,
-                "darts-extern" => 2,
-                "darts-wled" => 3,
-                "darts-pixelit" => 4,
-                "darts-gif" => 5,
-                "darts-voice" => 6,
-                _ => 10 // Other darts-apps
-            };
-        }
-
-        private void UpdateOverviewTab()
-        {
-            if (!consoleTabs.TryGetValue("Overview", out var tab)) return;
-
-            var scrollViewer = tab.Content as ScrollViewer;
-            var textBox = scrollViewer?.Content as TextBox;
-            if (textBox == null) return;
-
-            var overviewText = new StringBuilder();
-            overviewText.AppendLine("=== Darts-Hub Console Overview ===");
-            overviewText.AppendLine($"Profile: {selectedProfile?.Name ?? "None"}");
-            overviewText.AppendLine($"Last updated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-            overviewText.AppendLine();
-
-            if (selectedProfile != null)
-            {
-                overviewText.AppendLine("Applications Status:");
-                overviewText.AppendLine();
-
-                foreach (var app in selectedProfile.Apps.Values.OrderBy(a => a.App.CustomName))
+                _ = Task.Run(async () =>
                 {
-                    var status = app.TaggedForStart ? (app.App.AppRunningState ? "RUNNING" : "ENABLED") : "DISABLED";
-                    var hasOutput = !string.IsNullOrEmpty(app.App.AppMonitor);
-                    
-                    overviewText.AppendLine($"• {app.App.CustomName}");
-                    overviewText.AppendLine($"  Status: {status}");
-                    
-                    // Add startup command info for running or recently run apps
-                    if (app.App.AppRunningState || hasOutput)
+                    await Dispatcher.UIThread.InvokeAsync(async () =>
                     {
-                        var executable = GetAppExecutable(app.App);
-                        var arguments = GetAppArguments(app.App);
-                        
-                        overviewText.AppendLine($"  Executable: {executable}");
-                        if (!string.IsNullOrEmpty(arguments))
-                        {
-                            // Limit argument display length for overview
-                            var displayArgs = arguments.Length > 80 ? 
-                                arguments.Substring(0, 77) + "..." : arguments;
-                            overviewText.AppendLine($"  Arguments: {displayArgs}");
-                        }
-                        else
-                        {
-                            overviewText.AppendLine($"  Arguments: (none)");
-                        }
-                    }
-                    
-                    overviewText.AppendLine($"  Console Output: {(hasOutput ? "Available" : "None")}");
-
-                    if (hasOutput)
-                    {
-                        var lines = app.App.AppMonitor.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        var lastLines = lines.TakeLast(2); // Reduced to 2 lines to make room for command info
-                        overviewText.AppendLine($"  Last Output:");
-                        foreach (var line in lastLines)
-                        {
-                            var trimmedLine = line.Trim();
-                            if (trimmedLine.Length > 60)
-                                trimmedLine = trimmedLine.Substring(0, 57) + "...";
-                            overviewText.AppendLine($"    {trimmedLine}");
-                        }
-                    }
-                }
-            }
-            else
-            {
-                overviewText.AppendLine("No profile selected.");
-            }
-
-            textBox.Text = overviewText.ToString();
-
-            // Auto-scroll if this is the current tab
-            if (isAutoScrollEnabled && !isUserScrolling && currentConsoleTab == "Overview")
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    scrollViewer?.ScrollToEnd();
+                        await RenderAppSettings(selectedApp);
+                    });
                 });
             }
+            else
+            {
+                // Just switch modes
+                contentModeManager.ShowClassicSettingsMode();
+            }
         }
 
-        // New event handlers for console functionality
-        private void ConsoleClearButton_Click(object sender, RoutedEventArgs e)
+        private void ToTopButton_Click(object sender, RoutedEventArgs e)
         {
-            // Clear all console tabs
-            foreach (var tab in consoleTabs.Values)
+            if (contentModeManager.CurrentContentMode == ContentModeManager.ContentMode.Settings)
             {
-                var scrollViewer = tab.Content as ScrollViewer;
-                var textBox = scrollViewer?.Content as TextBox;
-                if (textBox != null)
+                ScrollViewer scrollViewer;
+                if (configurator.Settings.NewSettingsMode)
                 {
-                    textBox.Text = "Console cleared.\n\n";
+                    scrollViewer = NewSettingsScrollViewer;
+                }
+                else
+                {
+                    scrollViewer = SettingsScrollViewer;
+                }
+                
+                if (scrollViewer == null) return;
+                
+                AnimateScrollToTop(scrollViewer);
+            }
+        }
+
+        private void AnimateScrollToTop(ScrollViewer scrollViewer)
+        {
+            var startOffset = scrollViewer.Offset.Y;
+            var duration = TimeSpan.FromMilliseconds(500);
+            var startTime = DateTime.Now;
+
+            var scrollTimer = new Timer(16); // ~60 FPS
+            scrollTimer.Elapsed += (s, args) =>
+            {
+                var elapsed = DateTime.Now - startTime;
+                var progress = Math.Min(elapsed.TotalMilliseconds / duration.TotalMilliseconds, 1.0);
+                
+                var easedProgress = 1 - Math.Pow(1 - progress, 3);
+                var currentOffset = startOffset * (1 - easedProgress);
+                
+                Dispatcher.UIThread.Post(() =>
+                {
+                    scrollViewer.Offset = scrollViewer.Offset.WithY(currentOffset);
+                    
+                    if (progress >= 1.0)
+                    {
+                        scrollTimer.Stop();
+                        scrollTimer.Dispose();
+                    }
+                });
+            };
+            scrollTimer.Start();
+        }
+
+        private void SettingsScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            UpdateToTopButtonVisibility(sender as ScrollViewer);
+        }
+
+        private void NewSettingsScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            UpdateToTopButtonVisibility(sender as ScrollViewer);
+        }
+
+        private void UpdateToTopButtonVisibility(ScrollViewer? scrollViewer)
+        {
+            if (contentModeManager.CurrentContentMode == ContentModeManager.ContentMode.Settings && scrollViewer != null)
+            {
+                const double showThreshold = 100.0;
+                bool shouldShow = scrollViewer.Offset.Y > showThreshold;
+                var toTopButton = this.FindControl<Button>("ToTopButton");
+                if (toTopButton != null)
+                {
+                    if (shouldShow && !toTopButton.IsVisible)
+                    {
+                        toTopButton.IsVisible = true;
+                        toTopButton.Opacity = 0.9;
+                    }
+                    else if (!shouldShow && toTopButton.IsVisible)
+                    {
+                        toTopButton.IsVisible = false;
+                        toTopButton.Opacity = 0.0;
+                    }
                 }
             }
-            
-            // Re-update all tabs with fresh content
-            UpdateConsoleContent();
+        }
+
+        private async void SetupWizardButton_Click(object sender, RoutedEventArgs e)
+        {
+            await ShowSetupWizard();
+        }
+        #endregion
+
+        #region Console Event Handlers
+        private void ConsoleClearButton_Click(object sender, RoutedEventArgs e)
+        {
+            consoleManager.ClearAllConsoles();
         }
 
         private void ConsoleClearCurrentButton_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(currentConsoleTab)) return;
-
-            if (consoleTabs.TryGetValue(currentConsoleTab, out var tab))
-            {
-                var scrollViewer = tab.Content as ScrollViewer;
-                var textBox = scrollViewer?.Content as TextBox;
-                if (textBox != null)
-                {
-                    textBox.Text = $"Console cleared for {currentConsoleTab}.\n\n";
-                }
-                
-                // Re-update this specific tab
-                if (currentConsoleTab == "Overview")
-                {
-                    UpdateOverviewTab();
-                }
-                else if (selectedProfile != null)
-                {
-                    var app = selectedProfile.Apps.Values.FirstOrDefault(appState => appState.App.CustomName == currentConsoleTab)?.App;
-                    if (app != null)
-                    {
-                        UpdateConsoleTab(app);
-                    }
-                }
-            }
+            consoleManager.ClearCurrentConsole();
         }
 
         private async void ConsoleExportButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                if (string.IsNullOrEmpty(currentConsoleTab) || selectedProfile == null)
+                var filePath = consoleManager.ExportCurrentConsole();
+                if (filePath != null)
                 {
-                    await RenderMessageBox("Export Error", "No console tab selected or profile active.", MsBox.Avalonia.Enums.Icon.Warning);
-                    return;
-                }
-
-                var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                string fileName;
-                string content;
-
-                if (currentConsoleTab == "Overview")
-                {
-                    fileName = $"{timestamp}_Overview.log";
-                    
-                    // Get overview content
-                    if (consoleTabs.TryGetValue("Overview", out var overviewTab))
-                    {
-                        var scrollViewer = overviewTab.Content as ScrollViewer;
-                        var textBox = scrollViewer?.Content as TextBox;
-                        content = textBox?.Text ?? "No overview content available.";
-                    }
-                    else
-                    {
-                        content = "Overview tab not found.";
-                    }
+                    await RenderMessageBox("Export Success", 
+                        $"Console log exported successfully to:\n{filePath}", 
+                        MsBox.Avalonia.Enums.Icon.Success);
                 }
                 else
                 {
-                    // Export specific app console
-                    var app = selectedProfile.Apps.Values.FirstOrDefault(appState => appState.App.CustomName == currentConsoleTab)?.App;
-                    if (app == null)
-                    {
-                        await RenderMessageBox("Export Error", $"App '{currentConsoleTab}' not found.", MsBox.Avalonia.Enums.Icon.Warning);
-                        return;
-                    }
-
-                    fileName = $"{timestamp}_{app.CustomName.Replace(" ", "_")}.log";
-                    
-                    // Get console content for this app
-                    if (consoleTabs.TryGetValue(currentConsoleTab, out var appTab))
-                    {
-                        var scrollViewer = appTab.Content as ScrollViewer;
-                        var textBox = scrollViewer?.Content as TextBox;
-                        content = textBox?.Text ?? "No console content available.";
-                    }
-                    else
-                    {
-                        content = "Console tab not found.";
-                    }
+                    await RenderMessageBox("Export Error", "No console tab selected or profile active.", 
+                        MsBox.Avalonia.Enums.Icon.Warning);
                 }
-
-                // Create logs directory if it doesn't exist
-                var logsDir = System.IO.Path.Combine(Environment.CurrentDirectory, "logs");
-                if (!System.IO.Directory.Exists(logsDir))
-                {
-                    System.IO.Directory.CreateDirectory(logsDir);
-                }
-
-                var filePath = System.IO.Path.Combine(logsDir, fileName);
-                
-                // Save to file
-                await System.IO.File.WriteAllTextAsync(filePath, content);
-                
-                await RenderMessageBox("Export Success", 
-                    $"Console log exported successfully to:\n{filePath}", 
-                    MsBox.Avalonia.Enums.Icon.Success);
             }
             catch (Exception ex)
             {
@@ -1062,154 +501,13 @@ namespace darts_hub
             }
         }
 
-        private void ConsoleTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ConsoleAutoScrollCheckBox_Changed(object sender, RoutedEventArgs e)
         {
-            if (ConsoleTabControl.SelectedItem is TabItem selectedTab)
-            {
-                if (selectedTab.Header is string headerText)
-                {
-                    currentConsoleTab = headerText;
-                }
-                else if (selectedTab.Header is StackPanel headerPanel)
-                {
-                    var textBlock = headerPanel.Children.OfType<TextBlock>().FirstOrDefault();
-                    currentConsoleTab = textBlock?.Text;
-                }
-                
-                // Reset user scrolling state when switching tabs
-                isUserScrolling = false;
-            }
+            consoleManager.IsAutoScrollEnabled = ConsoleAutoScrollCheckBox.IsChecked == true;
         }
+        #endregion
 
-        private void ConsoleScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e, string appName)
-        {
-            if (sender is not ScrollViewer scrollViewer) return;
-
-            // Detect if user is manually scrolling
-            if (e.OffsetDelta.Y != 0)
-            {
-                // Check if user scrolled up (not at bottom)
-                var isAtBottom = Math.Abs(scrollViewer.Offset.Y - scrollViewer.ScrollBarMaximum.Y) < 1;
-                
-                if (currentConsoleTab == appName)
-                {
-                    isUserScrolling = !isAtBottom;
-                }
-            }
-
-            // Verbessertes horizontales Scrolling: Position beibehalten, wenn nicht explizit gescrollt
-            if (e.OffsetDelta.X != 0 && Math.Abs(e.OffsetDelta.X) < 50) // Kleine horizontale Änderungen ignorieren
-            {
-                // Prüfe ob das eine ungewollte horizontale Scroll-Aktion war
-                var textBox = scrollViewer.Content as TextBox;
-                if (textBox != null && textBox.TextWrapping == TextWrapping.NoWrap)
-                {
-                    // Lasse horizontales Scrolling zu, aber verhindere ungewollte Rücksprünge
-                    var currentHorizontalOffset = scrollViewer.Offset.X;
-                    
-                    // Falls der horizontale Offset zurückgesetzt wurde, aber der Benutzer nicht explizit gescrollt hat
-                    if (currentHorizontalOffset == 0 && e.OffsetDelta.X < 0)
-                    {
-                        // Verhindere den Rücksprung zum Anfang
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            if (scrollViewer.Offset.X == 0 && scrollViewer.ScrollBarMaximum.X > 0)
-                            {
-                                scrollViewer.Offset = scrollViewer.Offset.WithX(Math.Min(50, scrollViewer.ScrollBarMaximum.X));
-                            }
-                        });
-                    }
-                }
-            }
-        }
-
-        // ProfileManager event handlers
-        private async void ProfileManager_AppDownloadStarted(object? sender, AppEventArgs e)
-        {
-            SetWait(true, "Downloading " + e.App.Name + "...");
-        }
-
-        private void ProfileManager_AppDownloadFinished(object? sender, AppEventArgs e)
-        {
-            SetWait(false);
-            RunSelectedProfile(true);
-        }
-
-        private void ProfileManager_AppDownloadFailed(object? sender, AppEventArgs e)
-        {
-            SetWait(false, "Download " + e.App.Name + " failed. Bitte überprüfe deine Internetverbindung und versuche es erneut. " + e.Message);
-        }
-
-        private void ProfileManager_AppDownloadProgressed(object? sender, DownloadProgressChangedEventArgs e)
-        {
-            SetWait(true);
-        }
-
-        private void ProfileManager_AppInstallStarted(object? sender, AppEventArgs e)
-        {
-            SetWait(true, "Installing " + e.App.Name + "...");
-        }
-
-        private void ProfileManager_AppInstallFinished(object? sender, AppEventArgs e)
-        {
-            SetWait(false);
-        }
-
-        private void ProfileManager_AppInstallFailed(object? sender, AppEventArgs e)
-        {
-            SetWait(false, "Install " + e.App.Name + " failed. " + e.Message);
-        }
-
-        private async void ProfileManager_AppConfigurationRequired(object? sender, AppEventArgs e)
-        {
-            selectedApp = e.App;
-            await RenderAppSettings(e.App);
-        }
-
-        private void Save()
-        {
-            try
-            {
-                profileManager.StoreApps();
-            }
-            catch (Exception ex)
-            {
-                RenderMessageBox("", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
-            }
-        }
-
-        private async void RunSelectedProfile(bool minimize = true)
-        {
-            try
-            {
-                SetWait(true, "Starting profile...");
-                if (ProfileManager.RunProfile(selectedProfile) && minimize) 
-                    WindowState = WindowState.Minimized;
-            }
-            catch (Exception ex)
-            {
-                await RenderMessageBox("", "An error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
-            }
-            finally
-            {
-                SetWait(false);
-            }
-        }
-
-        private void SetWait(bool wait, string waitingText = "")
-        {
-            string waitingMessage = string.IsNullOrEmpty(waitingText) ? WaitingText.Text : waitingText;
-            
-            LoadingOverlay.IsVisible = wait;
-            WaitingText.Text = waitingMessage;
-            
-            // Update console content if in console mode (but don't interfere with manual scrolling)
-            if (currentContentMode == ContentMode.Console && !wait)
-            {
-                UpdateConsoleContent();
-            }
-        }
-
+        #region Profile and App Management
         private async void RenderProfiles()
         {
             ComboBoxItem? lastItemTaggedForStart = null;
@@ -1238,239 +536,57 @@ namespace darts_hub
             }
             
             Comboboxportal.SelectedItem = lastItemTaggedForStart ?? cbiProfiles[0];
-            RenderAppNavigation();
         }
 
-        private void RenderAppNavigation()
+        private void Comboboxportal_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            AppNavigationPanel.Children.Clear();
-            
-            if (selectedProfile == null) return;
-
-            // Custom ordering: darts-apps first, with darts-caller at the very top
-            var sortedApps = selectedProfile.Apps
-                .OrderBy(a => GetAppSortPriority(a.Value.App.CustomName))
-                .ThenBy(a => a.Value.App.CustomName)
-                .ThenByDescending(a => a.Value.TaggedForStart)
-                .ThenByDescending(a => a.Value.IsRequired);
-
-            foreach (var app in sortedApps)
+            if (Comboboxportal.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is Profile profile)
             {
-                var appState = app.Value;
+                selectedProfile = profile;
+                navigationManager.SetSelectedProfile(profile);
+                consoleManager.SetSelectedProfile(profile);
                 
-                // Create app button content with running indicator if app is running
-                var buttonContent = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Stretch
-                };
+                SettingsPanel.Children.Clear();
+                selectedApp = null;
                 
-                // App name text
-                var appNameText = new TextBlock
+                if (contentModeManager.CurrentContentMode == ContentModeManager.ContentMode.Console)
                 {
-                    Text = appState.App.CustomName,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Foreground = appState.TaggedForStart ? Brushes.White : new SolidColorBrush(Color.FromRgb(153, 153, 153)),
-                    FontWeight = appState.TaggedForStart ? FontWeight.Bold : FontWeight.Normal
-                };
-                buttonContent.Children.Add(appNameText);
-                
-                // Add running indicator as part of the button content if app is running
-                if (appState.App.AppRunningState)
-                {
-                    var runningIndicator = new Border
-                    {
-                        Background = new SolidColorBrush(Color.FromArgb(7, 2, 155, 250)), // RGBA with transparency
-                        CornerRadius = new CornerRadius(8),
-                        Padding = new Thickness(5, 1),
-                        Margin = new Thickness(10, 0, 0, 0),
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Child = new TextBlock
-                        {
-                            Text = "RUNNING",
-                            Foreground = Brushes.White,
-                            FontSize = 10,
-                            FontWeight = FontWeight.Bold
-                        }
-                    };
-                    
-                    // Add subtle glow effect with RGBA
-                    runningIndicator.Effect = new Avalonia.Media.DropShadowEffect
-                    {
-                        Color = Color.FromRgb(2, 155, 250), // RGBA shadow color
-                        BlurRadius = 20,
-                        OffsetX = 0,
-                        OffsetY = 0,
-                        Opacity = 1.0
-                    };
-                    
-                    buttonContent.Children.Add(runningIndicator);
+                    consoleManager.InitializeConsoleTabs();
                 }
-
-                // Linie oben
-                var topLine = new Border
-                {
-                    Height = 1,
-                    Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-                    Margin = new Thickness(0, 0, 0, 0),
-                    HorizontalAlignment = HorizontalAlignment.Stretch
-                };
-
-                // App-Button ohne Border
-                var appButton = new Button
-                {
-                    Content = buttonContent,
-                    Background = Brushes.Transparent,
-                    BorderThickness = new Thickness(0), // Keine Border!
-                    CornerRadius = new CornerRadius(0),
-                    HorizontalAlignment = HorizontalAlignment.Stretch,
-                    HorizontalContentAlignment = HorizontalAlignment.Left,
-                    Padding = new Thickness(10, 8),
-                    Width = double.NaN,
-                    Tag = appState.App
-                };
-
-                // Linie unten
-                var bottomLine = new Border
-                {
-                    Height = 1,
-                    Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-                    Margin = new Thickness(0, 0, 0, 0),
-                    HorizontalAlignment = HorizontalAlignment.Stretch
-                };
-
-                // Container für alles
-                var buttonContainer = new StackPanel
-                {
-                    Orientation = Orientation.Vertical,
-                    Margin = new Thickness(0, 0, 0, 0)
-                };
-
-                buttonContainer.Children.Add(topLine);
-                buttonContainer.Children.Add(appButton);
-                buttonContainer.Children.Add(bottomLine);
-
-                AppNavigationPanel.Children.Add(buttonContainer);
-
-                appButton.Click += async (s, e) =>
-                {
-                    selectedApp = appState.App;
-
-                    // Show settings mode if not already
-                    if (currentContentMode != ContentMode.Settings)
-                    {
-                        ShowSettingsMode();
-                    }
-                    
-                    // Render app settings
-                    await RenderAppSettings(appState.App);
-                };
-
-                // Add context menu for app actions
-                var contextMenu = new ContextMenu();
-                
-                var configMenuItem = new MenuItem { Header = "Configure" };
-                configMenuItem.Click += async (s, e) => await RenderAppSettings(appState.App);
-                contextMenu.Items.Add(configMenuItem);
-                
-                if (!string.IsNullOrEmpty(appState.App.AppMonitor))
-                {
-                    var monitorMenuItem = new MenuItem { Header = "Show Monitor" };
-                    monitorMenuItem.Click += async (s, e) => await new MonitorWindow(appState.App).ShowDialog(this);
-                    contextMenu.Items.Add(monitorMenuItem);
-                }
-                
-                var toggleMenuItem = new MenuItem 
-                { 
-                    Header = appState.TaggedForStart ? "Disable" : "Enable"
-                };
-                toggleMenuItem.Click += (s, e) =>
-                {
-                    if (!appState.IsRequired)
-                    {
-                        appState.TaggedForStart = !appState.TaggedForStart;
-                        if (!appState.TaggedForStart)
-                        {
-                            appState.App.Close();
-                        }
-                        RenderAppNavigation();
-                        Save();
-                    }
-                };
-                contextMenu.Items.Add(toggleMenuItem);
-                
-                appButton.ContextMenu = contextMenu;
             }
         }
 
-        // Timer event handlers
-        private void ConsoleUpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
+        private async Task OnAppSelected(AppBase app)
         {
-            // Only update if we're in console mode
-            if (currentContentMode == ContentMode.Console)
+            selectedApp = app;
+
+            // Show settings mode if not already
+            if (contentModeManager.CurrentContentMode != ContentModeManager.ContentMode.Settings)
             {
-                Dispatcher.UIThread.Post(() =>
+                contentModeManager.ShowSettingsMode();
+                consoleManager.Stop();
+            }
+            
+            // Render app settings
+            await RenderAppSettings(app);
+        }
+
+        private void RefreshCurrentAppSettings()
+        {
+            if (selectedApp != null && contentModeManager.CurrentContentMode == ContentModeManager.ContentMode.Settings)
+            {
+                _ = Task.Run(async () =>
                 {
-                    UpdateConsoleContent();
-                    UpdateOverviewTab();
+                    await Dispatcher.UIThread.InvokeAsync(async () =>
+                    {
+                        await RenderAppSettings(selectedApp);
+                    });
                 });
             }
         }
+        #endregion
 
-        private void NavigationUpdateTimer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            // Update navigation to refresh running states
-            Dispatcher.UIThread.Post(() =>
-            {
-                var currentSelectedApp = selectedApp;
-                bool needsSettingsRefresh = false;
-                
-                // Check if any app running state has changed
-                if (selectedProfile != null)
-                {
-                    foreach (var appState in selectedProfile.Apps.Values)
-                    {
-                        var appName = appState.App.CustomName;
-                        var currentRunningState = appState.App.AppRunningState;
-                        
-                        if (lastKnownRunningStates.TryGetValue(appName, out var lastKnownState))
-                        {
-                            if (lastKnownState != currentRunningState)
-                            {
-                                // Running state changed
-                                lastKnownRunningStates[appName] = currentRunningState;
-                                
-                                // If this is the currently selected app, we need to refresh settings
-                                if (currentSelectedApp != null && currentSelectedApp.CustomName == appName)
-                                {
-                                    needsSettingsRefresh = true;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // First time seeing this app, store its state
-                            lastKnownRunningStates[appName] = currentRunningState;
-                        }
-                    }
-                }
-                
-                RenderAppNavigation();
-                
-                // Only refresh app settings if needed and we're in settings mode
-                if (needsSettingsRefresh && currentSelectedApp != null && currentContentMode == ContentMode.Settings)
-                {
-                    _ = Task.Run(async () =>
-                    {
-                        await Dispatcher.UIThread.InvokeAsync(async () =>
-                        {
-                            await RenderAppSettings(currentSelectedApp);
-                        });
-                    });
-                }
-            });
-        }
-
+        #region App Settings Rendering
         private async Task RenderAppSettings(AppBase app)
         {
             SettingsPanel.Children.Clear();
@@ -1479,7 +595,6 @@ namespace darts_hub
             
             if (!app.IsConfigurable())
             {
-                // For non-configurable apps, show in appropriate panel based on mode
                 var message = new TextBlock
                 {
                     Text = $"{app.CustomName} has no configurable settings.",
@@ -1491,12 +606,12 @@ namespace darts_hub
 
                 if (configurator.Settings.NewSettingsMode)
                 {
-                    ShowNewSettingsMode();
+                    contentModeManager.ShowNewSettingsMode();
                     NewSettingsContent.Children.Add(message);
                 }
                 else
                 {
-                    ShowClassicSettingsMode();
+                    contentModeManager.ShowClassicSettingsMode();
                     SettingsPanel.Children.Add(message);
                 }
                 return;
@@ -1505,37 +620,60 @@ namespace darts_hub
             // Check if new settings mode is enabled
             if (configurator.Settings.NewSettingsMode)
             {
-                ShowNewSettingsMode();
-                
-                // Load new settings content with save callback
-                var newSettingsContent = await NewSettingsContentProvider.CreateNewSettingsContent(app, () => Save());
-                
-                // Clear existing content and add new content
-                NewSettingsContent.Children.Clear();
-                if (newSettingsContent is StackPanel newPanel)
-                {
-                    // Copy children from the created content to our NewSettingsContent panel
-                    while (newPanel.Children.Count > 0)
-                    {
-                        var child = newPanel.Children[0];
-                        newPanel.Children.RemoveAt(0);
-                        NewSettingsContent.Children.Add(child);
-                    }
-                }
-                else
-                {
-                    NewSettingsContent.Children.Add(newSettingsContent);
-                }
-                return;
+                await RenderNewSettingsMode(app);
             }
+            else
+            {
+                await RenderClassicSettingsMode(app);
+            }
+        }
 
-            // Classic settings mode
-            ShowClassicSettingsMode();
+        private async Task RenderNewSettingsMode(AppBase app)
+        {
+            contentModeManager.ShowNewSettingsMode();
+            
+            // Load new settings content with save callback
+            var newSettingsContent = await NewSettingsContentProvider.CreateNewSettingsContent(app, () => Save());
+            
+            // Clear existing content and add new content
+            NewSettingsContent.Children.Clear();
+            if (newSettingsContent is StackPanel newPanel)
+            {
+                // Copy children from the created content to our NewSettingsContent panel
+                while (newPanel.Children.Count > 0)
+                {
+                    var child = newPanel.Children[0];
+                    newPanel.Children.RemoveAt(0);
+                    NewSettingsContent.Children.Add(child);
+                }
+            }
+            else
+            {
+                NewSettingsContent.Children.Add(newSettingsContent);
+            }
+        }
+
+        private async Task RenderClassicSettingsMode(AppBase app)
+        {
+            contentModeManager.ShowClassicSettingsMode();
             
             // Load tooltips for this app
             await LoadTooltipsForApp(app);
 
-            // Header
+            // Create header with app controls
+            var headerPanel = CreateAppSettingsHeader(app);
+            SettingsPanel.Children.Add(headerPanel);
+
+            // Add Autostart section
+            var autostartSection = CreateAutostartSection(app);
+            SettingsPanel.Children.Add(autostartSection);
+
+            // Render configuration sections
+            await RenderConfigurationSections(app);
+        }
+
+        private StackPanel CreateAppSettingsHeader(AppBase app)
+        {
             var headerPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -1552,6 +690,14 @@ namespace darts_hub
             });
 
             // Add action buttons
+            var buttonPanel = CreateAppActionButtons(app);
+            headerPanel.Children.Add(buttonPanel);
+
+            return headerPanel;
+        }
+
+        private StackPanel CreateAppActionButtons(AppBase app)
+        {
             var buttonPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -1560,6 +706,18 @@ namespace darts_hub
             };
 
             // App Control Buttons
+            var controlButtonPanel = CreateAppControlButtons(app);
+            buttonPanel.Children.Add(controlButtonPanel);
+
+            // Help and Changelog buttons
+            var helpButtonPanel = CreateHelpButtons(app);
+            buttonPanel.Children.Add(helpButtonPanel);
+
+            return buttonPanel;
+        }
+
+        private StackPanel CreateAppControlButtons(AppBase app)
+        {
             var controlButtonPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -1567,6 +725,18 @@ namespace darts_hub
             };
 
             // Start/Stop Button
+            var startStopButton = CreateStartStopButton(app);
+            controlButtonPanel.Children.Add(startStopButton);
+
+            // Restart Button
+            var restartButton = CreateRestartButton(app);
+            controlButtonPanel.Children.Add(restartButton);
+
+            return controlButtonPanel;
+        }
+
+        private Button CreateStartStopButton(AppBase app)
+        {
             var startStopButton = new Button
             {
                 Content = app.AppRunningState ? "Stop" : "Start",
@@ -1581,38 +751,14 @@ namespace darts_hub
             
             startStopButton.Click += async (s, e) =>
             {
-                try
-                {
-                    if (app.AppRunningState)
-                    {
-                        app.Close();
-                        await Task.Delay(500); // Give it time to close
-                    }
-                    else
-                    {
-                        app.Run();
-                        await Task.Delay(500); // Give it time to start
-                    }
-                    
-                    // Update tracking after state change
-                    lastKnownRunningStates[app.CustomName] = app.AppRunningState;
-                    
-                    // Refresh the settings page and navigation
-                    await RenderAppSettings(app);
-                    RenderAppNavigation();
-                    
-                    // Save changes
-                    Save();
-                }
-                catch (Exception ex)
-                {
-                    await RenderMessageBox("Error", $"Failed to {(app.AppRunningState ? "stop" : "start")} {app.CustomName}:\n{ex.Message}", MsBox.Avalonia.Enums.Icon.Error);
-                }
+                await HandleStartStopApp(app);
             };
-            
-            controlButtonPanel.Children.Add(startStopButton);
 
-            // Restart Button
+            return startStopButton;
+        }
+
+        private Button CreateRestartButton(AppBase app)
+        {
             var restartButton = new Button
             {
                 Content = "Restart",
@@ -1634,69 +780,19 @@ namespace darts_hub
             
             restartButton.Click += async (s, e) =>
             {
-                if (!app.AppRunningState) return;
-                
-                try
-                {
-                    SetWait(true, $"Restarting {app.CustomName}...");
-                    
-                    startStopButton.IsEnabled = false;
-                    restartButton.IsEnabled = false;
-                    
-                    lastKnownRunningStates[app.CustomName] = app.AppRunningState;
-                    
-                    if (app.AppRunningState)
-                    {
-                        app.Close();
-                        await Task.Delay(2000);
-                        lastKnownRunningStates[app.CustomName] = app.AppRunningState;
-                    }
-                    
-                    app.Run();
-                    
-                    int attempts = 0;
-                    bool startedSuccessfully = false;
-                    while (attempts < 10)
-                    {
-                        await Task.Delay(500);
-                        attempts++;
-                        if (app.AppRunningState)
-                        {
-                            startedSuccessfully = true;
-                            break;
-                        }
-                    }
-                    
-                    lastKnownRunningStates[app.CustomName] = app.AppRunningState;
-                    SetWait(false);
-                    
-                    if (!startedSuccessfully)
-                    {
-                        await RenderMessageBox("Warning", $"Restart initiated for {app.CustomName}, but the app may not have started properly. Please check the console for details.", MsBox.Avalonia.Enums.Icon.Warning);
-                    }
-                    
-                    await RenderAppSettings(app);
-                    RenderAppNavigation();
-                    Save();
-                }
-                catch (Exception ex)
-                {
-                    SetWait(false);
-                    await RenderMessageBox("Error", $"Failed to restart {app.CustomName}:\n{ex.Message}", MsBox.Avalonia.Enums.Icon.Error);
-                    
-                    lastKnownRunningStates[app.CustomName] = app.AppRunningState;
-                    startStopButton.IsEnabled = true;
-                    restartButton.IsEnabled = app.AppRunningState;
-                    
-                    await RenderAppSettings(app);
-                    RenderAppNavigation();
-                }
+                await HandleRestartApp(app);
             };
-            
-            controlButtonPanel.Children.Add(restartButton);
-            buttonPanel.Children.Add(controlButtonPanel);
 
-            // Help and Changelog buttons
+            return restartButton;
+        }
+
+        private StackPanel CreateHelpButtons(AppBase app)
+        {
+            var helpButtonPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal
+            };
+
             if (!string.IsNullOrEmpty(app.ChangelogUrl))
             {
                 var changelogBtn = new Button
@@ -1715,7 +811,7 @@ namespace darts_hub
                     
                     await RenderMessageBox("Changelog", changelogText, MsBox.Avalonia.Enums.Icon.None, ButtonEnum.Ok, Width, Height);
                 };
-                buttonPanel.Children.Add(changelogBtn);
+                helpButtonPanel.Children.Add(changelogBtn);
             }
 
             if (!string.IsNullOrEmpty(app.HelpUrl))
@@ -1742,17 +838,14 @@ namespace darts_hub
                         RenderMessageBox("Error", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
                     }
                 };
-                buttonPanel.Children.Add(helpBtn);
+                helpButtonPanel.Children.Add(helpBtn);
             }
-            
-            headerPanel.Children.Add(buttonPanel);
-            SettingsPanel.Children.Add(headerPanel);
 
-            // Add Autostart section
-            var autostartSection = CreateAutostartSection(app);
-            SettingsPanel.Children.Add(autostartSection);
+            return helpButtonPanel;
+        }
 
-            // Render configuration sections
+        private async Task RenderConfigurationSections(AppBase app)
+        {
             var appConfiguration = app.Configuration;
             var argumentsBySection = appConfiguration.Arguments.GroupBy(a => a.Section);
 
@@ -1796,267 +889,386 @@ namespace darts_hub
             }
         }
 
-        private void ShowClassicSettingsMode()
+        private Control CreateAutostartSection(AppBase app)
         {
-            // Show tooltip panel and splitter for classic mode
-            MainGrid.ColumnDefinitions[4].Width = new GridLength(250, GridUnitType.Pixel);
-            MainGrid.ColumnDefinitions[3].Width = new GridLength(2, GridUnitType.Pixel);
-            TooltipPanel.IsVisible = true;
-            TooltipSplitter.IsVisible = true;
-            
-            // Hide new settings panel, show classic settings
-            NewSettingsPanel.IsVisible = false;
-            SettingsScrollViewer.IsVisible = true;
-            
-            TooltipTitle.Text = "Tooltips";
-            TooltipDescription.Text = "";
-        }
-
-        private void ShowNewSettingsMode()
-        {
-            // Hide tooltip panel and splitter for new settings mode
-            MainGrid.ColumnDefinitions[4].Width = new GridLength(0);
-            MainGrid.ColumnDefinitions[3].Width = new GridLength(0);
-            TooltipPanel.IsVisible = false;
-            TooltipSplitter.IsVisible = false;
-            
-            // Hide classic settings, show new settings panel
-            SettingsScrollViewer.IsVisible = false;
-            NewSettingsPanel.IsVisible = true;
-        }
-
-        private void NewSettingsBackButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Switch back to classic mode
-            configurator.Settings.NewSettingsMode = false;
-            configurator.SaveSettings();
-            
-            // Update the checkbox in About section
-            AboutCheckBoxNewSettingsMode.IsChecked = false;
-            
-            // Re-render current app settings if any app is selected
-            if (selectedApp != null)
+            var expander = new Expander
             {
-                _ = Task.Run(async () =>
-                {
-                    await Dispatcher.UIThread.InvokeAsync(async () =>
-                    {
-                        await RenderAppSettings(selectedApp);
-                    });
-                });
-            }
-            else
+                Header = "Application Control",
+                IsExpanded = true,
+                Margin = new Thickness(0, 10),
+                FontSize = 16,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White,
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            var sectionPanel = new StackPanel 
+            { 
+                Margin = new Thickness(10),
+                Background = Brushes.Transparent,
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            var appState = selectedProfile?.Apps.Values.FirstOrDefault(a => a.App.CustomName == app.CustomName);
+            
+            if (appState != null)
             {
-                // Just switch modes
-                ShowClassicSettingsMode();
+                var autostartPanel = CreateAutostartPanel(appState);
+                sectionPanel.Children.Add(autostartPanel);
             }
+
+            expander.Content = sectionPanel;
+            return expander;
         }
 
-        private void ToTopButton_Click(object sender, RoutedEventArgs e)
+        private StackPanel CreateAutostartPanel(ProfileState appState)
         {
-            if (currentContentMode == ContentMode.Settings)
+            var autostartPanel = new StackPanel 
+            { 
+                Margin = new Thickness(0, 5),
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+            
+            var autostartLabel = new TextBlock
             {
-                ScrollViewer scrollViewer;
-                if (configurator.Settings.NewSettingsMode)
-                {
-                    scrollViewer = NewSettingsScrollViewer;
-                }
-                else
-                {
-                    scrollViewer = SettingsScrollViewer;
-                }
-                
-                if (scrollViewer == null) return;
-                
-                var startOffset = scrollViewer.Offset.Y;
-                var duration = TimeSpan.FromMilliseconds(500);
-                var startTime = DateTime.Now;
+                Text = "Enable at startup",
+                FontSize = 14,
+                Foreground = Brushes.White,
+                Margin = new Thickness(0, 0, 0, 5)
+            };
+            autostartPanel.Children.Add(autostartLabel);
 
-                var scrollTimer = new Timer(16); // ~60 FPS
-                scrollTimer.Elapsed += (s, args) =>
-                {
-                    var elapsed = DateTime.Now - startTime;
-                    var progress = Math.Min(elapsed.TotalMilliseconds / duration.TotalMilliseconds, 1.0);
-                    
-                    var easedProgress = 1 - Math.Pow(1 - progress, 3);
-                    var currentOffset = startOffset * (1 - easedProgress);
-                    
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        scrollViewer.Offset = scrollViewer.Offset.WithY(currentOffset);
-                        
-                        if (progress >= 1.0)
-                        {
-                            scrollTimer.Stop();
-                            scrollTimer.Dispose();
-                        }
-                    });
-                };
-                scrollTimer.Start();
-            }
+            var autostartCheckBox = new CheckBox
+            {
+                Content = "Start this application when the profile is launched",
+                IsChecked = appState.TaggedForStart,
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
+                Margin = new Thickness(0, 0, 0, 10),
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            autostartCheckBox.Checked += (s, e) => 
+            {
+                appState.TaggedForStart = true;
+                Save();
+            };
+            
+            autostartCheckBox.Unchecked += (s, e) => 
+            {
+                appState.TaggedForStart = false;
+                Save();
+            };
+
+            autostartPanel.Children.Add(autostartCheckBox);
+            return autostartPanel;
         }
 
-        private void SettingsScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        private async Task<Control?> CreateArgumentControl(Argument argument)
         {
-            if (currentContentMode == ContentMode.Settings && sender is ScrollViewer scrollViewer)
-            {
-                const double showThreshold = 100.0;
-                bool shouldShow = scrollViewer.Offset.Y > showThreshold;
-                var toTopButton = this.FindControl<Button>("ToTopButton");
-                if (toTopButton != null)
-                {
-                    if (shouldShow && !toTopButton.IsVisible)
-                    {
-                        toTopButton.IsVisible = true;
-                        toTopButton.Opacity = 0.9;
-                    }
-                    else if (!shouldShow && toTopButton.IsVisible)
-                    {
-                        toTopButton.IsVisible = false;
-                        toTopButton.Opacity = 0.0;
-                    }
-                }
-            }
+            var argumentControlFactory = new ArgumentControlFactory(this);
+            return await argumentControlFactory.CreateControl(argument, AutoSaveConfiguration, ShowTooltip);
         }
 
-        private void NewSettingsScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
-        {
-            if (currentContentMode == ContentMode.Settings && sender is ScrollViewer scrollViewer)
-            {
-                const double showThreshold = 100.0;
-                bool shouldShow = scrollViewer.Offset.Y > showThreshold;
-                var toTopButton = this.FindControl<Button>("ToTopButton");
-                if (toTopButton != null)
-                {
-                    if (shouldShow && !toTopButton.IsVisible)
-                    {
-                        toTopButton.IsVisible = true;
-                        toTopButton.Opacity = 0.9;
-                    }
-                    else if (!shouldShow && toTopButton.IsVisible)
-                    {
-                        toTopButton.IsVisible = false;
-                        toTopButton.Opacity = 0.0;
-                    }
-                }
-            }
-        }
-
-        // Missing essential methods - basic implementations
-        private void InitializeAboutContent()
+        private void AutoSaveConfiguration(Argument argument)
         {
             try
             {
-                // Set the app version
-                AboutAppVersion.Content = Updater.version;
-                
-                // Set the skip update confirmation checkbox
-                AboutCheckBoxSkipUpdateConfirmation.IsChecked = configurator.Settings.SkipUpdateConfirmation;
-                
-                // Set the new settings mode checkbox
-                AboutCheckBoxNewSettingsMode.IsChecked = configurator.Settings.NewSettingsMode;
-                
-                // Show the About content by default
-                ShowAboutMode();
+                argument.IsValueChanged = true;
+                Save();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error initializing About content: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Auto-save failed: {ex.Message}");
             }
         }
 
-        private async Task<ButtonResult> RenderMessageBox(string title, string message, MsBox.Avalonia.Enums.Icon icon, ButtonEnum buttons = ButtonEnum.Ok, double? width = null, double? height = null, int autoCloseDelayInSeconds = 0)
+        private void ShowTooltip(Argument argument)
         {
-            var messageBoxParams = new MessageBoxStandardParams
+            try
             {
-                ContentTitle = title,
-                ContentMessage = message,
-                Icon = icon,
-                ButtonDefinitions = buttons,
-                WindowIcon = Icon,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            };
+                if (TooltipDescription == null) return;
 
-            if (width.HasValue)
-                messageBoxParams.Width = width.Value;
-            if (height.HasValue)
-                messageBoxParams.Height = height.Value;
+                // Inlines leeren, um vorherigen Text zu entfernen
+                TooltipDescription.Inlines.Clear();
 
-            var messageBox = MessageBoxManager.GetMessageBoxStandard(messageBoxParams);
-            
-            if (autoCloseDelayInSeconds > 0)
-            {
-                _ = Task.Delay(TimeSpan.FromSeconds(autoCloseDelayInSeconds)).ContinueWith(_ =>
+                // Argument-Namen in fett hinzufügen
+                TooltipDescription.Inlines.Add(new Run(argument.NameHuman) { FontWeight = FontWeight.Bold });
+
+                // Doppelpunkt als Trenner
+                TooltipDescription.Inlines.Add(new Run(": "));
+                TooltipDescription.Inlines.Add(new LineBreak());
+                TooltipDescription.Inlines.Add(new LineBreak());
+
+                // Beschreibungstext in normaler Schrift hinzufügen
+                string description;
+                if (currentTooltips != null && currentTooltips.TryGetValue(argument.Name, out var tooltip))
                 {
-                    // The MessageBox will auto-close on timeout
-                });
+                    description = tooltip;
+                }
+                else
+                {
+                    description = argument.Description ?? "No description available.";
+                }
+
+                TooltipDescription.Inlines.Add(new Run(description));
             }
-
-            return await messageBox.ShowWindowDialogAsync(this);
+            catch (Exception ex)
+            {
+                if (TooltipDescription != null)
+                    TooltipDescription.Text = "Error loading tooltip.";
+                System.Diagnostics.Debug.WriteLine($"Error showing tooltip: {ex.Message}");
+            }
         }
+        #endregion
 
-        private void ShowAboutMode()
+        #region App Control Actions
+        private async Task HandleStartStopApp(AppBase app)
         {
-            currentContentMode = ContentMode.About;
-            
-            // Hide to top button when not in settings mode
-            var toTopButton = this.FindControl<Button>("ToTopButton");
-            if (toTopButton != null)
+            try
             {
-                toTopButton.IsVisible = false;
+                if (app.AppRunningState)
+                {
+                    app.Close();
+                    await Task.Delay(500); // Give it time to close
+                }
+                else
+                {
+                    app.Run();
+                    await Task.Delay(500); // Give it time to start
+                }
+                
+                // Refresh the settings page and navigation
+                await RenderAppSettings(app);
+                
+                // Save changes
+                Save();
             }
-            
-            // Stop the console update timer
-            consoleUpdateTimer?.Stop();
-            
-            // Show tooltip panel and splitter
-            MainGrid.ColumnDefinitions[4].Width = new GridLength(250, GridUnitType.Pixel);
-            MainGrid.ColumnDefinitions[3].Width = new GridLength(2, GridUnitType.Pixel);
-            TooltipPanel.IsVisible = true;
-            TooltipSplitter.IsVisible = true;
-            
-            // Hide console panel
-            ConsolePanel.IsVisible = false;
-            
-            // Hide settings and new settings panel
-            SettingsScrollViewer.IsVisible = false;
-            ChangelogScrollViewer.IsVisible = false;
-            NewSettingsPanel.IsVisible = false;
-            
-            // Show about
-            AboutScrollViewer.IsVisible = true;
-
-            // *** Reset ChangelogScrollViewer positioning ***
-            Grid.SetColumn(ChangelogScrollViewer, 2);
-            Grid.SetColumnSpan(ChangelogScrollViewer, 1);
-
-            // *** Reset Border-Eigenschaften ***
-            var contentBorder = MainGrid.Children.OfType<Border>()
-                .FirstOrDefault(b => Grid.GetColumn(b) == 2 && Grid.GetColumnSpan(b) == 1);
-
-            if (contentBorder != null)
+            catch (Exception ex)
             {
-                contentBorder.Background = new SolidColorBrush(Color.FromArgb(242, 37, 37, 38));
-                contentBorder.Width = double.NaN;
-                contentBorder.HorizontalAlignment = HorizontalAlignment.Stretch;
-            }
-
-            // Update tooltip content
-            TooltipTitle.Text = "Darts-Hub Info Area";
-            TooltipDescription.Text = "This is your central hub for managing darts applications. Use the navigation panel to configure your apps, or explore the settings for detailed configuration options.";
-            
-            // Update button states
-            ButtonConsole.Background = Brushes.Transparent;
-            ButtonChangelog.Background = Brushes.Transparent;
-
-            // Update the about button appearance to show it's active
-            var aboutButton = this.FindControl<Button>("Buttonabout");
-            if (aboutButton != null)
-            {
-                aboutButton.Background = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+                await RenderMessageBox("Error", $"Failed to {(app.AppRunningState ? "stop" : "start")} {app.CustomName}:\n{ex.Message}", MsBox.Avalonia.Enums.Icon.Error);
             }
         }
 
+        private async Task HandleRestartApp(AppBase app)
+        {
+            if (!app.AppRunningState) return;
+            
+            try
+            {
+                SetWait(true, $"Restarting {app.CustomName}...");
+                
+                if (app.AppRunningState)
+                {
+                    app.Close();
+                    await Task.Delay(2000);
+                }
+                
+                app.Run();
+                
+                int attempts = 0;
+                bool startedSuccessfully = false;
+                while (attempts < 10)
+                {
+                    await Task.Delay(500);
+                    attempts++;
+                    if (app.AppRunningState)
+                    {
+                        startedSuccessfully = true;
+                        break;
+                    }
+                }
+                
+                SetWait(false);
+                
+                if (!startedSuccessfully)
+                {
+                    await RenderMessageBox("Warning", $"Restart initiated for {app.CustomName}, but the app may not have started properly. Please check the console for details.", MsBox.Avalonia.Enums.Icon.Warning);
+                }
+                
+                await RenderAppSettings(app);
+                Save();
+            }
+            catch (Exception ex)
+            {
+                SetWait(false);
+                await RenderMessageBox("Error", $"Failed to restart {app.CustomName}:\n{ex.Message}", MsBox.Avalonia.Enums.Icon.Error);
+                await RenderAppSettings(app);
+            }
+        }
+        #endregion
+
+        #region ProfileManager Event Handlers
+        private void SetupProfileManagerEvents()
+        {
+            profileManager.AppDownloadStarted += ProfileManager_AppDownloadStarted;
+            profileManager.AppDownloadFinished += ProfileManager_AppDownloadFinished;
+            profileManager.AppDownloadFailed += ProfileManager_AppDownloadFailed;
+            profileManager.AppDownloadProgressed += ProfileManager_AppDownloadProgressed;
+            profileManager.AppInstallStarted += ProfileManager_AppInstallStarted;
+            profileManager.AppInstallFinished += ProfileManager_AppInstallFinished;
+            profileManager.AppInstallFailed += ProfileManager_AppInstallFailed;
+            profileManager.AppConfigurationRequired += ProfileManager_AppConfigurationRequired;
+        }
+
+        private async void ProfileManager_AppDownloadStarted(object? sender, AppEventArgs e)
+        {
+            SetWait(true, "Downloading " + e.App.Name + "...");
+        }
+
+        private void ProfileManager_AppDownloadFinished(object? sender, AppEventArgs e)
+        {
+            SetWait(false);
+            RunSelectedProfile(true);
+        }
+
+        private void ProfileManager_AppDownloadFailed(object? sender, AppEventArgs e)
+        {
+            SetWait(false, "Download " + e.App.Name + " failed. Bitte überprüfe deine Internetverbindung und versuche es erneut. " + e.Message);
+        }
+
+        private void ProfileManager_AppDownloadProgressed(object? sender, DownloadProgressChangedEventArgs e)
+        {
+            SetWait(true);
+        }
+
+        private void ProfileManager_AppInstallStarted(object? sender, AppEventArgs e)
+        {
+            SetWait(true, "Installing " + e.App.Name + "...");
+        }
+
+        private void ProfileManager_AppInstallFinished(object? sender, AppEventArgs e)
+        {
+            SetWait(false);
+        }
+
+        private void ProfileManager_AppInstallFailed(object? sender, AppEventArgs e)
+        {
+            SetWait(false, "Install " + e.App.Name + " failed. " + e.Message);
+        }
+
+        private async void ProfileManager_AppConfigurationRequired(object? sender, AppEventArgs e)
+        {
+            selectedApp = e.App;
+            await RenderAppSettings(e.App);
+        }
+        #endregion
+
+        #region Updater Event Handlers
+        private void SetupUpdaterEvents()
+        {
+            Updater.NewReleaseFound += Updater_NewReleaseFound;
+            Updater.NoNewReleaseFound += Updater_NoNewReleaseFound;
+            Updater.ReleaseInstallInitialized += Updater_ReleaseInstallInitialized;
+            Updater.ReleaseDownloadStarted += Updater_ReleaseDownloadStarted;
+            Updater.ReleaseDownloadFailed += Updater_ReleaseDownloadFailed;
+            Updater.ReleaseDownloadProgressed += Updater_ReleaseDownloadProgressed;
+        }
+
+        private async void Updater_NoNewReleaseFound(object? sender, ReleaseEventArgs e)
+        {
+            await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                SetWait(false);
+                
+                // Check if wizard should be shown first
+                if (!configurator.Settings.WizardCompleted && selectedProfile != null)
+                {
+                    return;
+                }
+                
+                // Only auto-start if no wizard is needed
+                if (configurator.Settings.StartProfileOnStart) 
+                {
+                    RunSelectedProfile();
+                }
+            });
+        }
+
+        private async void Updater_NewReleaseFound(object? sender, ReleaseEventArgs e)
+        {
+            await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                var update = ButtonResult.No;
+                if (!configurator.Settings.SkipUpdateConfirmation)
+                {
+                    update = await RenderMessageBox($"Update available",
+                        $"New Version '{e.Version}' available!\r\n\r\nDO YOU WANT TO UPDATE?\r\n\r\n" +
+                        $"------------------  CHANGELOG  ------------------\r\n\r\n{e.Message}",
+                        MsBox.Avalonia.Enums.Icon.Success, ButtonEnum.YesNo, 600.0, 800.0);
+                }
+                else
+                {
+                    update = ButtonResult.Yes;
+                }
+                
+                if (update == ButtonResult.Yes)
+                {
+                    try
+                    {
+                        Updater.UpdateToNewVersion();
+                    }
+                    catch (Exception ex)
+                    {
+                        await RenderMessageBox("", "Update to new version failed: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
+                    }
+                }
+                else
+                {
+                    await HandleNoUpdateSelected();
+                }
+            });
+        }
+
+        private async Task HandleNoUpdateSelected()
+        {
+            await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                SetWait(false);
+                
+                // Check if wizard should be shown first
+                if (!configurator.Settings.WizardCompleted && selectedProfile != null)
+                {
+                    return;
+                }
+                
+                // Only auto-start if no wizard is needed
+                if (configurator.Settings.StartProfileOnStart) 
+                {
+                    RunSelectedProfile();
+                }
+            });
+        }
+
+        private async void Updater_ReleaseDownloadStarted(object? sender, ReleaseEventArgs e)
+        {
+            SetWait(true, "Downloading " + e.Version + "...");
+        }
+
+        private async void Updater_ReleaseDownloadFailed(object? sender, ReleaseEventArgs e)
+        {
+            await RenderMessageBox("", "Check or update to new version failed: " + e.Message, MsBox.Avalonia.Enums.Icon.Error, autoCloseDelayInSeconds: 5);
+            await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                SetWait(false);
+                if (configurator.Settings.StartProfileOnStart) RunSelectedProfile();
+            });
+        }
+
+        private void Updater_ReleaseDownloadProgressed(object? sender, DownloadProgressChangedEventArgs e)
+        {
+            SetWait(true);
+        }
+
+        private void Updater_ReleaseInstallInitialized(object? sender, ReleaseEventArgs e)
+        {
+            Close();
+        }
+        #endregion
+
+        #region Content Loading and Utility Methods
         private async Task LoadChangelogContent()
         {
             try
@@ -2108,525 +1320,93 @@ namespace darts_hub
             };
         }
 
-        private Control CreateAutostartSection(AppBase app)
-        {
-            var expander = new Expander
-            {
-                Header = "Application Control",
-                IsExpanded = true,
-                Margin = new Thickness(0, 10),
-                FontSize = 16,
-                FontWeight = FontWeight.Bold,
-                Foreground = Brushes.White,
-                Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0),
-                HorizontalAlignment = HorizontalAlignment.Stretch
-            };
-
-            var sectionPanel = new StackPanel 
-            { 
-                Margin = new Thickness(10),
-                Background = Brushes.Transparent,
-                HorizontalAlignment = HorizontalAlignment.Stretch
-            };
-
-            var appState = selectedProfile?.Apps.Values.FirstOrDefault(a => a.App.CustomName == app.CustomName);
-            
-            if (appState != null)
-            {
-                var autostartPanel = new StackPanel 
-                { 
-                    Margin = new Thickness(0, 5),
-                    HorizontalAlignment = HorizontalAlignment.Stretch
-                };
-                
-                var autostartLabel = new TextBlock
-                {
-                    Text = "Enable at startup",
-                    FontSize = 14,
-                    Foreground = Brushes.White,
-                    Margin = new Thickness(0, 0, 0, 5)
-                };
-                autostartPanel.Children.Add(autostartLabel);
-
-                var autostartCheckBox = new CheckBox
-                {
-                    Content = "Start this application when the profile is launched",
-                    IsChecked = appState.TaggedForStart,
-                    FontSize = 12,
-                    Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
-                    Margin = new Thickness(0, 0, 0, 10),
-                    HorizontalAlignment = HorizontalAlignment.Stretch
-                };
-
-                autostartCheckBox.Checked += (s, e) => 
-                {
-                    appState.TaggedForStart = true;
-                    Save();
-                    RenderAppNavigation();
-                };
-                
-                autostartCheckBox.Unchecked += (s, e) => 
-                {
-                    appState.TaggedForStart = false;
-                    Save();
-                    RenderAppNavigation();
-                };
-
-                autostartPanel.Children.Add(autostartCheckBox);
-                sectionPanel.Children.Add(autostartPanel);
-            }
-
-            expander.Content = sectionPanel;
-            return expander;
-        }
-
-        private async Task<Control?> CreateArgumentControl(Argument argument)
-        {
-            var mainPanel = new StackPanel 
-            { 
-                Margin = new Thickness(0, 5),
-                HorizontalAlignment = HorizontalAlignment.Stretch
-            };
-            
-            // Label
-            var label = new TextBlock
-            {
-                Text = argument.NameHuman + (argument.Required ? " *" : ""),
-                FontSize = 14,
-                Foreground = Brushes.White,
-                Margin = new Thickness(0, 0, 0, 5)
-            };
-            
-            mainPanel.Children.Add(label);
-
-            Control? inputControl = null;
-            string type = argument.GetTypeClear();
-
-            // Helper function to check if value is default/empty
-            bool IsValueDefault(Argument arg)
-            {
-                return string.IsNullOrEmpty(arg.Value) || arg.Value == null;
-            }
-
-            // Helper function to update clear button opacity
-            void UpdateClearButtonOpacity(Button clearButton, Argument arg)
-            {
-                clearButton.Opacity = IsValueDefault(arg) ? 0.1 : 1.0;
-            }
-
-            // Create appropriate input control based on argument type
-            switch (type)
-            {
-                case Argument.TypeString:
-                case Argument.TypePassword:
-                    inputControl = new TextBox
-                    {
-                        Text = argument.Value,
-                        PasswordChar = type == Argument.TypePassword ? '*' : '\0',
-                        FontSize = 14,
-                        Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-                        Foreground = Brushes.White,
-                        BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
-                        Padding = new Thickness(8),
-                        HorizontalAlignment = HorizontalAlignment.Stretch
-                    };
-                    break;
-
-                case Argument.TypeBool:
-                    bool isChecked = false;
-                    if (!string.IsNullOrEmpty(argument.Value))
-                    {
-                        isChecked = argument.Value == "True" || argument.Value == "1";
-                    }
-                    
-                    inputControl = new CheckBox
-                    {
-                        IsChecked = isChecked,
-                        FontSize = 14,
-                        Foreground = Brushes.White,
-                        HorizontalAlignment = HorizontalAlignment.Stretch
-                    };
-                    break;
-
-                case Argument.TypeInt:
-                    inputControl = new NumericUpDown
-                    {
-                        Value = int.TryParse(argument.Value, out var intVal) ? intVal : 0,
-                        Increment = 1,
-                        FontSize = 14,
-                        Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-                        Foreground = Brushes.White,
-                        BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
-                        HorizontalAlignment = HorizontalAlignment.Stretch
-                    };
-                    break;
-
-                case Argument.TypeFloat:
-                    inputControl = new NumericUpDown
-                    {
-                        Value = double.TryParse(argument.Value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var doubleVal) ? (decimal)doubleVal : 0,
-                        Increment = 0.1m,
-                        FormatString = "F1",
-                        FontSize = 14,
-                        Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-                        Foreground = Brushes.White,
-                        BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
-                        HorizontalAlignment = HorizontalAlignment.Stretch
-                    };
-                    break;
-
-                case Argument.TypeFile:
-                case Argument.TypePath:
-                    var fileTextBox = new TextBox
-                    {
-                        Text = argument.Value,
-                        FontSize = 14,
-                        Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-                        Foreground = Brushes.White,
-                        BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
-                        Padding = new Thickness(8),
-                        HorizontalAlignment = HorizontalAlignment.Stretch
-                    };
-
-                    var browseButton = new Button
-                    {
-                        Content = "Browse",
-                        Margin = new Thickness(5, 0, 0, 0),
-                        Padding = new Thickness(10, 5),
-                        Background = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
-                        Foreground = Brushes.White,
-                        BorderThickness = new Thickness(0),
-                        Width = 80
-                    };
-
-                    browseButton.Click += async (s, e) =>
-                    {
-                        if (type == Argument.TypePath)
-                        {
-                            var dialog = new OpenFolderDialog();
-                            var result = await dialog.ShowAsync(this);
-                            if (result != null)
-                            {
-                                fileTextBox.Text = result;
-                                argument.Value = result;
-                                AutoSaveConfiguration(argument);
-                            }
-                        }
-                        else
-                        {
-                            var dialog = new OpenFileDialog { AllowMultiple = false };
-                            var result = await dialog.ShowAsync(this);
-                            if (result != null && result.Length > 0)
-                            {
-                                fileTextBox.Text = result[0];
-                                argument.Value = result[0];
-                                AutoSaveConfiguration(argument);
-                            }
-                        }
-                    };
-
-                    var grid = new Grid
-                    {
-                        HorizontalAlignment = HorizontalAlignment.Stretch
-                    };
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-                    
-                    Grid.SetColumn(fileTextBox, 0);
-                    Grid.SetColumn(browseButton, 1);
-                    
-                    grid.Children.Add(fileTextBox);
-                    grid.Children.Add(browseButton);
-                    
-                    inputControl = grid;
-                    fileTextBox.TextChanged += (s, e) => 
-                    {
-                        argument.Value = fileTextBox.Text;
-                        AutoSaveConfiguration(argument);
-                    };
-                    break;
-            }
-
-            if (inputControl != null)
-            {
-                var inputContainer = new Grid
-                {
-                    HorizontalAlignment = HorizontalAlignment.Stretch                };
-                inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-                Grid.SetColumn(inputControl, 0);
-                inputContainer.Children.Add(inputControl);
-
-                var clearImage = new Image
-                {
-                    Width = 20,
-                    Height = 20,
-                    Source = new Bitmap(AssetLoader.Open(new Uri("avares://darts-hub/Assets/clear.png")))
-                };
-
-                var clearButton = new Button
-                {
-                    Content = clearImage,
-                    Background = Brushes.Transparent,
-                    BorderThickness = new Thickness(0),
-                    Padding = new Thickness(5),
-                    Margin = new Thickness(5, 0, 0, 0),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Width = 30,
-                    Height = 30
-                };
-
-                ToolTip.SetTip(clearButton, "Reset to default");
-
-                clearButton.Click += (s, e) =>
-                {
-                    argument.Value = null;
-
-                    switch (type)
-                    {
-                        case Argument.TypeString:
-                        case Argument.TypePassword:
-                            if (inputControl is TextBox textBox)
-                                textBox.Text = "";
-                            break;
-                        case Argument.TypeBool:
-                            if (inputControl is CheckBox checkBox)
-                            {
-                                checkBox.IsChecked = false;
-                                argument.Value = null;
-                            }
-                            break;
-                        case Argument.TypeInt:
-                        case Argument.TypeFloat:
-                            if (inputControl is NumericUpDown numericUpDown)
-                                numericUpDown.Value = 0;
-                            break;
-                        case Argument.TypeFile:
-                        case Argument.TypePath:
-                            if (inputControl is Grid gridControl)
-                            {
-                                var textBoxInGrid = gridControl.Children.OfType<TextBox>().FirstOrDefault();
-                                if (textBoxInGrid != null)
-                                    textBoxInGrid.Text = "";
-                            }
-                            break;
-                    }
-
-                    UpdateClearButtonOpacity(clearButton, argument);
-                    AutoSaveConfiguration(argument);
-                };
-
-                // Add event handlers to update clear button opacity when value changes
-                switch (type)
-                {
-                    case Argument.TypeString:
-                    case Argument.TypePassword:
-                        if (inputControl is TextBox textBox)
-                        {
-                            textBox.TextChanged += (s, e) => 
-                            {
-                                argument.Value = textBox.Text;
-                                UpdateClearButtonOpacity(clearButton, argument);
-                                AutoSaveConfiguration(argument);
-                            };
-                        }
-                        break;
-                    case Argument.TypeBool:
-                        if (inputControl is CheckBox checkBox)
-                        {
-                            checkBox.Checked += (s, e) => 
-                            {
-                                argument.Value = "True";
-                                UpdateClearButtonOpacity(clearButton, argument);
-                                AutoSaveConfiguration(argument);
-                            };
-                            checkBox.Unchecked += (s, e) => 
-                            {
-                                argument.Value = "False";
-                                UpdateClearButtonOpacity(clearButton, argument);
-                                AutoSaveConfiguration(argument);
-                            };
-                        }
-                        break;
-                    case Argument.TypeInt:
-                    case Argument.TypeFloat:
-                        if (inputControl is NumericUpDown numericUpDown)
-                        {
-                            numericUpDown.ValueChanged += (s, e) => 
-                            {
-                                if (type == Argument.TypeFloat)
-                                {
-                                    argument.Value = numericUpDown.Value?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
-                                }
-                                else
-                                {
-                                    argument.Value = numericUpDown.Value?.ToString() ?? "";
-                                }
-                                UpdateClearButtonOpacity(clearButton, argument);
-                                AutoSaveConfiguration(argument);
-                            };
-                        }
-                        break;
-                }
-
-                Grid.SetColumn(clearButton, 1);
-                inputContainer.Children.Add(clearButton);
-
-                inputControl.PointerEntered += (s, e) => ShowTooltip(argument);
-                inputControl.PointerPressed += (s, e) => ShowTooltip(argument);
-                
-                mainPanel.Children.Add(inputContainer);
-            }
-
-            return mainPanel;
-        }
-
-        private void AutoSaveConfiguration(Argument argument)
+        private void VisitHelpPage(string url)
         {
             try
             {
-                argument.IsValueChanged = true;
-                Save();
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
+                {
+                    UseShellExecute = true
+                });
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Auto-save failed: {ex.Message}");
+                RenderMessageBox("Error", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
             }
         }
 
-        private void ShowTooltip(Argument argument)
+        private void Save()
         {
             try
             {
-                // Inlines leeren, um vorherigen Text zu entfernen
-                TooltipDescription.Inlines.Clear();
-
-                // Argument-Namen in fett hinzufügen
-                TooltipDescription.Inlines.Add(new Run(argument.NameHuman) { FontWeight = FontWeight.Bold });
-
-                // Doppelpunkt als Trenner
-                TooltipDescription.Inlines.Add(new Run(": "));
-                TooltipDescription.Inlines.Add(new LineBreak());
-                TooltipDescription.Inlines.Add(new LineBreak());
-
-                // Beschreibungstext in normaler Schrift hinzufügen
-                string description;
-                if (currentTooltips != null && currentTooltips.TryGetValue(argument.Name, out var tooltip))
-                {
-                    description = tooltip;
-                }
-                else
-                {
-                    description = argument.Description ?? "No description available.";
-                }
-
-                TooltipDescription.Inlines.Add(new Run(description));
+                profileManager.StoreApps();
             }
             catch (Exception ex)
             {
-                TooltipDescription.Text = "Error loading tooltip.";
-                System.Diagnostics.Debug.WriteLine($"Error showing tooltip: {ex.Message}");
+                RenderMessageBox("", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
             }
         }
 
-        // Updater event handlers
-        private async void Updater_NoNewReleaseFound(object? sender, ReleaseEventArgs e)
+        private async void RunSelectedProfile(bool minimize = true)
         {
-            await Dispatcher.UIThread.InvokeAsync(async () =>
+            try
+            {
+                SetWait(true, "Starting profile...");
+                if (ProfileManager.RunProfile(selectedProfile) && minimize) 
+                    WindowState = WindowState.Minimized;
+            }
+            catch (Exception ex)
+            {
+                await RenderMessageBox("", "An error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
+            }
+            finally
             {
                 SetWait(false);
-                
-                // Check if wizard should be shown first
-                if (!configurator.Settings.WizardCompleted && selectedProfile != null)
-                {
-                    // Don't auto-start profile if wizard needs to be shown
-                    return;
-                }
-                
-                // Only auto-start if no wizard is needed
-                if (configurator.Settings.StartProfileOnStart) 
-                {
-                    RunSelectedProfile();
-                }
-            });
+            }
         }
 
-        private async void Updater_NewReleaseFound(object? sender, ReleaseEventArgs e)
+        private void SetWait(bool wait, string waitingText = "")
         {
-            await Dispatcher.UIThread.InvokeAsync(async () =>
+            string waitingMessage = string.IsNullOrEmpty(waitingText) ? WaitingText.Text : waitingText;
+            
+            LoadingOverlay.IsVisible = wait;
+            WaitingText.Text = waitingMessage;
+            
+            // Update console content if in console mode (but don't interfere with manual scrolling)
+            if (contentModeManager.CurrentContentMode == ContentModeManager.ContentMode.Console && !wait)
             {
-                var update = ButtonResult.No;
-                if (!configurator.Settings.SkipUpdateConfirmation)
-                {
-                    update = await RenderMessageBox($"Update available",
-                        $"New Version '{e.Version}' available!\r\n\r\nDO YOU WANT TO UPDATE?\r\n\r\n" +
-                        $"------------------  CHANGELOG  ------------------\r\n\r\n{e.Message}",
-                        MsBox.Avalonia.Enums.Icon.Success, ButtonEnum.YesNo, 600.0, 800.0);
-                }
-                else
-                {
-                    update = ButtonResult.Yes;
-                }
-                
-                if (update == ButtonResult.Yes)
-                {
-                    try
-                    {
-                        Updater.UpdateToNewVersion();
-                    }
-                    catch (Exception ex)
-                    {
-                        await RenderMessageBox("", "Update to new version failed: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
-                    }
-                }
-                else
-                {
-                    await Dispatcher.UIThread.InvokeAsync(async () =>
-                    {
-                        SetWait(false);
-                        
-                        // Check if wizard should be shown first
-                        if (!configurator.Settings.WizardCompleted && selectedProfile != null)
-                        {
-                            // Don't auto-start profile if wizard needs to be shown
-                            return;
-                        }
-                        
-                        // Only auto-start if no wizard is needed
-                        if (configurator.Settings.StartProfileOnStart) 
-                        {
-                            RunSelectedProfile();
-                        }
-                    });
-                }
-            });
+                consoleManager.UpdateContent();
+            }
         }
 
-        private async void Updater_ReleaseDownloadStarted(object? sender, ReleaseEventArgs e)
+        private async Task<ButtonResult> RenderMessageBox(string title, string message, MsBox.Avalonia.Enums.Icon icon, ButtonEnum buttons = ButtonEnum.Ok, double? width = null, double? height = null, int autoCloseDelayInSeconds = 0)
         {
-            SetWait(true, "Downloading " + e.Version + "...");
-        }
-
-        private async void Updater_ReleaseDownloadFailed(object? sender, ReleaseEventArgs e)
-        {
-            await RenderMessageBox("", "Check or update to new version failed: " + e.Message, MsBox.Avalonia.Enums.Icon.Error, autoCloseDelayInSeconds: 5);
-            await Dispatcher.UIThread.InvokeAsync(async () =>
+            var messageBoxParams = new MessageBoxStandardParams
             {
-                SetWait(false);
-                if (configurator.Settings.StartProfileOnStart) RunSelectedProfile();
-            });
-        }
+                ContentTitle = title,
+                ContentMessage = message,
+                Icon = icon,
+                ButtonDefinitions = buttons,
+                WindowIcon = Icon,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
 
-        private void Updater_ReleaseDownloadProgressed(object? sender, DownloadProgressChangedEventArgs e)
-        {
-            SetWait(true);
-        }
+            if (width.HasValue)
+                messageBoxParams.Width = width.Value;
+            if (height.HasValue)
+                messageBoxParams.Height = height.Value;
 
-        private void Updater_ReleaseInstallInitialized(object? sender, ReleaseEventArgs e)
-        {
-            Close();
+            var messageBox = MessageBoxManager.GetMessageBoxStandard(messageBoxParams);
+            
+            if (autoCloseDelayInSeconds > 0)
+            {
+                _ = Task.Delay(TimeSpan.FromSeconds(autoCloseDelayInSeconds)).ContinueWith(_ =>
+                {
+                    // The MessageBox will auto-close on timeout
+                });
+            }
+
+            return await messageBox.ShowWindowDialogAsync(this);
         }
 
         private async void ShowCorruptedConfigHandlingBox(ConfigurationException ex)
@@ -2654,103 +1434,9 @@ namespace darts_hub
                 Environment.Exit(1);
             }
         }
+        #endregion
 
-        // Additional event handlers
-        private void Comboboxportal_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (Comboboxportal.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is Profile profile)
-            {
-                selectedProfile = profile;
-                lastKnownRunningStates.Clear();
-                RenderAppNavigation();
-                SettingsPanel.Children.Clear();
-                selectedApp = null;
-                
-                if (currentContentMode == ContentMode.Console)
-                {
-                    InitializeConsoleTabs();
-                }
-            }
-        }
-
-        private void CheckBoxStartProfileOnProgramStartChanged(object sender, RoutedEventArgs e)
-        {
-            if (CheckBoxStartProfileOnProgramStart.IsChecked.HasValue)
-            {
-                configurator.Settings.StartProfileOnStart = CheckBoxStartProfileOnProgramStart.IsChecked.Value;
-                configurator.SaveSettings();
-            }
-        }
-
-        private void ConsoleAutoScrollCheckBox_Changed(object sender, RoutedEventArgs e)
-        {
-            isAutoScrollEnabled = ConsoleAutoScrollCheckBox.IsChecked == true;
-        }
-
-        private async void AboutButton_Click(object sender, RoutedEventArgs e)
-        {
-            Button helpButton = sender as Button;
-
-            switch (helpButton?.Name)
-            {
-                case "AboutContact1":
-                    VisitHelpPage("https://discordapp.com/users/Reepa86#1149");
-                    break;
-                case "AboutContact2":
-                    VisitHelpPage("https://discordapp.com/users/wusaaa#0578");
-                    break;
-                case "AboutContact3":
-                    VisitHelpPage("https://discordapp.com/users/366537096414101504");
-                    break;
-                case "AboutPaypal":
-                    VisitHelpPage("https://paypal.me/I3ull3t");
-                    break;
-                case "AboutDonation":
-                    var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
-                    if (clipboard != null)
-                    {
-                        const string donationAddress = "bc1qr7wsvmmgaj6dle8gae2dl0dcxu5yh8vqlv34x4";
-                        await clipboard.SetTextAsync(donationAddress);
-                        await MessageBoxManager.GetMessageBoxStandard("Bitcoin donation address copied", 
-                            $"Address copied to clipboard:\n{donationAddress}").ShowWindowAsync();
-                    }
-                    break;
-                case "AboutBug":
-                    VisitHelpPage("https://github.com/lbormann/darts-hub/issues");
-                    break;
-                case "AboutChangelog":
-                    await ShowChangelogMode();
-                    break;
-            }
-        }
-
-        private void AboutCheckBoxSkipUpdateConfirmationChanged(object sender, RoutedEventArgs e)
-        {
-            configurator.Settings.SkipUpdateConfirmation = (bool)AboutCheckBoxSkipUpdateConfirmation.IsChecked;
-            configurator.SaveSettings();
-        }
-        
-        private void AboutCheckBoxNewSettingsModeChanged(object sender, RoutedEventArgs e)
-        {
-            configurator.Settings.NewSettingsMode = (bool)AboutCheckBoxNewSettingsMode.IsChecked;
-            configurator.SaveSettings();
-        }
-
-        private void VisitHelpPage(string url)
-        {
-            try
-            {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
-                {
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                RenderMessageBox("Error", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
-            }
-        }
-
+        #region Wizard Management
         /// <summary>
         /// Checks if the setup wizard should be shown and displays it if needed
         /// </summary>
@@ -2801,7 +1487,7 @@ namespace darts_hub
                         MsBox.Avalonia.Enums.Icon.Success);
                     
                     // Refresh the UI
-                    RenderAppNavigation();
+                    navigationManager.RenderAppNavigation();
                     
                     // Re-render current app settings if any app is selected
                     if (selectedApp != null)
@@ -2831,13 +1517,6 @@ namespace darts_hub
                     MsBox.Avalonia.Enums.Icon.Error);
             }
         }
-
-        /// <summary>
-        /// Event handler for the Setup Wizard button click
-        /// </summary>
-        private async void SetupWizardButton_Click(object sender, RoutedEventArgs e)
-        {
-            await ShowSetupWizard();
-        }
+        #endregion
     }
 }

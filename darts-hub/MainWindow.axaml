@@ -220,7 +220,7 @@
 								
 								<!-- Setup Wizard Button -->
 								<Button x:Name="SetupWizardButton"
-										Content="🪄 Run Setup Wizard"
+										Content="🎯 Run Setup Wizard"
 										Padding="15,10"
 										Background="#FF007ACC"
 										BorderBrush="#FF005A9E"
@@ -463,8 +463,7 @@
 					<TabControl x:Name="ConsoleTabControl" 
 								Grid.Row="1"
 								Background="#FF252526"
-							BorderThickness="0"
-								SelectionChanged="ConsoleTabControl_SelectionChanged">
+								BorderThickness="0">
 					</TabControl>
 				</Grid>
 			</Border>

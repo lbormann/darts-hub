@@ -320,10 +320,10 @@ namespace darts_hub.control.wizard.wled
                     var scoreNumber = int.Parse(arg.Name.Substring(1));
                     if (SelectedScores.Contains(scoreNumber))
                     {
-                        // Set a default effect for selected scores
+                        // Set a default effect for selected scores using the new color effect format
                         if (string.IsNullOrEmpty(arg.Value))
                         {
-                            arg.Value = "solid,#00FF00,1000"; // Green solid for 1 second as example
+                            arg.Value = "solid|green"; // Use the new solid|colorname format for color effects
                             arg.IsValueChanged = true;
                         }
                     }

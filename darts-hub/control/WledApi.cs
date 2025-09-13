@@ -515,30 +515,117 @@ namespace darts_hub.control
             
             foreach (var endpoint in endpoints)
             {
-                // First get the effect ID from the effects list
-                var effects = await QueryEffectsAsync(endpoint);
-                if (effects == null) continue;
-                
-                var effectId = effects.IndexOf(effectName);
-                if (effectId < 0) continue; // Effect not found
-                
-                // Get palette ID if palette is specified
-                int? paletteId = null;
-                if (!string.IsNullOrEmpty(palette))
-                {
-                    var palettes = await QueryPalettesAsync(endpoint);
-                    if (palettes != null)
-                    {
-                        paletteId = palettes.IndexOf(palette);
-                        if (paletteId < 0) paletteId = null; // Palette not found, ignore
-                    }
-                }
-                
-                // Query available segments
-                var segmentIds = await QuerySegmentsAsync(endpoint);
-                
                 try
                 {
+                    // Get effect ID - try both local data and live query
+                    int effectId = -1;
+                    
+                    // First try to get from local data
+                    if (wledData?.Effects?.Names != null && wledData.Effects.Ids != null)
+                    {
+                        var effectIndex = wledData.Effects.Names.IndexOf(effectName);
+                        if (effectIndex >= 0 && effectIndex < wledData.Effects.Ids.Count)
+                        {
+                            effectId = wledData.Effects.Ids[effectIndex];
+                            System.Diagnostics.Debug.WriteLine($"Found effect '{effectName}' in local data with ID: {effectId}");
+                        }
+                        else
+                        {
+                            // Try case-insensitive search
+                            effectIndex = wledData.Effects.Names.FindIndex(e => 
+                                string.Equals(e, effectName, StringComparison.OrdinalIgnoreCase));
+                            if (effectIndex >= 0 && effectIndex < wledData.Effects.Ids.Count)
+                            {
+                                effectId = wledData.Effects.Ids[effectIndex];
+                                System.Diagnostics.Debug.WriteLine($"Found effect '{effectName}' in local data (case-insensitive) with ID: {effectId}");
+                            }
+                        }
+                    }
+                    
+                    // If not found in local data, query the endpoint directly
+                    if (effectId < 0)
+                    {
+                        var effects = await QueryEffectsAsync(endpoint);
+                        if (effects != null)
+                        {
+                            effectId = effects.IndexOf(effectName);
+                            if (effectId < 0)
+                            {
+                                // Try case-insensitive search
+                                effectId = effects.FindIndex(e => 
+                                    string.Equals(e, effectName, StringComparison.OrdinalIgnoreCase));
+                            }
+                            
+                            if (effectId >= 0)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Found effect '{effectName}' via live query with ID: {effectId}");
+                            }
+                        }
+                    }
+                    
+                    if (effectId < 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Effect '{effectName}' not found on {endpoint}");
+                        continue; // Effect not found, try next endpoint
+                    }
+                
+                    // Get palette ID if palette is specified
+                    int? paletteId = null;
+                    if (!string.IsNullOrEmpty(palette))
+                    {
+                        // First try local data
+                        if (wledData?.Palettes?.Names != null && wledData.Palettes.Ids != null)
+                        {
+                            var paletteIndex = wledData.Palettes.Names.IndexOf(palette);
+                            if (paletteIndex >= 0 && paletteIndex < wledData.Palettes.Ids.Count)
+                            {
+                                paletteId = wledData.Palettes.Ids[paletteIndex];
+                                System.Diagnostics.Debug.WriteLine($"Found palette '{palette}' in local data with ID: {paletteId}");
+                            }
+                            else
+                            {
+                                // Try case-insensitive search
+                                paletteIndex = wledData.Palettes.Names.FindIndex(p => 
+                                    string.Equals(p, palette, StringComparison.OrdinalIgnoreCase));
+                                if (paletteIndex >= 0 && paletteIndex < wledData.Palettes.Ids.Count)
+                                {
+                                    paletteId = wledData.Palettes.Ids[paletteIndex];
+                                    System.Diagnostics.Debug.WriteLine($"Found palette '{palette}' in local data (case-insensitive) with ID: {paletteId}");
+                                }
+                            }
+                        }
+                        
+                        // If not found in local data, query the endpoint
+                        if (!paletteId.HasValue)
+                        {
+                            var palettes = await QueryPalettesAsync(endpoint);
+                            if (palettes != null)
+                            {
+                                var paletteIndex = palettes.IndexOf(palette);
+                                if (paletteIndex < 0)
+                                {
+                                    // Try case-insensitive search
+                                    paletteIndex = palettes.FindIndex(p => 
+                                        string.Equals(p, palette, StringComparison.OrdinalIgnoreCase));
+                                }
+                                
+                                if (paletteIndex >= 0)
+                                {
+                                    paletteId = paletteIndex;
+                                    System.Diagnostics.Debug.WriteLine($"Found palette '{palette}' via live query with ID: {paletteId}");
+                                }
+                            }
+                        }
+                        
+                        if (!paletteId.HasValue)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Palette '{palette}' not found, using default");
+                        }
+                    }
+                
+                    // Query available segments
+                    var segmentIds = await QuerySegmentsAsync(endpoint);
+                
                     // Ensure proper URL format
                     string endpointUrl = endpoint;
                     if (!endpointUrl.StartsWith("http://") && !endpointUrl.StartsWith("https://"))
@@ -560,12 +647,12 @@ namespace darts_hub.control
                             {
                                 id = segmentId,                            // Segment ID
                                 fx = effectId,                             // Effect ID
-                                sx = speed ?? 180,                         // Speed (default 180 if not specified)
-                                ix = intensity ?? 100,                     // Intensity (default 100 if not specified)  
-                                pal = paletteId ?? 6,                      // Palette ID (default 6 = Party if not specified)
+                                sx = speed ?? 128,                         // Speed (default 128 if not specified)
+                                ix = intensity ?? 128,                     // Intensity (default 128 if not specified)  
+                                pal = paletteId ?? 0,                      // Palette ID (default 0 = Default if not specified)
                                 col = new int[][]                          // Color array with primary, secondary, background
                                 {
-                                    new int[] { 255, 0, 0 },               // Primary color (red)
+                                    new int[] { 255, 160, 0 },             // Primary color (orange)
                                     new int[] { 0, 255, 0 },               // Secondary color (green)
                                     new int[] { 0, 0, 255 }                // Background color (blue)
                                 }
@@ -582,12 +669,12 @@ namespace darts_hub.control
                         {
                             id = 0,                                        // Default segment ID
                             fx = effectId,                                 // Effect ID
-                            sx = speed ?? 180,                             // Speed (default 180 if not specified)
-                            ix = intensity ?? 100,                         // Intensity (default 100 if not specified)
-                            pal = paletteId ?? 6,                          // Palette ID (default 6 = Party if not specified)
+                            sx = speed ?? 128,                             // Speed (default 128 if not specified)
+                            ix = intensity ?? 128,                         // Intensity (default 128 if not specified)
+                            pal = paletteId ?? 0,                          // Palette ID (default 0 = Default if not specified)
                             col = new int[][]                              // Color array with primary, secondary, background
                             {
-                                new int[] { 255, 0, 0 },                   // Primary color (red)
+                                new int[] { 255, 160, 0 },                 // Primary color (orange)
                                 new int[] { 0, 255, 0 },                   // Secondary color (green)
                                 new int[] { 0, 0, 255 }                    // Background color (blue)
                             }
@@ -613,6 +700,12 @@ namespace darts_hub.control
                     });
                     
                     System.Diagnostics.Debug.WriteLine($"Sending WLED effect test payload to {endpoint} for {segments.Count} segment(s):");
+                    System.Diagnostics.Debug.WriteLine($"Effect: '{effectName}' (ID: {effectId})");
+                    if (paletteId.HasValue) 
+                        System.Diagnostics.Debug.WriteLine($"Palette: '{palette}' (ID: {paletteId})");
+                    else 
+                        System.Diagnostics.Debug.WriteLine("Palette: Default (ID: 0)");
+                    System.Diagnostics.Debug.WriteLine($"Speed: {speed ?? 128}, Intensity: {intensity ?? 128}");
                     System.Diagnostics.Debug.WriteLine(json);
                     
                     var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
@@ -623,8 +716,8 @@ namespace darts_hub.control
                     {
                         System.Diagnostics.Debug.WriteLine($"Successfully sent effect '{effectName}' (ID: {effectId}) to {segments.Count} segment(s) on {endpoint}");
                         if (paletteId.HasValue) System.Diagnostics.Debug.WriteLine($"  with palette '{palette}' (ID: {paletteId})");
-                        System.Diagnostics.Debug.WriteLine($"  with speed: {speed ?? 180}");
-                        System.Diagnostics.Debug.WriteLine($"  with intensity: {intensity ?? 100}");
+                        System.Diagnostics.Debug.WriteLine($"  with speed: {speed ?? 128}");
+                        System.Diagnostics.Debug.WriteLine($"  with intensity: {intensity ?? 128}");
                         if (segmentIds != null) System.Diagnostics.Debug.WriteLine($"  applied to segments: [{string.Join(", ", segmentIds)}]");
                         return true;
                     }

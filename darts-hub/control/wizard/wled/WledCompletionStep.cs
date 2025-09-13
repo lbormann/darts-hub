@@ -11,18 +11,20 @@ namespace darts_hub.control.wizard.wled
     /// </summary>
     public class WledCompletionStep
     {
-        private readonly bool showPlayerSpecificColors;
-        private readonly bool showGameWinEffects;
-        private readonly bool showScoreEffects;
-        private readonly int selectedScoresCount;
+        private readonly bool hasPlayerColors;
+        private readonly bool hasGameWinEffects;
+        private readonly bool hasBoardStatusEffects;
+        private readonly bool hasScoreEffects;
+        private readonly int configuredScoresCount;
 
-        public WledCompletionStep(bool showPlayerSpecificColors, bool showGameWinEffects, 
-            bool showScoreEffects, int selectedScoresCount)
+        public WledCompletionStep(bool hasPlayerColors, bool hasGameWinEffects, 
+            bool hasBoardStatusEffects, bool hasScoreEffects, int configuredScoresCount)
         {
-            this.showPlayerSpecificColors = showPlayerSpecificColors;
-            this.showGameWinEffects = showGameWinEffects;
-            this.showScoreEffects = showScoreEffects;
-            this.selectedScoresCount = selectedScoresCount;
+            this.hasPlayerColors = hasPlayerColors;
+            this.hasGameWinEffects = hasGameWinEffects;
+            this.hasBoardStatusEffects = hasBoardStatusEffects;
+            this.hasScoreEffects = hasScoreEffects;
+            this.configuredScoresCount = configuredScoresCount;
         }
 
         public Border CreateCompletionCard()
@@ -47,9 +49,10 @@ namespace darts_hub.control.wizard.wled
             });
 
             var summary = new List<string>();
-            if (showPlayerSpecificColors) summary.Add("• Player-specific colors enabled");
-            if (showGameWinEffects) summary.Add("• Game/match win effects enabled");
-            if (showScoreEffects) summary.Add($"• Score effects for {selectedScoresCount} scores");
+            if (hasPlayerColors) summary.Add("• Player-specific colors enabled");
+            if (hasGameWinEffects) summary.Add("• Game/match win effects enabled");
+            if (hasBoardStatusEffects) summary.Add("• Board status effects enabled");
+            if (hasScoreEffects) summary.Add($"• Score effects for {configuredScoresCount} scores");
             
             if (summary.Count > 0)
             {
@@ -63,8 +66,38 @@ namespace darts_hub.control.wizard.wled
                 });
             }
 
+            var leftFeatures = new StackPanel { Spacing = 4 };
+            leftFeatures.Children.Add(CreateFeatureInfo("🎨 Customizable player colors", hasPlayerColors));
+            leftFeatures.Children.Add(CreateFeatureInfo("🏆 Game win celebrations", hasGameWinEffects));
+            leftFeatures.Children.Add(CreateFeatureInfo("🎯 Board status indicators", hasBoardStatusEffects));
+            leftFeatures.Children.Add(CreateFeatureInfo("📊 Individual score effects", hasScoreEffects));
+            
+            var rightFeatures = new StackPanel { Spacing = 4 };
+            rightFeatures.Children.Add(CreateFeatureInfo("💡 Global brightness control", true));
+            rightFeatures.Children.Add(CreateFeatureInfo("⚡ Real-time dart detection", true));
+            rightFeatures.Children.Add(CreateFeatureInfo("📍 Score area segments", true));
+            rightFeatures.Children.Add(CreateFeatureInfo("🌟 Multiple effect styles", true));
+
+            var featuresPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+            featuresPanel.Children.Add(leftFeatures);
+            featuresPanel.Children.Add(rightFeatures);
+
+            content.Children.Add(featuresPanel);
+
             completionCard.Child = content;
             return completionCard;
+        }
+
+        private StackPanel CreateFeatureInfo(string text, bool enabled)
+        {
+            var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+            panel.Children.Add(new TextBlock
+            {
+                Text = text,
+                FontSize = 14,
+                Foreground = enabled ? Brushes.White : Brushes.Gray
+            });
+            return panel;
         }
     }
 }

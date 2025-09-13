@@ -16,7 +16,7 @@ namespace darts_hub.control.wizard
         private Configurator configurator;
 
         public string Title => "Welcome to Darts-Hub Setup";
-        public string Description => "Let's configure your darts applications to get you started quickly";
+        public string Description => "Let's configure your Autodarts extensions to get you started quickly";
         public string IconName => "darts";
         public bool CanSkip => false;
 
@@ -102,16 +102,16 @@ namespace darts_hub.control.wizard
             var hasVoice = HasAppInProfile("voice");
             var hasExtern = HasAppInProfile("extern");
 
-            configItems.Children.Add(CreateConfigItem("🎯", "Darts-Caller", "Core dart recognition and throwing detection"));
+            configItems.Children.Add(CreateConfigItem("🎯", "Darts-Caller", "Customizeable Caller with almost no limits."));
             
             if (hasWled)
-                configItems.Children.Add(CreateConfigItem("💡", "WLED Integration", "LED strip control and effects"));
+                configItems.Children.Add(CreateConfigItem("💡", "Darts-WLED Integration", "LED strip control and effects"));
             
             if (hasPixelit)
-                configItems.Children.Add(CreateConfigItem("📱", "Pixelit Display", "Smart display for scores and animations"));
+                configItems.Children.Add(CreateConfigItem("📱", "Darts-Pixelit Display", "Smart Pixeldisplay for scores and animations"));
             
             if (hasVoice)
-                configItems.Children.Add(CreateConfigItem("🗣️", "Voice Announcements", "Audio feedback and announcements"));
+                configItems.Children.Add(CreateConfigItem("🗣️", "Darts-Voice", "Controle your Autodarts with Voice commands"));
                 
             if (hasExtern)
                 configItems.Children.Add(CreateConfigItem("🔗", "External Integration", "Connect with external services"));

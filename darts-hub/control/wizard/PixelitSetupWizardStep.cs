@@ -350,16 +350,26 @@ namespace darts_hub.control.wizard
                 var pixelitIpArg = pixelitApp.Configuration.Arguments.FirstOrDefault(a => a.Name == "PEPS");
                 if (pixelitIpArg != null && !string.IsNullOrEmpty(pixelitIpArg.Value))
                 {
-                    var url = pixelitIpArg.Value;
-                    if (url.StartsWith("http://"))
+                    // Argument contains IP without http://, so use it directly
+                    var cleanIpAddress = pixelitIpArg.Value;
+                    
+                    // Remove http:// if somehow present in stored value
+                    if (cleanIpAddress.StartsWith("http://"))
                     {
-                        url = url.Substring(7);
+                        cleanIpAddress = cleanIpAddress.Substring(7);
                     }
-                    else if (url.StartsWith("https://"))
+                    else if (cleanIpAddress.StartsWith("https://"))
                     {
-                        url = url.Substring(8);
+                        cleanIpAddress = cleanIpAddress.Substring(8);
                     }
-                    pixelitIpTextBox.Text = url;
+                    
+                    // Remove trailing slash if present
+                    if (cleanIpAddress.EndsWith("/"))
+                    {
+                        cleanIpAddress = cleanIpAddress.Substring(0, cleanIpAddress.Length - 1);
+                    }
+                    
+                    pixelitIpTextBox.Text = cleanIpAddress;
                 }
             }
         }
@@ -470,10 +480,26 @@ namespace darts_hub.control.wizard
             var pixelitEndpointsArg = pixelitApp.Configuration?.Arguments?.FirstOrDefault(a => a.Name == "PEPS");
             if (pixelitEndpointsArg != null)
             {
-                var url = ipAddress.StartsWith("http") ? ipAddress : $"http://{ipAddress}";
-                pixelitEndpointsArg.Value = url;
+                // Store IP address WITHOUT http:// prefix for the argument
+                var cleanIpAddress = ipAddress;
+                if (cleanIpAddress.StartsWith("http://"))
+                {
+                    cleanIpAddress = cleanIpAddress.Substring(7);
+                }
+                else if (cleanIpAddress.StartsWith("https://"))
+                {
+                    cleanIpAddress = cleanIpAddress.Substring(8);
+                }
+                
+                // Remove trailing slash if present
+                if (cleanIpAddress.EndsWith("/"))
+                {
+                    cleanIpAddress = cleanIpAddress.Substring(0, cleanIpAddress.Length - 1);
+                }
+                
+                pixelitEndpointsArg.Value = cleanIpAddress;
                 pixelitEndpointsArg.IsValueChanged = true;
-                System.Diagnostics.Debug.WriteLine($"[Pixelit] Updated PEPS argument: {url}");
+                System.Diagnostics.Debug.WriteLine($"[Pixelit] Updated PEPS argument: {cleanIpAddress} (without http://)");
             }
 
             // Update display brightness to a reasonable default if not set

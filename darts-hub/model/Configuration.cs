@@ -62,68 +62,115 @@ namespace darts_hub.model
 
         public string GenerateArgumentString(AppBase app, Dictionary<string, string>? runtimeArguments = null)
         {
-            if (runtimeArguments != null)
+            try
             {
-                foreach (var ra in runtimeArguments)
+                System.Diagnostics.Debug.WriteLine($"[Configuration] Starting GenerateArgumentString for {app?.CustomName ?? "Unknown App"}");
+                
+                if (runtimeArguments != null)
                 {
-                    foreach (var a in Arguments)
+                    foreach (var ra in runtimeArguments)
                     {
-                        if (a.Name == ra.Key)
+                        foreach (var a in Arguments)
                         {
-                            a.Value = ra.Value;
-                            break;
+                            if (a.Name == ra.Key)
+                            {
+                                a.Value = ra.Value;
+                                break;
+                            }
                         }
                     }
                 }
-            }
 
-            
-            string composedArguments = String.Empty;
+                string composedArguments = String.Empty;
 
-            // unterscheiden zwischen normal und raw
-            if (IsRaw)
-            {
-                composedArguments = Arguments.Count == 2 ? Arguments[1].Value : String.Empty;
-            }
-            else
-            {
-                foreach (var a in Arguments) ValidateRequiredOnArgument(a);
-
-                var arguments = Arguments.FindAll(a => a.Required || (!a.Required && !String.IsNullOrEmpty(a.Value)));
-
-                foreach (var a in arguments) a.Validate();
-
-
-                // TODO: improve for other situations!
-                // Wir setzen die übergebenen 'arguments' zu einen String zusammen, der dann beim Prozess starten genutzt werden kann
-                // Wir durchlaufen alle übergebenen Argumente und hängen diese dem String an
-                foreach (var a in arguments)
+                // unterscheiden zwischen normal und raw
+                if (IsRaw)
                 {
-                    // Das Start Argument hat kein Key-Value, deshalb unterscheiden wir hier und nehmen an,
-                    // dass es kein Value gibt, wenn der Wert ein leerer String ist.
-                    if (string.IsNullOrEmpty(a.Value))
+                    composedArguments = Arguments.Count == 2 ? Arguments[1].Value : String.Empty;
+                    System.Diagnostics.Debug.WriteLine($"[Configuration] Raw mode result: '{composedArguments}'");
+                }
+                else
+                {
+                    // Validate required arguments
+                    for (int i = 0; i < Arguments.Count; i++)
                     {
-                        composedArguments += " " + a.Name;
-                    }
-                    // ... sonst hängen wir den Value an
-                    else
-                    {
-                        if (!a.IsMulti || String.IsNullOrEmpty(a.MappedValue()))
+                        try
                         {
-                            composedArguments += " " + Prefix + a.Name + Delimitter + "\"" + a.MappedValue() + "\"";
+                            ValidateRequiredOnArgument(Arguments[i]);
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            var splitted = a.MappedValue().Split(" ");
-                            var multiSplitted = String.Empty;
-                            foreach (var b in splitted) multiSplitted += $" \"{b}\"";
-                            composedArguments += " " + Prefix + a.Name + Delimitter + multiSplitted;
-                        }  
+                            System.Diagnostics.Debug.WriteLine($"[Configuration] Error validating argument {i} ({Arguments[i].Name}): {ex.Message}");
+                            throw;
+                        }
+                    }
+
+                    // Get arguments that should be included
+                    var arguments = Arguments.FindAll(a => a.Required || (!a.Required && !String.IsNullOrEmpty(a.Value)));
+                    System.Diagnostics.Debug.WriteLine($"[Configuration] Found {arguments.Count} arguments to include (from {Arguments.Count} total)");
+
+                    // Validate each argument
+                    for (int i = 0; i < arguments.Count; i++)
+                    {
+                        try
+                        {
+                            arguments[i].Validate();
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[Configuration] Error validating included argument {i} ({arguments[i].Name}): {ex.Message}");
+                            throw;
+                        }
+                    }
+
+                    // Build argument string
+                    foreach (var a in arguments)
+                    {
+                        try
+                        {
+                            // Das Start Argument hat kein Key-Value, deshalb unterscheiden wir hier und nehmen an,
+                            // dass es kein Value gibt, wenn der Wert ein leerer String ist.
+                            if (string.IsNullOrEmpty(a.Value))
+                            {
+                                composedArguments += " " + a.Name;
+                            }
+                            // ... sonst hängen wir den Value an
+                            else
+                            {
+                                var mappedValue = a.MappedValue();
+                                
+                                if (!a.IsMulti || String.IsNullOrEmpty(mappedValue))
+                                {
+                                    composedArguments += " " + Prefix + a.Name + Delimitter + "\"" + mappedValue + "\"";
+                                }
+                                else
+                                {
+                                    var splitted = mappedValue.Split(" ");
+                                    var multiSplitted = String.Empty;
+                                    foreach (var b in splitted) multiSplitted += $" \"{b}\"";
+                                    composedArguments += " " + Prefix + a.Name + Delimitter + multiSplitted;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[Configuration] Error processing argument {a.Name}: {ex.Message}");
+                            throw;
+                        }
                     }
                 }
-            }
 
-            return composedArguments;
+                System.Diagnostics.Debug.WriteLine($"[Configuration] Final composed arguments length: {composedArguments.Length} characters");
+                
+                return composedArguments;
+            }
+            catch (Exception ex)
+            {
+                var errorMsg = $"Error in GenerateArgumentString for {app?.CustomName ?? "Unknown App"}: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"[Configuration] {errorMsg}");
+                
+                throw; // Re-throw to maintain original behavior
+            }
         }
 
 

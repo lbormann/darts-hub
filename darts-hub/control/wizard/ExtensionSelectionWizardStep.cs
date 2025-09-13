@@ -160,7 +160,7 @@ namespace darts_hub.control.wizard
 
             panel.Children.Add(new TextBlock
             {
-                Text = "The core dart recognition system will always be configured as it's essential for the darts experience.",
+                Text = "The Caller must be configured! Its the base extension for all other Darts- Extensions.",
                 FontSize = 12,
                 Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
                 TextWrapping = TextWrapping.Wrap
@@ -282,8 +282,8 @@ namespace darts_hub.control.wizard
             // Default selections based on common usage
             return extensionKey switch
             {
-                var key when key.Contains("wled") => true,
-                var key when key.Contains("pixelit") => true,
+                var key when key.Contains("wled") => false,
+                var key when key.Contains("pixelit") => false,
                 _ => false
             };
         }
@@ -294,10 +294,10 @@ namespace darts_hub.control.wizard
             {
                 var key when key.Contains("wled") => "💡",
                 var key when key.Contains("pixelit") => "📱",
-                var key when key.Contains("voice") => "🗣️",
+                var key when key.Contains("voice") => "🎯",
                 var key when key.Contains("gif") => "🎬",
-                var key when key.Contains("extern") => "🔗",
-                _ => "⚙️"
+                var key when key.Contains("extern") => "🔧",
+                _ => "🔧"
             };
         }
 
@@ -307,7 +307,7 @@ namespace darts_hub.control.wizard
             {
                 var key when key.Contains("wled") => "Control LED strips with dynamic effects and dart game feedback. Perfect for ambient lighting and visual dart tracking.",
                 var key when key.Contains("pixelit") => "Display scores, animations, and game information on a smart LED matrix display.",
-                var key when key.Contains("voice") => "Add voice announcements and audio feedback to enhance your dart game experience.",
+                var key when key.Contains("voice") => "Controle your Autodarts with Voice commands",
                 var key when key.Contains("gif") => "Display animated GIFs and custom visuals during dart games for entertainment.",
                 var key when key.Contains("extern") => "Integrate with external services and APIs for extended functionality.",
                 _ => "Additional functionality and customization options for your dart setup."
@@ -319,10 +319,10 @@ namespace darts_hub.control.wizard
             // First try to get a nice display name from the extension key
             var displayName = extensionKey switch
             {
-                var key when key.Contains("wled") => "WLED LED Strip Control",
-                var key when key.Contains("pixelit") => "Pixelit LED Matrix Display",
-                var key when key.Contains("voice") => "Voice Announcements",
-                var key when key.Contains("gif") => "GIF Display & Media",
+                var key when key.Contains("wled") => "Darts-WLED LED Strip Control",
+                var key when key.Contains("pixelit") => "Darts Pixelit LED Matrix Display",
+                var key when key.Contains("voice") => "Darts-Voice",
+                var key when key.Contains("gif") => "Darts-GIF Display & Media",
                 var key when key.Contains("extern") => "External Integrations",
                 _ => null
             };

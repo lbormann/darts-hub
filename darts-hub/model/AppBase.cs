@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -228,9 +229,12 @@ namespace darts_hub.model
 
             try
             {
+                // Only reset console output when starting a new process (restart)
+                // Do NOT reset during continuous execution
                 AppConsoleStdOutput = String.Empty;
                 AppConsoleStdError = String.Empty;
                 AppMonitor = String.Empty;
+                AppMonitorEntries = 0; // Reset counter only on application start/restart
 
                 // For testing purposes
                 //AppConsoleStdOutput = arguments;
@@ -262,12 +266,26 @@ namespace darts_hub.model
                 {   
                     if (!String.IsNullOrEmpty(e.Data))
                     {
-                        if (AppMonitorEntries >= MaxAppMonitorEntries)
+                        // Instead of hard reset, trim old lines to prevent memory issues
+                        // but keep output continuous during application execution
+                        if (AppMonitorEntries >= MaxAppMonitorEntries * 2) // Allow double the limit before trimming
                         {
-                            AppConsoleStdOutput = String.Empty;
-                            AppConsoleStdError = String.Empty;
-                            AppMonitorEntries = 0;
+                            // Trim to keep most recent MaxAppMonitorEntries lines
+                            var outputLines = AppConsoleStdOutput.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                            var errorLines = AppConsoleStdError.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                            
+                            if (outputLines.Length > MaxAppMonitorEntries)
+                            {
+                                AppConsoleStdOutput = string.Join(Environment.NewLine, outputLines.Skip(outputLines.Length - MaxAppMonitorEntries));
+                            }
+                            if (errorLines.Length > MaxAppMonitorEntries)
+                            {
+                                AppConsoleStdError = string.Join(Environment.NewLine, errorLines.Skip(errorLines.Length - MaxAppMonitorEntries));
+                            }
+                            
+                            AppMonitorEntries = MaxAppMonitorEntries; // Reset to manageable number
                         }
+                        
                         AppConsoleStdOutput += e.Data + Environment.NewLine;
                         AppMonitor = AppConsoleStdOutput + Environment.NewLine + Environment.NewLine + AppConsoleStdError;
                         AppMonitorEntries++;
@@ -277,12 +295,26 @@ namespace darts_hub.model
                 {
                     if (!String.IsNullOrEmpty(e.Data))
                     {
-                        if (AppMonitorEntries >= MaxAppMonitorEntries)
+                        // Instead of hard reset, trim old lines to prevent memory issues
+                        // but keep output continuous during application.execution
+                        if (AppMonitorEntries >= MaxAppMonitorEntries * 2) // Allow double the limit before trimming
                         {
-                            AppConsoleStdError = String.Empty;
-                            AppConsoleStdOutput = String.Empty;
-                            AppMonitorEntries = 0;
+                            // Trim to keep most recent MaxAppMonitorEntries lines
+                            var outputLines = AppConsoleStdOutput.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                            var errorLines = AppConsoleStdError.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                            
+                            if (outputLines.Length > MaxAppMonitorEntries)
+                            {
+                                AppConsoleStdOutput = string.Join(Environment.NewLine, outputLines.Skip(outputLines.Length - MaxAppMonitorEntries));
+                            }
+                            if (errorLines.Length > MaxAppMonitorEntries)
+                            {
+                                AppConsoleStdError = string.Join(Environment.NewLine, errorLines.Skip(errorLines.Length - MaxAppMonitorEntries));
+                            }
+                            
+                            AppMonitorEntries = MaxAppMonitorEntries; // Reset to manageable number
                         }
+                        
                         AppConsoleStdError += e.Data + Environment.NewLine;
                         AppMonitor = AppConsoleStdOutput + Environment.NewLine + Environment.NewLine + AppConsoleStdError;
                         AppMonitorEntries++;

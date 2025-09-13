@@ -2,16 +2,16 @@
 using Avalonia.Layout;
 using Avalonia.Media;
 using darts_hub.model;
+using darts_hub.control.wizard.caller;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Avalonia.Interactivity;
 using System;
 
 namespace darts_hub.control.wizard
 {
     /// <summary>
-    /// Wizard step for configuring the darts-caller application with enhanced UI
+    /// Enhanced caller setup wizard step with guided configuration
     /// </summary>
     public class CallerSetupWizardStep : IWizardStep
     {
@@ -24,10 +24,19 @@ namespace darts_hub.control.wizard
         private Dictionary<string, Control> argumentControls;
         private WizardArgumentsConfig wizardConfig;
 
-        public string Title => "Configure Darts-Caller";
-        public string Description => "Set up the core dart recognition system";
+        // Guided configuration steps
+        private StackPanel guidedConfigPanel;
+        private CallerEssentialSettingsStep essentialSettingsStep;
+        private CallerCameraConfigStep cameraConfigStep;
+        private CallerDownloadStep downloadStep;
+        private CallerRandomStep randomStep;
+        private CallerCheckoutStep checkoutStep;
+        private CallerFixedStep fixedStep;
+
+        public string Title => "Configure Darts Caller (Voice Announcements)";
+        public string Description => "Set up voice announcements and scoring calls";
         public string IconName => "darts";
-        public bool CanSkip => false; // Caller is essential
+        public bool CanSkip => false; // Caller is mandatory
 
         public void Initialize(Profile profile, ProfileManager profileManager, Configurator configurator)
         {
@@ -39,9 +48,17 @@ namespace darts_hub.control.wizard
             this.argumentDescriptions = new Dictionary<string, string>();
             this.wizardConfig = WizardArgumentsConfig.Instance;
             
-            // Find the darts-caller app
+            // Find the Caller app
             callerApp = profile.Apps.Values.FirstOrDefault(a => 
                 a.App.CustomName.ToLower().Contains("caller"))?.App;
+
+            // Initialize guided configuration steps
+            InitializeGuidedSteps();
+        }
+
+        private void InitializeGuidedSteps()
+        {
+            // Steps werden später initialisiert, nachdem die Beschreibungen geladen wurden
         }
 
         public async Task<Control> CreateContent()
@@ -55,24 +72,54 @@ namespace darts_hub.control.wizard
 
             if (callerApp == null)
             {
-                return CreateNoCallerMessage();
+                return CreateNotAvailableMessage();
             }
 
-            // Load argument descriptions
+            // Load argument descriptions FIRST
             await LoadArgumentDescriptions();
+
+            // THEN initialize guided steps with loaded descriptions
+            InitializeGuidedStepsWithDescriptions();
 
             // Header
             var header = CreateHeader();
             mainPanel.Children.Add(header);
 
-            // Create enhanced configuration sections
-            await CreateConfigurationSections(mainPanel);
+            // Create guided configuration immediately
+            await CreateGuidedConfiguration();
+            mainPanel.Children.Add(guidedConfigPanel);
 
-            // Enable caller for autostart
-            var autostartSection = CreateAutostartSection();
-            mainPanel.Children.Add(autostartSection);
+            // Load existing argument values
+            LoadExistingArgumentValues();
 
             return mainPanel;
+        }
+
+        private void InitializeGuidedStepsWithDescriptions()
+        {
+            if (callerApp == null) return;
+
+            essentialSettingsStep = new CallerEssentialSettingsStep(callerApp, wizardConfig, argumentControls, argumentDescriptions);
+
+            cameraConfigStep = new CallerCameraConfigStep(callerApp, wizardConfig, argumentControls, argumentDescriptions,
+                onCameraConfigSelected: () => ShowNextStep("DownloadConfigCard"),
+                onCameraConfigSkipped: () => ShowNextStep("DownloadConfigCard"));
+
+            downloadStep = new CallerDownloadStep(callerApp, wizardConfig, argumentControls, argumentDescriptions,
+                onDownloadConfigSelected: () => ShowNextStep("RandomConfigCard"),
+                onDownloadConfigSkipped: () => ShowNextStep("RandomConfigCard"));
+
+            randomStep = new CallerRandomStep(callerApp, wizardConfig, argumentControls, argumentDescriptions,
+                onRandomConfigSelected: () => ShowNextStep("CheckoutConfigCard"),
+                onRandomConfigSkipped: () => ShowNextStep("CheckoutConfigCard"));
+
+            checkoutStep = new CallerCheckoutStep(callerApp, wizardConfig, argumentControls, argumentDescriptions,
+                onCheckoutConfigSelected: () => ShowNextStep("FixedConfigCard"),
+                onCheckoutConfigSkipped: () => ShowNextStep("FixedConfigCard"));
+
+            fixedStep = new CallerFixedStep(callerApp, wizardConfig, argumentControls, argumentDescriptions,
+                onFixedConfigSelected: CompleteGuidedSetup,
+                onFixedConfigSkipped: CompleteGuidedSetup);
         }
 
         private async Task LoadArgumentDescriptions()
@@ -84,12 +131,12 @@ namespace darts_hub.control.wizard
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to load caller argument descriptions: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Failed to load Caller argument descriptions: {ex.Message}");
                 argumentDescriptions = new Dictionary<string, string>();
             }
         }
 
-        private Control CreateNoCallerMessage()
+        private Control CreateNotAvailableMessage()
         {
             var panel = new StackPanel
             {
@@ -99,7 +146,7 @@ namespace darts_hub.control.wizard
 
             panel.Children.Add(new TextBlock
             {
-                Text = "⚠️ Darts-Caller Not Found",
+                Text = "⚠️ Darts Caller Not Available",
                 FontSize = 24,
                 FontWeight = FontWeight.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(255, 193, 7)),
@@ -108,7 +155,7 @@ namespace darts_hub.control.wizard
 
             panel.Children.Add(new TextBlock
             {
-                Text = "The darts-caller application is required for dart recognition but was not found in the current profile. Please ensure darts-caller is installed and configured in your profile.",
+                Text = "The darts caller (voice announcements) is not available in the current profile. This is required for score announcements and cannot be skipped.",
                 FontSize = 16,
                 Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
                 TextWrapping = TextWrapping.Wrap,
@@ -125,7 +172,7 @@ namespace darts_hub.control.wizard
 
             panel.Children.Add(new TextBlock
             {
-                Text = "🎯 Darts-Caller Configuration",
+                Text = "🗣️ Darts Caller Configuration",
                 FontSize = 24,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
@@ -134,7 +181,7 @@ namespace darts_hub.control.wizard
 
             panel.Children.Add(new TextBlock
             {
-                Text = "Configure the core dart recognition system. These settings are essential for proper dart detection and game management.",
+                Text = "Configure voice announcements, score calls, and media settings for enhanced dart game experience.",
                 FontSize = 14,
                 Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
                 TextWrapping = TextWrapping.Wrap,
@@ -145,572 +192,117 @@ namespace darts_hub.control.wizard
             return panel;
         }
 
-        private async Task CreateConfigurationSections(StackPanel mainPanel)
+        private async Task CreateGuidedConfiguration()
         {
-            if (callerApp?.Configuration?.Arguments == null) 
-            {
-                System.Diagnostics.Debug.WriteLine("No caller arguments found");
-                return;
-            }
+            guidedConfigPanel = new StackPanel { Spacing = 20 };
 
-            var extensionConfig = wizardConfig.GetExtensionConfig("darts-caller");
-            if (extensionConfig?.Sections == null) 
-            {
-                System.Diagnostics.Debug.WriteLine("No caller extension config found for 'darts-caller'");
-                return;
-            }
+            // Step 1: Essential Settings (Autodarts credentials, Media path)
+            var essentialCard = essentialSettingsStep.CreateEssentialSettingsCard();
+            guidedConfigPanel.Children.Add(essentialCard);
 
-            System.Diagnostics.Debug.WriteLine($"Creating {extensionConfig.Sections.Count} caller sections");
+            // Step 2: Voice & Media configuration question
+            var cameraConfigCard = cameraConfigStep.CreateCameraConfigQuestionCard();
+            guidedConfigPanel.Children.Add(cameraConfigCard);
 
-            // Load existing argument values
-            LoadExistingArgumentValues();
+            // Step 3: Download configuration question (initially hidden)
+            var downloadConfigCard = downloadStep.CreateDownloadConfigQuestionCard();
+            downloadConfigCard.IsVisible = false;
+            guidedConfigPanel.Children.Add(downloadConfigCard);
 
-            // Create enhanced settings style sections
-            foreach (var sectionKvp in extensionConfig.Sections.OrderBy(s => s.Value.Priority))
-            {
-                var sectionName = sectionKvp.Key;
-                var sectionConfig = sectionKvp.Value;
+            // Step 4: Random caller configuration question (initially hidden)
+            var randomConfigCard = randomStep.CreateRandomConfigQuestionCard();
+            randomConfigCard.IsVisible = false;
+            guidedConfigPanel.Children.Add(randomConfigCard);
 
-                var sectionCard = new Border
-                {
-                    Background = new SolidColorBrush(Color.FromArgb(80, 45, 45, 48)),
-                    CornerRadius = new Avalonia.CornerRadius(8),
-                    Padding = new Avalonia.Thickness(20),
-                    Margin = new Avalonia.Thickness(0, 8)
-                };
+            // Step 5: Checkout configuration question (initially hidden)
+            var checkoutConfigCard = checkoutStep.CreateCheckoutConfigQuestionCard();
+            checkoutConfigCard.IsVisible = false;
+            guidedConfigPanel.Children.Add(checkoutConfigCard);
 
-                var sectionContent = new StackPanel { Spacing = 12 };
+            // Step 6: Fixed caller configuration question (initially hidden)
+            var fixedConfigCard = fixedStep.CreateFixedConfigQuestionCard();
+            fixedConfigCard.IsVisible = false;
+            guidedConfigPanel.Children.Add(fixedConfigCard);
 
-                // Section Header with expand/collapse
-                var headerPanel = CreateSectionHeader(sectionName, sectionConfig.Expanded);
-                sectionContent.Children.Add(headerPanel);
+            // Add autostart section (Caller should always autostart)
+            var autostartCard = CreateAutostartSection();
+            guidedConfigPanel.Children.Add(autostartCard);
+        }
 
-                // Section Arguments (initially visible based on expanded state)
-                var argumentsPanel = new StackPanel { Spacing = 12, IsVisible = sectionConfig.Expanded };
-
-                System.Diagnostics.Debug.WriteLine($"  Section '{sectionName}' with {sectionConfig.Arguments.Count} arguments");
-
-                foreach (var argumentName in sectionConfig.Arguments)
-                {
-                    var argument = callerApp.Configuration.Arguments.FirstOrDefault(a => 
-                        a.Name.Equals(argumentName, StringComparison.OrdinalIgnoreCase));
-                    
-                    if (argument != null)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"    Creating control for caller argument: {argument.Name} = '{argument.Value}'");
-                        var argumentControl = await CreateEnhancedArgumentControl(argument);
-                        if (argumentControl != null)
-                        {
-                            argumentsPanel.Children.Add(argumentControl);
-                        }
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"    Caller argument '{argumentName}' not found in app configuration");
-                    }
-                }
-
-                // Add toggle functionality
-                if (headerPanel.Children[0] is Button toggleButton)
-                {
-                    toggleButton.Click += (s, e) =>
-                    {
-                        argumentsPanel.IsVisible = !argumentsPanel.IsVisible;
-                        toggleButton.Content = argumentsPanel.IsVisible ? "▼" : "▶";
-                    };
-                }
-
-                sectionContent.Children.Add(argumentsPanel);
-                sectionCard.Child = sectionContent;
-                mainPanel.Children.Add(sectionCard);
-                
-                System.Diagnostics.Debug.WriteLine($"  Added section '{sectionName}' with {argumentsPanel.Children.Count} controls");
-            }
+        private void ShowNextStep(string stepName)
+        {
+            var stepCard = guidedConfigPanel.Children
+                .OfType<Border>()
+                .FirstOrDefault(b => b.Name == stepName);
             
-            System.Diagnostics.Debug.WriteLine($"Total caller configuration sections created: {extensionConfig.Sections.Count}");
+            if (stepCard != null)
+            {
+                stepCard.IsVisible = true;
+            }
         }
 
-        private StackPanel CreateSectionHeader(string sectionName, bool expanded)
+        private void CompleteGuidedSetup()
         {
-            var headerPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 10
-            };
+            var completionStep = new CallerCompletionStep(
+                cameraConfigStep.ShowCameraConfiguration,
+                downloadStep.ShowDownloadConfiguration,
+                randomStep.ShowRandomConfiguration,
+                checkoutStep.ShowCheckoutConfiguration,
+                fixedStep.ShowFixedConfiguration);
 
-            var toggleButton = new Button
-            {
-                Content = expanded ? "▼" : "▶",
-                FontSize = 16,
-                Background = Brushes.Transparent,
-                BorderThickness = new Avalonia.Thickness(0),
-                Foreground = Brushes.White,
-                VerticalAlignment = VerticalAlignment.Center,
-                Padding = new Avalonia.Thickness(5)
-            };
-
-            headerPanel.Children.Add(toggleButton);
-
-            headerPanel.Children.Add(new TextBlock
-            {
-                Text = sectionName,
-                FontSize = 16,
-                FontWeight = FontWeight.Bold,
-                Foreground = Brushes.White,
-                VerticalAlignment = VerticalAlignment.Center
-            });
-
-            return headerPanel;
+            var completionCard = completionStep.CreateCompletionCard();
+            guidedConfigPanel.Children.Add(completionCard);
         }
 
-        private async Task<Control> CreateEnhancedArgumentControl(Argument argument)
-        {
-            var container = new Border
-            {
-                Background = new SolidColorBrush(Color.FromArgb(60, 70, 70, 70)),
-                CornerRadius = new Avalonia.CornerRadius(6),
-                Padding = new Avalonia.Thickness(15),
-                Margin = new Avalonia.Thickness(0, 8)
-            };
+        //private string GetArgumentDescription(Argument argument)
+        //{
+        //    // First try to get description from parsed README
+        //    if (argumentDescriptions.TryGetValue(argument.Name, out string description) && !string.IsNullOrEmpty(description))
+        //    {
+        //        return description;
+        //    }
 
-            var content = new StackPanel { Spacing = 10 };
+        //    // Then try the argument's own description
+        //    if (!string.IsNullOrEmpty(argument.Description))
+        //    {
+        //        return argument.Description;
+        //    }
 
-            // Label and Description
-            var labelPanel = new StackPanel { Spacing = 5 };
-
-            var titleLabel = new TextBlock
-            {
-                Text = argument.NameHuman + (argument.Required ? " *" : ""),
-                FontSize = 14,
-                FontWeight = FontWeight.Bold,
-                Foreground = Brushes.White
-            };
-            labelPanel.Children.Add(titleLabel);
-
-            // Description
-            string description = GetArgumentDescription(argument);
-            if (!string.IsNullOrEmpty(description))
-            {
-                var descLabel = new TextBlock
-                {
-                    Text = description,
-                    FontSize = 12,
-                    Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
-                    TextWrapping = TextWrapping.Wrap
-                };
-                labelPanel.Children.Add(descLabel);
-            }
-
-            content.Children.Add(labelPanel);
-
-            // Input Control
-            var inputControl = CreateInputControl(argument);
-            if (inputControl != null)
-            {
-                var inputContainer = new Grid();
-                inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-                Grid.SetColumn(inputControl, 0);
-                inputContainer.Children.Add(inputControl);
-
-                // Clear button
-                var clearButton = CreateClearButton(argument, inputControl);
-                Grid.SetColumn(clearButton, 1);
-                inputContainer.Children.Add(clearButton);
-
-                content.Children.Add(inputContainer);
-                argumentControls[argument.Name] = inputControl;
-            }
-
-            container.Child = content;
-            return container;
-        }
-
-        private string GetArgumentDescription(Argument argument)
-        {
-            if (argumentDescriptions.TryGetValue(argument.Name, out string description) && !string.IsNullOrEmpty(description))
-            {
-                return description;
-            }
-            
-            if (!string.IsNullOrEmpty(argument.Description))
-            {
-                return argument.Description;
-            }
-
-            // Fallback descriptions for common caller arguments
-            return argument.Name.ToLower() switch
-            {
-                "u" => "Your autodarts.io email address for authentication",
-                "p" => "Your autodarts.io password for authentication",
-                "b" => "Your unique autodarts board ID from your autodarts profile",
-                "m" => "Path to the media/sounds directory for voice announcements",
-                "ms" => "Optional path to shared media directory for additional sounds",
-                "c" => "Specific caller voice to use (leave empty for random selection)",
-                "v" => "Volume level for voice announcements (0.0 = mute, 1.0 = maximum)",
-                "r" => "Random caller selection mode (0=disabled, 1=per game, 2=per leg)",
-                "rl" => "Language for random caller selection",
-                "rg" => "Gender preference for random caller selection",
-                "e" => "Call out every dart score (0=disabled, 1=score only, 2=with total, 3=advanced)",
-                "ets" => "Include total score when calling every dart",
-                "ccp" => "Announce current player before their turn",
-                "cba" => "Enable voice announcements for bot/AI actions",
-                "pcc" => "Minimum score to announce possible checkout opportunities",
-                "pccyo" => "Only announce checkout opportunities for yourself",
-                "a" => "Volume level for ambient background sounds",
-                "aac" => "Play ambient sounds after voice announcements",
-                "dl" => "Auto-download voice packs (0=disabled, 1-100=quality level)",
-                "dlla" => "Language for downloaded voice packs",
-                "dln" => "Specific caller name for downloads",
-                "rovp" => "Remove old voice packs when downloading new ones",
-                "bav" => "Volume level for background audio during games",
-                "lpb" => "Enable local audio playback instead of streaming",
-                "webdh" => "Disable HTTPS for web caller interface",
-                "hp" => "Port number for the web interface",
-                "deb" => "Enable debug logging for troubleshooting",
-                "cc" => "Enable SSL certificate checking",
-                "crl" => "Enable real-life caller mode for physical games",
-                _ => $"Caller configuration setting: {argument.NameHuman}"
-            };
-        }
-
-        private Control CreateInputControl(Argument argument)
-        {
-            string type = argument.GetTypeClear();
-
-            // Set default values from config
-            if (string.IsNullOrEmpty(argument.Value))
-            {
-                var defaultValue = wizardConfig.GetDefaultValue(argument.Name);
-                if (!string.IsNullOrEmpty(defaultValue))
-                {
-                    argument.Value = defaultValue;
-                }
-            }
-
-            return type switch
-            {
-                Argument.TypeString or Argument.TypePassword => CreateTextBox(argument),
-                Argument.TypeBool => CreateCheckBox(argument),
-                Argument.TypeInt => CreateNumericUpDown(argument, false),
-                Argument.TypeFloat => CreateNumericUpDown(argument, true),
-                Argument.TypeFile => CreateFileSelector(argument, false),
-                Argument.TypePath => CreateFileSelector(argument, true),
-                _ => CreateTextBox(argument)
-            };
-        }
-
-        private Control CreateTextBox(Argument argument)
-        {
-            var textBox = new TextBox
-            {
-                Text = argument.Value ?? "",
-                FontSize = 13,
-                Background = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
-                Foreground = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Padding = new Avalonia.Thickness(10, 8),
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                PasswordChar = argument.GetTypeClear() == Argument.TypePassword ? '*' : '\0'
-            };
-
-            textBox.TextChanged += (s, e) =>
-            {
-                argument.Value = textBox.Text;
-                argument.IsValueChanged = true;
-            };
-
-            return textBox;
-        }
-
-        private Control CreateCheckBox(Argument argument)
-        {
-            bool isChecked = false;
-            if (!string.IsNullOrEmpty(argument.Value))
-            {
-                isChecked = argument.Value.Equals("True", StringComparison.OrdinalIgnoreCase) ||
-                           argument.Value == "1";
-            }
-
-            var checkBox = new CheckBox
-            {
-                Content = "Enable this feature",
-                IsChecked = isChecked,
-                FontSize = 13,
-                Foreground = Brushes.White
-            };
-
-            checkBox.Checked += (s, e) =>
-            {
-                argument.Value = "True";
-                argument.IsValueChanged = true;
-            };
-
-            checkBox.Unchecked += (s, e) =>
-            {
-                argument.Value = "False";
-                argument.IsValueChanged = true;
-            };
-
-            return checkBox;
-        }
-
-        private Control CreateNumericUpDown(Argument argument, bool isFloat)
-        {
-            var numericUpDown = new NumericUpDown
-            {
-                FontSize = 13,
-                Background = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
-                Foreground = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Padding = new Avalonia.Thickness(10, 8),
-                Width = 150,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Increment = isFloat ? 0.1m : 1m,
-                FormatString = isFloat ? "F1" : "F0"
-            };
-
-            // Set value and limits
-            if (isFloat)
-            {
-                if (double.TryParse(argument.Value, System.Globalization.NumberStyles.Float,
-                    System.Globalization.CultureInfo.InvariantCulture, out var doubleVal))
-                {
-                    numericUpDown.Value = (decimal)doubleVal;
-                }
-            }
-            else
-            {
-                if (int.TryParse(argument.Value, out var intVal))
-                {
-                    numericUpDown.Value = intVal;
-                }
-            }
-
-            // Set appropriate limits based on argument
-            switch (argument.Name.ToLower())
-            {
-                case "v" or "a" or "bav":
-                    numericUpDown.Minimum = 0.0m;
-                    numericUpDown.Maximum = 1.0m;
-                    numericUpDown.Increment = 0.1m;
-                    break;
-                case "hp":
-                    numericUpDown.Minimum = 1024;
-                    numericUpDown.Maximum = 65535;
-                    break;
-                case "e":
-                    numericUpDown.Minimum = 0;
-                    numericUpDown.Maximum = 3;
-                    break;
-                case "r":
-                    numericUpDown.Minimum = 0;
-                    numericUpDown.Maximum = 2;
-                    break;
-                case "rl":
-                    numericUpDown.Minimum = 0;
-                    numericUpDown.Maximum = 6;
-                    break;
-                case "rg":
-                    numericUpDown.Minimum = 0;
-                    numericUpDown.Maximum = 2;
-                    break;
-                case "ccp":
-                    numericUpDown.Minimum = 0;
-                    numericUpDown.Maximum = 2;
-                    break;
-                case "dl":
-                    numericUpDown.Minimum = 0;
-                    numericUpDown.Maximum = 100;
-                    break;
-                case "dlla":
-                    numericUpDown.Minimum = 0;
-                    numericUpDown.Maximum = 6;
-                    break;
-                default:
-                    numericUpDown.Minimum = isFloat ? -9999.9m : -9999;
-                    numericUpDown.Maximum = isFloat ? 9999.9m : 9999;
-                    break;
-            }
-
-            numericUpDown.ValueChanged += (s, e) =>
-            {
-                argument.Value = numericUpDown.Value?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
-                argument.IsValueChanged = true;
-            };
-
-            return numericUpDown;
-        }
-
-        private Control CreateFileSelector(Argument argument, bool isFolder)
-        {
-            var panel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 10
-            };
-
-            var textBox = new TextBox
-            {
-                Text = argument.Value ?? "",
-                FontSize = 13,
-                Background = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
-                Foreground = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Padding = new Avalonia.Thickness(10, 8),
-                Width = 250
-            };
-
-            var browseButton = new Button
-            {
-                Content = isFolder ? "Browse..." : "Browse...",
-                Padding = new Avalonia.Thickness(15, 8),
-                Background = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
-                BorderBrush = new SolidColorBrush(Color.FromRgb(0, 102, 180)),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Foreground = Brushes.White,
-                FontWeight = FontWeight.Bold
-            };
-
-            textBox.TextChanged += (s, e) =>
-            {
-                argument.Value = textBox.Text;
-                argument.IsValueChanged = true;
-            };
-
-            browseButton.Click += async (s, e) =>
-            {
-                Window parentWindow = null;
-                var topLevel = TopLevel.GetTopLevel(browseButton);
-                if (topLevel is Window window)
-                {
-                    parentWindow = window;
-                }
-
-                if (isFolder)
-                {
-                    var dialog = new OpenFolderDialog();
-                    var result = await dialog.ShowAsync(parentWindow);
-                    if (!string.IsNullOrEmpty(result))
-                    {
-                        textBox.Text = result;
-                        argument.Value = result;
-                        argument.IsValueChanged = true;
-                    }
-                }
-                else
-                {
-                    var dialog = new OpenFileDialog { AllowMultiple = false };
-                    var result = await dialog.ShowAsync(parentWindow);
-                    if (result != null && result.Length > 0)
-                    {
-                        textBox.Text = result[0];
-                        argument.Value = result[0];
-                        argument.IsValueChanged = true;
-                    }
-                }
-            };
-
-            panel.Children.Add(textBox);
-            panel.Children.Add(browseButton);
-
-            return panel;
-        }
-
-        private Control CreateClearButton(Argument argument, Control inputControl)
-        {
-            var clearButton = new Button
-            {
-                Content = "🗑️",
-                Width = 28,
-                Height = 28,
-                Background = Brushes.Transparent,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
-                FontSize = 10,
-                Margin = new Avalonia.Thickness(10, 0, 0, 0),
-                VerticalAlignment = VerticalAlignment.Top
-            };
-
-            clearButton.Click += (s, e) =>
-            {
-                ResetArgumentToDefault(argument, inputControl);
-            };
-
-            return clearButton;
-        }
-
-        private void ResetArgumentToDefault(Argument argument, Control inputControl)
-        {
-            var defaultValue = wizardConfig.GetDefaultValue(argument.Name);
-            argument.Value = defaultValue;
-            argument.IsValueChanged = true;
-
-            switch (inputControl)
-            {
-                case TextBox textBox:
-                    textBox.Text = defaultValue;
-                    break;
-                case CheckBox checkBox:
-                    checkBox.IsChecked = defaultValue.Equals("True", StringComparison.OrdinalIgnoreCase);
-                    break;
-                case NumericUpDown numericUpDown:
-                    if (decimal.TryParse(defaultValue, out var decimalVal))
-                        numericUpDown.Value = decimalVal;
-                    else
-                        numericUpDown.Value = 0;
-                    break;
-                case StackPanel panel when panel.Children.OfType<TextBox>().FirstOrDefault() is TextBox fileTextBox:
-                    fileTextBox.Text = defaultValue;
-                    break;
-            }
-        }
-
-        private void LoadExistingArgumentValues()
-        {
-            try
-            {
-                if (callerApp?.Configuration?.Arguments == null) return;
-                
-                System.Diagnostics.Debug.WriteLine("Loading existing caller argument values:");
-                
-                foreach (var argument in callerApp.Configuration.Arguments)
-                {
-                    // If argument already has a value, keep it
-                    if (!string.IsNullOrEmpty(argument.Value))
-                    {
-                        System.Diagnostics.Debug.WriteLine($"  {argument.Name}: {argument.Value} (existing)");
-                        continue;
-                    }
-                    
-                    // Otherwise try to get default value from config
-                    var defaultValue = wizardConfig.GetDefaultValue(argument.Name);
-                    if (!string.IsNullOrEmpty(defaultValue))
-                    {
-                        argument.Value = defaultValue;
-                        System.Diagnostics.Debug.WriteLine($"  {argument.Name}: {defaultValue} (default)");
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"  {argument.Name}: (empty)");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading existing caller argument values: {ex.Message}");
-            }
-        }
+        //    // Fallback descriptions for Caller arguments (based on actual arguments from ProfileManager)
+        //    return argument.Name.ToUpper() switch
+        //    {
+        //        "U" => "Your Autodarts email address for authentication",
+        //        "P" => "Your Autodarts password for authentication", 
+        //        "B" => "Your Autodarts board ID for connection",
+        //        "M" => "Path to folder containing voice media files for announcements",
+        //        "MS" => "Path to shared media folder for additional voice packs",
+        //        "V" => "Volume level for voice announcements (0.0 to 1.0)",
+        //        "C" => "Select specific caller/announcer voice",
+        //        "R" => "Random caller selection mode",
+        //        "RL" => "Language for random caller selection",
+        //        "RG" => "Gender preference for random caller selection", 
+        //        "CCP" => "Call out current player name",
+        //        "CBA" => "Enable announcements for bot actions",
+        //        "E" => "Frequency of dart throw announcements",
+        //        "ETS" => "Include total score in dart announcements",
+        //        "PCC" => "Call out possible checkout scores",
+        //        "PCCYO" => "Only announce checkouts for yourself",
+        //        "A" => "Ambient sound volume level",
+        //        "AAC" => "Play ambient sounds after call announcements",
+        //        "DL" => "Download limit for voice packs",
+        //        "DLLA" => "Language preference for voice pack downloads",
+        //        "DLN" => "Specific caller name for downloads",
+        //        "ROVP" => "Remove old voice packs when downloading new ones",
+        //        "BAV" => "Background audio volume level",
+        //        "LPB" => "Enable local playback mode",
+        //        "WEBDH" => "Disable HTTPS for web caller interface",
+        //        "HP" => "Host port for caller web service",
+        //        "DEB" => "Enable debug mode for troubleshooting",
+        //        "CC" => "Enable certificate checking for HTTPS connections",
+        //        "CRL" => "Enable real-life caller mode",
+        //        _ => $"Caller voice announcement setting: {argument.NameHuman}"
+        //    };
+        //}
 
         private Control CreateAutostartSection()
         {
@@ -750,20 +342,43 @@ namespace darts_hub.control.wizard
 
             var autostartCheckBox = new CheckBox
             {
-                Content = "Start darts-caller automatically with profile",
+                Content = "Start darts caller automatically with profile (Recommended)",
                 FontSize = 13,
                 Foreground = Brushes.White,
-                IsChecked = true,
-                IsEnabled = false // Caller is always enabled since it's essential
+                IsChecked = true // Caller should typically autostart
+            };
+
+            // Set current autostart status
+            var appState = profile.Apps.Values.FirstOrDefault(a => a.App == callerApp);
+            if (appState != null)
+            {
+                autostartCheckBox.IsChecked = appState.TaggedForStart;
+                
+                // Force autostart for caller since it's essential
+                if (!appState.TaggedForStart)
+                {
+                    appState.TaggedForStart = true;
+                    autostartCheckBox.IsChecked = true;
+                }
+            }
+
+            autostartCheckBox.Checked += (s, e) =>
+            {
+                if (appState != null) appState.TaggedForStart = true;
+            };
+
+            autostartCheckBox.Unchecked += (s, e) =>
+            {
+                if (appState != null) appState.TaggedForStart = false;
             };
 
             content.Children.Add(autostartCheckBox);
 
             content.Children.Add(new TextBlock
             {
-                Text = "Darts-caller will automatically start when you launch your dart profile since it's essential for dart recognition.",
+                Text = "The darts caller should start automatically as it provides essential voice announcements and score calls.",
                 FontSize = 12,
-                Foreground = new SolidColorBrush(Color.FromRgb(200, 240, 200)),
+                Foreground = new SolidColorBrush(Color.FromRgb(200, 255, 200)),
                 TextWrapping = TextWrapping.Wrap
             });
 
@@ -771,36 +386,63 @@ namespace darts_hub.control.wizard
             return card;
         }
 
+        private void LoadExistingArgumentValues()
+        {
+            try
+            {
+                if (callerApp?.Configuration?.Arguments == null) return;
+                
+                System.Diagnostics.Debug.WriteLine("Loading existing Caller argument values:");
+                
+                foreach (var argument in callerApp.Configuration.Arguments)
+                {
+                    if (!string.IsNullOrEmpty(argument.Value))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"  {argument.Name}: {argument.Value} (existing)");
+                        continue;
+                    }
+                    
+                    var defaultValue = wizardConfig.GetDefaultValue(argument.Name);
+                    if (!string.IsNullOrEmpty(defaultValue))
+                    {
+                        argument.Value = defaultValue;
+                        System.Diagnostics.Debug.WriteLine($"  {argument.Name}: {defaultValue} (default)");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"  {argument.Name}: (empty)");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading existing Caller argument values: {ex.Message}");
+            }
+        }
+
         public async Task<WizardValidationResult> ValidateStep()
         {
             if (callerApp == null)
             {
-                return WizardValidationResult.Error("Darts-Caller application is required but not found.");
+                return WizardValidationResult.Error("Darts caller is required and must be configured.");
             }
 
-            // Validate required arguments
-            if (callerApp.Configuration?.Arguments != null)
-            {
-                foreach (var argument in callerApp.Configuration.Arguments.Where(a => a.Required))
-                {
-                    if (string.IsNullOrWhiteSpace(argument.Value))
-                    {
-                        return WizardValidationResult.Error($"'{argument.NameHuman}' is required but not set.");
-                    }
-                }
+            // Basic validation - ensure required arguments are set
+            var requiredArgs = new[] { "U", "P", "B", "M" }; // Email, Password, Board ID, Media Path
+            var missingArgs = new List<string>();
 
-                // Additional validation for specific arguments
-                var portArg = callerApp.Configuration.Arguments.FirstOrDefault(a => a.Name == "HP");
-                if (portArg != null && !string.IsNullOrEmpty(portArg.Value))
+            foreach (var argName in requiredArgs)
+            {
+                var arg = callerApp.Configuration?.Arguments?.FirstOrDefault(a => a.Name.Equals(argName, StringComparison.OrdinalIgnoreCase));
+                if (arg != null && string.IsNullOrEmpty(arg.Value))
                 {
-                    if (int.TryParse(portArg.Value, out int port))
-                    {
-                        if (port < 1024 || port > 65535)
-                        {
-                            return WizardValidationResult.Error("Host port must be between 1024 and 65535.");
-                        }
-                    }
+                    missingArgs.Add(arg.NameHuman);
                 }
+            }
+
+            if (missingArgs.Count > 0)
+            {
+                return WizardValidationResult.Error($"Please fill in the required fields: {string.Join(", ", missingArgs)}");
             }
 
             return WizardValidationResult.Success();
@@ -812,14 +454,6 @@ namespace darts_hub.control.wizard
 
             try
             {
-                // Enable caller for autostart (it's essential)
-                var callerAppState = profile.Apps.Values.FirstOrDefault(a => a.App == callerApp);
-                if (callerAppState != null)
-                {
-                    callerAppState.TaggedForStart = true;
-                }
-                
-                // Configuration changes are already applied through the input controls
                 if (callerApp.Configuration?.Arguments != null)
                 {
                     foreach (var argument in callerApp.Configuration.Arguments)
@@ -830,10 +464,17 @@ namespace darts_hub.control.wizard
                         }
                     }
                 }
+
+                // Ensure caller is set to autostart since it's essential
+                var appState = profile.Apps.Values.FirstOrDefault(a => a.App == callerApp);
+                if (appState != null)
+                {
+                    appState.TaggedForStart = true;
+                }
             }
             catch (Exception ex)
             {
-                throw new Exception($"Failed to apply caller configuration: {ex.Message}");
+                throw new Exception($"Failed to apply Caller configuration: {ex.Message}");
             }
         }
 
@@ -849,13 +490,31 @@ namespace darts_hub.control.wizard
 
         public async Task ResetStep()
         {
-            if (callerApp?.Configuration?.Arguments != null)
+            // Reset all controls to default values
+            foreach (var kvp in argumentControls)
             {
-                foreach (var argument in callerApp.Configuration.Arguments)
+                var argument = callerApp?.Configuration?.Arguments?.FirstOrDefault(a => a.Name == kvp.Key);
+                if (argument != null)
                 {
-                    if (argumentControls.TryGetValue(argument.Name, out var control))
+                    var defaultValue = wizardConfig.GetDefaultValue(argument.Name) ?? "";
+                    argument.Value = defaultValue;
+                    argument.IsValueChanged = true;
+
+                    // Update the control
+                    switch (kvp.Value)
                     {
-                        ResetArgumentToDefault(argument, control);
+                        case TextBox textBox:
+                            textBox.Text = defaultValue;
+                            break;
+                        case CheckBox checkBox:
+                            checkBox.IsChecked = defaultValue.Equals("True", StringComparison.OrdinalIgnoreCase);
+                            break;
+                        case NumericUpDown numericUpDown:
+                            if (decimal.TryParse(defaultValue, out var decimalVal))
+                                numericUpDown.Value = decimalVal;
+                            else
+                                numericUpDown.Value = 0;
+                            break;
                     }
                 }
             }

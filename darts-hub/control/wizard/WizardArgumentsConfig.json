@@ -3,15 +3,12 @@
     "darts-caller": {
       "displayName": "Darts-Caller",
       "icon": "🎯",
-      "description": "Core dart recognition and throwing detection system",
+      "description": "Free configurable Darts Caller where the user is the Limit",
       "primaryArguments": [
         "U",
         "P", 
         "B",
         "M",
-        "C",
-        "V",
-        "E"
       ],
       "sections": {
         "Essential Setup": {
@@ -27,22 +24,27 @@
         "Calling Options": {
           "priority": 3,
           "expanded": true,
-          "arguments": ["E", "ETS", "CCP", "CBA", "PCC", "PCCYO", "CRL"]
+          "arguments": [ "E", "ETS", "CCP", "CBA","CRL" ]
         },
-        "Downloads & Updates": {
+        "Checkout": {
           "priority": 4,
+          "expanded": true,
+          "arguments": ["PCC","PCCYO"]
+        }
+        "Downloads & Updates": {
+          "priority": 5,
           "expanded": false,
           "arguments": ["DL", "DLLA", "DLN", "ROVP"]
         },
-        "Network & Service": {
-          "priority": 5,
-          "expanded": false,
-          "arguments": ["WEBDH", "HP", "CC", "DEB"]
-        }
+        //"Network & Service": {
+        //  "priority": 5,
+        //  "expanded": false,
+        //  "arguments": ["WEBDH", "HP", "CC", "DEB"]
+        //}
       }
     },
     "darts-wled": {
-      "displayName": "WLED Integration",
+      "displayName": "Darts-WLED Integration",
       "icon": "💡",
       "description": "LED strip control with dynamic effects and dart game feedback",
       "primaryArguments": [
@@ -99,7 +101,7 @@
       }
     },
     "darts-pixelit": {
-      "displayName": "Pixelit Display",
+      "displayName": "Darts-Pixelit Display",
       "icon": "📱", 
       "description": "Smart LED matrix display for scores, animations, and game information",
       "primaryArguments": [
@@ -150,9 +152,9 @@
       }
     },
     "darts-voice": {
-      "displayName": "Voice Announcements",
+      "displayName": "Darts-Voice",
       "icon": "🗣️",
-      "description": "Audio feedback and voice announcements for enhanced dart game experience",
+      "description": "Controle your Autodarts with Voice commands",
       "primaryArguments": [
         "CON",
         "MP",
@@ -165,42 +167,42 @@
         "Connection Settings": {
           "priority": 1,
           "expanded": true,
-          "arguments": ["CON"]
+          "arguments": [ "CON" ]
         },
         "Voice Recognition": {
           "priority": 2,
           "expanded": true,
-          "arguments": ["MP", "L"]
+          "arguments": [ "MP", "L" ]
         },
         "Game Control Keywords": {
           "priority": 3,
           "expanded": true,
-          "arguments": ["KNG", "KN", "KU", "KBC", "KCC"]
+          "arguments": [ "KNG", "KN", "KU", "KBC", "KCC" ]
         },
         "Board Control Keywords": {
           "priority": 4,
           "expanded": false,
-          "arguments": ["KSB", "KSPB", "KRB", "KCB"]
+          "arguments": [ "KSB", "KSPB", "KRB", "KCB" ]
         },
         "Dart Keywords": {
           "priority": 5,
           "expanded": false,
-          "arguments": ["KFD", "KSD", "KTD", "KS", "KD", "KT"]
+          "arguments": [ "KFD", "KSD", "KTD", "KS", "KD", "KT" ]
         },
         "Number Keywords": {
           "priority": 6,
           "expanded": false,
-          "arguments": ["KZERO", "KONE", "KTWO", "KTHREE", "KFOUR", "KFIVE", "KSIX", "KSEVEN", "KEIGHT", "KNINE", "KTEN", "KELEVEN", "KTWELVE", "KTHIRTEEN", "KFOURTEEN", "KFIFTEEN", "KSIXTEEN", "KSEVENTEEN", "KEIGHTEEN", "KNINETEEN", "KTWENTY", "KTWENTYFIVE", "KFIFTY"]
+          "arguments": [ "KZERO", "KONE", "KTWO", "KTHREE", "KFOUR", "KFIVE", "KSIX", "KSEVEN", "KEIGHT", "KNINE", "KTEN", "KELEVEN", "KTWELVE", "KTHIRTEEN", "KFOURTEEN", "KFIFTEEN", "KSIXTEEN", "KSEVENTEEN", "KEIGHTEEN", "KNINETEEN", "KTWENTY", "KTWENTYFIVE", "KFIFTY" ]
         },
         "Advanced": {
           "priority": 7,
           "expanded": false,
-          "arguments": ["DEB"]
+          "arguments": [ "DEB" ]
         }
       }
     },
     "darts-gif": {
-      "displayName": "GIF Display",
+      "displayName": "Darts-GIF Display",
       "icon": "🎬",
       "description": "Animated GIF display during dart games for entertainment",
       "primaryArguments": [
@@ -291,24 +293,14 @@
     }
   },
   "commonDefaults": {
-    "CON": "localhost:8080",
-    "caller-ip": "localhost",
-    "caller-port": "8080",
-    "websocket-port": "8080",
-    "wled-ip": "192.168.1.100",
-    "WEPS": "http://192.168.1.100",
-    "PEPS": "http://192.168.1.100",
-    "led-count": "144",
-    "led-brightness": "128",
-    "BRI": "128",
-    "brightness": "128",
-    "volume": "0.8",
-    "V": "0.8",
-    "voice-speed": "1.0",
-    "display-duration": "3000",
-    "throw-line-tolerance": "50",
-    "coordinates-size": "8",
-    "HP": "8090",
+    "CON": "localhost:8079",
+    "WEPS": "192.168.1.100",
+    "PEPS": "192.168.1.100",
+    "BRI": "255",
+    "brightness": "255",
+    "V": "1",
+    "display-duration": "",
+    "HP": "8079",
     "L": "0",
     "DEB": "False",
     "OFF": "False",
@@ -331,10 +323,10 @@
     "WEBDH": "False",
     "CC": "True",
     "HFO": "100",
-    "DU": "3",
+    "DU": "0",
     "BSS": "0.0",
     "WEB": "0",
-    "WEBP": "8080",
+    "WEBP": "8079",
     "extern_platform": "lidarts"
   }
 }

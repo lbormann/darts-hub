@@ -48,6 +48,7 @@ namespace darts_hub.control.wizard
         private WledPlayerColorsStep playerColorsStep;
         private WledGameWinEffectsStep gameWinEffectsStep;
         private WledScoreEffectsStep scoreEffectsStep;
+        private WledBoardStatusStep boardStatusStep;
         
         // Score areas configuration
         private int currentAreaCount = 2; // Start with area 1 and 2
@@ -86,8 +87,12 @@ namespace darts_hub.control.wizard
                 onPlayerColorsSkipped: () => ShowNextStep("GameWinCard"));
 
             gameWinEffectsStep = new WledGameWinEffectsStep(wledApp, wizardConfig, argumentControls,
-                onGameWinEffectsSelected: () => ShowNextStep("ScoreEffectsCard"),
-                onGameWinEffectsSkipped: () => ShowNextStep("ScoreEffectsCard"));
+                onGameWinEffectsSelected: () => ShowNextStep("BoardStatusCard"),
+                onGameWinEffectsSkipped: () => ShowNextStep("BoardStatusCard"));
+
+            boardStatusStep = new WledBoardStatusStep(wledApp, wizardConfig, argumentControls,
+                onBoardStatusConfigSelected: () => ShowNextStep("ScoreEffectsCard"),
+                onBoardStatusConfigSkipped: () => ShowNextStep("ScoreEffectsCard"));
 
             scoreEffectsStep = new WledScoreEffectsStep(wledApp, wizardConfig, argumentControls,
                 onScoreEffectsSelected: () => ShowNextStep("ScoreSelectionCard"),
@@ -990,12 +995,17 @@ namespace darts_hub.control.wizard
             gameWinCard.IsVisible = false;
             guidedConfigPanel.Children.Add(gameWinCard);
 
-            // Step 4: Score effects question (initially hidden)
+            // Step 4: Board status effects question (initially hidden)
+            var boardStatusCard = boardStatusStep.CreateBoardStatusQuestionCard();
+            boardStatusCard.IsVisible = false;
+            guidedConfigPanel.Children.Add(boardStatusCard);
+
+            // Step 5: Score effects question (initially hidden)
             var scoreEffectsCard = scoreEffectsStep.CreateScoreEffectsQuestionCard();
             scoreEffectsCard.IsVisible = false;
             guidedConfigPanel.Children.Add(scoreEffectsCard);
 
-            // Step 5: Score selection (initially hidden)
+            // Step 6: Score selection (initially hidden)
             var scoreSelectionCard = scoreEffectsStep.CreateScoreSelectionCard();
             scoreSelectionCard.IsVisible = false;
             guidedConfigPanel.Children.Add(scoreSelectionCard);
@@ -1025,6 +1035,7 @@ namespace darts_hub.control.wizard
             var completionStep = new WledCompletionStep(
                 playerColorsStep.ShowPlayerSpecificColors,
                 gameWinEffectsStep.ShowGameWinEffects,
+                boardStatusStep.ShowBoardStatusConfiguration,
                 scoreEffectsStep.ShowScoreEffects,
                 scoreEffectsStep.SelectedScores.Count);
 
@@ -1038,10 +1049,26 @@ namespace darts_hub.control.wizard
             var wledEndpointsArg = wledApp.Configuration?.Arguments?.FirstOrDefault(a => a.Name == "WEPS");
             if (wledEndpointsArg != null)
             {
-                var url = ipAddress.StartsWith("http") ? ipAddress : $"http://{ipAddress}";
-                wledEndpointsArg.Value = url;
+                // Store IP address WITHOUT http:// prefix for the argument
+                var cleanIpAddress = ipAddress;
+                if (cleanIpAddress.StartsWith("http://"))
+                {
+                    cleanIpAddress = cleanIpAddress.Substring(7);
+                }
+                else if (cleanIpAddress.StartsWith("https://"))
+                {
+                    cleanIpAddress = cleanIpAddress.Substring(8);
+                }
+                
+                // Remove trailing slash if present
+                if (cleanIpAddress.EndsWith("/"))
+                {
+                    cleanIpAddress = cleanIpAddress.Substring(0, cleanIpAddress.Length - 1);
+                }
+                
+                wledEndpointsArg.Value = cleanIpAddress;
                 wledEndpointsArg.IsValueChanged = true;
-                System.Diagnostics.Debug.WriteLine($"[WLED] Updated WEPS argument: {url}");
+                System.Diagnostics.Debug.WriteLine($"[WLED] Updated WEPS argument: {cleanIpAddress} (without http://)");
             }
 
             // Update LED brightness to a reasonable default if not set
@@ -1096,16 +1123,26 @@ namespace darts_hub.control.wizard
                 var wledIpArg = wledApp.Configuration.Arguments.FirstOrDefault(a => a.Name == "WEPS");
                 if (wledIpArg != null && !string.IsNullOrEmpty(wledIpArg.Value))
                 {
-                    var url = wledIpArg.Value;
-                    if (url.StartsWith("http://"))
+                    // Argument contains IP without http://, so use it directly
+                    var cleanIpAddress = wledIpArg.Value;
+                    
+                    // Remove http:// if somehow present in stored value
+                    if (cleanIpAddress.StartsWith("http://"))
                     {
-                        url = url.Substring(7);
+                        cleanIpAddress = cleanIpAddress.Substring(7);
                     }
-                    else if (url.StartsWith("https://"))
+                    else if (cleanIpAddress.StartsWith("https://"))
                     {
-                        url = url.Substring(8);
+                        cleanIpAddress = cleanIpAddress.Substring(8);
                     }
-                    wledIpTextBox.Text = url;
+                    
+                    // Remove trailing slash if present
+                    if (cleanIpAddress.EndsWith("/"))
+                    {
+                        cleanIpAddress = cleanIpAddress.Substring(0, cleanIpAddress.Length - 1);
+                    }
+                    
+                    wledIpTextBox.Text = cleanIpAddress;
                 }
             }
         }

@@ -1,3 +1,30 @@
+## b1.0.5
+- Setup Wizard System
+  - Complete setup wizard implementation for all extensions
+  - Step-by-step configuration guidance for new users
+  - Automated extension detection and configuration
+  - Network device scanning capabilities
+  - Integrated completion steps with validation
+
+- Extension Setup Wizards
+  - Caller setup wizard with essential settings, camera config, and detection steps
+  - WLED setup wizard with board status, player colors, and effect configurations
+  - GIF extension setup wizard with media configuration and display modes
+  - Pixelit extension setup wizard with player and game animations
+  - Generic extension wizard support for future extensions
+
+- Enhanced User Experience
+  - Improved argument control factories for all extensions
+  - Better configuration validation and error handling
+  - Streamlined extension selection process
+  - Enhanced settings content provider with wizard integration
+
+- Technical Improvements
+  - Refactored wizard architecture with modular step system
+  - Improved configuration management and validation
+  - Enhanced network device discovery functionality
+  - Better separation of concerns in wizard components
+
 ## b1.0.4
 - Beta tester functionality
   - Add support for beta release checking and downloading

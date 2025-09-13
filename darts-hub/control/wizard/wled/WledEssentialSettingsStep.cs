@@ -62,7 +62,7 @@ namespace darts_hub.control.wizard.wled
             content.Children.Add(header);
 
             // Essential arguments only - use enhanced controls for effect parameters
-            var essentialArgs = new[] { "WEPS", "BRI", "IDE" }; // Endpoint, Brightness, and Idle Effect
+            var essentialArgs = new[] { "WEPS", "IDE" }; // Endpoint, Brightness, and Idle Effect
 
             foreach (var argName in essentialArgs)
             {

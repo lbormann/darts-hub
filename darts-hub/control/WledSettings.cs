@@ -31,6 +31,29 @@ namespace darts_hub.control
         }
 
         /// <summary>
+        /// Checks if a parameter value is a color effect
+        /// </summary>
+        public static bool IsColorEffect(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return false;
+            
+            // Check if it's a simple color effect (just a color name)
+            if (NewSettingsContentProvider.ColorEffects.Contains(value))
+            {
+                return true;
+            }
+            
+            // Check if it's a color effect with solid prefix (solid|colorname format)
+            if (value.StartsWith("solid|", StringComparison.OrdinalIgnoreCase))
+            {
+                var colorName = value.Substring(6); // Remove "solid|" prefix
+                return NewSettingsContentProvider.ColorEffects.Contains(colorName);
+            }
+            
+            return false;
+        }
+
+        /// <summary>
         /// Checks if a parameter value is in WLED effect format
         /// </summary>
         /// <param name="value">The parameter value to check</param>
@@ -38,6 +61,13 @@ namespace darts_hub.control
         public static bool IsWledEffectParameter(string value)
         {
             if (string.IsNullOrEmpty(value)) return false;
+            
+            // First check if it's a color effect (these should be handled by the color dropdown)
+            if (IsColorEffect(value))
+            {
+                System.Diagnostics.Debug.WriteLine($"IsWledEffectParameter: '{value}' is a color effect, not a WLED effect");
+                return false;
+            }
             
             var parts = value.Split('|');
             if (parts.Length == 0) return false;
@@ -147,17 +177,17 @@ namespace darts_hub.control
                     isManualMode = false;
                     System.Diagnostics.Debug.WriteLine($"MODE: PRESETS (detected preset parameter)");
                 }
+                else if (IsColorEffect(param.Value))
+                {
+                    modeSelector.SelectedItem = colorsItem;
+                    isManualMode = false;
+                    System.Diagnostics.Debug.WriteLine($"MODE: COLORS (detected color effect)");
+                }
                 else if (IsWledEffectParameter(param.Value))
                 {
                     modeSelector.SelectedItem = effectsItem;
                     isManualMode = false;
                     System.Diagnostics.Debug.WriteLine($"MODE: EFFECTS (detected WLED effect parameter)");
-                }
-                else if (NewSettingsContentProvider.ColorEffects.Contains(param.Value))
-                {
-                    modeSelector.SelectedItem = colorsItem;
-                    isManualMode = false;
-                    System.Diagnostics.Debug.WriteLine($"MODE: COLORS");
                 }
                 else
                 {
@@ -190,16 +220,26 @@ namespace darts_hub.control
                         HorizontalAlignment = HorizontalAlignment.Center
                     };
                     
-                    Control newControl = mode switch
+                    try
                     {
-                        "manual" => CreateManualEffectInput(param, saveCallback),
-                        "effects" => await CreateWledEffectsDropdown(param, saveCallback, app),
-                        "presets" => await CreateWledPresetsDropdown(param, saveCallback, app),
-                        "colors" => CreateColorEffectsDropdown(param, saveCallback, app),
-                        _ => CreateManualEffectInput(param, saveCallback)
-                    };
-                    
-                    inputContainer.Child = newControl;
+                        Control newControl = mode switch
+                        {
+                            "manual" => CreateManualEffectInput(param, saveCallback),
+                            "effects" => await CreateWledEffectsDropdown(param, saveCallback, app),
+                            "presets" => await CreateWledPresetsDropdown(param, saveCallback, app),
+                            "colors" => CreateColorEffectsDropdown(param, saveCallback, app),
+                            _ => CreateManualEffectInput(param, saveCallback)
+                        };
+                        
+                        inputContainer.Child = newControl;
+                        System.Diagnostics.Debug.WriteLine($"Successfully created control for mode: {mode}");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error creating control for mode {mode}: {ex.Message}");
+                        // Fallback to manual input on error
+                        inputContainer.Child = CreateManualEffectInput(param, saveCallback);
+                    }
                 }
             };
 
@@ -257,7 +297,7 @@ namespace darts_hub.control
                         }
                         catch (Exception ex)
                         {
-                            System.Diagnostics.Debug.WriteLine($"BACKGROUND ERROR: {ex.Message}");
+                            System.Diagnostics.Debug.WriteLine($"_BACKGROUND ERROR: {ex.Message}");
                             System.Diagnostics.Debug.WriteLine($"BACKGROUND STACK: {ex.StackTrace}");
                             
                             // Fallback to manual input on error
@@ -804,15 +844,27 @@ namespace darts_hub.control
             // Allow updates after initial population
             isInitializing = false;
 
-            // Event handlers
+            // Event handlers - FIXED: Properly capture references and handle async operations
             testButton.Click += async (s, e) =>
             {
+                // Ensure we have a valid app reference
+                if (app == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("Test button clicked but app is null");
+                    return;
+                }
+
                 if (effectDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is string effect && 
-                    app != null)
+                    !string.IsNullOrEmpty(effect))
                 {
+                    System.Diagnostics.Debug.WriteLine($"Testing WLED effect: {effect}");
+                    
+                    // Disable button to prevent multiple clicks
                     testButton.IsEnabled = false;
-                    testButton.Content = "▶️";
+                    var originalContent = testButton.Content;
+                    testButton.Content = "⏳";
+                    
                     try
                     {
                         var palette = (paletteDropdown.SelectedItem as ComboBoxItem)?.Tag?.ToString();
@@ -830,52 +882,87 @@ namespace darts_hub.control
                             }
                         }
                         
+                        System.Diagnostics.Debug.WriteLine($"Sending test effect: {effect}, palette: {paletteName}, speed: {speed}, intensity: {intensity}");
+                        
                         var success = await WledApi.TestEffectAsync(app, effect, 
                             paletteName, speed, intensity);
+                            
                         if (success)
                         {
-                            testButton.Content = "▶️";
-                            await Task.Delay(1000);
+                            testButton.Content = "✅";
+                            System.Diagnostics.Debug.WriteLine("Effect test successful");
                         }
                         else
                         {
-                            testButton.Content = "▶️";
-                            await Task.Delay(1000);
+                            testButton.Content = "❌";
+                            System.Diagnostics.Debug.WriteLine("Effect test failed");
                         }
+                        
+                        // Reset button after delay
+                        await Task.Delay(1500);
+                    }
+                    catch (Exception ex)
+                    {
+                        testButton.Content = "❌";
+                        System.Diagnostics.Debug.WriteLine($"Error testing effect: {ex.Message}");
+                        await Task.Delay(1500);
                     }
                     finally
                     {
-                        testButton.Content = "▶️";
+                        testButton.Content = originalContent;
                         testButton.IsEnabled = true;
                     }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("Test button clicked but no effect selected");
                 }
             };
 
             stopButton.Click += async (s, e) =>
             {
-                if (app != null)
+                // Ensure we have a valid app reference
+                if (app == null)
                 {
-                    stopButton.IsEnabled = false;
-                    stopButton.Content = "■";
-                    try
+                    System.Diagnostics.Debug.WriteLine("Stop button clicked but app is null");
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine("Stopping WLED effects");
+                
+                // Disable button to prevent multiple clicks
+                stopButton.IsEnabled = false;
+                var originalContent = stopButton.Content;
+                stopButton.Content = "⏳";
+                
+                try
+                {
+                    var success = await WledApi.StopEffectsAsync(app);
+                    
+                    if (success)
                     {
-                        var success = await WledApi.StopEffectsAsync(app);
-                        if (success)
-                        {
-                            stopButton.Content = "■";
-                            await Task.Delay(1000);
-                        }
-                        else
-                        {
-                            stopButton.Content = "■";
-                            await Task.Delay(1000);
-                        }
+                        stopButton.Content = "✅";
+                        System.Diagnostics.Debug.WriteLine("Effects stopped successfully");
                     }
-                    finally
+                    else
                     {
-                        stopButton.Content = "■";
-                        stopButton.IsEnabled = true;
+                        stopButton.Content = "❌";
+                        System.Diagnostics.Debug.WriteLine("Failed to stop effects");
                     }
+                    
+                    // Reset button after delay
+                    await Task.Delay(1500);
+                }
+                catch (Exception ex)
+                {
+                    stopButton.Content = "❌";
+                    System.Diagnostics.Debug.WriteLine($"Error stopping effects: {ex.Message}");
+                    await Task.Delay(1500);
+                }
+                finally
+                {
+                    stopButton.Content = originalContent;
+                    stopButton.IsEnabled = true;
                 }
             };
 
@@ -1211,7 +1298,7 @@ namespace darts_hub.control
                     if (parts.Length >= 2 && int.TryParse(parts[1], out var presetId))
                     {
                         testButton.IsEnabled = false;
-                        testButton.Content = "▶️";
+                        testButton.Content = "⏳";
                         try
                         {
                             var success = await WledApi.TestPresetAsync(app, presetId);
@@ -1240,7 +1327,7 @@ namespace darts_hub.control
                 if (app != null)
                 {
                     stopButton.IsEnabled = false;
-                    stopButton.Content = "■";
+                    stopButton.Content = "⏳";
                     try
                     {
                         var success = await WledApi.StopEffectsAsync(app);
@@ -1345,6 +1432,13 @@ namespace darts_hub.control
             ToolTip.SetTip(testButton, "Test selected color on WLED controller");
             ToolTip.SetTip(stopButton, "Stop effects on WLED controller");
 
+            // Determine the current color value (remove "solid|" prefix if present)
+            string currentColorValue = param.Value ?? "";
+            if (currentColorValue.StartsWith("solid|", StringComparison.OrdinalIgnoreCase))
+            {
+                currentColorValue = currentColorValue.Substring(6);
+            }
+
             // Populate color effects
             foreach (var colorEffect in NewSettingsContentProvider.ColorEffects)
             {
@@ -1356,69 +1450,114 @@ namespace darts_hub.control
                 };
                 colorDropdown.Items.Add(colorItem);
                 
-                // Pre-select if this matches current value
-                if (param.Value == colorEffect)
+                // Pre-select if this matches current value (compare just the color name)
+                if (currentColorValue == colorEffect)
                 {
                     colorDropdown.SelectedItem = colorItem;
                 }
             }
 
-            // Event handlers
+            // Event handlers - FIXED: Properly capture references and handle async operations
             testButton.Click += async (s, e) =>
             {
+                // Ensure we have a valid app reference
+                if (app == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("Test button clicked but app is null");
+                    return;
+                }
+
                 if (colorDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is string colorEffect && 
-                    app != null)
+                    !string.IsNullOrEmpty(colorEffect))
                 {
+                    System.Diagnostics.Debug.WriteLine($"Testing WLED color: {colorEffect}");
+                    
+                    // Disable button to prevent multiple clicks
                     testButton.IsEnabled = false;
-                    testButton.Content = "▶️";
+                    var originalContent = testButton.Content;
+                    testButton.Content = "⏳";
+                    
                     try
                     {
                         var success = await WledApi.TestColorAsync(app, colorEffect);
+                        
                         if (success)
                         {
-                            testButton.Content = "▶️";
-                            await Task.Delay(1000);
+                            testButton.Content = "✅";
+                            System.Diagnostics.Debug.WriteLine("Color test successful");
                         }
                         else
                         {
-                            testButton.Content = "▶️";
-                            await Task.Delay(1000);
+                            testButton.Content = "❌";
+                            System.Diagnostics.Debug.WriteLine("Color test failed");
                         }
+                        
+                        // Reset button after delay
+                        await Task.Delay(1500);
+                    }
+                    catch (Exception ex)
+                    {
+                        testButton.Content = "❌";
+                        System.Diagnostics.Debug.WriteLine($"Error testing color: {ex.Message}");
+                        await Task.Delay(1500);
                     }
                     finally
                     {
-                        testButton.Content = "▶️";
+                        testButton.Content = originalContent;
                         testButton.IsEnabled = true;
                     }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("Test button clicked but no color selected");
                 }
             };
 
             stopButton.Click += async (s, e) =>
             {
-                if (app != null)
+                // Ensure we have a valid app reference
+                if (app == null)
                 {
-                    stopButton.IsEnabled = false;
-                    stopButton.Content = "■";
-                    try
+                    System.Diagnostics.Debug.WriteLine("Stop button clicked but app is null");
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine("Stopping WLED effects");
+                
+                // Disable button to prevent multiple clicks
+                stopButton.IsEnabled = false;
+                var originalContent = stopButton.Content;
+                stopButton.Content = "⏳";
+                
+                try
+                {
+                    var success = await WledApi.StopEffectsAsync(app);
+                    
+                    if (success)
                     {
-                        var success = await WledApi.StopEffectsAsync(app);
-                        if (success)
-                        {
-                            stopButton.Content = "■";
-                            await Task.Delay(1000);
-                        }
-                        else
-                        {
-                            stopButton.Content = "■";
-                            await Task.Delay(1000);
-                        }
+                        stopButton.Content = "✅";
+                        System.Diagnostics.Debug.WriteLine("Effects stopped successfully");
                     }
-                    finally
+                    else
                     {
-                        stopButton.Content = "■";
-                        stopButton.IsEnabled = true;
+                        stopButton.Content = "❌";
+                        System.Diagnostics.Debug.WriteLine("Failed to stop effects");
                     }
+                    
+                    // Reset button after delay
+                    await Task.Delay(1500);
+                }
+                catch (Exception ex)
+                {
+                    stopButton.Content = "❌";
+                    System.Diagnostics.Debug.WriteLine($"Error stopping effects: {ex.Message}");
+                    await Task.Delay(1500);
+                }
+                finally
+                {
+                    stopButton.Content = originalContent;
+                    stopButton.IsEnabled = true;
                 }
             };
 
@@ -1427,9 +1566,12 @@ namespace darts_hub.control
                 if (colorDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is string colorEffect)
                 {
-                    param.Value = $"solid|{colorEffect}"; // Just the color effect name, no duration
+                    // CRITICAL FIX: Always store color effects with "solid|" prefix
+                    param.Value = $"solid|{colorEffect}";
                     param.IsValueChanged = true;
                     saveCallback?.Invoke();
+                    
+                    System.Diagnostics.Debug.WriteLine($"Updated color effect parameter with solid prefix: {param.Value}");
                 }
             };
 

@@ -16,6 +16,94 @@ namespace darts_hub.control
     public static class WledScoreAreaHelper
     {
         /// <summary>
+        /// Checks if a parameter value is a color effect
+        /// </summary>
+        private static bool IsColorEffect(string value)
+        {
+            if (string.IsNullOrEmpty(value)) 
+            {
+                System.Diagnostics.Debug.WriteLine($"IsColorEffect('{value}') = false (null/empty)");
+                return false;
+            }
+            
+            // Check if it's a simple color effect (just a color name)
+            if (NewSettingsContentProvider.ColorEffects.Contains(value))
+            {
+                System.Diagnostics.Debug.WriteLine($"IsColorEffect('{value}') = true (direct match)");
+                return true;
+            }
+            
+            // Check if it's a color effect with solid prefix (solid|colorname format)
+            if (value.StartsWith("solid|", StringComparison.OrdinalIgnoreCase))
+            {
+                var colorName = value.Substring(6); // Remove "solid|" prefix
+                bool isColor = NewSettingsContentProvider.ColorEffects.Contains(colorName);
+                System.Diagnostics.Debug.WriteLine($"IsColorEffect('{value}') = {isColor} (solid| prefix, colorName='{colorName}')");
+                return isColor;
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"IsColorEffect('{value}') = false (no match)");
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if a parameter value is a WLED effect
+        /// </summary>
+        private static bool IsWledEffect(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return false;
+            
+            var parts = value.Split('|');
+            if (parts.Length == 0) return false;
+            
+            var effectName = parts[0];
+            
+            // Check if the effect name is in the fallback categories (known WLED effects)
+            var allFallbackEffects = WledApi.FallbackEffectCategories.SelectMany(kv => kv.Value).ToList();
+            if (allFallbackEffects.Contains(effectName))
+            {
+                System.Diagnostics.Debug.WriteLine($"IsWledEffect: '{effectName}' found in fallback effects");
+                return true;
+            }
+            
+            // Check if it has the new format with prefixed parameters (s{value}, i{value}, p{value}, d{value})
+            if (parts.Length > 1)
+            {
+                bool hasNewFormatParams = false;
+                for (int i = 1; i < parts.Length; i++)
+                {
+                    var part = parts[i];
+                    if (!string.IsNullOrEmpty(part) && 
+                        (part.StartsWith("s") || part.StartsWith("i") || part.StartsWith("p") || part.StartsWith("d")))
+                    {
+                        hasNewFormatParams = true;
+                        break;
+                    }
+                }
+                
+                if (hasNewFormatParams)
+                {
+                    System.Diagnostics.Debug.WriteLine($"IsWledEffect: '{effectName}' has new format parameters");
+                    return true;
+                }
+            }
+            
+            // Check if it has the old format with 4 parts (effect|palette|speed|intensity)
+            if (parts.Length == 4)
+            {
+                // Try to parse speed and intensity as numbers
+                if (int.TryParse(parts[2], out _) && int.TryParse(parts[3], out _))
+                {
+                    System.Diagnostics.Debug.WriteLine($"IsWledEffect: '{effectName}' has old 4-part format");
+                    return true;
+                }
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"IsWledEffect: '{value}' not recognized as WLED effect");
+            return false;
+        }
+
+        /// <summary>
         /// Creates a score area effect parameter control with range dropdowns and effect selection
         /// </summary>
         public static Control CreateScoreAreaEffectParameterControl(Argument param, Action? saveCallback = null, AppBase? app = null)
@@ -182,23 +270,23 @@ namespace darts_hub.control
                             }
                         }
                         
-                        // Set mode based on effect type
+                        // Set mode based on effect type - prioritize color effects first
                         System.Diagnostics.Debug.WriteLine($"  Determining mode for effect: '{effectPart}'");
                         
-                        if (IsPresetParameter(effectPart))
+                        if (IsColorEffect(effectPart))
+                        {
+                            modeSelector.SelectedItem = colorsItem;
+                            System.Diagnostics.Debug.WriteLine($"  MODE: COLORS (detected color effect)");
+                        }
+                        else if (IsPresetParameter(effectPart))
                         {
                             modeSelector.SelectedItem = presetsItem;
                             System.Diagnostics.Debug.WriteLine($"  MODE: PRESETS (detected preset parameter)");
                         }
-                        else if (WledApi.FallbackEffectCategories.SelectMany(kv => kv.Value).Contains(effectPart))
+                        else if (IsWledEffect(effectPart))
                         {
                             modeSelector.SelectedItem = effectsItem;
-                            System.Diagnostics.Debug.WriteLine($"  MODE: EFFECTS");
-                        }
-                        else if (NewSettingsContentProvider.ColorEffects.Contains(effectPart))
-                        {
-                            modeSelector.SelectedItem = colorsItem;
-                            System.Diagnostics.Debug.WriteLine($"  MODE: COLORS");
+                            System.Diagnostics.Debug.WriteLine($"  MODE: EFFECTS (detected WLED effect parameter)");
                         }
                         else
                         {
@@ -443,7 +531,7 @@ namespace darts_hub.control
                         }),
                         "effects" => await CreateWledEffectsDropdown(tempParam, () => { effectPart = tempParam.Value; UpdateParameterValue(); }, app),
                         "presets" => await CreateWledPresetsDropdownWithState(tempParam, () => { effectPart = tempParam.Value; UpdateParameterValue(); }, app, ExtractPresetFromEffectPart(effectPart), selectedTo ?? 0, selectedFrom ?? 0),
-                        "colors" => CreateColorEffectsDropdown(tempParam, () => { effectPart = tempParam.Value; UpdateParameterValue(); }),
+                        "colors" => CreateColorEffectsDropdown(tempParam, () => { effectPart = tempParam.Value; UpdateParameterValue(); }, app),
                         _ => CreateManualEffectInput(tempParam, () => { 
                             effectPart = tempParam.Value; 
                             param.Value = tempParam.Value;
@@ -481,21 +569,34 @@ namespace darts_hub.control
                     });
                     System.Diagnostics.Debug.WriteLine($"INITIALIZED: Manual text input created");
                 }
+                else if (currentMode == "colors" && !string.IsNullOrEmpty(effectPart))
+                {
+                    System.Diagnostics.Debug.WriteLine($"INITIALIZING: Colors mode");
+                    
+                    // CRITICAL FIX: For colors mode, always ensure container visibility during initialization
+                    if (!effectContainer.IsVisible)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"FIXING: Effect container was hidden by range validation - forcing visibility for colors initialization");
+                        effectContainer.IsVisible = true;
+                    }
+                    
+                    // For colors, create immediately (synchronous)
+                    var tempParam = new Argument("temp", Argument.TypeString, false) { Value = effectPart };
+                    effectContainer.Child = CreateColorEffectsDropdown(tempParam, () => { 
+                        effectPart = tempParam.Value; 
+                        UpdateParameterValue(); 
+                    }, app);
+                    System.Diagnostics.Debug.WriteLine($"INITIALIZED: Colors dropdown created successfully");
+                }
                 else if (currentMode == "presets" && !string.IsNullOrEmpty(effectPart))
                 {
                     System.Diagnostics.Debug.WriteLine($"INITIALIZING: Preset mode with effect part");
                     
-                    // Check if container is visible before proceeding
+                    // CRITICAL FIX: For presets mode, always ensure container visibility during initialization
                     if (!effectContainer.IsVisible)
                     {
-                        System.Diagnostics.Debug.WriteLine($"ERROR: Effect container not visible - cannot initialize presets!");
-                        System.Diagnostics.Debug.WriteLine($"  This means range validation failed");
-                        System.Diagnostics.Debug.WriteLine($"  From dropdown: {fromDropdown.SelectedItem}");
-                        System.Diagnostics.Debug.WriteLine($"  To dropdown: {toDropdown.SelectedItem}");
-                        
-                        // Force visibility for debugging
+                        System.Diagnostics.Debug.WriteLine($"FIXING: Effect container was hidden by range validation - forcing visibility for presets initialization");
                         effectContainer.IsVisible = true;
-                        System.Diagnostics.Debug.WriteLine($"  FORCED container visibility to true");
                     }
                     
                     // Show loading indicator initially
@@ -516,39 +617,36 @@ namespace darts_hub.control
                     System.Diagnostics.Debug.WriteLine($"UI THREAD: ExtractPresetFromEffectPart('{effectPart}') = '{extractedPreset}'");
                     
                     // Create preset control on UI thread asynchronously
-                    _ = Task.Run(async () =>
+                    _ = Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
                     {
                         try
                         {
-                            System.Diagnostics.Debug.WriteLine($"BACKGROUND: Starting async preset creation");
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD: Starting async preset creation");
                             
                             // Create the preset control on UI thread
-                            var presetControl = await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
-                            {
-                                System.Diagnostics.Debug.WriteLine($"UI THREAD: Creating preset control");
-                                return await CreateWledPresetsDropdownWithState(
-                                    tempParam, 
-                                    () => { effectPart = tempParam.Value; UpdateParameterValue(); }, 
-                                    app, 
-                                    extractedPreset, 
-                                    selectedTo ?? 0, 
-                                    selectedFrom ?? 0
-                                );
-                            });
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD: Creating preset control");
+                            var presetControl = await CreateWledPresetsDropdownWithState(
+                                tempParam, 
+                                () => { effectPart = tempParam.Value; UpdateParameterValue(); }, 
+                                app, 
+                                extractedPreset, 
+                                selectedTo ?? 0, 
+                                selectedFrom ?? 0
+                            );
                             
-                            System.Diagnostics.Debug.WriteLine($"BACKGROUND: Preset control created successfully");
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD: Preset control created successfully");
                             
                             // Set the control on UI thread
-                            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-                            {
-                                effectContainer.Child = presetControl;
-                                System.Diagnostics.Debug.WriteLine($"UI THREAD: Preset control set to container");
-                            });
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD: Setting preset control to container");
+                            // CRITICAL FIX: Re-ensure visibility before setting the control, in case something changed it in the meantime
+                            effectContainer.IsVisible = true;
+                            effectContainer.Child = presetControl;
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD: Preset control set to container");
                         }
                         catch (Exception ex)
                         {
-                            System.Diagnostics.Debug.WriteLine($"BACKGROUND ERROR: {ex.Message}");
-                            System.Diagnostics.Debug.WriteLine($"BACKGROUND STACK: {ex.StackTrace}");
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD ERROR: {ex.Message}");
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD STACK: {ex.StackTrace}");
                             
                             // Fallback to manual input on error
                             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
@@ -566,68 +664,81 @@ namespace darts_hub.control
                 else if (currentMode == "effects" && !string.IsNullOrEmpty(effectPart))
                 {
                     System.Diagnostics.Debug.WriteLine($"INITIALIZING: Effects mode");
-                    // Show loading indicator initially
-                    effectContainer.Child = new TextBlock 
-                    { 
-                        Text = "Loading effects...", 
-                        Foreground = Brushes.White,
-                        HorizontalAlignment = HorizontalAlignment.Center
-                    };
                     
-                    // For effects, initialize with existing data
-                    Task.Run(async () =>
+                    // CRITICAL FIX: For effects mode, always ensure container visibility during initialization
+                    // The range validation might have hidden it, but we need to show it for effects initialization
+                    if (!effectContainer.IsVisible)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"FIXING: Effect container was hidden by range validation - forcing visibility for effects initialization");
+                        effectContainer.IsVisible = true;
+                    }
+                    
+                    // IMMEDIATE SYNCHRONOUS CREATION as fallback if async fails
+                    System.Diagnostics.Debug.WriteLine($"IMMEDIATE: Creating synchronous effects control as initial content");
+                    var immediateTempParam = new Argument("temp", Argument.TypeString, false) { Value = effectPart };
+                    
+                    // Create a simple immediate control that shows the parsed values
+                    var immediatePanel = new StackPanel { Spacing = 5 };
+                    immediatePanel.Children.Add(new TextBlock 
+                    { 
+                        Text = $"WLED Effect: {effectPart}", 
+                        Foreground = Brushes.White,
+                        FontSize = 12
+                    });
+                    immediatePanel.Children.Add(new TextBlock 
+                    { 
+                        Text = "Loading full WLED controls...", 
+                        Foreground = Brushes.LightGray,
+                        FontSize = 10
+                    });
+                    effectContainer.Child = immediatePanel;
+                    System.Diagnostics.Debug.WriteLine($"IMMEDIATE: Set immediate panel showing effect info");
+                    
+                    // CRITICAL FIX: Call CreateWledEffectsDropdown on UI thread, not in background
+                    System.Diagnostics.Debug.WriteLine($"UI THREAD: Starting async creation on UI thread");
+                    _ = Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
                     {
                         try
                         {
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD: Creating WLED effects control with effectPart='{effectPart}'");
                             var tempParam = new Argument("temp", Argument.TypeString, false) { Value = effectPart };
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD: Created tempParam with value='{tempParam.Value}'");
+                            
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD: Calling CreateWledEffectsDropdown");
                             var effectControl = await CreateWledEffectsDropdown(
                                 tempParam, 
-                                () => { effectPart = tempParam.Value; UpdateParameterValue(); }, 
+                                () => { 
+                                    System.Diagnostics.Debug.WriteLine($"CALLBACK: effectPart updated from '{effectPart}' to '{tempParam.Value}'");
+                                    effectPart = tempParam.Value; 
+                                    UpdateParameterValue(); 
+                                }, 
                                 app
                             );
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD: CreateWledEffectsDropdown completed successfully");
                             
-                            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-                            {
-                                effectContainer.Child = effectControl;
-                            });
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD: Setting effect control to container");
+                            // CRITICAL FIX: Re-ensure visibility before setting the control, in case something changed it in the meantime
+                            effectContainer.IsVisible = true;
+                            effectContainer.Child = effectControl;
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD: WLED Effects control set to container successfully");
                         }
-                        catch
+                        catch (Exception ex)
                         {
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD ERROR in effects creation: {ex.Message}");
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD STACK: {ex.StackTrace}");
+                            
+
                             // Fallback to manual input on error
-                            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-                            {
-                                var tempParam = new Argument("temp", Argument.TypeString, false) { Value = effectPart };
-                                effectContainer.Child = CreateManualEffectInput(tempParam, () => { 
-                                    effectPart = tempParam.Value; 
-                                    UpdateParameterValue();
-                                });
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD: Creating fallback manual input due to error");
+                            var fallbackParam = new Argument("temp", Argument.TypeString, false) { Value = effectPart };
+                            effectContainer.Child = CreateManualEffectInput(fallbackParam, () => { 
+                                effectPart = fallbackParam.Value; 
+                                UpdateParameterValue();
                             });
+                            System.Diagnostics.Debug.WriteLine($"UI THREAD: Fallback manual input created due to effects error");
                         }
                     });
-                }
-                else if (currentMode == "colors" && !string.IsNullOrEmpty(effectPart))
-                {
-                    System.Diagnostics.Debug.WriteLine($"INITIALIZING: Colors mode");
-                    // For colors, create immediately (synchronous)
-                    var tempParam = new Argument("temp", Argument.TypeString, false) { Value = effectPart };
-                    effectContainer.Child = CreateColorEffectsDropdown(tempParam, () => { 
-                        effectPart = tempParam.Value; 
-                        UpdateParameterValue(); 
-                    });
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"INITIALIZING: Default fallback to manual");
-                    System.Diagnostics.Debug.WriteLine($"  Reason: currentMode='{currentMode}', effectPart='{effectPart}', isEmpty={string.IsNullOrEmpty(effectPart)}");
-                    
-                    // Default to manual mode if no specific mode matched
-                    var tempParam = new Argument("temp", Argument.TypeString, false) { Value = param.Value };
-                    effectContainer.Child = CreateManualEffectInput(tempParam, () => { 
-                        effectPart = tempParam.Value; 
-                        param.Value = tempParam.Value;
-                        param.IsValueChanged = true;
-                        saveCallback?.Invoke();
-                    });
+                    System.Diagnostics.Debug.WriteLine($"UI THREAD: Async task scheduled for effects creation");
                 }
             }
             else
@@ -710,7 +821,7 @@ namespace darts_hub.control
         {
             if (string.IsNullOrEmpty(effectPart)) return null;
             
-            // Check if effectPart is a preset format (ps|1, ps|1|5, etc.)
+            // Check if effectPart is a preset format (ps|1, ps|1|5, etc.);
             var parts = effectPart.Split('|');
             if (parts.Length >= 2 && 
                 parts[0].Equals("ps", StringComparison.OrdinalIgnoreCase) && 
@@ -921,12 +1032,18 @@ namespace darts_hub.control
             int selectedSpeed = 128;
             int selectedIntensity = 128;
 
+            System.Diagnostics.Debug.WriteLine($"=== WLED EFFECTS PARSING START ===");
+            System.Diagnostics.Debug.WriteLine($"Parameter Value: '{param.Value}'");
+
             if (!string.IsNullOrEmpty(param.Value))
             {
                 var parts = param.Value.Split('|');
+                System.Diagnostics.Debug.WriteLine($"Split into {parts.Length} parts: [{string.Join(", ", parts)}]");
+                
                 if (parts.Length > 0) 
                 {
                     selectedEffect = parts[0];
+                    System.Diagnostics.Debug.WriteLine($"Selected Effect: '{selectedEffect}'");
                 }
                 
                 // First try new format with prefixes
@@ -940,36 +1057,71 @@ namespace darts_hub.control
                     {
                         selectedSpeed = Math.Max(1, Math.Min(255, speed));
                         foundNewFormat = true;
+                        System.Diagnostics.Debug.WriteLine($"Found Speed (new format): {selectedSpeed}");
                     }
                     else if (part.StartsWith("i") && int.TryParse(part.Substring(1), out var intensity))
                     {
                         selectedIntensity = Math.Max(1, Math.Min(255, intensity));
                         foundNewFormat = true;
+                        System.Diagnostics.Debug.WriteLine($"Found Intensity (new format): {selectedIntensity}");
                     }
                     else if (part.StartsWith("p"))
                     {
                         var paletteValue = part.Substring(1);
                         selectedPalette = paletteValue;
                         foundNewFormat = true;
+                        System.Diagnostics.Debug.WriteLine($"Found Palette (new format): '{selectedPalette}'");
                     }
                 }
                 
                 // If no new format found, try old format for backward compatibility
                 if (!foundNewFormat && parts.Length > 1)
                 {
-                    if (parts.Length > 1) selectedPalette = parts[1];
+                    System.Diagnostics.Debug.WriteLine($"Trying old format parsing...");
+                    if (parts.Length > 1) 
+                    {
+                        selectedPalette = parts[1];
+                        System.Diagnostics.Debug.WriteLine($"Found Palette (old format): '{selectedPalette}'");
+                    }
                     if (parts.Length > 2 && int.TryParse(parts[2], out var oldSpeed)) 
+                    {
                         selectedSpeed = Math.Max(1, Math.Min(255, oldSpeed));
+                        System.Diagnostics.Debug.WriteLine($"Found Speed (old format): {selectedSpeed}");
+                    }
                     if (parts.Length > 3 && int.TryParse(parts[3], out var oldIntensity)) 
+                    {
                         selectedIntensity = Math.Max(1, Math.Min(255, oldIntensity));
+                        System.Diagnostics.Debug.WriteLine($"Found Intensity (old format): {selectedIntensity}");
+                    }
                 }
+                
+                System.Diagnostics.Debug.WriteLine($"Final parsed values:");
+                System.Diagnostics.Debug.WriteLine($"  Effect: '{selectedEffect}'");
+                System.Diagnostics.Debug.WriteLine($"  Palette: '{selectedPalette}'");
+                System.Diagnostics.Debug.WriteLine($"  Speed: {selectedSpeed}");
+                System.Diagnostics.Debug.WriteLine($"  Intensity: {selectedIntensity}");
+                System.Diagnostics.Debug.WriteLine($"  Found New Format: {foundNewFormat}");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"Parameter value is empty or null");
             }
 
             // Set initial values
+            System.Diagnostics.Debug.WriteLine($"=== SETTING INITIAL SLIDER VALUES ===");
+            System.Diagnostics.Debug.WriteLine($"Setting Speed to: {selectedSpeed}");
+            System.Diagnostics.Debug.WriteLine($"Setting Intensity to: {selectedIntensity}");
+            
             speedSlider.Value = selectedSpeed;
             speedValue.Text = selectedSpeed.ToString();
             intensitySlider.Value = selectedIntensity;
             intensityValue.Text = selectedIntensity.ToString();
+            
+            System.Diagnostics.Debug.WriteLine($"Sliders initialized:");
+            System.Diagnostics.Debug.WriteLine($"  Speed Slider Value: {speedSlider.Value}");
+            System.Diagnostics.Debug.WriteLine($"  Speed Text Value: {speedValue.Text}");
+            System.Diagnostics.Debug.WriteLine($"  Intensity Slider Value: {intensitySlider.Value}");
+            System.Diagnostics.Debug.WriteLine($"  Intensity Text Value: {intensityValue.Text}");
 
             // Flag to prevent recursive updates
             bool isUpdating = false;
@@ -1029,6 +1181,9 @@ namespace darts_hub.control
             // Function to populate effects
             async Task PopulateEffects()
             {
+                System.Diagnostics.Debug.WriteLine($"=== POPULATING EFFECTS START ===");
+                System.Diagnostics.Debug.WriteLine($"Looking for effect to select: '{selectedEffect}'");
+                
                 effectDropdown.PlaceholderText = "Loading WLED effects...";
                 effectDropdown.Items.Clear();
                 
@@ -1037,6 +1192,8 @@ namespace darts_hub.control
                 if (app != null)
                 {
                     var (effects, source, isLive) = await WledApi.GetEffectsWithFallbackAsync(app);
+                    
+                    System.Diagnostics.Debug.WriteLine($"Retrieved {effects.Count} effects from {source} (isLive: {isLive})");
                     
                     // Add info header
                     var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
@@ -1066,6 +1223,7 @@ namespace darts_hub.control
                         if (selectedEffect == effect)
                         {
                             effectToSelect = effectItem;
+                            System.Diagnostics.Debug.WriteLine($"MATCH FOUND: Will select effect '{effect}'");
                         }
                     }
 
@@ -1075,8 +1233,13 @@ namespace darts_hub.control
                 }
                 else
                 {
+                    System.Diagnostics.Debug.WriteLine($"No app provided, using fallback effects");
+                    
                     // Just use fallback if no app provided
                     var fallbackEffects = WledApi.FallbackEffectCategories.SelectMany(kv => kv.Value).ToList();
+                    
+                    System.Diagnostics.Debug.WriteLine($"Retrieved {fallbackEffects.Count} fallback effects");
+                    
                     foreach (var effect in fallbackEffects)
                     {
                         var effectItem = new ComboBoxItem
@@ -1090,6 +1253,7 @@ namespace darts_hub.control
                         if (selectedEffect == effect)
                         {
                             effectToSelect = effectItem;
+                            System.Diagnostics.Debug.WriteLine($"FALLBACK MATCH FOUND: Will select effect '{effect}'");
                         }
                     }
                     effectDropdown.PlaceholderText = "Select WLED effect...";
@@ -1098,12 +1262,29 @@ namespace darts_hub.control
                 if (effectToSelect != null)
                 {
                     effectDropdown.SelectedItem = effectToSelect;
+                    System.Diagnostics.Debug.WriteLine($"EFFECT SELECTED: '{selectedEffect}' was set as selected item");
                 }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"NO EFFECT MATCH: '{selectedEffect}' was not found in available effects");
+                    
+                    // Debug: List all available effects
+                    var allEffects = effectDropdown.Items.OfType<ComboBoxItem>()
+                        .Where(item => item.IsEnabled && item.Tag != null)
+                        .Select(item => item.Tag?.ToString())
+                        .ToList();
+                    System.Diagnostics.Debug.WriteLine($"Available effects: [{string.Join(", ", allEffects)}]");
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"=== POPULATING EFFECTS COMPLETE ===");
             }
 
             // Function to populate palettes
             async Task PopulatePalettes()
             {
+                System.Diagnostics.Debug.WriteLine($"=== POPULATING PALETTES START ===");
+                System.Diagnostics.Debug.WriteLine($"Looking for palette to select: '{selectedPalette}'");
+                
                 paletteDropdown.PlaceholderText = "Loading palettes...";
                 paletteDropdown.Items.Clear();
                 
@@ -1121,11 +1302,14 @@ namespace darts_hub.control
                 if (string.IsNullOrEmpty(selectedPalette))
                 {
                     paletteToSelect = noneItem;
+                    System.Diagnostics.Debug.WriteLine($"NONE SELECTED: Empty palette, will select 'None'");
                 }
                 
                 if (app != null)
                 {
                     var (palettes, source, isLive) = await WledApi.GetPalettesWithFallbackAsync(app);
+                    
+                    System.Diagnostics.Debug.WriteLine($"Retrieved {palettes.Count} palettes from {source} (isLive: {isLive})");
                     
                     // Add info header
                     var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
@@ -1156,6 +1340,7 @@ namespace darts_hub.control
                         if (selectedPalette == i.ToString() || selectedPalette == palette)
                         {
                             paletteToSelect = paletteItem;
+                            System.Diagnostics.Debug.WriteLine($"PALETTE MATCH FOUND: Will select palette '{palette}' (index: {i}, selectedPalette: '{selectedPalette}')");
                         }
                     }
 
@@ -1165,6 +1350,8 @@ namespace darts_hub.control
                 }
                 else
                 {
+                    System.Diagnostics.Debug.WriteLine($"No app provided, using fallback palettes");
+                    
                     // Just use fallback if no app provided
                     for (int i = 0; i < WledApi.FallbackPalettes.Count; i++)
                     {
@@ -1180,6 +1367,7 @@ namespace darts_hub.control
                         if (selectedPalette == i.ToString() || selectedPalette == palette)
                         {
                             paletteToSelect = paletteItem;
+                            System.Diagnostics.Debug.WriteLine($"FALLBACK PALETTE MATCH: Will select palette '{palette}' (index: {i})");
                         }
                     }
                     paletteDropdown.PlaceholderText = "Select palette...";
@@ -1188,14 +1376,41 @@ namespace darts_hub.control
                 if (paletteToSelect != null)
                 {
                     paletteDropdown.SelectedItem = paletteToSelect;
+                    System.Diagnostics.Debug.WriteLine($"PALETTE SELECTED: '{paletteToSelect.Content}' was set as selected item");
                 }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"NO PALETTE MATCH: '{selectedPalette}' was not found in available palettes");
+                    
+                    // Debug: List all available palettes
+                    var allPalettes = paletteDropdown.Items.OfType<ComboBoxItem>()
+                        .Where(item => item.IsEnabled && item.Tag != null)
+                        .Select(item => $"{item.Content} (tag: {item.Tag})")
+                        .ToList();
+                    System.Diagnostics.Debug.WriteLine($"Available palettes: [{string.Join(", ", allPalettes)}]");
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"=== POPULATING PALETTES COMPLETE ===");
             }
 
             // Initial population
+            System.Diagnostics.Debug.WriteLine($"=== STARTING INITIAL POPULATION ===");
             await PopulateEffects();
             await PopulatePalettes();
             
+            // Re-set slider values after population (in case they got reset)
+            System.Diagnostics.Debug.WriteLine($"=== RE-SETTING SLIDER VALUES AFTER POPULATION ===");
+            speedSlider.Value = selectedSpeed;
+            speedValue.Text = selectedSpeed.ToString();
+            intensitySlider.Value = selectedIntensity;
+            intensityValue.Text = selectedIntensity.ToString();
+            
+            System.Diagnostics.Debug.WriteLine($"Final slider values:");
+            System.Diagnostics.Debug.WriteLine($"  Speed: {speedSlider.Value} (text: {speedValue.Text})");
+            System.Diagnostics.Debug.WriteLine($"  Intensity: {intensitySlider.Value} (text: {intensityValue.Text})");
+            
             // Allow updates after initial population
+            System.Diagnostics.Debug.WriteLine($"=== INITIAL POPULATION COMPLETE - ENABLING UPDATES ===");
             isInitializing = false;
 
             // Event handlers
@@ -1205,7 +1420,7 @@ namespace darts_hub.control
                 refreshButton.Content = "⏳";
                 try
                 {
-                    isInitializing = true;
+                    isInitializing = true; // Prevent updates during refresh
                     await PopulateEffects();
                     await PopulatePalettes();
                     isInitializing = false;
@@ -1219,12 +1434,24 @@ namespace darts_hub.control
 
             testButton.Click += async (s, e) =>
             {
+                // Ensure we have a valid app reference
+                if (app == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("Test button clicked but app is null");
+                    return;
+                }
+
                 if (effectDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is string effect && 
-                    app != null)
+                    !string.IsNullOrEmpty(effect))
                 {
+                    System.Diagnostics.Debug.WriteLine($"Testing WLED effect: {effect}");
+                    
+                    // Disable button to prevent multiple clicks
                     testButton.IsEnabled = false;
+                    var originalContent = testButton.Content;
                     testButton.Content = "⏳";
+                    
                     try
                     {
                         var palette = (paletteDropdown.SelectedItem as ComboBoxItem)?.Tag?.ToString();
@@ -1247,52 +1474,86 @@ namespace darts_hub.control
                             paletteName = palette;
                         }
                         
+                        System.Diagnostics.Debug.WriteLine($"Sending test effect: {effect}, palette: {paletteName}, speed: {speed}, intensity: {intensity}");
+                        
                         var success = await WledApi.TestEffectAsync(app, effect, 
                             paletteName, speed, intensity);
+                            
                         if (success)
                         {
                             testButton.Content = "✅";
-                            await Task.Delay(1000);
+                            System.Diagnostics.Debug.WriteLine("Effect test successful");
                         }
                         else
                         {
                             testButton.Content = "❌";
-                            await Task.Delay(1000);
+                            System.Diagnostics.Debug.WriteLine("Effect test failed");
                         }
+                        
+                        // Reset button after delay
+                        await Task.Delay(1500);
+                    }
+                    catch (Exception ex)
+                    {
+                        testButton.Content = "❌";
+                        System.Diagnostics.Debug.WriteLine($"Error testing effect: {ex.Message}");
+                        await Task.Delay(1500);
                     }
                     finally
                     {
-                        testButton.Content = "▶️";
+                        testButton.Content = originalContent;
                         testButton.IsEnabled = true;
                     }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("Test button clicked but no effect selected or effect is empty");
                 }
             };
 
             stopButton.Click += async (s, e) =>
             {
-                if (app != null)
+                // Ensure we have a valid app reference
+                if (app == null)
                 {
-                    stopButton.IsEnabled = false;
-                    stopButton.Content = "⏳";
-                    try
+                    System.Diagnostics.Debug.WriteLine("Stop button clicked but app is null");
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine("Stopping WLED effects");
+                
+                // Disable button to prevent multiple clicks
+                stopButton.IsEnabled = false;
+                var originalContent = stopButton.Content;
+                stopButton.Content = "⏳";
+                
+                try
+                {
+                    var success = await WledApi.StopEffectsAsync(app);
+                    if (success)
                     {
-                        var success = await WledApi.StopEffectsAsync(app);
-                        if (success)
-                        {
-                            stopButton.Content = "✅";
-                            await Task.Delay(1000);
-                        }
-                        else
-                        {
-                            stopButton.Content = "❌";
-                            await Task.Delay(1000);
-                        }
+                        stopButton.Content = "✅";
+                        System.Diagnostics.Debug.WriteLine("Effects stopped successfully");
                     }
-                    finally
+                    else
                     {
-                        stopButton.Content = "■";
-                        stopButton.IsEnabled = true;
+                        stopButton.Content = "❌";
+                        System.Diagnostics.Debug.WriteLine("Failed to stop effects");
                     }
+                    
+                    // Reset button after delay
+                    await Task.Delay(1500);
+                }
+                catch (Exception ex)
+                {
+                    stopButton.Content = "❌";
+                    System.Diagnostics.Debug.WriteLine($"Error stopping effects: {ex.Message}");
+                    await Task.Delay(1500);
+                }
+                finally
+                {
+                    stopButton.Content = originalContent;
+                    stopButton.IsEnabled = true;
                 }
             };
 
@@ -1576,6 +1837,7 @@ namespace darts_hub.control
                         if (targetPreset == presetValue)
                         {
                             itemToSelect = presetItem;
+                            System.Diagnostics.Debug.WriteLine($"MATCH FOUND: Will select preset '{presetValue}'");
                         }
                     }
 
@@ -1601,6 +1863,7 @@ namespace darts_hub.control
                         if (targetPreset == presetValue)
                         {
                             itemToSelect = presetItem;
+                            System.Diagnostics.Debug.WriteLine($"FALLBACK MATCH FOUND: Will select preset '{presetValue}'");
                         }
                     }
                     presetDropdown.PlaceholderText = "Select preset...";
@@ -1636,66 +1899,116 @@ namespace darts_hub.control
                 }
             };
 
+            // Event handlers - FIXED: Properly capture references and handle async operations
             testButton.Click += async (s, e) =>
             {
+                // Ensure we have a valid app reference
+                if (app == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("Test button clicked but app is null");
+                    return;
+                }
+
                 if (presetDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is string presetTag && 
-                    app != null)
+                    !string.IsNullOrEmpty(presetTag))
                 {
                     // Extract preset ID from "ps|X" format
                     var parts = presetTag.Split('|');
                     if (parts.Length >= 2 && int.TryParse(parts[1], out var presetId))
                     {
+                        System.Diagnostics.Debug.WriteLine($"Testing WLED preset: {presetId}");
+                        
+                        // Disable button to prevent multiple clicks
                         testButton.IsEnabled = false;
+                        var originalContent = testButton.Content;
                         testButton.Content = "⏳";
+                        
                         try
                         {
                             var success = await WledApi.TestPresetAsync(app, presetId);
+                            
                             if (success)
                             {
                                 testButton.Content = "✅";
-                                await Task.Delay(1000);
+                                System.Diagnostics.Debug.WriteLine("Preset test successful");
                             }
                             else
                             {
                                 testButton.Content = "❌";
-                                await Task.Delay(1000);
+                                System.Diagnostics.Debug.WriteLine("Preset test failed");
                             }
+                            
+                            // Reset button after delay
+                            await Task.Delay(1500);
+                        }
+                        catch (Exception ex)
+                        {
+                            testButton.Content = "❌";
+                            System.Diagnostics.Debug.WriteLine($"Error testing preset: {ex.Message}");
+                            await Task.Delay(1500);
                         }
                         finally
                         {
-                            testButton.Content = "▶️";
+                            testButton.Content = originalContent;
                             testButton.IsEnabled = true;
                         }
                     }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Invalid preset tag format: {presetTag}");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("Test button clicked but no preset selected");
                 }
             };
 
             stopButton.Click += async (s, e) =>
             {
-                if (app != null)
+                // Ensure we have a valid app reference
+                if (app == null)
                 {
-                    stopButton.IsEnabled = false;
-                    stopButton.Content = "⏳";
-                    try
+                    System.Diagnostics.Debug.WriteLine("Stop button clicked but app is null");
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine("Stopping WLED effects");
+                
+                // Disable button to prevent multiple clicks
+                stopButton.IsEnabled = false;
+                var originalContent = stopButton.Content;
+                stopButton.Content = "⏳";
+                
+                try
+                {
+                    var success = await WledApi.StopEffectsAsync(app);
+                    
+                    if (success)
                     {
-                        var success = await WledApi.StopEffectsAsync(app);
-                        if (success)
-                        {
-                            stopButton.Content = "✅";
-                            await Task.Delay(1000);
-                        }
-                        else
-                        {
-                            stopButton.Content = "❌";
-                            await Task.Delay(1000);
-                        }
+                        stopButton.Content = "✅";
+                        System.Diagnostics.Debug.WriteLine("Effects stopped successfully");
                     }
-                    finally
+                    else
                     {
-                        stopButton.Content = "■";
-                        stopButton.IsEnabled = true;
+                        stopButton.Content = "❌";
+                        System.Diagnostics.Debug.WriteLine("Failed to stop effects");
                     }
+                    
+                    // Reset button after delay
+                    await Task.Delay(1500);
+                }
+                catch (Exception ex)
+                {
+                    stopButton.Content = "❌";
+                    System.Diagnostics.Debug.WriteLine($"Error stopping effects: {ex.Message}");
+                    await Task.Delay(1500);
+                }
+                finally
+                {
+                    stopButton.Content = originalContent;
+                    stopButton.IsEnabled = true;
                 }
             };
 
@@ -1778,7 +2091,20 @@ namespace darts_hub.control
             ToolTip.SetTip(testButton, "Test selected color on WLED controller");
             ToolTip.SetTip(stopButton, "Stop effects on WLED controller");
 
+            // Determine the current color value (remove "solid|" prefix if present)
+            string currentColorValue = param.Value ?? "";
+            if (currentColorValue.StartsWith("solid|", StringComparison.OrdinalIgnoreCase))
+            {
+                currentColorValue = currentColorValue.Substring(6);
+            }
+
+            System.Diagnostics.Debug.WriteLine($"=== SCORE AREA COLOR DROPDOWN INIT ===");
+            System.Diagnostics.Debug.WriteLine($"App: {app?.Name ?? "NULL"}");
+            System.Diagnostics.Debug.WriteLine($"Param Value: '{param.Value}'");
+            System.Diagnostics.Debug.WriteLine($"Current Color Value: '{currentColorValue}'");
+
             // Populate color effects
+            ComboBoxItem? selectedColorItem = null;
             foreach (var colorEffect in NewSettingsContentProvider.ColorEffects)
             {
                 var colorItem = new ComboBoxItem
@@ -1789,68 +2115,140 @@ namespace darts_hub.control
                 };
                 colorDropdown.Items.Add(colorItem);
                 
-                if (param.Value == colorEffect)
+                // Pre-select if this matches current value (compare just the color name)
+                if (currentColorValue == colorEffect)
                 {
-                    colorDropdown.SelectedItem = colorItem;
+                    selectedColorItem = colorItem;
+                    System.Diagnostics.Debug.WriteLine($"MATCH FOUND: Will select color '{colorEffect}'");
                 }
             }
 
-            // Event handlers
+            // Set selected item after all items are added
+            if (selectedColorItem != null)
+            {
+                colorDropdown.SelectedItem = selectedColorItem;
+                System.Diagnostics.Debug.WriteLine($"SELECTED COLOR: '{selectedColorItem.Content}' was set as selected item");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"NO COLOR MATCH: '{currentColorValue}' was not found in available colors");
+            }
+
+            // Event handlers - FIXED: Properly capture references and handle async operations
             testButton.Click += async (s, e) =>
             {
+                System.Diagnostics.Debug.WriteLine($"=== SCORE AREA COLOR TEST BUTTON CLICKED ===");
+                
+                // Ensure we have a valid app reference
+                if (app == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("ERROR: Test button clicked but app is null");
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"App available: {app.Name}");
+
                 if (colorDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is string colorEffect && 
-                    app != null)
+                    !string.IsNullOrEmpty(colorEffect))
                 {
+                    System.Diagnostics.Debug.WriteLine($"Testing WLED score area color: {colorEffect}");
+                    
+                    // Disable button to prevent multiple clicks
                     testButton.IsEnabled = false;
+                    var originalContent = testButton.Content;
                     testButton.Content = "⏳";
+                    
                     try
                     {
+                        // For score area effects, we test the color directly
+                        // The WledApi.TestColorAsync method expects just the color name without "solid|" prefix
+                        System.Diagnostics.Debug.WriteLine($"Calling WledApi.TestColorAsync with app='{app.Name}', color='{colorEffect}'");
+                        
                         var success = await WledApi.TestColorAsync(app, colorEffect);
+                        
                         if (success)
                         {
                             testButton.Content = "✅";
-                            await Task.Delay(1000);
+                            System.Diagnostics.Debug.WriteLine("Score area color test successful");
                         }
                         else
                         {
                             testButton.Content = "❌";
-                            await Task.Delay(1000);
+                            System.Diagnostics.Debug.WriteLine("Score area color test failed");
                         }
+                        
+                        // Reset button after delay
+                        await Task.Delay(1500);
+                    }
+                    catch (Exception ex)
+                    {
+                        testButton.Content = "❌";
+                        System.Diagnostics.Debug.WriteLine($"Error testing score area color: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                        await Task.Delay(1500);
                     }
                     finally
                     {
-                        testButton.Content = "▶️";
+                        testButton.Content = originalContent;
                         testButton.IsEnabled = true;
                     }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("ERROR: Test button clicked but no color selected or color is empty");
                 }
             };
 
             stopButton.Click += async (s, e) =>
             {
-                if (app != null)
+                System.Diagnostics.Debug.WriteLine($"=== SCORE AREA COLOR STOP BUTTON CLICKED ===");
+                
+                // Ensure we have a valid app reference
+                if (app == null)
                 {
-                    stopButton.IsEnabled = false;
-                    stopButton.Content = "⏳";
-                    try
+                    System.Diagnostics.Debug.WriteLine("ERROR: Stop button clicked but app is null");
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"App available: {app.Name}");
+                System.Diagnostics.Debug.WriteLine("Stopping WLED effects");
+                
+                // Disable button to prevent multiple clicks
+                stopButton.IsEnabled = false;
+                var originalContent = stopButton.Content;
+                stopButton.Content = "⏳";
+                
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine($"Calling WledApi.StopEffectsAsync with app='{app.Name}'");
+                    
+                    var success = await WledApi.StopEffectsAsync(app);
+                    if (success)
                     {
-                        var success = await WledApi.StopEffectsAsync(app);
-                        if (success)
-                        {
-                            stopButton.Content = "✅";
-                            await Task.Delay(1000);
-                        }
-                        else
-                        {
-                            stopButton.Content = "❌";
-                            await Task.Delay(1000);
-                        }
+                        stopButton.Content = "✅";
+                        System.Diagnostics.Debug.WriteLine("Score area effects stopped successfully");
                     }
-                    finally
+                    else
                     {
-                        stopButton.Content = "■";
-                        stopButton.IsEnabled = true;
+                        stopButton.Content = "❌";
+                        System.Diagnostics.Debug.WriteLine("Failed to stop score area effects");
                     }
+                    
+                    // Reset button after delay
+                    await Task.Delay(1500);
+                }
+                catch (Exception ex)
+                {
+                    stopButton.Content = "❌";
+                    System.Diagnostics.Debug.WriteLine($"Error stopping score area effects: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                    await Task.Delay(1500);
+                }
+                finally
+                {
+                    stopButton.Content = originalContent;
+                    stopButton.IsEnabled = true;
                 }
             };
 
@@ -1859,15 +2257,21 @@ namespace darts_hub.control
                 if (colorDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is string colorEffect)
                 {
+                    // CRITICAL FIX: Always store color effects with "solid|" prefix for score areas
                     param.Value = $"solid|{colorEffect}";
                     param.IsValueChanged = true;
                     saveCallback?.Invoke();
+                    
+                    System.Diagnostics.Debug.WriteLine($"Updated score area color effect parameter with solid prefix: {param.Value}");
                 }
             };
 
             panel.Children.Add(colorDropdown);
             panel.Children.Add(testButton);
             panel.Children.Add(stopButton);
+            
+            System.Diagnostics.Debug.WriteLine($"=== SCORE AREA COLOR DROPDOWN COMPLETE ===");
+            
             return panel;
         }
     }

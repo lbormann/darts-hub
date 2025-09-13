@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform;
@@ -794,7 +795,7 @@ namespace darts_hub.control
 
                 ToolTip.SetTip(removeButton, "Remove parameter");
 
-                removeButton.Click += async (sender, e) =>
+                removeButton.Click += (sender, e) =>
                 {
                     param.Value = null;
                     // Mark as changed for saving
@@ -802,11 +803,46 @@ namespace darts_hub.control
                     // Trigger auto-save
                     saveCallback?.Invoke();
                     
-                    // Find the root NewSettingsContent panel and refresh it to update dropdowns
-                    var rootPanel = FindRootNewSettingsPanel(removeButton);
-                    if (rootPanel != null)
+                    System.Diagnostics.Debug.WriteLine($"=== REMOVE PARAMETER CLICK ===");
+                    System.Diagnostics.Debug.WriteLine($"Removing parameter: {param.Name}");
+                    
+                    // Find the main panel by traversing up to the root
+                    var current = removeButton.Parent;
+                    StackPanel? rootMainPanel = null;
+                    
+                    // Traverse up to find the main panel that contains the header
+                    while (current != null)
                     {
-                        await RefreshNewSettingsContent(app, rootPanel, saveCallback);
+                        System.Diagnostics.Debug.WriteLine($"Checking parent: {current.GetType().Name}");
+                        
+                        if (current is StackPanel stackPanel)
+                        {
+                            // Look for the root main panel that contains the header
+                            var hasSettingsHeader = stackPanel.Children.OfType<StackPanel>()
+                                .Any(sp => sp.Children.OfType<TextBlock>()
+                                       .Any(tb => tb.Text?.Contains("Settings Mode") == true));
+                            
+                            System.Diagnostics.Debug.WriteLine($"  Has settings header: {hasSettingsHeader}");
+                            
+                            if (hasSettingsHeader)
+                            {
+                                rootMainPanel = stackPanel;
+                                System.Diagnostics.Debug.WriteLine($"✓ Found root main panel");
+                                break;
+                            }
+                        }
+                        current = current.Parent;
+                    }
+                    
+                    if (rootMainPanel != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Triggering section refresh for parameter removal");
+                        // Use the same force refresh method for consistency
+                        ForceCompleteSettingsRefresh(param, app, rootMainPanel, saveCallback);
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("ERROR: Could not find root main panel for parameter removal");
                     }
                 };
 
@@ -999,7 +1035,7 @@ namespace darts_hub.control
                         Foreground = Brushes.White,
                         BorderThickness = new Thickness(0),
                         CornerRadius = new CornerRadius(3),
-                        Width = 30,
+                        Width = 60,
                         Height = 30,
                         Margin = new Thickness(5, 0, 0, 0)
                     };
@@ -1009,6 +1045,90 @@ namespace darts_hub.control
                         param.Value = fileTextBox.Text;
                         param.IsValueChanged = true;
                         saveCallback?.Invoke();
+                    };
+
+                    // Add functionality to the browse button
+                    browseButton.Click += async (s, e) =>
+                    {
+                        try
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Browse button clicked for parameter: {param.Name}, type: {type}");
+                            
+                            // Get the top level window for the dialog
+                            var topLevel = TopLevel.GetTopLevel(browseButton);
+                            if (topLevel is not Window window)
+                            {
+                                System.Diagnostics.Debug.WriteLine("Could not find parent window for file dialog");
+                                return;
+                            }
+
+                            string? result = null;
+
+                            if (type == Argument.TypePath)
+                            {
+                                // Open folder dialog for path selection
+                                System.Diagnostics.Debug.WriteLine("Opening folder dialog...");
+                                var folderDialog = new OpenFolderDialog
+                                {
+                                    Title = $"Select folder for {param.NameHuman ?? param.Name}"
+                                };
+
+                                // Set initial directory if current value exists and is valid
+                                if (!string.IsNullOrEmpty(param.Value) && System.IO.Directory.Exists(param.Value))
+                                {
+                                    folderDialog.Directory = param.Value;
+                                }
+
+                                result = await folderDialog.ShowAsync(window);
+                                System.Diagnostics.Debug.WriteLine($"Folder dialog result: {result ?? "CANCELLED"}");
+                            }
+                            else // Argument.TypeFile
+                            {
+                                // Open file dialog for file selection
+                                System.Diagnostics.Debug.WriteLine("Opening file dialog...");
+                                var fileDialog = new OpenFileDialog
+                                {
+                                    Title = $"Select file for {param.NameHuman ?? param.Name}",
+                                    AllowMultiple = false
+                                };
+
+                                // Set initial directory if current value exists
+                                if (!string.IsNullOrEmpty(param.Value))
+                                {
+                                    try
+                                    {
+                                        var directory = System.IO.Path.GetDirectoryName(param.Value);
+                                        if (!string.IsNullOrEmpty(directory) && System.IO.Directory.Exists(directory))
+                                        {
+                                            fileDialog.Directory = directory;
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine($"Error setting initial directory: {ex.Message}");
+                                    }
+                                }
+
+                                var fileResults = await fileDialog.ShowAsync(window);
+                                result = fileResults?.FirstOrDefault();
+                                System.Diagnostics.Debug.WriteLine($"File dialog result: {result ?? "CANCELLED"}");
+                            }
+
+                            // Update the textbox and parameter if a selection was made
+                            if (!string.IsNullOrEmpty(result))
+                            {
+                                fileTextBox.Text = result;
+                                param.Value = result;
+                                param.IsValueChanged = true;
+                                saveCallback?.Invoke();
+                                System.Diagnostics.Debug.WriteLine($"Updated parameter {param.Name} with value: {result}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error in browse button click: {ex.Message}");
+                            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                        }
                     };
 
                     Grid.SetColumn(fileTextBox, 0);
@@ -1156,23 +1276,62 @@ namespace darts_hub.control
                 addButton.IsEnabled = paramDropdown.SelectedItem != null;
             };
 
-            addButton.Click += async (s, e) =>
+            addButton.Click += (s, e) =>
             {
                 if (paramDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is Argument selectedParam)
                 {
+                    System.Diagnostics.Debug.WriteLine($"=== ADD PARAMETER BUTTON CLICKED ===");
+                    System.Diagnostics.Debug.WriteLine($"Adding parameter: {selectedParam.Name}");
+                    System.Diagnostics.Debug.WriteLine($"Parameter section: {selectedParam.Section ?? "General"}");
+                    
                     // Set a default value to make it "configured"
-                    selectedParam.Value = GetDefaultValueForType(selectedParam.GetTypeClear());
+                    selectedParam.Value = GetDefaultValueForParameter(selectedParam.GetTypeClear());
                     selectedParam.IsValueChanged = true;
+                    System.Diagnostics.Debug.WriteLine($"Set parameter value to: {selectedParam.Value}");
 
                     // Trigger auto-save
                     saveCallback?.Invoke();
+                    System.Diagnostics.Debug.WriteLine("Triggered auto-save");
 
-                    // Find the root NewSettingsContent panel and refresh it
-                    var rootPanel = FindRootNewSettingsPanel(addButton);
-                    if (rootPanel != null)
+                    // Find the REAL main panel by traversing up to the root (like we do in remove button)
+                    System.Diagnostics.Debug.WriteLine("Finding REAL main panel...");
+                    var current = addButton.Parent;
+                    StackPanel? realMainPanel = null;
+                    
+                    // Traverse up to find the main panel that contains the header
+                    while (current != null)
                     {
-                        await RefreshNewSettingsContent(app, rootPanel, saveCallback);
+                        System.Diagnostics.Debug.WriteLine($"Checking parent: {current.GetType().Name}");
+                        
+                        if (current is StackPanel stackPanel)
+                        {
+                            // Look for the root main panel that contains the header
+                            var hasSettingsHeader = stackPanel.Children.OfType<StackPanel>()
+                                .Any(sp => sp.Children.OfType<TextBlock>()
+                                       .Any(tb => tb.Text?.Contains("Settings Mode") == true));
+                            
+                            System.Diagnostics.Debug.WriteLine($"  Has settings header: {hasSettingsHeader}");
+                            
+                            if (hasSettingsHeader)
+                            {
+                                realMainPanel = stackPanel;
+                                System.Diagnostics.Debug.WriteLine($"✓ Found real main panel");
+                                break;
+                            }
+                        }
+                        current = current.Parent;
+                    }
+                    
+                    if (realMainPanel != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Triggering section refresh for parameter addition");
+                        // Use the same force refresh method for consistency
+                        ForceCompleteSettingsRefresh(selectedParam, app, realMainPanel, saveCallback);
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("ERROR: Could not find real main panel for parameter addition");
                     }
                 }
             };
@@ -1184,7 +1343,162 @@ namespace darts_hub.control
             return sectionPanel;
         }
 
-        private static string GetDefaultValueForType(string type)
+        /// <summary>
+        /// Forces a complete settings refresh by rebuilding the entire UI
+        /// </summary>
+        private static void ForceCompleteSettingsRefresh(Argument changedParam, AppBase app, StackPanel mainPanel, Action? saveCallback)
+        {
+            System.Diagnostics.Debug.WriteLine($"=== FORCE COMPLETE SETTINGS REFRESH ===");
+            System.Diagnostics.Debug.WriteLine($"Changed parameter: {changedParam.Name} (Section: {changedParam.Section ?? "General"})");
+            System.Diagnostics.Debug.WriteLine($"Main panel type: {mainPanel.GetType().Name}");
+            System.Diagnostics.Debug.WriteLine($"Main panel children count: {mainPanel.Children.Count}");
+            
+            try
+            {
+                // Verify this is the correct main panel by checking for expected structure
+                bool hasExpectedStructure = mainPanel.Children.OfType<StackPanel>()
+                    .Any(sp => sp.Children.OfType<TextBlock>()
+                           .Any(tb => tb.Text?.Contains("Settings Mode") == true));
+                
+                System.Diagnostics.Debug.WriteLine($"Main panel has expected structure: {hasExpectedStructure}");
+                
+                if (!hasExpectedStructure)
+                {
+                    System.Diagnostics.Debug.WriteLine("WARNING: Main panel does not have expected structure!");
+                    
+                    // Try to find the real main panel
+                    var realMainPanel = FindRealMainPanel(mainPanel);
+                    if (realMainPanel != null && realMainPanel != mainPanel)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Found different real main panel, using that instead");
+                        ForceCompleteSettingsRefresh(changedParam, app, realMainPanel, saveCallback);
+                        return;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("Could not find better main panel, proceeding with current one");
+                    }
+                }
+                
+                // Clear the entire main panel
+                mainPanel.Children.Clear();
+                System.Diagnostics.Debug.WriteLine("Cleared entire main panel");
+                
+                // Recreate header
+                var headerPanel = CreateHeaderPanel(app);
+                mainPanel.Children.Add(headerPanel);
+                System.Diagnostics.Debug.WriteLine("Added header panel");
+                
+                // Recreate status section
+                var statusSection = CreateStatusSection(app);
+                mainPanel.Children.Add(statusSection);
+                System.Diagnostics.Debug.WriteLine("Added status section");
+                
+                // Recreate actions section
+                var actionsSection = CreateQuickActionsSection(app);
+                mainPanel.Children.Add(actionsSection);
+                System.Diagnostics.Debug.WriteLine("Added actions section");
+                
+                // Recreate configured parameters section (this will show the new parameter)
+                var configuredSection = CreateConfiguredParametersSection(app, saveCallback);
+                mainPanel.Children.Add(configuredSection);
+                System.Diagnostics.Debug.WriteLine("Added configured parameters section");
+                
+                // Recreate add parameter section (this will have updated dropdowns)
+                var addParameterSection = CreateAddParameterSection(app, mainPanel, saveCallback);
+                mainPanel.Children.Add(addParameterSection);
+                System.Diagnostics.Debug.WriteLine("Added add parameter section");
+                
+                // Recreate beta notice
+                var betaNotice = CreateBetaNotice();
+                mainPanel.Children.Add(betaNotice);
+                System.Diagnostics.Debug.WriteLine("Added beta notice");
+                
+                System.Diagnostics.Debug.WriteLine($"✓ Force complete settings refresh successful, final children count: {mainPanel.Children.Count}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ERROR during force complete settings refresh: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        }
+
+        /// <summary>
+        /// Tries to find the real main panel by traversing the UI tree
+        /// </summary>
+        private static StackPanel? FindRealMainPanel(StackPanel startPanel)
+        {
+            System.Diagnostics.Debug.WriteLine($"=== FINDING REAL MAIN PANEL ===");
+            System.Diagnostics.Debug.WriteLine($"Starting from panel: {startPanel.GetType().Name}");
+            
+            // First, traverse up to find the topmost parent
+            var current = startPanel.Parent;
+            StackPanel? rootCandidate = startPanel;
+            
+            while (current != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"Traversing up: {current.GetType().Name}");
+                
+                if (current is StackPanel parentStackPanel)
+                {
+                    rootCandidate = parentStackPanel;
+                }
+                current = current.Parent;
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"Root candidate: {rootCandidate?.GetType().Name}");
+            
+            // Now traverse down from the root to find the main panel with settings content
+            return FindMainPanelInHierarchy(rootCandidate);
+        }
+
+        /// <summary>
+        /// Recursively searches for the main panel with settings mode content
+        /// </summary>
+        private static StackPanel? FindMainPanelInHierarchy(Control? control)
+        {
+            if (control == null) return null;
+            
+            if (control is StackPanel stackPanel)
+            {
+                // Check if this panel has the expected structure
+                bool hasExpectedStructure = stackPanel.Children.OfType<StackPanel>()
+                    .Any(sp => sp.Children.OfType<TextBlock>()
+                           .Any(tb => tb.Text?.Contains("Settings Mode") == true));
+                
+                if (hasExpectedStructure)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Found main panel with expected structure");
+                    return stackPanel;
+                }
+                
+                // Recursively search children
+                foreach (var child in stackPanel.Children)
+                {
+                    var found = FindMainPanelInHierarchy(child);
+                    if (found != null) return found;
+                }
+            }
+            else if (control is ContentPresenter presenter && presenter.Content is Control content)
+            {
+                return FindMainPanelInHierarchy(content);
+            }
+            else if (control is Panel panel)
+            {
+                foreach (var child in panel.Children)
+                {
+                    var found = FindMainPanelInHierarchy(child);
+                    if (found != null) return found;
+                }
+            }
+            
+            return null;
+        }
+
+        /// <summary>
+        /// Gets a default value for a parameter type
+        /// </summary>
+        private static string GetDefaultValueForParameter(string type)
         {
             return type switch
             {
@@ -1193,38 +1507,6 @@ namespace darts_hub.control
                 Argument.TypeFloat => "0.0",
                 _ => "change to activate" // String, Password, File, Path get a non-empty default value
             };
-        }
-
-        private static StackPanel? FindRootNewSettingsPanel(Control startControl)
-        {
-            var current = startControl.Parent;
-            while (current != null)
-            {
-                if (current is StackPanel panel && panel.Name == "NewSettingsContent")
-                {
-                    return panel;
-                }
-                current = current.Parent;
-            }
-            return null;
-        }
-
-        private static async Task RefreshNewSettingsContent(AppBase app, StackPanel rootPanel, Action? saveCallback = null)
-        {
-            // Clear and rebuild the settings content
-            rootPanel.Children.Clear();
-            var newContent = await CreateNewSettingsContent(app, saveCallback);
-            
-            // Copy children from new content to root panel
-            if (newContent is StackPanel newPanel)
-            {
-                while (newPanel.Children.Count > 0)
-                {
-                    var child = newPanel.Children[0];
-                    newPanel.Children.RemoveAt(0);
-                    rootPanel.Children.Add(child);
-                }
-            }
         }
 
         private static Control CreateConfigurationPreviewSection(AppBase app)
