@@ -178,8 +178,8 @@ namespace darts_hub.control.wizard.caller
                     Control control;
                     if (argName == "R")
                     {
-                        // Enable random selection by default when this step is shown
-                        argument.Value = "True";
+                        // Enable random selection by default when this step is shown (1 = random selection enabled)
+                        argument.Value = "1";
                         argument.IsValueChanged = true;
                     }
                     

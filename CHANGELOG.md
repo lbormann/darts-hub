@@ -1,3 +1,10 @@
+## b1.0.6
+- Bug Fixes
+  - Fixed wizard navigation edge cases
+  - Resolved configuration saving issues in specific scenarios
+  - Corrected extension argument validation errors
+  - Fixed memory leaks in wizard cleanup processes
+
 ## b1.0.5
 - Setup Wizard System
   - Complete setup wizard implementation for all extensions
