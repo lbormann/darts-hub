@@ -279,10 +279,7 @@ jobs:
           body: |
             # Changes in this Release
             - Bug Fixes
-              - Fixed wizard navigation edge cases
-              - Resolved configuration saving issues in specific scenarios
-              - Corrected extension argument validation errors
-              - Fixed memory leaks in wizard cleanup processes
+              - short WLED start after connection test in wizzard
 
             ## WLED
             - WLED Extension

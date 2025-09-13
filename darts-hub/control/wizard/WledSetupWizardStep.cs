@@ -359,420 +359,7 @@ namespace darts_hub.control.wizard
             return panel;
         }
 
-        private async Task CreateConfigurationSections()
-        {
-            if (wledApp?.Configuration?.Arguments == null) 
-            {
-                System.Diagnostics.Debug.WriteLine("No WLED arguments found");
-                return;
-            }
-
-            var extensionConfig = wizardConfig.GetExtensionConfig("darts-wled");
-            if (extensionConfig?.Sections == null) 
-            {
-                System.Diagnostics.Debug.WriteLine("No WLED extension config found for 'darts-wled'");
-                return;
-            }
-
-            System.Diagnostics.Debug.WriteLine($"Creating {extensionConfig.Sections.Count} WLED sections");
-
-            // Create enhanced settings style sections
-            foreach (var sectionKvp in extensionConfig.Sections.OrderBy(s => s.Value.Priority))
-            {
-                var sectionName = sectionKvp.Key;
-                var sectionConfig = sectionKvp.Value;
-
-                var sectionCard = new Border
-                {
-                    Background = new SolidColorBrush(Color.FromArgb(80, 45, 45, 48)),
-                    CornerRadius = new Avalonia.CornerRadius(8),
-                    Padding = new Avalonia.Thickness(20),
-                    Margin = new Avalonia.Thickness(0, 8)
-                };
-
-                var sectionContent = new StackPanel { Spacing = 12 };
-
-                // Section Header with expand/collapse
-                var headerPanel = CreateSectionHeader(sectionName, sectionConfig.Expanded);
-                sectionContent.Children.Add(headerPanel);
-
-                // Section Arguments (initially visible based on expanded state)
-                var argumentsPanel = new StackPanel { Spacing = 12, IsVisible = sectionConfig.Expanded };
-
-                System.Diagnostics.Debug.WriteLine($"  Section '{sectionName}' with {sectionConfig.Arguments.Count} arguments");
-
-                foreach (var argumentName in sectionConfig.Arguments)
-                {
-                    var argument = wledApp.Configuration.Arguments.FirstOrDefault(a => 
-                        a.Name.Equals(argumentName, StringComparison.OrdinalIgnoreCase));
-                    
-                    if (argument != null)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"    Creating control for WLED argument: {argument.Name} = '{argument.Value}'");
-                        var argumentControl = await CreateEnhancedArgumentControl(argument);
-                        if (argumentControl != null)
-                        {
-                            argumentsPanel.Children.Add(argumentControl);
-                        }
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"    WLED argument '{argumentName}' not found in app configuration");
-                    }
-                }
-
-                // Add toggle functionality
-                if (headerPanel.Children[0] is Button toggleButton)
-                {
-                    toggleButton.Click += (s, e) =>
-                    {
-                        argumentsPanel.IsVisible = !argumentsPanel.IsVisible;
-                        toggleButton.Content = argumentsPanel.IsVisible ? "▼" : "▶";
-                    };
-                }
-
-                sectionContent.Children.Add(argumentsPanel);
-                sectionCard.Child = sectionContent;
-                configurationPanel.Children.Add(sectionCard);
-                
-                System.Diagnostics.Debug.WriteLine($"  Added section '{sectionName}' with {argumentsPanel.Children.Count} controls");
-            }
-            
-            System.Diagnostics.Debug.WriteLine($"Total WLED configuration sections created: {configurationPanel.Children.Count}");
-        }
-
-        private StackPanel CreateSectionHeader(string sectionName, bool expanded)
-        {
-            var headerPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 10
-            };
-
-            var toggleButton = new Button
-            {
-                Content = expanded ? "▼" : "▶",
-                FontSize = 16,
-                Background = Brushes.Transparent,
-                BorderThickness = new Avalonia.Thickness(0),
-                Foreground = Brushes.White,
-                VerticalAlignment = VerticalAlignment.Center,
-                Padding = new Avalonia.Thickness(5)
-            };
-
-            headerPanel.Children.Add(toggleButton);
-
-            headerPanel.Children.Add(new TextBlock
-            {
-                Text = sectionName,
-                FontSize = 16,
-                FontWeight = FontWeight.Bold,
-                Foreground = Brushes.White,
-                VerticalAlignment = VerticalAlignment.Center
-            });
-
-            return headerPanel;
-        }
-
-        private async Task<Control> CreateEnhancedArgumentControl(Argument argument)
-        {
-            var container = new Border
-            {
-                Background = new SolidColorBrush(Color.FromArgb(60, 70, 70, 70)),
-                CornerRadius = new Avalonia.CornerRadius(6),
-                Padding = new Avalonia.Thickness(15),
-                Margin = new Avalonia.Thickness(0, 8)
-            };
-
-            var content = new StackPanel { Spacing = 10 };
-
-            // Label and Description
-            var labelPanel = new StackPanel { Spacing = 5 };
-
-            var titleLabel = new TextBlock
-            {
-                Text = argument.NameHuman + (argument.Required ? " *" : ""),
-                FontSize = 14,
-                FontWeight = FontWeight.Bold,
-                Foreground = Brushes.White
-            };
-            labelPanel.Children.Add(titleLabel);
-
-            // Description
-            string description = GetArgumentDescription(argument);
-            if (!string.IsNullOrEmpty(description))
-            {
-                var descLabel = new TextBlock
-                {
-                    Text = description,
-                    FontSize = 12,
-                    Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
-                    TextWrapping = TextWrapping.Wrap
-                };
-                labelPanel.Children.Add(descLabel);
-            }
-
-            content.Children.Add(labelPanel);
-
-            // Input Control
-            var inputControl = CreateInputControl(argument);
-            if (inputControl != null)
-            {
-                var inputContainer = new Grid();
-                inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-                Grid.SetColumn(inputControl, 0);
-                inputContainer.Children.Add(inputControl);
-
-                // Clear button
-                var clearButton = CreateClearButton(argument, inputControl);
-                Grid.SetColumn(clearButton, 1);
-                inputContainer.Children.Add(clearButton);
-
-                content.Children.Add(inputContainer);
-                argumentControls[argument.Name] = inputControl;
-            }
-
-            container.Child = content;
-            return container;
-        }
-
-        private string GetArgumentDescription(Argument argument)
-        {
-            if (argumentDescriptions.TryGetValue(argument.Name, out string description) && !string.IsNullOrEmpty(description))
-            {
-                return description;
-            }
-
-            if (!string.IsNullOrEmpty(argument.Description))
-            {
-                return argument.Description;
-            }
-
-            // Fallback descriptions for WLED arguments
-            return argument.Name.ToLower() switch
-            {
-                "weps" or "con" => "IP address and port of your WLED controller device",
-                "bri" => "Global brightness level for LED effects (1-255)",
-                "ide" => "Default effect shown when no game is active",
-                "hfo" => "Score threshold for high finish effects",
-                "hf" => "Special effects for high finishes and checkouts",
-                "g" => "Effects played when a game is won",
-                "m" => "Effects played when a match is won",
-                "b" => "Effects played when a player goes bust",
-                _ => $"WLED configuration setting: {argument.NameHuman}"
-            };
-        }
-
-        private Control CreateInputControl(Argument argument)
-        {
-            string type = argument.GetTypeClear();
-
-            // Set default values from config
-            if (string.IsNullOrEmpty(argument.Value))
-            {
-                var defaultValue = wizardConfig.GetDefaultValue(argument.Name);
-                if (!string.IsNullOrEmpty(defaultValue))
-                {
-                    argument.Value = defaultValue;
-                }
-            }
-
-            // Use enhanced controls for WLED effect parameters
-            if (WledSettings.IsEffectParameter(argument))
-            {
-                return WledSettings.CreateAdvancedEffectParameterControl(argument, 
-                    () => { argument.IsValueChanged = true; }, wledApp);
-            }
-
-            return type switch
-            {
-                Argument.TypeString or Argument.TypePassword => CreateTextBox(argument),
-                Argument.TypeBool => CreateCheckBox(argument),
-                Argument.TypeInt => CreateNumericUpDown(argument, false),
-                Argument.TypeFloat => CreateNumericUpDown(argument, true),
-                _ => CreateTextBox(argument)
-            };
-        }
-
-        private Control CreateSimpleArgumentControl(Argument argument)
-        {
-            // Use the factory method instead of duplicating code
-            return WledArgumentControlFactory.CreateSimpleArgumentControl(argument, argumentControls, GetArgumentDescription);
-        }
-
-        private Control CreateTextBox(Argument argument)
-        {
-            var textBox = new TextBox
-            {
-                Text = argument.Value ?? "",
-                FontSize = 13,
-                Background = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
-                Foreground = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Padding = new Avalonia.Thickness(10, 8),
-                HorizontalAlignment = HorizontalAlignment.Stretch
-            };
-
-            textBox.TextChanged += (s, e) =>
-            {
-                argument.Value = textBox.Text;
-                argument.IsValueChanged = true;
-            };
-
-            return textBox;
-        }
-
-        private Control CreateCheckBox(Argument argument)
-        {
-            bool isChecked = false;
-            if (!string.IsNullOrEmpty(argument.Value))
-            {
-                isChecked = argument.Value.Equals("True", StringComparison.OrdinalIgnoreCase) ||
-                           argument.Value == "1";
-            }
-
-            var checkBox = new CheckBox
-            {
-                Content = "Enable this feature",
-                IsChecked = isChecked,
-                FontSize = 13,
-                Foreground = Brushes.White
-            };
-
-            checkBox.Checked += (s, e) =>
-            {
-                argument.Value = "True";
-                argument.IsValueChanged = true;
-            };
-
-            checkBox.Unchecked += (s, e) =>
-            {
-                argument.Value = "False";
-                argument.IsValueChanged = true;
-            };
-
-            return checkBox;
-        }
-
-        private Control CreateNumericUpDown(Argument argument, bool isFloat)
-        {
-            var numericUpDown = new NumericUpDown
-            {
-                FontSize = 13,
-                Background = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
-                Foreground = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Padding = new Avalonia.Thickness(10, 8),
-                Width = 150,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Increment = isFloat ? 0.1m : 1m,
-                FormatString = isFloat ? "F1" : "F0"
-            };
-
-            // Set value and limits
-            if (isFloat)
-            {
-                if (double.TryParse(argument.Value, System.Globalization.NumberStyles.Float,
-                    System.Globalization.CultureInfo.InvariantCulture, out var doubleVal))
-                {
-                    numericUpDown.Value = (decimal)doubleVal;
-                }
-            }
-            else
-            {
-                if (int.TryParse(argument.Value, out var intVal))
-                {
-                    numericUpDown.Value = intVal;
-                }
-            }
-
-            // Set appropriate limits
-            switch (argument.Name.ToLower())
-            {
-                case "bri" or "brightness":
-                    numericUpDown.Minimum = 1;
-                    numericUpDown.Maximum = 255;
-                    break;
-                case "hp" or "port" or "webp":
-                    numericUpDown.Minimum = 1024;
-                    numericUpDown.Maximum = 65535;
-                    break;
-                case "hfo":
-                    numericUpDown.Minimum = 2;
-                    numericUpDown.Maximum = 170;
-                    break;
-                case "du":
-                    numericUpDown.Minimum = 0;
-                    numericUpDown.Maximum = 10;
-                    break;
-                default:
-                    numericUpDown.Minimum = isFloat ? -9999.9m : -9999;
-                    numericUpDown.Maximum = isFloat ? 9999.9m : 9999;
-                    break;
-            }
-
-            numericUpDown.ValueChanged += (s, e) =>
-            {
-                argument.Value = numericUpDown.Value?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
-                argument.IsValueChanged = true;
-            };
-
-            return numericUpDown;
-        }
-
-        private Control CreateClearButton(Argument argument, Control inputControl)
-        {
-            var clearButton = new Button
-            {
-                Content = "🗑️",
-                Width = 28,
-                Height = 28,
-                Background = Brushes.Transparent,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
-                FontSize = 10,
-                Margin = new Avalonia.Thickness(10, 0, 0, 0),
-                VerticalAlignment = VerticalAlignment.Top
-            };
-
-            clearButton.Click += (s, e) =>
-            {
-                ResetArgumentToDefault(argument, inputControl);
-            };
-
-            return clearButton;
-        }
-
-        private void ResetArgumentToDefault(Argument argument, Control inputControl)
-        {
-            var defaultValue = wizardConfig.GetDefaultValue(argument.Name);
-            argument.Value = defaultValue;
-            argument.IsValueChanged = true;
-
-            switch (inputControl)
-            {
-                case TextBox textBox:
-                    textBox.Text = defaultValue;
-                    break;
-                case CheckBox checkBox:
-                    checkBox.IsChecked = defaultValue.Equals("True", StringComparison.OrdinalIgnoreCase);
-                    break;
-                case NumericUpDown numericUpDown:
-                    if (decimal.TryParse(defaultValue, out var decimalVal))
-                        numericUpDown.Value = decimalVal;
-                    else
-                        numericUpDown.Value = 0;
-                    break;
-            }
-        }
+        
 
         private Control CreateAutostartSection()
         {
@@ -889,6 +476,9 @@ namespace darts_hub.control.wizard
                     // Update WLED endpoint in configuration
                     UpdateWledConfiguration(ipAddress);
                     
+                    // Ensure WLED extension is available and start it briefly to generate wled_data.json
+                    await EnsureWledExtensionAndGenerateData();
+                    
                     // Load existing argument values
                     LoadExistingArgumentValues();
                     
@@ -918,6 +508,134 @@ namespace darts_hub.control.wizard
             testConnectionButton.Content = "🔌 Test Connection";
         }
 
+        /// <summary>
+        /// Ensures WLED extension is available and starts it briefly to generate wled_data.json
+        /// </summary>
+        private async Task EnsureWledExtensionAndGenerateData()
+        {
+            try
+            {
+                UpdateConnectionStatus("🔄 Preparing WLED extension to generate configuration data...", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
+                
+                // Check if WLED app is available and installed
+                if (wledApp == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[WLED] WLED app not found in profile");
+                    return;
+                }
+
+                // Check if it's a downloadable app that needs to be downloaded first
+                var downloadableApp = profileManager.AppsDownloadable?.FirstOrDefault(a => a.Name == wledApp.Name);
+                if (downloadableApp != null && !downloadableApp.IsInstalled())
+                {
+                    UpdateConnectionStatus("📥 Downloading WLED extension...", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
+                    System.Diagnostics.Debug.WriteLine("[WLED] WLED extension not installed, downloading...");
+                    
+                    // Setup event handler for download completion
+                    var downloadCompleted = new TaskCompletionSource<bool>();
+                    
+                    EventHandler<AppEventArgs> onDownloadFinished = null;
+                    EventHandler<AppEventArgs> onDownloadFailed = null;
+                    
+                    onDownloadFinished = (sender, e) =>
+                    {
+                        downloadableApp.DownloadFinished -= onDownloadFinished;
+                        downloadableApp.DownloadFailed -= onDownloadFailed;
+                        downloadCompleted.SetResult(true);
+                    };
+                    
+                    onDownloadFailed = (sender, e) =>
+                    {
+                        downloadableApp.DownloadFinished -= onDownloadFinished;
+                        downloadableApp.DownloadFailed -= onDownloadFailed;
+                        downloadCompleted.SetResult(false);
+                    };
+                    
+                    downloadableApp.DownloadFinished += onDownloadFinished;
+                    downloadableApp.DownloadFailed += onDownloadFailed;
+                    
+                    // Start download
+                    var downloadStarted = downloadableApp.Install();
+                    if (downloadStarted)
+                    {
+                        // Wait for download to complete
+                        var downloadSuccess = await downloadCompleted.Task;
+                        if (!downloadSuccess)
+                        {
+                            System.Diagnostics.Debug.WriteLine("[WLED] Failed to download WLED extension");
+                            UpdateConnectionStatus("⚠️ Warning: Could not download WLED extension. Please install it manually.", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
+                            return;
+                        }
+                        
+                        System.Diagnostics.Debug.WriteLine("[WLED] WLED extension downloaded successfully");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("[WLED] Failed to start WLED extension download");
+                        UpdateConnectionStatus("⚠️ Warning: Could not start WLED extension download. Please install it manually.", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
+                        return;
+                    }
+                }
+                
+                // Check if the app is installed
+                if (!wledApp.IsInstalled())
+                {
+                    System.Diagnostics.Debug.WriteLine("[WLED] WLED extension not available after download attempt");
+                    UpdateConnectionStatus("⚠️ Warning: WLED extension not available. Please install it manually.", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
+                    return;
+                }
+
+                // Start WLED extension briefly to generate wled_data.json
+                UpdateConnectionStatus("🚀 Starting WLED extension to generate configuration data...", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
+                System.Diagnostics.Debug.WriteLine("[WLED] Starting WLED extension to generate wled_data.json");
+                
+                // Prepare runtime arguments with current IP
+                var runtimeArgs = new Dictionary<string, string>();
+                if (wledApp.Configuration?.Arguments != null)
+                {
+                    var wepsArg = wledApp.Configuration.Arguments.FirstOrDefault(a => a.Name == "WEPS");
+                    if (wepsArg != null && !string.IsNullOrEmpty(wepsArg.Value))
+                    {
+                        // Use the configured WLED endpoint
+                        System.Diagnostics.Debug.WriteLine($"[WLED] Using configured WLED endpoint: {wepsArg.Value}");
+                    }
+                }
+                
+                // Start the app
+                var startSuccess = wledApp.Run(runtimeArgs);
+                if (startSuccess)
+                {
+                    System.Diagnostics.Debug.WriteLine("[WLED] WLED extension started successfully");
+                    
+                    // Wait a moment for the app to initialize and generate wled_data.json
+                    await Task.Delay(3000);
+                    
+                    // Stop the app
+                    try
+                    {
+                        wledApp.Close();
+                        System.Diagnostics.Debug.WriteLine("[WLED] WLED extension stopped");
+                        UpdateConnectionStatus("✅ Configuration data generated successfully!", new SolidColorBrush(Color.FromRgb(40, 167, 69)));
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[WLED] Error stopping WLED extension: {ex.Message}");
+                        // Continue anyway, the important part is that it started
+                        UpdateConnectionStatus("✅ Configuration data generated (extension may still be running)", new SolidColorBrush(Color.FromRgb(40, 167, 69)));
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[WLED] Failed to start WLED extension");
+                    UpdateConnectionStatus("⚠️ Warning: Could not start WLED extension to generate configuration data", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[WLED] Error in EnsureWledExtensionAndGenerateData: {ex.Message}");
+                UpdateConnectionStatus("⚠️ Warning: Error preparing WLED extension", new SolidColorBrush(Color.FromRgb(255, 193, 7)));
+            }
+        }
         private async void ScanNetwork_Click(object sender, RoutedEventArgs e)
         {
             if (isScanning)
@@ -1262,34 +980,7 @@ namespace darts_hub.control.wizard
                 new SolidColorBrush(Color.FromRgb(180, 180, 180)));
         }
 
-        private void ApplySelectedScores()
-        {
-            if (scoreEffectsStep.SelectedScores.Count == 0) return;
-
-            // Find score-related arguments and set them based on selection
-            var scoreArgs = wledApp.Configuration?.Arguments?
-                .Where(a => a.Name.StartsWith("S") && int.TryParse(a.Name.Substring(1), out _))
-                .ToList();
-
-            if (scoreArgs != null)
-            {
-                foreach (var arg in scoreArgs)
-                {
-                    var scoreNumber = int.Parse(arg.Name.Substring(1));
-                    if (scoreEffectsStep.SelectedScores.Contains(scoreNumber))
-                    {
-                        // Set a default effect for selected scores
-                        if (string.IsNullOrEmpty(arg.Value))
-                        {
-                            arg.Value = "solid,#00FF00,1000"; // Green solid for 1 second as example
-                            arg.IsValueChanged = true;
-                        }
-                    }
-                }
-            }
-
-            System.Diagnostics.Debug.WriteLine($"[WLED] Applied effects for {scoreEffectsStep.SelectedScores.Count} selected scores");
-        }
+       
 
         private void ShowSelectedScoreArgumentsAndAreas(HashSet<int> selectedScores)
         {
@@ -1361,17 +1052,6 @@ namespace darts_hub.control.wizard
             System.Diagnostics.Debug.WriteLine($"[WLED] Extended score selection card with {selectedScores.Count} score argument controls and inline score areas question");
         }
 
-        private void ShowSelectedScoreArguments(HashSet<int> selectedScores)
-        {
-            // Redirect to the combined method
-            ShowSelectedScoreArgumentsAndAreas(selectedScores);
-        }
-
-        private void ShowSelectedScoreArguments()
-        {
-            // Legacy method that uses scoreEffectsStep.SelectedScores
-            ShowSelectedScoreArgumentsAndAreas(scoreEffectsStep.SelectedScores);
-        }
 
         private void ShowScoreAreasQuestionInline(StackPanel parentContent)
         {

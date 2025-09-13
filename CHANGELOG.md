@@ -1,3 +1,7 @@
+## b1.0.7
+- Bug Fixes
+    - short WLED start after connection test in wizzard
+
 ## b1.0.6
 - Bug Fixes
   - Fixed wizard navigation edge cases
