@@ -1,0 +1,273 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="900"
+        x:Class="darts_hub.control.wizard.WizardWindow"
+        Title="🎯 Darts-Hub Setup Wizard"
+        Icon="/Assets/favicon.ico"
+        Width="900"
+        Height="900"
+        MinWidth="400"
+        MinHeight="600"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True"
+        Background="#FF2D2D30">
+
+    <!-- Viewport settings for scaling and adaptive content -->
+    <Viewbox x:Name="WizardViewbox" 
+             Stretch="Uniform" 
+             StretchDirection="DownOnly"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch">
+        <Grid x:Name="WizardGrid" Width="900" Height="900">
+            <Grid.RowDefinitions>
+                <!-- Header -->
+                <RowDefinition Height="Auto"/>
+                <!-- Progress Bar -->
+                <RowDefinition Height="Auto"/>
+                <!-- Content -->
+                <RowDefinition Height="*"/>
+                <!-- Footer with buttons -->
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0" 
+                    Background="#FF1E1E1E" 
+                    Padding="20,15"
+                    BorderBrush="#FF464647" 
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Step Icon -->
+                    <Border Grid.Column="0"
+                            Width="48" 
+                            Height="48" 
+                            Background="#FF007ACC" 
+                            CornerRadius="24"
+                            VerticalAlignment="Center"
+                            Margin="0,0,15,0">
+                        <Image x:Name="StepIcon" 
+                               Width="24" 
+                               Height="24" 
+                               Source="/Assets/darts.png"/>
+                    </Border>
+
+                    <!-- Step Title and Description -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock x:Name="StepTitle"
+                                   Text="Welcome to Darts-Hub"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   Foreground="White"/>
+                        <TextBlock x:Name="StepDescription"
+                                   Text="Let's set up your darts applications"
+                                   FontSize="14"
+                                   Foreground="#FFCCCCCC"
+                                   Margin="0,5,0,0"/>
+                    </StackPanel>
+
+                    <!-- Step Counter -->
+                    <Border Grid.Column="2"
+                            Background="#33FFFFFF"
+                            CornerRadius="12"
+                            Padding="12,6"
+                            VerticalAlignment="Center">
+                        <TextBlock x:Name="StepCounter"
+                                   Text="Step 1 of 5"
+                                   FontSize="12"
+                                   FontWeight="Bold"
+                                   Foreground="White"/>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Progress Bar -->
+            <Border Grid.Row="1" 
+                    Background="#FF252526" 
+                    Padding="20,10"
+                    BorderBrush="#FF464647" 
+                    BorderThickness="0,0,0,1">
+                <ProgressBar x:Name="WizardProgressBar"
+                             Height="6"
+                             Background="#FF464647"
+                             Foreground="#FF007ACC"
+                             Value="20"
+                             Maximum="100"/>
+            </Border>
+
+            <!-- Content Area -->
+            <Border Grid.Row="2" 
+                    Background="#FF252526"
+                    Padding="0">
+                <ScrollViewer x:Name="ContentScrollViewer"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Hidden"
+                              Padding="20,20,20,40">
+                    <ContentPresenter x:Name="StepContentPresenter"
+                                      Margin="0,0,0,60"/>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Footer with Navigation Buttons -->
+            <Border Grid.Row="3" 
+                    Background="#FF1E1E1E" 
+                    Padding="20,15"
+                    BorderBrush="#FF464647" 
+                    BorderThickness="0,1,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Cancel Button -->
+                    <Button x:Name="CancelButton"
+                            Grid.Column="0"
+                            Content="Cancel"
+                            Padding="15,8"
+                            Background="Transparent"
+                            BorderBrush="#FF666666"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Foreground="#FFCCCCCC"
+                            Click="CancelButton_Click"/>
+
+                    <!-- Skip Button -->
+                    <Button x:Name="SkipButton"
+                            Grid.Column="1"
+                            Content="Skip this step"
+                            Padding="15,8"
+                            Background="Transparent"
+                            BorderBrush="#FF666666"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Foreground="#FFCCCCCC"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,10,0"
+                            IsVisible="False"
+                            Click="SkipButton_Click"/>
+
+                    <!-- Previous Button -->
+                    <Button x:Name="PreviousButton"
+                            Grid.Column="2"
+                            Content="← Previous"
+                            Padding="15,8"
+                            Background="#FF444444"
+                            BorderBrush="#FF666666"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Foreground="White"
+                            Margin="0,0,10,0"
+                            IsEnabled="False"
+                            Click="PreviousButton_Click"/>
+
+                    <!-- Next/Finish Button -->
+                    <Button x:Name="NextButton"
+                            Grid.Column="3"
+                            Content="Next →"
+                            Padding="20,8"
+                            Background="#FF007ACC"
+                            BorderBrush="#FF005A9E"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Foreground="White"
+                            FontWeight="Bold"
+                            Click="NextButton_Click"/>
+                </Grid>
+            </Border>
+
+            <!-- Error Message Overlay -->
+            <Border x:Name="ErrorOverlay"
+                    Grid.RowSpan="4"
+                    Background="#AA000000"
+                    IsVisible="False"
+                    ZIndex="1000">
+                <Border Background="#FF2D2D30"
+                        BorderBrush="#FFFF4444"
+                        BorderThickness="2"
+                        CornerRadius="8"
+                        Padding="20"
+                        MaxWidth="400"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                            <Border Width="24" Height="24" 
+                                    Background="#FFFF4444" 
+                                    CornerRadius="12"
+                                    Margin="0,0,10,0">
+                                <TextBlock Text="!" 
+                                           FontSize="16" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Configuration Error"
+                                       FontSize="16"
+                                       FontWeight="Bold"
+                                       Foreground="White"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        
+                        <TextBlock x:Name="ErrorMessage"
+                                   Text="An error occurred"
+                                   FontSize="14"
+                                   Foreground="#FFCCCCCC"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,15"/>
+                        
+                        <Button Content="OK"
+                                Padding="15,8"
+                                Background="#FF007ACC"
+                                BorderBrush="#FF005A9E"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Foreground="White"
+                                FontWeight="Bold"
+                                HorizontalAlignment="Center"
+                                Click="ErrorOkButton_Click"/>
+                    </StackPanel>
+                </Border>
+            </Border>
+
+            <!-- Loading Overlay -->
+            <Border x:Name="LoadingOverlay"
+                    Grid.RowSpan="4"
+                    Background="#AA000000"
+                    IsVisible="False"
+                    ZIndex="999">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <!-- Loading spinner -->
+                    <Border Width="60"
+                            Height="60"
+                            CornerRadius="30"
+                            BorderBrush="White"
+                            BorderThickness="4"
+                            Margin="0,0,0,20">
+                        <Ellipse Width="40" Height="40" 
+                                 Fill="Transparent" 
+                                 Stroke="White" 
+                                 StrokeThickness="3" 
+                                 StrokeDashArray="5,3"/>
+                    </Border>
+                    <TextBlock x:Name="LoadingText"
+                               Text="Processing..."
+                               TextAlignment="Center"
+                               Foreground="White"
+                               FontSize="16"
+                               FontWeight="Bold"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Viewbox>
+</Window>

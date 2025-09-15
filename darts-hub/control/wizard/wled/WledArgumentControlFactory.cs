@@ -1,0 +1,343 @@
+﻿using Avalonia.Controls;
+using Avalonia.Layout;
+using Avalonia.Media;
+using darts_hub.model;
+using System.Collections.Generic;
+using System;
+
+namespace darts_hub.control.wizard.wled
+{
+    /// <summary>
+    /// Factory for creating WLED argument controls with enhanced mode support
+    /// </summary>
+    public static class WledArgumentControlFactory
+    {
+        public static Control CreateSimpleArgumentControl(Argument argument, Dictionary<string, Control> argumentControls, 
+            Func<Argument, string> getDescription)
+        {
+            var container = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(40, 70, 70, 70)),
+                CornerRadius = new Avalonia.CornerRadius(4),
+                Padding = new Avalonia.Thickness(12),
+                Margin = new Avalonia.Thickness(0, 4)
+            };
+
+            var content = new StackPanel { Spacing = 8 };
+
+            // Label
+            var label = new TextBlock
+            {
+                Text = argument.NameHuman + (argument.Required ? " *" : ""),
+                FontSize = 13,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White
+            };
+            content.Children.Add(label);
+
+            // Description
+            string description = getDescription(argument);
+            if (!string.IsNullOrEmpty(description))
+            {
+                var descLabel = new TextBlock
+                {
+                    Text = description,
+                    FontSize = 11,
+                    Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                    TextWrapping = TextWrapping.Wrap
+                };
+                content.Children.Add(descLabel);
+            }
+
+            // Input Control
+            var inputControl = CreateBasicInputControl(argument);
+            if (inputControl != null)
+            {
+                content.Children.Add(inputControl);
+                argumentControls[argument.Name] = inputControl;
+            }
+
+            container.Child = content;
+            return container;
+        }
+
+        public static Control CreateEnhancedArgumentControl(Argument argument, Dictionary<string, Control> argumentControls, 
+            Func<Argument, string> getDescription, AppBase wledApp)
+        {
+            var container = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(60, 70, 70, 70)),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Padding = new Avalonia.Thickness(15),
+                Margin = new Avalonia.Thickness(0, 8)
+            };
+
+            var content = new StackPanel { Spacing = 10 };
+
+            // Label and Description
+            var labelPanel = new StackPanel { Spacing = 5 };
+
+            var titleLabel = new TextBlock
+            {
+                Text = argument.NameHuman + (argument.Required ? " *" : ""),
+                FontSize = 14,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White
+            };
+            labelPanel.Children.Add(titleLabel);
+
+            // Description
+            string description = getDescription(argument);
+            if (!string.IsNullOrEmpty(description))
+            {
+                var descLabel = new TextBlock
+                {
+                    Text = description,
+                    FontSize = 12,
+                    Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                    TextWrapping = TextWrapping.Wrap
+                };
+                labelPanel.Children.Add(descLabel);
+            }
+
+            content.Children.Add(labelPanel);
+
+            // Input Control - Check if this is a WLED effect parameter
+            Control inputControl;
+            if (WledSettings.IsEffectParameter(argument))
+            {
+                // Use advanced WLED effect control with dropdowns and enhanced settings
+                inputControl = WledSettings.CreateAdvancedEffectParameterControl(argument, 
+                    () => { argument.IsValueChanged = true; }, wledApp);
+            }
+            else
+            {
+                // Use basic control for non-effect parameters
+                inputControl = CreateBasicInputControl(argument);
+            }
+
+            if (inputControl != null)
+            {
+                var inputContainer = new Grid();
+                inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                inputContainer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                Grid.SetColumn(inputControl, 0);
+                inputContainer.Children.Add(inputControl);
+
+                // Clear button
+                var clearButton = CreateClearButton(argument, inputControl);
+                Grid.SetColumn(clearButton, 1);
+                inputContainer.Children.Add(clearButton);
+
+                content.Children.Add(inputContainer);
+                argumentControls[argument.Name] = inputControl;
+            }
+
+            container.Child = content;
+            return container;
+        }
+
+        private static Control CreateBasicInputControl(Argument argument)
+        {
+            string type = argument.GetTypeClear();
+
+            return type switch
+            {
+                Argument.TypeString or Argument.TypePassword => CreateTextBox(argument),
+                Argument.TypeBool => CreateCheckBox(argument),
+                Argument.TypeInt => CreateNumericUpDown(argument, false),
+                Argument.TypeFloat => CreateNumericUpDown(argument, true),
+                _ => CreateTextBox(argument)
+            };
+        }
+
+        private static Control CreateTextBox(Argument argument)
+        {
+            var textBox = new TextBox
+            {
+                Text = argument.Value ?? "",
+                FontSize = 13,
+                Background = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
+                Foreground = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(4),
+                Padding = new Avalonia.Thickness(10, 8),
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            if (argument.Type.ToLower().Contains("password"))
+            {
+                textBox.PasswordChar = '*';
+                textBox.RevealPassword = false;
+            }
+
+            textBox.TextChanged += (s, e) =>
+            {
+                argument.Value = textBox.Text;
+                argument.IsValueChanged = true;
+            };
+
+            return textBox;
+        }
+
+        private static Control CreateCheckBox(Argument argument)
+        {
+            bool isChecked = false;
+            if (!string.IsNullOrEmpty(argument.Value))
+            {
+                isChecked = argument.Value.Equals("True", StringComparison.OrdinalIgnoreCase) ||
+                           argument.Value == "1";
+            }
+
+            var checkBox = new CheckBox
+            {
+                Content = "Enable this feature",
+                IsChecked = isChecked,
+                FontSize = 13,
+                Foreground = Brushes.White
+            };
+
+            checkBox.Checked += (s, e) =>
+            {
+                argument.Value = argument.ValueMapping?.ContainsKey("True") == true ? 
+                    argument.ValueMapping["True"] : "True";
+                argument.IsValueChanged = true;
+            };
+
+            checkBox.Unchecked += (s, e) =>
+            {
+                argument.Value = argument.ValueMapping?.ContainsKey("False") == true ? 
+                    argument.ValueMapping["False"] : "False";
+                argument.IsValueChanged = true;
+            };
+
+            return checkBox;
+        }
+
+        private static Control CreateNumericUpDown(Argument argument, bool isFloat)
+        {
+            var numericUpDown = new NumericUpDown
+            {
+                FontSize = 13,
+                Background = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
+                Foreground = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(4),
+                Padding = new Avalonia.Thickness(10, 8),
+                Width = 150,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Increment = isFloat ? 0.1m : 1m,
+                FormatString = isFloat ? "F1" : "F0"
+            };
+
+            // Set value and limits
+            if (isFloat)
+            {
+                if (double.TryParse(argument.Value, System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out var doubleVal))
+                {
+                    numericUpDown.Value = (decimal)doubleVal;
+                }
+            }
+            else
+            {
+                if (int.TryParse(argument.Value, out var intVal))
+                {
+                    numericUpDown.Value = intVal;
+                }
+            }
+
+            // Set appropriate limits based on argument
+            SetNumericLimits(numericUpDown, argument, isFloat);
+
+            numericUpDown.ValueChanged += (s, e) =>
+            {
+                argument.Value = numericUpDown.Value?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
+                argument.IsValueChanged = true;
+            };
+
+            return numericUpDown;
+        }
+
+        private static void SetNumericLimits(NumericUpDown control, Argument argument, bool isFloat)
+        {
+            var argName = argument.Name.ToLower();
+            
+            switch (argName)
+            {
+                case "bri" or "brightness":
+                    control.Minimum = 1;
+                    control.Maximum = 255;
+                    break;
+                case "hp" or "port" or "webp":
+                    control.Minimum = 1024;
+                    control.Maximum = 65535;
+                    break;
+                case "v" or "volume":
+                    control.Minimum = 0;
+                    control.Maximum = 1;
+                    control.Increment = 0.1m;
+                    break;
+                case "hfo":
+                    control.Minimum = 2;
+                    control.Maximum = 170;
+                    break;
+                case "du":
+                    control.Minimum = 0;
+                    control.Maximum = 10;
+                    break;
+                default:
+                    control.Minimum = isFloat ? -999.9m : -999;
+                    control.Maximum = isFloat ? 999.9m : 999;
+                    break;
+            }
+        }
+
+        private static Control CreateClearButton(Argument argument, Control inputControl)
+        {
+            var clearButton = new Button
+            {
+                Content = "❌",
+                Width = 28,
+                Height = 28,
+                Background = Brushes.Transparent,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(4),
+                Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                FontSize = 10,
+                Margin = new Avalonia.Thickness(10, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Top
+            };
+
+            clearButton.Click += (s, e) =>
+            {
+                // Reset to default value
+                var defaultValue = "";
+                argument.Value = defaultValue;
+                argument.IsValueChanged = true;
+
+                switch (inputControl)
+                {
+                    case TextBox textBox:
+                        textBox.Text = defaultValue;
+                        break;
+                    case CheckBox checkBox:
+                        checkBox.IsChecked = defaultValue.Equals("True", StringComparison.OrdinalIgnoreCase);
+                        break;
+                    case NumericUpDown numericUpDown:
+                        if (decimal.TryParse(defaultValue, out var decimalVal))
+                            numericUpDown.Value = decimalVal;
+                        else
+                            numericUpDown.Value = 0;
+                        break;
+                }
+            };
+
+            return clearButton;
+        }
+    }
+}
