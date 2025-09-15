@@ -278,20 +278,22 @@ jobs:
           name: Release ${{ github.ref }}
           body: |
             # Changes in this Release
+            - Improvements
+                - Added viewport settings to setup wizard window for better scaling and adaptive content
+                - Wizard window now properly scales and adjusts content when resized
 
             ## WLED
-            - nothing new
+            - WLED Extension
+              - Updated WLED extension components
+              - Improved WLED API integration
+              - Enhanced color definitions and score area handling
+              - Better WLED settings management
             
             ## PIXELIT
             - nothing new
 
             ## Caller
-            - reactivate possibility to use the Caller standalone via source
-            - changed webcaller design
-            - add new soundpacks
-            - add new languages IT, RU
-            - add more realistic caller behaviour arg -CRL "--caller-real-life" (just X01)
-            - add if no playername soundkey avaialble play "player one, two....."
+            - nothing new
             
             **BACKUP YOUR CONFIGURATION FILES BEFORE UPDATING!**
                    all .json files in Dart-Hub folder

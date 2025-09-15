@@ -113,15 +113,27 @@ namespace darts_hub.model
 
         public string? MappedValue()
         {
-            if(ValueMapping != null)
+            try
             {
-                foreach (var item in ValueMapping)
+                if(ValueMapping != null)
                 {
-                    if (Value == item.Key) return item.Value;
+                    foreach (var item in ValueMapping)
+                    {
+                        if (Value == item.Key)
+                        {
+                            return item.Value;
+                        }
+                    }
                 }
-            }
 
-            return Value;
+                return Value;
+            }
+            catch (Exception ex)
+            {
+                var errorMsg = $"Error getting mapped value for argument {Name}: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"[Argument] {errorMsg}");
+                throw;
+            }
         }
 
         public bool ShouldSerializeValue()
@@ -131,47 +143,57 @@ namespace darts_hub.model
 
         public void Validate()
         {
-            // Validate Type & Value
+            try
+            {
+                // Validate Type & Value
+                if (String.IsNullOrEmpty(Value) && !EmptyAllowedOnRequired && Required) 
+                {
+                    ThrowException("is required");
+                }
 
-            if (String.IsNullOrEmpty(Value) && !EmptyAllowedOnRequired && Required) ThrowException("is required");
-
-            if (Type.StartsWith(TypeString))
-            {
-                ValidateString();
+                if (Type.StartsWith(TypeString))
+                {
+                    ValidateString();
+                }
+                else if(Type.StartsWith(TypeFloat))
+                {
+                    ValidateFloat();
+                }
+                else if (Type.StartsWith(TypeInt))
+                {
+                    ValidateInt();
+                }
+                else if (Type == TypeBool)
+                {
+                    ValidateBool();
+                }
+                else if (Type == TypeFile)
+                {
+                    ValidateFile();
+                }
+                else if (Type == TypePath)
+                {
+                    ValidatePath();
+                }
+                else if (Type == TypePassword)
+                {
+                    ValidatePassword();
+                }
+                else if (Type.StartsWith(TypeSelection))
+                {
+                    ValidateSelection();
+                }
+                else
+                {
+                    ThrowException($"Invalid type {Type}");
+                }
             }
-            else if(Type.StartsWith(TypeFloat))
+            catch (Exception ex)
             {
-                ValidateFloat();
+                var errorMsg = $"Error validating argument {Name}: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"[Argument] {errorMsg}");
+                throw;
             }
-            else if (Type.StartsWith(TypeInt))
-            {
-                ValidateInt();
-            }
-            else if (Type == TypeBool)
-            {
-                ValidateBool();
-            }
-            else if (Type == TypeFile)
-            {
-                ValidateFile();
-            }
-            else if (Type == TypePath)
-            {
-                ValidatePath();
-            }
-            else if (Type == TypePassword)
-            {
-                ValidatePassword();
-            }
-            else if (Type.StartsWith(TypeSelection))
-            {
-                ValidateSelection();
-            }
-            else
-            {
-                ThrowException($"Invalid type {Type}");
-            }
-
         }
 
         public string GetTypeClear()
@@ -342,7 +364,41 @@ namespace darts_hub.model
         {
             try
             {
-                bool.Parse(Value);
+                // Handle common boolean representations
+                if (string.IsNullOrEmpty(Value))
+                {
+                    return; // Empty values are handled by required validation
+                }
+                
+                var normalizedValue = Value.Trim().ToLowerInvariant();
+                
+                // Check for standard boolean values
+                if (normalizedValue == "true" || normalizedValue == "false")
+                {
+                    return; // Valid boolean strings
+                }
+                
+                // Check for numeric boolean representations (common in command line args)
+                if (normalizedValue == "1" || normalizedValue == "0")
+                {
+                    return; // Valid numeric boolean values
+                }
+                
+                // Check for yes/no representations
+                if (normalizedValue == "yes" || normalizedValue == "no" || 
+                    normalizedValue == "y" || normalizedValue == "n")
+                {
+                    return; // Valid yes/no values
+                }
+                
+                // Try to parse as standard boolean (this will handle "True", "False", etc.)
+                if (bool.TryParse(Value, out _))
+                {
+                    return; // Successfully parsed as boolean
+                }
+                
+                // If none of the above work, it's invalid
+                throw new Exception($"Value '{Value}' is not a valid boolean. Expected: true/false, 1/0, yes/no, or standard boolean values.");
             }
             catch (Exception ex)
             {

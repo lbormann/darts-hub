@@ -183,6 +183,11 @@ namespace darts_hub.model
             return Helper.SearchExecutable(downloadPath);
         }
 
+        public string? GetExecutablePath()
+        {
+            return GetDownloadExecutable();
+        }
+
         protected override string? SetRunExecutable()
         {
             return GetDownloadExecutable();

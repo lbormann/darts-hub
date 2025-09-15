@@ -1,3 +1,66 @@
+## b1.0.8
+- Improvements
+    - Added viewport settings to setup wizard window for better scaling and adaptive content
+    - Wizard window now properly scales and adjusts content when resized
+
+## b1.0.7
+- Bug Fixes
+    - short WLED start after connection test in wizzard
+
+## b1.0.6
+- Bug Fixes
+  - Fixed wizard navigation edge cases
+  - Resolved configuration saving issues in specific scenarios
+  - Corrected extension argument validation errors
+  - Fixed memory leaks in wizard cleanup processes
+
+## b1.0.5
+- Setup Wizard System
+  - Complete setup wizard implementation for all extensions
+  - Step-by-step configuration guidance for new users
+  - Automated extension detection and configuration
+  - Network device scanning capabilities
+  - Integrated completion steps with validation
+
+- Extension Setup Wizards
+  - Caller setup wizard with essential settings, camera config, and detection steps
+  - WLED setup wizard with board status, player colors, and effect configurations
+  - GIF extension setup wizard with media configuration and display modes
+  - Pixelit extension setup wizard with player and game animations
+  - Generic extension wizard support for future extensions
+
+- Enhanced User Experience
+  - Improved argument control factories for all extensions
+  - Better configuration validation and error handling
+  - Streamlined extension selection process
+  - Enhanced settings content provider with wizard integration
+
+- Technical Improvements
+  - Refactored wizard architecture with modular step system
+  - Improved configuration management and validation
+  - Enhanced network device discovery functionality
+  - Better separation of concerns in wizard components
+
+## b1.0.4
+- Beta tester functionality
+  - Add support for beta release checking and downloading
+  - Users can opt-in to receive pre-release versions
+  - Separate handling for stable and beta version checking
+  - Enhanced version detection for pre-release versions
+
+- WLED Extension
+  - Updated WLED extension components
+  - Improved WLED API integration
+  - Enhanced color definitions and score area handling
+  - Better WLED settings management
+
+## b1.0.0
+- Complete UI redesign
+  - more user friendly
+  - more modern
+  - Tooltips for all arguments
+  - viewport settings
+
 ## 0.13.19
 - WLED
   - nothing new
@@ -98,7 +161,7 @@
 - Checkbox removed
 - IF YOU WANT TO BE A BETA TESTER YOU CAN ACTIVATE THE BETA TESTER CHECKBOX, 
   THE LATEST PRE RELEASE WILL BE DOWNLOADED AUTOMATICALLY. 
-  PLEASE BE CAREFUL AND BACKUP YOUR darts-hub FOLDER COMPLETELY BEFORE YOU DO IT!!!!
+  PLEASE BE CAREFUL AND BACKUP YOUR darts-hub FOLDER COMPLETELY BEFORE YOU DO IT!!!
 
 
 - update darts-pixel to version 1.2.2
