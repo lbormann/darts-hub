@@ -476,7 +476,7 @@ namespace darts_hub.control.wizard.caller
         {
             var clearButton = new Button
             {
-                Content = "🗑️",
+                Content = "❌",
                 Width = 28,
                 Height = 28,
                 Background = Brushes.Transparent,

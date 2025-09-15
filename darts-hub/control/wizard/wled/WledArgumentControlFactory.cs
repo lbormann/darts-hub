@@ -300,7 +300,7 @@ namespace darts_hub.control.wizard.wled
         {
             var clearButton = new Button
             {
-                Content = "🗑️",
+                Content = "❌",
                 Width = 28,
                 Height = 28,
                 Background = Brushes.Transparent,

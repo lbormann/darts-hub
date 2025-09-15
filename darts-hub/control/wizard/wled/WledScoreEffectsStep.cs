@@ -80,7 +80,7 @@ namespace darts_hub.control.wizard.wled
 
             var yesButton = new Button
             {
-                Content = "🎯 Yes, customize score effects",
+                Content = "✅ Yes, customize score effects",
                 Padding = new Avalonia.Thickness(20, 10),
                 Background = new SolidColorBrush(Color.FromRgb(40, 167, 69)),
                 BorderBrush = new SolidColorBrush(Color.FromRgb(34, 142, 58)),

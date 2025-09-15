@@ -100,7 +100,7 @@ namespace darts_hub.control.wizard.caller
 
             var configureButton = new Button
             {
-                Content = "🎛️ Configure Random Selection",
+                Content = "✅ Configure Random Selection",
                 Padding = new Avalonia.Thickness(15, 8),
                 Background = new SolidColorBrush(Color.FromRgb(40, 167, 69)),
                 BorderBrush = new SolidColorBrush(Color.FromRgb(34, 142, 58)),
@@ -112,7 +112,7 @@ namespace darts_hub.control.wizard.caller
 
             var skipButton = new Button
             {
-                Content = "⏭️ Use Fixed Caller",
+                Content = "❌ Use Fixed Caller",
                 Padding = new Avalonia.Thickness(15, 8),
                 Background = Brushes.Transparent,
                 BorderBrush = new SolidColorBrush(Color.FromRgb(108, 117, 125)),

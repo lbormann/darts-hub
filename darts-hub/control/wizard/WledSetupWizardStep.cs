@@ -1096,7 +1096,7 @@ namespace darts_hub.control.wizard
 
             var yesAreasButton = new Button
             {
-                Content = "🎯 Yes, configure score areas",
+                Content = "✅ Yes, configure score areas",
                 Padding = new Avalonia.Thickness(20, 10),
                 Background = new SolidColorBrush(Color.FromRgb(40, 167, 69)),
                 BorderBrush = new SolidColorBrush(Color.FromRgb(34, 142, 58)),

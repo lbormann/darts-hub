@@ -98,7 +98,7 @@ namespace darts_hub.control.wizard.wled
 
             var configureButton = new Button
             {
-                Content = "🎛️ Configure Board Status",
+                Content = "✅ Configure Board Status",
                 Padding = new Avalonia.Thickness(15, 8),
                 Background = new SolidColorBrush(Color.FromRgb(40, 167, 69)),
                 BorderBrush = new SolidColorBrush(Color.FromRgb(34, 142, 58)),
@@ -110,7 +110,7 @@ namespace darts_hub.control.wizard.wled
 
             var skipButton = new Button
             {
-                Content = "⏭️ No Board Effects",
+                Content = "❌ No Board Effects",
                 Padding = new Avalonia.Thickness(15, 8),
                 Background = Brushes.Transparent,
                 BorderBrush = new SolidColorBrush(Color.FromRgb(108, 117, 125)),

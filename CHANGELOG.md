@@ -1,3 +1,8 @@
+## b1.0.8
+- Improvements
+    - Added viewport settings to setup wizard window for better scaling and adaptive content
+    - Wizard window now properly scales and adjusts content when resized
+
 ## b1.0.7
 - Bug Fixes
     - short WLED start after connection test in wizzard

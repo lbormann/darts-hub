@@ -278,8 +278,9 @@ jobs:
           name: Release ${{ github.ref }}
           body: |
             # Changes in this Release
-            - Bug Fixes
-              - short WLED start after connection test in wizzard
+            - Improvements
+                - Added viewport settings to setup wizard window for better scaling and adaptive content
+                - Wizard window now properly scales and adjusts content when resized
 
             ## WLED
             - WLED Extension
