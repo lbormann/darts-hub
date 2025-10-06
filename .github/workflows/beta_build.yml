@@ -291,12 +291,12 @@ jobs:
           tag_name: ${{ github.ref }}
           name: Beta Release ${{ github.ref }}
           body: |
-            # ?? Beta Release - Changes in this Version
+            # Beta Release - Changes in this Version
 
-            **?? BACKUP YOUR CONFIGURATION FILES BEFORE UPDATING!**
+            **BACKUP YOUR CONFIGURATION FILES BEFORE UPDATING!**
             Please backup all .json files in your Darts-Hub folder before installing this beta version.
 
-            ## ?? New Features & Improvements
+            ## New Features & Improvements
             - Setup Wizard System
               - Complete setup wizard implementation for all extensions
               - Step-by-step configuration guidance for new users
@@ -308,13 +308,13 @@ jobs:
               - Improved viewport settings for setup wizard window
               - Better scaling and adaptive content when window is resized
 
-            ## ?? Bug Fixes
+            ## Bug Fixes
             - Fixed wizard navigation edge cases
             - Resolved configuration saving issues in specific scenarios
             - Corrected extension argument validation errors
             - Fixed memory leaks in wizard cleanup processes
 
-            ## ?? Extension Updates
+            ## Extension Updates
 
             ### WLED
             - Updated WLED extension components
