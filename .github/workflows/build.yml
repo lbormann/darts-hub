@@ -36,6 +36,11 @@ jobs:
       - name: Build osx-x64
         run: dotnet publish darts-hub/darts-hub.csproj -r osx-x64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
 
+      - name: List publish directory contents
+        run: |
+          echo "Contents of publish directory:"
+          find darts-hub/bin/Release/net6.0/osx-x64/publish/ -type f
+
       - name: Ensure publish directory exists and copy update script
         run: |
           mkdir -p darts-hub/bin/Release/net6.0/osx-x64/publish/
@@ -45,7 +50,8 @@ jobs:
         shell: bash
         run: |
           chmod +x darts-hub/bin/Release/net6.0/osx-x64/publish/update.sh
-          chmod +x darts-hub/bin/Release/net6.0/osx-x64/publish/darts-hub
+          # Find the executable file and make it executable
+          find darts-hub/bin/Release/net6.0/osx-x64/publish/ -name "darts-hub*" -type f -exec chmod +x {} \;
 
       - name: Zip osx-x64 build
         uses: vimtor/action-zip@v1
@@ -73,7 +79,8 @@ jobs:
         shell: bash
         run: |
           chmod +x darts-hub/bin/Release/net6.0/osx-arm64/publish/update.sh
-          chmod +x darts-hub/bin/Release/net6.0/osx-arm64/publish/darts-hub
+          # Find the executable file and make it executable
+          find darts-hub/bin/Release/net6.0/osx-arm64/publish/ -name "darts-hub*" -type f -exec chmod +x {} \;
 
       - name: Zip osx-arm64 build
         uses: vimtor/action-zip@v1
