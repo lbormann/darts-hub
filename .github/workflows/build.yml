@@ -36,8 +36,10 @@ jobs:
       - name: Build osx-x64
         run: dotnet publish darts-hub/darts-hub.csproj -r osx-x64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
 
-      - name: Copy update-script manually
-        run: cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-x64/publish/update.sh
+      - name: Ensure publish directory exists and copy update script
+        run: |
+          mkdir -p darts-hub/bin/Release/net6.0/osx-x64/publish/
+          cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-x64/publish/update.sh
 
       - name: Set execute permissions
         shell: bash
@@ -62,8 +64,10 @@ jobs:
       - name: Build osx-arm64
         run: dotnet publish darts-hub/darts-hub.csproj -r osx-arm64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
 
-      - name: Copy update-script manually
-        run: cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-arm64/publish/update.sh
+      - name: Ensure publish directory exists and copy update script
+        run: |
+          mkdir -p darts-hub/bin/Release/net6.0/osx-arm64/publish/
+          cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-arm64/publish/update.sh
 
       - name: Set execute permissions
         shell: bash
@@ -190,6 +194,11 @@ jobs:
       - name: Build linux-x64
         run: dotnet publish darts-hub/darts-hub.csproj -r linux-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
 
+      - name: Ensure publish directory exists and copy update script
+        run: |
+          mkdir -p darts-hub/bin/Release/net6.0/linux-x64/publish/
+          cp darts-hub/update.sh darts-hub/bin/Release/net6.0/linux-x64/publish/update.sh
+
       - name: Convert line endings in update.sh
         run: dos2unix darts-hub/bin/Release/net6.0/linux-x64/publish/update.sh
 
@@ -215,6 +224,11 @@ jobs:
       - name: Build linux-arm
         run: dotnet publish darts-hub/darts-hub.csproj -r linux-arm -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
 
+      - name: Ensure publish directory exists and copy update script
+        run: |
+          mkdir -p darts-hub/bin/Release/net6.0/linux-arm/publish/
+          cp darts-hub/update.sh darts-hub/bin/Release/net6.0/linux-arm/publish/update.sh
+
       - name: Convert line endings in update.sh
         run: dos2unix darts-hub/bin/Release/net6.0/linux-arm/publish/update.sh
 
@@ -239,6 +253,11 @@ jobs:
       # linux-arm64
       - name: Build linux-arm64
         run: dotnet publish darts-hub/darts-hub.csproj -r linux-arm64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+
+      - name: Ensure publish directory exists and copy update script
+        run: |
+          mkdir -p darts-hub/bin/Release/net6.0/linux-arm64/publish/
+          cp darts-hub/update.sh darts-hub/bin/Release/net6.0/linux-arm64/publish/update.sh
 
       - name: Convert line endings in update.sh
         run: dos2unix darts-hub/bin/Release/net6.0/linux-arm64/publish/update.sh
