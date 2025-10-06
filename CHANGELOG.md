@@ -1,3 +1,22 @@
+## v1.1.0
+- Setup Wizard System
+  - Complete setup wizard implementation for all extensions
+  - Step-by-step configuration guidance for new users
+  - Automated extension detection and configuration
+  - Network device scanning capabilities
+  - Integrated completion steps with validation
+- Improvements
+    - Added viewport settings to setup wizard window for better scaling and adaptive content
+    - Wizard window now properly scales and adjusts content when resized
+- Bug Fixes
+  - Fixed wizard navigation edge cases
+  - Resolved configuration saving issues in specific scenarios
+  - Corrected extension argument validation errors
+  - Fixed memory leaks in wizard cleanup processes
+- new ehnaced settings mode
+  - test the new possibility to configure your settings especially for wled.
+
+
 ## b1.0.8
 - Improvements
     - Added viewport settings to setup wizard window for better scaling and adaptive content

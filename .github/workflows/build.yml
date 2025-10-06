@@ -278,16 +278,34 @@ jobs:
           name: Release ${{ github.ref }}
           body: |
             # Changes in this Release
-            - Complete UI redesign
-             - more user friendly
-             - more modern
-             - Tooltips for all arguments 
-             - viewport settings
+            - Setup Wizard System
+              - Complete setup wizard implementation for all extensions
+              - Step-by-step configuration guidance for new users
+              - Automated extension detection and configuration
+              - Network device scanning capabilities
+              - Integrated completion steps with validation
+            - Improvements
+                - Added viewport settings to setup wizard window for better scaling and adaptive content
+                - Wizard window now properly scales and adjusts content when resized
+            - Bug Fixes
+              - Fixed wizard navigation edge cases
+              - Resolved configuration saving issues in specific scenarios
+              - Corrected extension argument validation errors
+              - Fixed memory leaks in wizard cleanup processes
+            - new ehnaced settings mode
+              - test the new possibility to configure your settings especially for wled.
 
             ## WLED
-            - nothing new
+            - WLED Extension
+              - Updated WLED extension components
+              - Improved WLED API integration
+              - Enhanced color definitions and score area handling
+              - Better WLED settings management
             
             ## PIXELIT
+            - nothing new
+
+            ## Caller
             - nothing new
 
             ## Caller
