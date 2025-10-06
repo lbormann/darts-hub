@@ -10,10 +10,6 @@ on:
 permissions:
   contents: write
 
-
-
-
-
 jobs:
 
   # MACOS
@@ -22,7 +18,7 @@ jobs:
 
     steps:
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v1.9.0
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
 
@@ -35,9 +31,6 @@ jobs:
       # osx-x64
       - name: Build osx-x64
         run: dotnet publish darts-hub/darts-hub.csproj -r osx-x64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
-
-      - name: Copy update-script manually
-        run: cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-x64/publish/update.sh
 
       - name: Set execute permissions
         shell: bash
@@ -61,9 +54,6 @@ jobs:
       # osx-arm64
       - name: Build osx-arm64
         run: dotnet publish darts-hub/darts-hub.csproj -r osx-arm64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
-
-      - name: Copy update-script manually
-        run: cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-arm64/publish/update.sh
 
       - name: Set execute permissions
         shell: bash
@@ -90,7 +80,7 @@ jobs:
 
     steps:
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v1.9.0
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
 
@@ -172,10 +162,10 @@ jobs:
 
     steps:
       - name: Install dos2unix
-        run: sudo apt-get install dos2unix
+        run: sudo apt-get update && sudo apt-get install -y dos2unix
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v1.9.0
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
 

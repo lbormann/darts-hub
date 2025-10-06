@@ -1,4 +1,4 @@
-## v1.1.6
+## v1.1.10
 - Setup Wizard System
   - Complete setup wizard implementation for all extensions
   - Step-by-step configuration guidance for new users
