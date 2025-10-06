@@ -178,7 +178,7 @@ namespace darts_hub.control.wizard
                     SetLoading(true, "Skipping step...");
                     try
                     {
-                        await wizardManager.GoToNextStep();
+                        await wizardManager.SkipCurrentStep();
                     }
                     catch (Exception ex)
                     {

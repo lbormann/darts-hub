@@ -177,20 +177,40 @@ namespace darts_hub.control.wizard
         /// </summary>
         public async Task<bool> GoToNextStep()
         {
+            return await GoToNextStep(validateStep: true);
+        }
+
+        /// <summary>
+        /// Skips the current wizard step without validation
+        /// </summary>
+        public async Task<bool> SkipCurrentStep()
+        {
+            return await GoToNextStep(validateStep: false);
+        }
+
+        /// <summary>
+        /// Navigates to the next wizard step with optional validation
+        /// </summary>
+        private async Task<bool> GoToNextStep(bool validateStep)
+        {
             var currentStep = GetCurrentStep();
             if (currentStep == null) return false;
 
-            // Validate current step before proceeding
-            var validationResult = await currentStep.ValidateStep();
-            if (!validationResult.IsValid)
+            if (validateStep)
             {
-                // Show validation error
-                await ShowValidationError(validationResult.ErrorMessage);
-                return false;
-            }
+                // Validate current step before proceeding
+                var validationResult = await currentStep.ValidateStep();
+                if (!validationResult.IsValid)
+                {
+                    // Show validation error
+                    await ShowValidationError(validationResult.ErrorMessage);
+                    return false;
+                }
 
-            // Apply the step configuration
-            await currentStep.ApplyConfiguration();
+                // Apply the step configuration
+                await currentStep.ApplyConfiguration();
+            }
+            // When skipping, we don't validate or apply configuration
 
             // Special handling after extension selection step
             if (currentStep is ExtensionSelectionWizardStep)

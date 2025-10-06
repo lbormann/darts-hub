@@ -37,11 +37,11 @@ jobs:
           
           # Extrahiere Changelog für die spezifische Version
           if [ -f "CHANGELOG.md" ]; then
-            # Suche nach der Version im Changelog
-            CHANGELOG=$(awk "/^## ${VERSION}$/{flag=1; next} /^## /{flag=0} flag" CHANGELOG.md)
+            # Suche nach der Version im Changelog - von ## VERSION bis zur nächsten ## 
+            CHANGELOG=$(awk "/^## ${VERSION}$/{flag=1; next} /^## / && flag{flag=0} flag" CHANGELOG.md)
             
             if [ -n "$CHANGELOG" ]; then
-              # Escape newlines und andere Zeichen für GitHub Output
+              # Escape Zeichen für GitHub Output aber behalte Markdown-Formatierung
               CHANGELOG="${CHANGELOG//'%'/'%25'}"
               CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
               CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
@@ -72,9 +72,6 @@ jobs:
       - name: Build macOS-x64
         run: dotnet publish darts-hub/darts-hub.csproj -r osx-x64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
 
-      - name: Copy update-script for macOS-x64
-        run: cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-x64/publish/update.sh
-
       - name: Set execute permissions for macOS-x64
         run: |
           chmod +x darts-hub/bin/Release/net6.0/osx-x64/publish/update.sh
@@ -95,9 +92,6 @@ jobs:
       # macOS-arm64
       - name: Build macOS-arm64
         run: dotnet publish darts-hub/darts-hub.csproj -r osx-arm64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
-
-      - name: Copy update-script for macOS-arm64
-        run: cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-arm64/publish/update.sh
 
       - name: Set execute permissions for macOS-arm64
         run: |

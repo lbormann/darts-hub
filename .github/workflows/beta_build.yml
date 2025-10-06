@@ -37,11 +37,11 @@ jobs:
           
           # Extrahiere Changelog für die spezifische Version
           if [ -f "CHANGELOG.md" ]; then
-            # Suche nach der Version im Changelog
-            CHANGELOG=$(awk "/^## ${VERSION}$/{flag=1; next} /^## /{flag=0} flag" CHANGELOG.md)
+            # Suche nach der Version im Changelog - von ## VERSION bis zur nächsten ## 
+            CHANGELOG=$(awk "/^## ${VERSION}$/{flag=1; next} /^## / && flag{flag=0} flag" CHANGELOG.md)
             
             if [ -n "$CHANGELOG" ]; then
-              # Escape newlines und andere Zeichen für GitHub Output
+              # Escape Zeichen für GitHub Output aber behalte Markdown-Formatierung
               CHANGELOG="${CHANGELOG//'%'/'%25'}"
               CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
               CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"

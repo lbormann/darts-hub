@@ -1,3 +1,8 @@
+## v1.1.11
+### Bug Fixes
+    - fixed skip this step button in setup wizard
+    - build routine bugfixes
+
 ## v1.1.10
 - Setup Wizard System
   - Complete setup wizard implementation for all extensions
