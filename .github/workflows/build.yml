@@ -10,6 +10,10 @@ on:
 permissions:
   contents: write
 
+
+
+
+
 jobs:
 
   # MACOS
@@ -18,7 +22,7 @@ jobs:
 
     steps:
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v1.9.0
         with:
           dotnet-version: '6.0.x'
 
@@ -32,30 +36,14 @@ jobs:
       - name: Build osx-x64
         run: dotnet publish darts-hub/darts-hub.csproj -r osx-x64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
 
-      - name: List and verify publish directory contents
-        run: |
-          echo "Contents of osx-x64 publish directory:"
-          ls -la darts-hub/bin/Release/net6.0/osx-x64/publish/ || echo "Publish directory not found, checking alternative locations..."
-          find darts-hub/bin -name "darts-hub*" -type f 2>/dev/null || echo "No darts-hub files found"
-
-      - name: Ensure publish directory exists and copy update script
-        run: |
-          # Create directory if it doesn't exist
-          mkdir -p darts-hub/bin/Release/net6.0/osx-x64/publish/
-          # Copy update script
-          cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-x64/publish/update.sh
+      - name: Copy update-script manually
+        run: cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-x64/publish/update.sh
 
       - name: Set execute permissions
         shell: bash
         run: |
           chmod +x darts-hub/bin/Release/net6.0/osx-x64/publish/update.sh
-          # Find and make executable files executable
-          find darts-hub/bin/Release/net6.0/osx-x64/publish/ -name "darts-hub*" -type f -exec chmod +x {} \;
-
-      - name: Verify files before zipping
-        run: |
-          echo "Final contents before zipping:"
-          ls -la darts-hub/bin/Release/net6.0/osx-x64/publish/
+          chmod +x darts-hub/bin/Release/net6.0/osx-x64/publish/darts-hub
 
       - name: Zip osx-x64 build
         uses: vimtor/action-zip@v1
@@ -74,16 +62,14 @@ jobs:
       - name: Build osx-arm64
         run: dotnet publish darts-hub/darts-hub.csproj -r osx-arm64 -p:Configuration=Release --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true
 
-      - name: Ensure publish directory exists and copy update script
-        run: |
-          mkdir -p darts-hub/bin/Release/net6.0/osx-arm64/publish/
-          cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-arm64/publish/update.sh
+      - name: Copy update-script manually
+        run: cp darts-hub/update.sh darts-hub/bin/Release/net6.0/osx-arm64/publish/update.sh
 
       - name: Set execute permissions
         shell: bash
         run: |
           chmod +x darts-hub/bin/Release/net6.0/osx-arm64/publish/update.sh
-          find darts-hub/bin/Release/net6.0/osx-arm64/publish/ -name "darts-hub*" -type f -exec chmod +x {} \;
+          chmod +x darts-hub/bin/Release/net6.0/osx-arm64/publish/darts-hub
 
       - name: Zip osx-arm64 build
         uses: vimtor/action-zip@v1
@@ -104,7 +90,7 @@ jobs:
 
     steps:
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v1.9.0
         with:
           dotnet-version: '6.0.x'
 
@@ -117,12 +103,6 @@ jobs:
       # win-x86
       - name: Build win-x86
         run: dotnet publish darts-hub/darts-hub.csproj -r win-x86 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
-
-      - name: List and verify publish directory contents
-        run: |
-          echo "Contents of win-x86 publish directory:"
-          dir "darts-hub\bin\Release\net6.0\win-x86\publish\" /b 2>nul || echo "Publish directory not found, checking alternative locations..."
-          dir "darts-hub\bin" /s /b | findstr "darts-hub" 2>nul || echo "No darts-hub files found"
 
       - name: Zip win-x86 build
         uses: vimtor/action-zip@v1
@@ -187,14 +167,15 @@ jobs:
 
   # LINUX
   build-linux:
+
     runs-on: ubuntu-22.04
 
     steps:
       - name: Install dos2unix
-        run: sudo apt-get update && sudo apt-get install -y dos2unix
+        run: sudo apt-get install dos2unix
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v1.9.0
         with:
           dotnet-version: '6.0.x'
 
@@ -208,17 +189,6 @@ jobs:
       # linux-x64
       - name: Build linux-x64
         run: dotnet publish darts-hub/darts-hub.csproj -r linux-x64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
-
-      - name: List and verify publish directory contents
-        run: |
-          echo "Contents of linux-x64 publish directory:"
-          ls -la darts-hub/bin/Release/net6.0/linux-x64/publish/ || echo "Publish directory not found, checking alternative locations..."
-          find darts-hub/bin -name "darts-hub*" -type f 2>/dev/null || echo "No darts-hub files found"
-
-      - name: Ensure publish directory exists and copy update script
-        run: |
-          mkdir -p darts-hub/bin/Release/net6.0/linux-x64/publish/
-          cp darts-hub/update.sh darts-hub/bin/Release/net6.0/linux-x64/publish/update.sh
 
       - name: Convert line endings in update.sh
         run: dos2unix darts-hub/bin/Release/net6.0/linux-x64/publish/update.sh
@@ -245,11 +215,6 @@ jobs:
       - name: Build linux-arm
         run: dotnet publish darts-hub/darts-hub.csproj -r linux-arm -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
 
-      - name: Ensure publish directory exists and copy update script
-        run: |
-          mkdir -p darts-hub/bin/Release/net6.0/linux-arm/publish/
-          cp darts-hub/update.sh darts-hub/bin/Release/net6.0/linux-arm/publish/update.sh
-
       - name: Convert line endings in update.sh
         run: dos2unix darts-hub/bin/Release/net6.0/linux-arm/publish/update.sh
 
@@ -274,11 +239,6 @@ jobs:
       # linux-arm64
       - name: Build linux-arm64
         run: dotnet publish darts-hub/darts-hub.csproj -r linux-arm64 -p:Configuration=Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
-
-      - name: Ensure publish directory exists and copy update script
-        run: |
-          mkdir -p darts-hub/bin/Release/net6.0/linux-arm64/publish/
-          cp darts-hub/update.sh darts-hub/bin/Release/net6.0/linux-arm64/publish/update.sh
 
       - name: Convert line endings in update.sh
         run: dos2unix darts-hub/bin/Release/net6.0/linux-arm64/publish/update.sh
@@ -310,63 +270,53 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
 
-      - name: Verify downloaded artifacts
-        run: |
-          echo "Downloaded artifacts:"
-          find . -name "*.zip" -exec ls -la {} \;
-          echo "Checking zip contents:"
-          find . -name "*.zip" -exec sh -c 'echo "=== $1 ==="; unzip -l "$1"' _ {} \;
-
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v1
         with:
           draft: false
           tag_name: ${{ github.ref }}
           name: Release ${{ github.ref }}
           body: |
-            # ?? Official Release - Changes in this Version
-
-            ## ?? New Features & Improvements
-            - **Setup Wizard System**
+            # Changes in this Release
+            - Setup Wizard System
               - Complete setup wizard implementation for all extensions
               - Step-by-step configuration guidance for new users
               - Automated extension detection and configuration
               - Network device scanning capabilities
               - Integrated completion steps with validation
-            
-            - **Enhanced Settings Mode**
-              - New configuration possibilities, especially for WLED
-              - Improved viewport settings for setup wizard window
-              - Better scaling and adaptive content when window is resized
+            - Improvements
+                - Added viewport settings to setup wizard window for better scaling and adaptive content
+                - Wizard window now properly scales and adjusts content when resized
+            - Bug Fixes
+              - Fixed wizard navigation edge cases
+              - Resolved configuration saving issues in specific scenarios
+              - Corrected extension argument validation errors
+              - Fixed memory leaks in wizard cleanup processes
+            - new ehnaced settings mode
+              - test the new possibility to configure your settings especially for wled.
 
-            ## ?? Bug Fixes
-            - Fixed wizard navigation edge cases
-            - Resolved configuration saving issues in specific scenarios
-            - Corrected extension argument validation errors
-            - Fixed memory leaks in wizard cleanup processes
-
-            ## ?? Extension Updates
-
-            ### ?? WLED
-            - Updated WLED extension components
-            - Improved WLED API integration
-            - Enhanced color definitions and score area handling
-            - Better WLED settings management
+            ## WLED
+            - WLED Extension
+              - Updated WLED extension components
+              - Improved WLED API integration
+              - Enhanced color definitions and score area handling
+              - Better WLED settings management
             
-            ### ?? PIXELIT
-            - Stability improvements and maintenance updates
-            
-            ### ?? Caller
-            - Reactivated possibility to use the Caller standalone via source
-            - Changed webcaller design
-            - Added new soundpacks
-            - Added new languages: IT (Italian), RU (Russian)
-            - Added more realistic caller behaviour with arg -CRL "--caller-real-life" (X01 games only)
-            - Improved fallback: if no player name soundkey is available, plays "player one, two....."
+            ## PIXELIT
+            - nothing new
 
-            ---
+            ## Caller
+            - nothing new
+
+            ## Caller
+            - reactivate possibility to use the Caller standalone via source
+            - changed webcaller design
+            - add new soundpacks
+            - add new languages IT, RU
+            - add more realistic caller behaviour arg -CRL "--caller-real-life" (just X01)
+            - add if no playername soundkey avaialble play "player one, two....."
             
-            **?? Download the appropriate version for your platform below.**
+            
             
           generate_release_notes: true
           files: |
