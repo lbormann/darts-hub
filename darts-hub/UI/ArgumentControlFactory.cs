@@ -122,6 +122,8 @@ namespace darts_hub.UI
             {
                 Value = int.TryParse(argument.Value, out var intVal) ? intVal : 0,
                 Increment = 1,
+                Minimum = -999,
+                Maximum = 999,
                 FontSize = 14,
                 Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
                 Foreground = Brushes.White,
@@ -136,6 +138,8 @@ namespace darts_hub.UI
             {
                 Value = double.TryParse(argument.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var doubleVal) ? (decimal)doubleVal : 0,
                 Increment = 0.1m,
+                Minimum = -999.9m,
+                Maximum = 999.9m,
                 FormatString = "F1",
                 FontSize = 14,
                 Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),

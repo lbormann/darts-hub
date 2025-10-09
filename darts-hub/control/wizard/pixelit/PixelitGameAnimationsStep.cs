@@ -19,6 +19,7 @@ namespace darts_hub.control.wizard.pixelit
         private readonly Dictionary<string, Control> argumentControls;
         private readonly Action onGameAnimationsSelected;
         private readonly Action onGameAnimationsSkipped;
+        private bool isProcessing = false; // ⭐ Flag to prevent multiple clicks
 
         public bool ShowGameAnimations { get; private set; }
 
@@ -99,15 +100,47 @@ namespace darts_hub.control.wizard.pixelit
 
             yesButton.Click += (s, e) =>
             {
-                ShowGameAnimations = true;
-                ShowGameAnimationSettings(content);
-                onGameAnimationsSelected?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowGameAnimations = true;
+                    ShowGameAnimationSettings(content);
+                    
+                    // Disable both buttons after selection
+                    yesButton.IsEnabled = false;
+                    noButton.IsEnabled = false;
+                    
+                    onGameAnimationsSelected?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             noButton.Click += (s, e) =>
             {
-                ShowGameAnimations = false;
-                onGameAnimationsSkipped?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowGameAnimations = false;
+                    
+                    // Disable both buttons after selection
+                    yesButton.IsEnabled = false;
+                    noButton.IsEnabled = false;
+                    
+                    onGameAnimationsSkipped?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             buttonPanel.Children.Add(yesButton);
@@ -141,7 +174,7 @@ namespace darts_hub.control.wizard.pixelit
         private void ShowGameAnimationSettings(StackPanel content)
         {
             var animationsPanel = content.Children.OfType<StackPanel>().FirstOrDefault(p => p.Name == "GameAnimationsPanel");
-            if (animationsPanel != null)
+            if (animationsPanel != null && !animationsPanel.IsVisible) // ⭐ Only show if not already visible
             {
                 animationsPanel.IsVisible = true;
             }

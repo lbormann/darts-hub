@@ -63,6 +63,7 @@ namespace darts_hub.control.wizard
 
         public async Task<Control> CreateContent()
         {
+            // ⭐ Always create a NEW main panel to avoid "already has a visual parent" errors
             var mainPanel = new StackPanel
             {
                 Spacing = 20,
@@ -81,11 +82,12 @@ namespace darts_hub.control.wizard
             // THEN initialize guided steps with loaded descriptions
             InitializeGuidedStepsWithDescriptions();
 
-            // Header
+            // Header - always create new
             var header = CreateHeader();
             mainPanel.Children.Add(header);
 
-            // Create guided configuration immediately
+            // ⭐ Clear and recreate guided configuration to avoid parent conflicts
+            guidedConfigPanel = null; // Clear reference
             await CreateGuidedConfiguration();
             mainPanel.Children.Add(guidedConfigPanel);
 
@@ -194,6 +196,7 @@ namespace darts_hub.control.wizard
 
         private async Task CreateGuidedConfiguration()
         {
+            // ⭐ Always create a completely NEW panel to avoid parent conflicts
             guidedConfigPanel = new StackPanel { Spacing = 20 };
 
             // Step 1: Essential Settings (Autodarts credentials, Media path)
@@ -235,7 +238,8 @@ namespace darts_hub.control.wizard
                 .OfType<Border>()
                 .FirstOrDefault(b => b.Name == stepName);
             
-            if (stepCard != null)
+            // ⭐ Only show if not already visible to prevent multiple triggers
+            if (stepCard != null && !stepCard.IsVisible)
             {
                 stepCard.IsVisible = true;
             }

@@ -133,6 +133,7 @@ namespace darts_hub.control.wizard
 
         public async Task<Control> CreateContent()
         {
+            // ⭐ Always create a NEW main panel to avoid "already has a visual parent" errors
             var mainPanel = new StackPanel
             {
                 Spacing = 25,
@@ -140,6 +141,7 @@ namespace darts_hub.control.wizard
                 HorizontalAlignment = HorizontalAlignment.Center
             };
 
+            // Prevent multiple calls from creating duplicate content
             if (targetApp == null)
             {
                 return CreateNotAvailableMessage();
@@ -148,14 +150,14 @@ namespace darts_hub.control.wizard
             // Load argument descriptions
             await LoadArgumentDescriptions();
 
-            // Header
+            // Header - always create new
             var header = CreateHeader();
             mainPanel.Children.Add(header);
 
-            // Configuration sections
+            // Configuration sections - always create new
             await CreateConfigurationSections(mainPanel);
 
-            // Add autostart section
+            // Add autostart section - always create new
             var autostartCard = CreateAutostartSection();
             mainPanel.Children.Add(autostartCard);
 
@@ -602,13 +604,20 @@ namespace darts_hub.control.wizard
                 FormatString = isFloat ? "F1" : "F0"
             };
 
-            // Set value and limits
+            // Set appropriate limits FIRST before setting value
+            SetNumericLimits(numericUpDown, argument, isFloat);
+
+            // Set value AFTER limits are set
             if (isFloat)
             {
                 if (double.TryParse(argument.Value, System.Globalization.NumberStyles.Float,
                     System.Globalization.CultureInfo.InvariantCulture, out var doubleVal))
                 {
                     numericUpDown.Value = (decimal)doubleVal;
+                }
+                else
+                {
+                    numericUpDown.Value = 0;
                 }
             }
             else
@@ -617,10 +626,11 @@ namespace darts_hub.control.wizard
                 {
                     numericUpDown.Value = intVal;
                 }
+                else
+                {
+                    numericUpDown.Value = 0;
+                }
             }
-
-            // Set appropriate limits based on argument
-            SetNumericLimits(numericUpDown, argument, isFloat);
 
             numericUpDown.ValueChanged += (s, e) =>
             {
@@ -663,6 +673,7 @@ namespace darts_hub.control.wizard
                     control.Maximum = 10;
                     break;
                 default:
+                    // Use reasonable default ranges instead of extreme values
                     control.Minimum = isFloat ? -999.9m : -999;
                     control.Maximum = isFloat ? 999.9m : 999;
                     break;

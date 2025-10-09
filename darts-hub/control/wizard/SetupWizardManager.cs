@@ -19,6 +19,8 @@ namespace darts_hub.control.wizard
         private ProfileManager profileManager;
         private Configurator configurator;
         private ExtensionSelectionWizardStep extensionSelectionStep;
+        private bool isNavigating = false; // Flag to prevent concurrent navigation
+        private HashSet<string> lastSelectedExtensions = new HashSet<string>(); // ? Track last selected extensions
 
         public SetupWizardManager(ProfileManager profileManager, Configurator configurator)
         {
@@ -36,6 +38,7 @@ namespace darts_hub.control.wizard
             selectedProfile = profile;
             wizardSteps.Clear();
             currentStepIndex = 0;
+            lastSelectedExtensions.Clear(); // ? Reset extension tracking
 
             // Add wizard steps in order
             wizardSteps.Add(new WelcomeWizardStep());
@@ -68,8 +71,29 @@ namespace darts_hub.control.wizard
                 return;
 
             var selectedExtensions = extensionSelectionStep.SelectedExtensions;
+            
+            // ? Check if extension selection has changed
+            var currentExtensionsSet = new HashSet<string>(selectedExtensions);
+            if (currentExtensionsSet.SetEquals(lastSelectedExtensions))
+            {
+                // No change in selection, don't rebuild steps
+                System.Diagnostics.Debug.WriteLine("Extension selection unchanged, skipping dynamic step recreation");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Extension selection changed from [{string.Join(", ", lastSelectedExtensions)}] to [{string.Join(", ", currentExtensionsSet)}]");
+            
+            // ? Always remove existing dynamic steps before creating new ones
+            RemoveDynamicSteps();
+            
+            // ? Update tracked extensions
+            lastSelectedExtensions = currentExtensionsSet;
+
             var dynamicSteps = new List<IWizardStep>();
 
+            // ? Add dynamic steps in the CORRECT order: AFTER Caller, BEFORE Completion
+            // Order should be: Welcome -> ExtensionSelection -> Caller -> [Dynamic Extensions] -> Completion
+            
             // Add WLED step if selected and available
             if (selectedExtensions.Contains("wled") || selectedExtensions.Any(e => e.Contains("wled")))
             {
@@ -80,6 +104,7 @@ namespace darts_hub.control.wizard
                     var wledStep = new WledSetupWizardStep();
                     wledStep.Initialize(selectedProfile, profileManager, configurator);
                     dynamicSteps.Add(wledStep);
+                    System.Diagnostics.Debug.WriteLine("Added WLED setup step");
                 }
             }
 
@@ -93,6 +118,7 @@ namespace darts_hub.control.wizard
                     var pixelitStep = new PixelitSetupWizardStep();
                     pixelitStep.Initialize(selectedProfile, profileManager, configurator);
                     dynamicSteps.Add(pixelitStep);
+                    System.Diagnostics.Debug.WriteLine("Added Pixelit setup step");
                 }
             }
 
@@ -106,6 +132,7 @@ namespace darts_hub.control.wizard
                     var voiceStep = new VoiceConfigWizardStep();
                     voiceStep.Initialize(selectedProfile, profileManager, configurator);
                     dynamicSteps.Add(voiceStep);
+                    System.Diagnostics.Debug.WriteLine("Added Voice setup step");
                 }
             }
 
@@ -119,6 +146,7 @@ namespace darts_hub.control.wizard
                     var gifStep = new GifConfigWizardStep();
                     gifStep.Initialize(selectedProfile, profileManager, configurator);
                     dynamicSteps.Add(gifStep);
+                    System.Diagnostics.Debug.WriteLine("Added GIF setup step");
                 }
             }
 
@@ -132,14 +160,33 @@ namespace darts_hub.control.wizard
                     var externStep = new ExternConfigWizardStep();
                     externStep.Initialize(selectedProfile, profileManager, configurator);
                     dynamicSteps.Add(externStep);
+                    System.Diagnostics.Debug.WriteLine("Added Extern setup step");
                 }
             }
 
-            // Insert dynamic steps before the completion step
-            var completionStepIndex = wizardSteps.Count - 1;
+            // ? Insert dynamic steps at the correct position: after Caller (index 2), before Completion
+            // Expected order: [0]Welcome -> [1]ExtensionSelection -> [2]Caller -> [3+]Dynamic -> [Last]Completion
+            var callerStepIndex = wizardSteps.FindIndex(s => s is CallerSetupWizardStep);
+            if (callerStepIndex == -1)
+            {
+                System.Diagnostics.Debug.WriteLine("ERROR: Could not find Caller step!");
+                return;
+            }
+
+            // Insert dynamic steps after Caller step
+            var insertIndex = callerStepIndex + 1;
             for (int i = 0; i < dynamicSteps.Count; i++)
             {
-                wizardSteps.Insert(completionStepIndex + i, dynamicSteps[i]);
+                wizardSteps.Insert(insertIndex + i, dynamicSteps[i]);
+                System.Diagnostics.Debug.WriteLine($"Inserted {dynamicSteps[i].GetType().Name} at index {insertIndex + i}");
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"Total wizard steps after dynamic creation: {wizardSteps.Count}");
+            
+            // ? Debug: Print current step order
+            for (int i = 0; i < wizardSteps.Count; i++)
+            {
+                System.Diagnostics.Debug.WriteLine($"  [{i}] {wizardSteps[i].GetType().Name}");
             }
         }
 
@@ -193,43 +240,75 @@ namespace darts_hub.control.wizard
         /// </summary>
         private async Task<bool> GoToNextStep(bool validateStep)
         {
-            var currentStep = GetCurrentStep();
-            if (currentStep == null) return false;
-
-            if (validateStep)
+            // Prevent concurrent navigation
+            if (isNavigating) return false;
+            
+            try
             {
-                // Validate current step before proceeding
-                var validationResult = await currentStep.ValidateStep();
-                if (!validationResult.IsValid)
+                isNavigating = true;
+                
+                var currentStep = GetCurrentStep();
+                if (currentStep == null) return false;
+
+                System.Diagnostics.Debug.WriteLine($"Going to next step from: {currentStep.GetType().Name} (index {currentStepIndex})");
+
+                if (validateStep)
                 {
-                    // Show validation error
-                    await ShowValidationError(validationResult.ErrorMessage);
-                    return false;
+                    // Validate current step before proceeding
+                    var validationResult = await currentStep.ValidateStep();
+                    if (!validationResult.IsValid)
+                    {
+                        // Show validation error
+                        await ShowValidationError(validationResult.ErrorMessage);
+                        return false;
+                    }
+
+                    // Apply the step configuration
+                    await currentStep.ApplyConfiguration();
+                }
+                // When skipping, we don't validate or apply configuration
+
+                // ? Special handling for extension selection step - ALWAYS check for changes
+                if (currentStep is ExtensionSelectionWizardStep)
+                {
+                    System.Diagnostics.Debug.WriteLine("Processing extension selection changes...");
+                    var oldStepCount = wizardSteps.Count;
+                    CreateDynamicSteps();
+                    var newStepCount = wizardSteps.Count;
+                    
+                    // ? If step count changed, we need to ensure we're going to the correct next step
+                    if (newStepCount != oldStepCount)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Step count changed from {oldStepCount} to {newStepCount}");
+                        // The next step should be the Caller step, which should be at index 2
+                        // Find the correct index for the Caller step
+                        var callerStepIndex = wizardSteps.FindIndex(s => s is CallerSetupWizardStep);
+                        if (callerStepIndex != -1)
+                        {
+                            currentStepIndex = callerStepIndex - 1; // Will be incremented below
+                            System.Diagnostics.Debug.WriteLine($"Adjusted currentStepIndex to {currentStepIndex} to navigate to Caller");
+                        }
+                    }
                 }
 
-                // Apply the step configuration
-                await currentStep.ApplyConfiguration();
+                // Move to next step
+                if (currentStepIndex < wizardSteps.Count - 1)
+                {
+                    currentStepIndex++;
+                    System.Diagnostics.Debug.WriteLine($"Moved to step index {currentStepIndex} of {wizardSteps.Count}");
+                    await ShowCurrentStep();
+                    return true;
+                }
+                else
+                {
+                    // Wizard completed
+                    await CompleteWizard();
+                    return true;
+                }
             }
-            // When skipping, we don't validate or apply configuration
-
-            // Special handling after extension selection step
-            if (currentStep is ExtensionSelectionWizardStep)
+            finally
             {
-                CreateDynamicSteps();
-            }
-
-            // Move to next step
-            if (currentStepIndex < wizardSteps.Count - 1)
-            {
-                currentStepIndex++;
-                await ShowCurrentStep();
-                return true;
-            }
-            else
-            {
-                // Wizard completed
-                await CompleteWizard();
-                return true;
+                isNavigating = false;
             }
         }
 
@@ -238,24 +317,37 @@ namespace darts_hub.control.wizard
         /// </summary>
         public async Task GoToPreviousStep()
         {
-            if (currentStepIndex > 0)
+            // Prevent concurrent navigation
+            if (isNavigating) return;
+            
+            try
             {
-                // Special handling: if going back from a dynamic step, we might need to rebuild
-                var currentStep = GetCurrentStep();
-                bool isDynamicStep = !(currentStep is WelcomeWizardStep || 
-                                     currentStep is ExtensionSelectionWizardStep || 
-                                     currentStep is CallerSetupWizardStep || 
-                                     currentStep is CompletionWizardStep);
-
-                currentStepIndex--;
+                isNavigating = true;
                 
-                // If we went back to extension selection, remove dynamic steps
-                if (GetCurrentStep() is ExtensionSelectionWizardStep && isDynamicStep)
+                if (currentStepIndex > 0)
                 {
-                    RemoveDynamicSteps();
+                    var currentStep = GetCurrentStep();
+                    System.Diagnostics.Debug.WriteLine($"Going back from: {currentStep?.GetType().Name} (index {currentStepIndex})");
+
+                    currentStepIndex--;
+                    
+                    var previousStep = GetCurrentStep();
+                    System.Diagnostics.Debug.WriteLine($"Going back to: {previousStep?.GetType().Name} (index {currentStepIndex})");
+                    
+                    // ? If we're going back to extension selection, check if we need to adjust the current step index
+                    // This handles cases where dynamic steps were added/removed and the index needs adjustment
+                    if (previousStep is ExtensionSelectionWizardStep)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Went back to extension selection step - dynamic steps may be rebuilt on next forward navigation");
+                        // Don't remove steps here - let the next forward navigation handle the rebuild
+                    }
+                    
+                    await ShowCurrentStep();
                 }
-                
-                await ShowCurrentStep();
+            }
+            finally
+            {
+                isNavigating = false;
             }
         }
 
@@ -264,14 +356,27 @@ namespace darts_hub.control.wizard
         /// </summary>
         private void RemoveDynamicSteps()
         {
+            System.Diagnostics.Debug.WriteLine($"Removing dynamic steps. Current step count: {wizardSteps.Count}");
+            
             var staticSteps = wizardSteps.Where(step => 
                 step is WelcomeWizardStep || 
                 step is ExtensionSelectionWizardStep || 
                 step is CallerSetupWizardStep || 
                 step is CompletionWizardStep).ToList();
 
+            // ? Adjust current step index if we're beyond the static steps
+            var staticStepCount = staticSteps.Count;
+            if (currentStepIndex >= staticStepCount)
+            {
+                // If we're currently on a dynamic step, move back to the last static step (usually completion or caller)
+                currentStepIndex = Math.Min(currentStepIndex, staticStepCount - 1);
+                System.Diagnostics.Debug.WriteLine($"Adjusted current step index to {currentStepIndex} after removing dynamic steps");
+            }
+
             wizardSteps.Clear();
             wizardSteps.AddRange(staticSteps);
+            
+            System.Diagnostics.Debug.WriteLine($"After removing dynamic steps. Step count: {wizardSteps.Count}, Current index: {currentStepIndex}");
         }
 
         /// <summary>
@@ -282,6 +387,7 @@ namespace darts_hub.control.wizard
             var currentStep = GetCurrentStep();
             if (currentStep != null && wizardWindow != null)
             {
+                System.Diagnostics.Debug.WriteLine($"Displaying step: {currentStep.GetType().Name}");
                 await wizardWindow.DisplayStep(currentStep);
             }
         }

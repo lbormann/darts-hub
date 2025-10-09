@@ -10,6 +10,7 @@ namespace darts_hub.control.wizard
     public partial class WizardWindow : Window
     {
         private SetupWizardManager wizardManager;
+        private bool isProcessing = false; // Flag to prevent multiple concurrent operations
         
         public WizardWindow() : this(null) { }
 
@@ -99,7 +100,13 @@ namespace darts_hub.control.wizard
         {
             if (wizardManager == null) return;
 
-            PreviousButton.IsEnabled = wizardManager.CanGoPrevious();
+            // Disable buttons during processing
+            bool canInteract = !isProcessing;
+            
+            PreviousButton.IsEnabled = canInteract && wizardManager.CanGoPrevious();
+            NextButton.IsEnabled = canInteract;
+            SkipButton.IsEnabled = canInteract;
+            CancelButton.IsEnabled = canInteract;
             
             if (wizardManager.IsLastStep())
             {
@@ -112,57 +119,64 @@ namespace darts_hub.control.wizard
         }
 
         /// <summary>
-        /// Sets the loading state
+        /// Sets the loading state and updates button states
         /// </summary>
         private void SetLoading(bool isLoading, string message = "Processing...")
         {
             LoadingOverlay.IsVisible = isLoading;
             LoadingText.Text = message;
+            
+            // Update processing state and button availability
+            isProcessing = isLoading;
+            UpdateNavigationButtons();
         }
 
         // Event handlers
         private async void NextButton_Click(object sender, RoutedEventArgs e)
         {
-            if (wizardManager != null)
+            // Prevent multiple concurrent operations
+            if (isProcessing || wizardManager == null) return;
+
+            SetLoading(true, "Processing configuration...");
+            try
             {
-                SetLoading(true, "Processing configuration...");
-                try
-                {
-                    await wizardManager.GoToNextStep();
-                }
-                catch (Exception ex)
-                {
-                    await ShowValidationError($"An error occurred: {ex.Message}");
-                }
-                finally
-                {
-                    SetLoading(false);
-                }
+                await wizardManager.GoToNextStep();
+            }
+            catch (Exception ex)
+            {
+                await ShowValidationError($"An error occurred: {ex.Message}");
+            }
+            finally
+            {
+                SetLoading(false);
             }
         }
 
         private async void PreviousButton_Click(object sender, RoutedEventArgs e)
         {
-            if (wizardManager != null)
+            // Prevent multiple concurrent operations
+            if (isProcessing || wizardManager == null) return;
+
+            SetLoading(true, "Loading previous step...");
+            try
             {
-                SetLoading(true, "Loading previous step...");
-                try
-                {
-                    await wizardManager.GoToPreviousStep();
-                }
-                catch (Exception ex)
-                {
-                    await ShowValidationError($"An error occurred: {ex.Message}");
-                }
-                finally
-                {
-                    SetLoading(false);
-                }
+                await wizardManager.GoToPreviousStep();
+            }
+            catch (Exception ex)
+            {
+                await ShowValidationError($"An error occurred: {ex.Message}");
+            }
+            finally
+            {
+                SetLoading(false);
             }
         }
 
         private async void SkipButton_Click(object sender, RoutedEventArgs e)
         {
+            // Prevent multiple concurrent operations
+            if (isProcessing || wizardManager == null) return;
+
             var messageBox = MessageBoxManager
                 .GetMessageBoxStandard("Skip Step", 
                     "Are you sure you want to skip this configuration step? You can always configure this later in the settings.",
@@ -173,27 +187,27 @@ namespace darts_hub.control.wizard
             
             if (result == MsBox.Avalonia.Enums.ButtonResult.Yes)
             {
-                if (wizardManager != null)
+                SetLoading(true, "Skipping step...");
+                try
                 {
-                    SetLoading(true, "Skipping step...");
-                    try
-                    {
-                        await wizardManager.SkipCurrentStep();
-                    }
-                    catch (Exception ex)
-                    {
-                        await ShowValidationError($"An error occurred: {ex.Message}");
-                    }
-                    finally
-                    {
-                        SetLoading(false);
-                    }
+                    await wizardManager.SkipCurrentStep();
+                }
+                catch (Exception ex)
+                {
+                    await ShowValidationError($"An error occurred: {ex.Message}");
+                }
+                finally
+                {
+                    SetLoading(false);
                 }
             }
         }
 
         private async void CancelButton_Click(object sender, RoutedEventArgs e)
         {
+            // Prevent multiple concurrent operations
+            if (isProcessing) return;
+
             var messageBox = MessageBoxManager
                 .GetMessageBoxStandard("Cancel Setup", 
                     "Are you sure you want to cancel the setup wizard? Your configuration will not be saved.",

@@ -20,6 +20,7 @@ namespace darts_hub.control.wizard.caller
         private readonly Dictionary<string, string> argumentDescriptions;
         private readonly Action onCameraConfigSelected;
         private readonly Action onCameraConfigSkipped;
+        private bool isProcessing = false; // ⭐ Flag to prevent multiple clicks
 
         public bool ShowCameraConfiguration { get; private set; }
 
@@ -102,15 +103,47 @@ namespace darts_hub.control.wizard.caller
 
             yesButton.Click += (s, e) =>
             {
-                ShowCameraConfiguration = true;
-                ShowCameraConfigSettings(content);
-                onCameraConfigSelected?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowCameraConfiguration = true;
+                    ShowCameraConfigSettings(content);
+                    
+                    // Disable both buttons after selection
+                    yesButton.IsEnabled = false;
+                    noButton.IsEnabled = false;
+                    
+                    onCameraConfigSelected?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             noButton.Click += (s, e) =>
             {
-                ShowCameraConfiguration = false;
-                onCameraConfigSkipped?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowCameraConfiguration = false;
+                    
+                    // Disable both buttons after selection
+                    yesButton.IsEnabled = false;
+                    noButton.IsEnabled = false;
+                    
+                    onCameraConfigSkipped?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             buttonPanel.Children.Add(yesButton);
@@ -152,7 +185,7 @@ namespace darts_hub.control.wizard.caller
         private void ShowCameraConfigSettings(StackPanel content)
         {
             var configPanel = content.Children.OfType<StackPanel>().FirstOrDefault(p => p.Name == "CameraConfigPanel");
-            if (configPanel != null)
+            if (configPanel != null && !configPanel.IsVisible) // ⭐ Only show if not already visible
             {
                 configPanel.IsVisible = true;
 

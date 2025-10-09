@@ -19,6 +19,7 @@ namespace darts_hub.control.wizard.caller
         private readonly Dictionary<string, string> argumentDescriptions;
         private readonly Action onDownloadConfigSelected;
         private readonly Action onDownloadConfigSkipped;
+        private bool isProcessing = false; // ⭐ Flag to prevent multiple clicks
 
         public bool ShowDownloadConfiguration { get; private set; } = false;
 
@@ -123,17 +124,47 @@ namespace darts_hub.control.wizard.caller
 
             configureButton.Click += (s, e) =>
             {
-                ShowDownloadConfiguration = true;
-                ShowDownloadConfigSettings(content);
-                configureButton.IsVisible = false;
-                skipButton.IsVisible = false;
-                onDownloadConfigSelected?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowDownloadConfiguration = true;
+                    ShowDownloadConfigSettings(content);
+                    
+                    // Disable both buttons after selection
+                    configureButton.IsEnabled = false;
+                    skipButton.IsEnabled = false;
+                    
+                    onDownloadConfigSelected?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             skipButton.Click += (s, e) =>
             {
-                ShowDownloadConfiguration = false;
-                onDownloadConfigSkipped?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowDownloadConfiguration = false;
+                    
+                    // Disable both buttons after selection
+                    configureButton.IsEnabled = false;
+                    skipButton.IsEnabled = false;
+                    
+                    onDownloadConfigSkipped?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             buttonPanel.Children.Add(configureButton);

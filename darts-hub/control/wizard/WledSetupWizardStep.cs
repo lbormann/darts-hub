@@ -102,6 +102,7 @@ namespace darts_hub.control.wizard
 
         public async Task<Control> CreateContent()
         {
+            // ⭐ Always create a NEW main panel to avoid "already has a visual parent" errors
             var mainPanel = new StackPanel
             {
                 Spacing = 20,
@@ -117,15 +118,15 @@ namespace darts_hub.control.wizard
             // Load argument descriptions
             await LoadArgumentDescriptions();
 
-            // Header
+            // Header - always create new
             var header = CreateHeader();
             mainPanel.Children.Add(header);
 
-            // Connection Test Panel
+            // Connection Test Panel - always create new
             connectionTestPanel = CreateConnectionTestPanel();
             mainPanel.Children.Add(connectionTestPanel);
 
-            // Configuration Panel (initially hidden)
+            // Configuration Panel (initially hidden) - always create new
             configurationPanel = new StackPanel { Spacing = 20, IsVisible = false };
             mainPanel.Children.Add(configurationPanel);
 
@@ -443,9 +444,13 @@ namespace darts_hub.control.wizard
                 return WizardValidationResult.Success(); // Skip if not available
             }
 
+            // ⭐ WLED connection test is optional - allow skipping even without connection
+            // Users can configure WLED later if they want
             if (!isConnected)
             {
-                return WizardValidationResult.Error("Please test the WLED connection before proceeding. A successful connection is required to configure WLED integration.");
+                // Don't force connection - allow skipping
+                System.Diagnostics.Debug.WriteLine("[WLED] WLED connection not tested, but allowing skip");
+                return WizardValidationResult.Success();
             }
 
             return WizardValidationResult.Success();
@@ -698,6 +703,7 @@ namespace darts_hub.control.wizard
 
         private async Task CreateGuidedConfiguration()
         {
+            // ⭐ Always create a completely NEW panel to avoid parent conflicts
             guidedConfigPanel = new StackPanel { Spacing = 20 };
 
             // Step 1: Essential Settings
@@ -732,8 +738,11 @@ namespace darts_hub.control.wizard
             var autostartCard = CreateAutostartSection();
             guidedConfigPanel.Children.Add(autostartCard);
 
-            // Add to main configuration panel
-            configurationPanel.Children.Add(guidedConfigPanel);
+            // Add to main configuration panel only if not already added
+            if (!configurationPanel.Children.Contains(guidedConfigPanel))
+            {
+                configurationPanel.Children.Add(guidedConfigPanel);
+            }
         }
 
         private void ShowNextStep(string stepName)
@@ -742,7 +751,8 @@ namespace darts_hub.control.wizard
                 .OfType<Border>()
                 .FirstOrDefault(b => b.Name == stepName);
             
-            if (stepCard != null)
+            // ⭐ Only show if not already visible to prevent multiple triggers
+            if (stepCard != null && !stepCard.IsVisible)
             {
                 stepCard.IsVisible = true;
             }

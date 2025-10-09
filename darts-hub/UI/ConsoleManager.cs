@@ -36,7 +36,7 @@ namespace darts_hub.UI
 
         public void Initialize()
         {
-            consoleUpdateTimer = new Timer(2000); // Update every 2 seconds
+            consoleUpdateTimer = new Timer(1000); // Update every 1 second
             consoleUpdateTimer.Elapsed += ConsoleUpdateTimer_Elapsed;
             consoleUpdateTimer.AutoReset = true;
         }
@@ -508,9 +508,9 @@ namespace darts_hub.UI
                     if (!string.IsNullOrEmpty(arguments))
                     {
                         // Show truncated version in console if too long
-                        if (arguments.Length > 200)
+                        if (arguments.Length > 2000)
                         {
-                            consoleText.AppendLine($"Arguments: {arguments.Substring(0, 200)}... [TRUNCATED - {arguments.Length} total chars]");
+                            consoleText.AppendLine($"Arguments: {arguments.Substring(0, 2000)}... [TRUNCATED - {arguments.Length} total chars]");
                         }
                         else
                         {
@@ -536,9 +536,9 @@ namespace darts_hub.UI
                         $"\"{executable}\"" + (!string.IsNullOrEmpty(arguments) ? $" {arguments}" : "") : 
                         "(executable not determined)";
                         
-                    if (fullCommand.Length > 300)
+                    if (fullCommand.Length > 3000)
                     {
-                        consoleText.AppendLine($"Full Command: {fullCommand.Substring(0, 300)}... [TRUNCATED]");
+                        consoleText.AppendLine($"Full Command: {fullCommand.Substring(0, 3000)}... [TRUNCATED]");
                     }
                     else
                     {

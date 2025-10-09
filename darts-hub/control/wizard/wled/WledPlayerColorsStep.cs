@@ -19,6 +19,7 @@ namespace darts_hub.control.wizard.wled
         private readonly Dictionary<string, Control> argumentControls;
         private readonly Action onPlayerColorsSelected;
         private readonly Action onPlayerColorsSkipped;
+        private bool isProcessing = false; // ⭐ Flag to prevent multiple clicks
 
         public bool ShowPlayerSpecificColors { get; private set; }
 
@@ -98,15 +99,47 @@ namespace darts_hub.control.wizard.wled
 
             yesButton.Click += (s, e) =>
             {
-                ShowPlayerSpecificColors = true;
-                ShowPlayerColorSettings(content);
-                onPlayerColorsSelected?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowPlayerSpecificColors = true;
+                    ShowPlayerColorSettings(content);
+                    
+                    // Disable both buttons after selection
+                    yesButton.IsEnabled = false;
+                    noButton.IsEnabled = false;
+                    
+                    onPlayerColorsSelected?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             noButton.Click += (s, e) =>
             {
-                ShowPlayerSpecificColors = false;
-                onPlayerColorsSkipped?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowPlayerSpecificColors = false;
+                    
+                    // Disable both buttons after selection
+                    yesButton.IsEnabled = false;
+                    noButton.IsEnabled = false;
+                    
+                    onPlayerColorsSkipped?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             buttonPanel.Children.Add(yesButton);
@@ -139,7 +172,7 @@ namespace darts_hub.control.wizard.wled
         private void ShowPlayerColorSettings(StackPanel content)
         {
             var colorsPanel = content.Children.OfType<StackPanel>().FirstOrDefault(p => p.Name == "PlayerColorsPanel");
-            if (colorsPanel != null)
+            if (colorsPanel != null && !colorsPanel.IsVisible) // ⭐ Only show if not already visible
             {
                 colorsPanel.IsVisible = true;
             }

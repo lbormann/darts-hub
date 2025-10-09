@@ -19,6 +19,7 @@ namespace darts_hub.control.wizard.caller
         private readonly Dictionary<string, string> argumentDescriptions;
         private readonly Action onCheckoutConfigSelected;
         private readonly Action onCheckoutConfigSkipped;
+        private bool isProcessing = false; // ⭐ Flag to prevent multiple clicks
 
         public bool ShowCheckoutConfiguration { get; private set; } = false;
 
@@ -123,17 +124,47 @@ namespace darts_hub.control.wizard.caller
 
             configureButton.Click += (s, e) =>
             {
-                ShowCheckoutConfiguration = true;
-                ShowCheckoutConfigSettings(content);
-                configureButton.IsVisible = false;
-                skipButton.IsVisible = false;
-                onCheckoutConfigSelected?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowCheckoutConfiguration = true;
+                    ShowCheckoutConfigSettings(content);
+                    
+                    // Disable both buttons after selection
+                    configureButton.IsEnabled = false;
+                    skipButton.IsEnabled = false;
+                    
+                    onCheckoutConfigSelected?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             skipButton.Click += (s, e) =>
             {
-                ShowCheckoutConfiguration = false;
-                onCheckoutConfigSkipped?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowCheckoutConfiguration = false;
+                    
+                    // Disable both buttons after selection
+                    configureButton.IsEnabled = false;
+                    skipButton.IsEnabled = false;
+                    
+                    onCheckoutConfigSkipped?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             buttonPanel.Children.Add(configureButton);

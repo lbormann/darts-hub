@@ -233,13 +233,20 @@ namespace darts_hub.control.wizard.wled
                 FormatString = isFloat ? "F1" : "F0"
             };
 
-            // Set value and limits
+            // Set appropriate limits FIRST before setting value
+            SetNumericLimits(numericUpDown, argument, isFloat);
+
+            // Set value AFTER limits are set
             if (isFloat)
             {
                 if (double.TryParse(argument.Value, System.Globalization.NumberStyles.Float,
                     System.Globalization.CultureInfo.InvariantCulture, out var doubleVal))
                 {
                     numericUpDown.Value = (decimal)doubleVal;
+                }
+                else
+                {
+                    numericUpDown.Value = 0;
                 }
             }
             else
@@ -248,10 +255,11 @@ namespace darts_hub.control.wizard.wled
                 {
                     numericUpDown.Value = intVal;
                 }
+                else
+                {
+                    numericUpDown.Value = 0;
+                }
             }
-
-            // Set appropriate limits based on argument
-            SetNumericLimits(numericUpDown, argument, isFloat);
 
             numericUpDown.ValueChanged += (s, e) =>
             {
@@ -290,6 +298,7 @@ namespace darts_hub.control.wizard.wled
                     control.Maximum = 10;
                     break;
                 default:
+                    // Use reasonable default ranges instead of extreme values
                     control.Minimum = isFloat ? -999.9m : -999;
                     control.Maximum = isFloat ? 999.9m : 999;
                     break;

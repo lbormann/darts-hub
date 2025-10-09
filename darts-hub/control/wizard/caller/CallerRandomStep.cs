@@ -19,6 +19,7 @@ namespace darts_hub.control.wizard.caller
         private readonly Dictionary<string, string> argumentDescriptions;
         private readonly Action onRandomConfigSelected;
         private readonly Action onRandomConfigSkipped;
+        private bool isProcessing = false; // ⭐ Flag to prevent multiple clicks
 
         public bool ShowRandomConfiguration { get; private set; } = false;
 
@@ -123,17 +124,47 @@ namespace darts_hub.control.wizard.caller
 
             configureButton.Click += (s, e) =>
             {
-                ShowRandomConfiguration = true;
-                ShowRandomConfigSettings(content);
-                configureButton.IsVisible = false;
-                skipButton.IsVisible = false;
-                onRandomConfigSelected?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowRandomConfiguration = true;
+                    ShowRandomConfigSettings(content);
+                    
+                    // Disable both buttons after selection
+                    configureButton.IsEnabled = false;
+                    skipButton.IsEnabled = false;
+                    
+                    onRandomConfigSelected?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             skipButton.Click += (s, e) =>
             {
-                ShowRandomConfiguration = false;
-                onRandomConfigSkipped?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowRandomConfiguration = false;
+                    
+                    // Disable both buttons after selection
+                    configureButton.IsEnabled = false;
+                    skipButton.IsEnabled = false;
+                    
+                    onRandomConfigSkipped?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             buttonPanel.Children.Add(configureButton);

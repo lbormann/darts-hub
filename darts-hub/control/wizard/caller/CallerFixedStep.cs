@@ -19,6 +19,7 @@ namespace darts_hub.control.wizard.caller
         private readonly Dictionary<string, string> argumentDescriptions;
         private readonly Action onFixedConfigSelected;
         private readonly Action onFixedConfigSkipped;
+        private bool isProcessing = false; // ⭐ Flag to prevent multiple clicks
 
         public bool ShowFixedConfiguration { get; private set; } = false;
 
@@ -123,17 +124,47 @@ namespace darts_hub.control.wizard.caller
 
             configureButton.Click += (s, e) =>
             {
-                ShowFixedConfiguration = true;
-                ShowFixedConfigSettings(content);
-                configureButton.IsVisible = false;
-                skipButton.IsVisible = false;
-                onFixedConfigSelected?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowFixedConfiguration = true;
+                    ShowFixedConfigSettings(content);
+                    
+                    // Disable both buttons after selection
+                    configureButton.IsEnabled = false;
+                    skipButton.IsEnabled = false;
+                    
+                    onFixedConfigSelected?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             skipButton.Click += (s, e) =>
             {
-                ShowFixedConfiguration = false;
-                onFixedConfigSkipped?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowFixedConfiguration = false;
+                    
+                    // Disable both buttons after selection
+                    configureButton.IsEnabled = false;
+                    skipButton.IsEnabled = false;
+                    
+                    onFixedConfigSkipped?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             buttonPanel.Children.Add(configureButton);

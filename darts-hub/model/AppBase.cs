@@ -19,7 +19,7 @@ namespace darts_hub.model
     {
 
         // ATTRIBUTES
-        public const int MaxAppMonitorEntries = 300;
+        public const int MaxAppMonitorEntries = 600;
 
         public string Name { get; set; }
         public string CustomName { get; set; }

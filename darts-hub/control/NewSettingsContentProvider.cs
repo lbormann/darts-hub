@@ -496,6 +496,12 @@ namespace darts_hub.control
             // Add event handlers for the buttons
             startStopButton.Click += (s, e) =>
             {
+                // ⭐ Prevent multiple clicks
+                if (startStopButton.Tag?.ToString() == "processing") return;
+                startStopButton.Tag = "processing";
+                var originalIsEnabled = startStopButton.IsEnabled;
+                startStopButton.IsEnabled = false;
+                
                 try
                 {
                     if (app.AppRunningState)
@@ -511,10 +517,28 @@ namespace darts_hub.control
                 {
                     System.Diagnostics.Debug.WriteLine($"Error in start/stop button: {ex.Message}");
                 }
+                finally
+                {
+                    // Restore button state after a delay to prevent rapid clicking
+                    Task.Delay(1000).ContinueWith(_ =>
+                    {
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            startStopButton.Tag = null;
+                            startStopButton.IsEnabled = originalIsEnabled;
+                        });
+                    });
+                }
             };
 
             restartButton.Click += (s, e) =>
             {
+                // ⭐ Prevent multiple clicks
+                if (restartButton.Tag?.ToString() == "processing") return;
+                restartButton.Tag = "processing";
+                var originalIsEnabled = restartButton.IsEnabled;
+                restartButton.IsEnabled = false;
+                
                 try
                 {
                     if (app.AppRunningState)
@@ -527,6 +551,18 @@ namespace darts_hub.control
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error in restart button: {ex.Message}");
+                }
+                finally
+                {
+                    // Restore button state after a delay to prevent rapid clicking
+                    Task.Delay(2000).ContinueWith(_ =>
+                    {
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            restartButton.Tag = null;
+                            restartButton.IsEnabled = originalIsEnabled;
+                        });
+                    });
                 }
             };
 
@@ -797,52 +833,65 @@ namespace darts_hub.control
 
                 removeButton.Click += (sender, e) =>
                 {
-                    param.Value = null;
-                    // Mark as changed for saving
-                    param.IsValueChanged = true;
-                    // Trigger auto-save
-                    saveCallback?.Invoke();
+                    // ⭐ Prevent multiple clicks
+                    if (removeButton.Tag?.ToString() == "processing") return;
+                    removeButton.Tag = "processing";
+                    removeButton.IsEnabled = false;
                     
-                    System.Diagnostics.Debug.WriteLine($"=== REMOVE PARAMETER CLICK ===");
-                    System.Diagnostics.Debug.WriteLine($"Removing parameter: {param.Name}");
-                    
-                    // Find the main panel by traversing up to the root
-                    var current = removeButton.Parent;
-                    StackPanel? rootMainPanel = null;
-                    
-                    // Traverse up to find the main panel that contains the header
-                    while (current != null)
+                    try
                     {
-                        System.Diagnostics.Debug.WriteLine($"Checking parent: {current.GetType().Name}");
+                        param.Value = null;
+                        // Mark as changed for saving
+                        param.IsValueChanged = true;
+                        // Trigger auto-save
+                        saveCallback?.Invoke();
                         
-                        if (current is StackPanel stackPanel)
+                        System.Diagnostics.Debug.WriteLine($"=== REMOVE PARAMETER CLICK ===");
+                        System.Diagnostics.Debug.WriteLine($"Removing parameter: {param.Name}");
+                        
+                        // Find the main panel by traversing up to the root
+                        var current = removeButton.Parent;
+                        StackPanel? rootMainPanel = null;
+                        
+                        // Traverse up to find the main panel that contains the header
+                        while (current != null)
                         {
-                            // Look for the root main panel that contains the header
-                            var hasSettingsHeader = stackPanel.Children.OfType<StackPanel>()
-                                .Any(sp => sp.Children.OfType<TextBlock>()
-                                       .Any(tb => tb.Text?.Contains("Settings Mode") == true));
+                            System.Diagnostics.Debug.WriteLine($"Checking parent: {current.GetType().Name}");
                             
-                            System.Diagnostics.Debug.WriteLine($"  Has settings header: {hasSettingsHeader}");
-                            
-                            if (hasSettingsHeader)
+                            if (current is StackPanel stackPanel)
                             {
-                                rootMainPanel = stackPanel;
-                                System.Diagnostics.Debug.WriteLine($"✓ Found root main panel");
-                                break;
+                                // Look for the root main panel that contains the header
+                                var hasSettingsHeader = stackPanel.Children.OfType<StackPanel>()
+                                    .Any(sp => sp.Children.OfType<TextBlock>()
+                                           .Any(tb => tb.Text?.Contains("Settings Mode") == true));
+                                
+                                System.Diagnostics.Debug.WriteLine($"  Has settings header: {hasSettingsHeader}");
+                                
+                                if (hasSettingsHeader)
+                                {
+                                    rootMainPanel = stackPanel;
+                                    System.Diagnostics.Debug.WriteLine($"✓ Found root main panel");
+                                    break;
+                                }
                             }
+                            current = current.Parent;
                         }
-                        current = current.Parent;
+                        
+                        if (rootMainPanel != null)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Triggering section refresh for parameter removal");
+                            // Use the same force refresh method for consistency
+                            ForceCompleteSettingsRefresh(param, app, rootMainPanel, saveCallback);
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine("ERROR: Could not find root main panel for parameter removal");
+                        }
                     }
-                    
-                    if (rootMainPanel != null)
+                    finally
                     {
-                        System.Diagnostics.Debug.WriteLine($"Triggering section refresh for parameter removal");
-                        // Use the same force refresh method for consistency
-                        ForceCompleteSettingsRefresh(param, app, rootMainPanel, saveCallback);
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine("ERROR: Could not find root main panel for parameter removal");
+                        // Reset processing flag (even though UI will be refreshed)
+                        removeButton.Tag = null;
                     }
                 };
 
@@ -973,6 +1022,8 @@ namespace darts_hub.control
                     {
                         Value = int.TryParse(param.Value, out var intVal) ? intVal : 0,
                         Increment = 1,
+                        Minimum = -999,
+                        Maximum = 999,
                         Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
                         Foreground = Brushes.White,
                         BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
@@ -994,6 +1045,8 @@ namespace darts_hub.control
                         Value = double.TryParse(param.Value, System.Globalization.NumberStyles.Float, 
                                 System.Globalization.CultureInfo.InvariantCulture, out var doubleVal) ? (decimal)doubleVal : 0,
                         Increment = 0.1m,
+                        Minimum = -999.9m,
+                        Maximum = 999.9m,
                         FormatString = "F2",
                         Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
                         Foreground = Brushes.White,
@@ -1050,6 +1103,11 @@ namespace darts_hub.control
                     // Add functionality to the browse button
                     browseButton.Click += async (s, e) =>
                     {
+                        // ⭐ Prevent multiple clicks
+                        if (browseButton.Tag?.ToString() == "processing") return;
+                        browseButton.Tag = "processing";
+                        browseButton.IsEnabled = false;
+                        
                         try
                         {
                             System.Diagnostics.Debug.WriteLine($"Browse button clicked for parameter: {param.Name}, type: {type}");
@@ -1128,6 +1186,12 @@ namespace darts_hub.control
                         {
                             System.Diagnostics.Debug.WriteLine($"Error in browse button click: {ex.Message}");
                             System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                        }
+                        finally
+                        {
+                            // Re-enable button after operation
+                            browseButton.Tag = null;
+                            browseButton.IsEnabled = true;
                         }
                     };
 
@@ -1278,61 +1342,74 @@ namespace darts_hub.control
 
             addButton.Click += (s, e) =>
             {
-                if (paramDropdown.SelectedItem is ComboBoxItem selectedItem && 
-                    selectedItem.Tag is Argument selectedParam)
+                // ⭐ Prevent multiple clicks
+                if (addButton.Tag?.ToString() == "processing") return;
+                addButton.Tag = "processing";
+                addButton.IsEnabled = false;
+                
+                try
                 {
-                    System.Diagnostics.Debug.WriteLine($"=== ADD PARAMETER BUTTON CLICKED ===");
-                    System.Diagnostics.Debug.WriteLine($"Adding parameter: {selectedParam.Name}");
-                    System.Diagnostics.Debug.WriteLine($"Parameter section: {selectedParam.Section ?? "General"}");
-                    
-                    // Set a default value to make it "configured"
-                    selectedParam.Value = GetDefaultValueForParameter(selectedParam.GetTypeClear());
-                    selectedParam.IsValueChanged = true;
-                    System.Diagnostics.Debug.WriteLine($"Set parameter value to: {selectedParam.Value}");
-
-                    // Trigger auto-save
-                    saveCallback?.Invoke();
-                    System.Diagnostics.Debug.WriteLine("Triggered auto-save");
-
-                    // Find the REAL main panel by traversing up to the root (like we do in remove button)
-                    System.Diagnostics.Debug.WriteLine("Finding REAL main panel...");
-                    var current = addButton.Parent;
-                    StackPanel? realMainPanel = null;
-                    
-                    // Traverse up to find the main panel that contains the header
-                    while (current != null)
+                    if (paramDropdown.SelectedItem is ComboBoxItem selectedItem && 
+                        selectedItem.Tag is Argument selectedParam)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Checking parent: {current.GetType().Name}");
+                        System.Diagnostics.Debug.WriteLine($"=== ADD PARAMETER BUTTON CLICKED ===");
+                        System.Diagnostics.Debug.WriteLine($"Adding parameter: {selectedParam.Name}");
+                        System.Diagnostics.Debug.WriteLine($"Parameter section: {selectedParam.Section ?? "General"}");
                         
-                        if (current is StackPanel stackPanel)
+                        // Set a default value to make it "configured"
+                        selectedParam.Value = GetDefaultValueForParameter(selectedParam.GetTypeClear());
+                        selectedParam.IsValueChanged = true;
+                        System.Diagnostics.Debug.WriteLine($"Set parameter value to: {selectedParam.Value}");
+
+                        // Trigger auto-save
+                        saveCallback?.Invoke();
+                        System.Diagnostics.Debug.WriteLine("Triggered auto-save");
+
+                        // Find the REAL main panel by traversing up to the root (like we do in remove button)
+                        System.Diagnostics.Debug.WriteLine("Finding REAL main panel...");
+                        var current = addButton.Parent;
+                        StackPanel? realMainPanel = null;
+                        
+                        // Traverse up to find the main panel that contains the header
+                        while (current != null)
                         {
-                            // Look for the root main panel that contains the header
-                            var hasSettingsHeader = stackPanel.Children.OfType<StackPanel>()
-                                .Any(sp => sp.Children.OfType<TextBlock>()
-                                       .Any(tb => tb.Text?.Contains("Settings Mode") == true));
+                            System.Diagnostics.Debug.WriteLine($"Checking parent: {current.GetType().Name}");
                             
-                            System.Diagnostics.Debug.WriteLine($"  Has settings header: {hasSettingsHeader}");
-                            
-                            if (hasSettingsHeader)
+                            if (current is StackPanel stackPanel)
                             {
-                                realMainPanel = stackPanel;
-                                System.Diagnostics.Debug.WriteLine($"✓ Found real main panel");
-                                break;
+                                // Look for the root main panel that contains the header
+                                var hasSettingsHeader = stackPanel.Children.OfType<StackPanel>()
+                                    .Any(sp => sp.Children.OfType<TextBlock>()
+                                           .Any(tb => tb.Text?.Contains("Settings Mode") == true));
+                                
+                                System.Diagnostics.Debug.WriteLine($"  Has settings header: {hasSettingsHeader}");
+                                
+                                if (hasSettingsHeader)
+                                {
+                                    realMainPanel = stackPanel;
+                                    System.Diagnostics.Debug.WriteLine($"✓ Found real main panel");
+                                    break;
+                                }
                             }
+                            current = current.Parent;
                         }
-                        current = current.Parent;
+                        
+                        if (realMainPanel != null)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Triggering section refresh for parameter addition");
+                            // Use the same force refresh method for consistency
+                            ForceCompleteSettingsRefresh(selectedParam, app, realMainPanel, saveCallback);
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine("ERROR: Could not find real main panel for parameter addition");
+                        }
                     }
-                    
-                    if (realMainPanel != null)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Triggering section refresh for parameter addition");
-                        // Use the same force refresh method for consistency
-                        ForceCompleteSettingsRefresh(selectedParam, app, realMainPanel, saveCallback);
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine("ERROR: Could not find real main panel for parameter addition");
-                    }
+                }
+                finally
+                {
+                    // Reset processing flag (even though UI will be refreshed)
+                    addButton.Tag = null;
                 }
             };
 

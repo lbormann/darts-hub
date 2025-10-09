@@ -715,7 +715,7 @@ namespace darts_hub.control
                         new(name: "PJ", type: "string", required: false, isMulti : true, nameHuman: "-PJ / --player_joined_effects", section: "Lobby Effects"),
                         new(name: "PL", type: "string", required: false, isMulti : true, nameHuman: "-PL / --player_left_effects", section: "Lobby Effects"),
                         new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
-                        new(name: "BSW", type: "bool", required: false, nameHuman: "-BSW / --board_stop_after_win", section: "Board Status Effects", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
+                        new(name: "BSW", type: "bool", required: false, nameHuman: "-BSW / --board_stop_after_win", section: "Board Stop Start", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
                         new(name: "OFF", type: "bool", required: false, nameHuman: "-OFF / --wled_off", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
                         new(name: "SOFF", type: "bool", required: false, nameHuman: "-SOFF / --wled_off_at_start", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
                         new(name: "BSE", type: "string", required: false, isMulti: true, nameHuman: "-BSE / --board_stop_effect", section: "Board Status Effects"),
@@ -1025,7 +1025,7 @@ namespace darts_hub.control
                     var boardStopAfterWin = dartsWled.Configuration.Arguments.Find(a => a.Name == "BSW");
                     if (boardStopAfterWin == null)
                     {
-                        dartsWled.Configuration.Arguments.Add(new(name: "BSW", type: "bool", required: false, nameHuman: "-BSW / --board_stop_after_win", section: "Board Status Effects", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
+                        dartsWled.Configuration.Arguments.Add(new(name: "BSW", type: "bool", required: false, nameHuman: "-BSW / --board_stop_after_win", section: "Board Stop Start", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
                     }
                     var boardStopeffect = dartsWled.Configuration.Arguments.Find(a => a.Name == "BSE");
                     if (boardStopeffect == null)
@@ -1240,7 +1240,7 @@ namespace darts_hub.control
                     var PLWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "PL");
                     if (PLWLEDMig != null) { PLWLEDMig.Section = "Lobby Effects"; }
                     var BSWWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "BSW");
-                    if (BSWWLEDMig != null) { BSWWLEDMig.Section = "Board Status Effects"; }
+                    if (BSWWLEDMig != null) { BSWWLEDMig.Section = "Board Stop Start"; }
                     var BSEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "BSE");
                     if (BSEWLEDMig != null) { BSEWLEDMig.Section = "Board Status Effects"; }
                     var TOEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "TOE");
