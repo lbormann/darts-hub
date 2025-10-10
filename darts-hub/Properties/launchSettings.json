@@ -2,7 +2,7 @@
   "profiles": {
     "darts-hub": {
       "commandName": "Project",
-      "workingDirectory": "Z:\\Github\\VisualStudio\\Darts-Hub"
+      "workingDirectory": "C:\\Users\\I3uLL3t\\source\\repos\\lbormann\\darts-hub\\darts-hub\\bin\\Debug\\net6.0"
     }
   }
 }

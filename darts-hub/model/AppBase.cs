@@ -9,9 +9,41 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace darts_hub.model
 {
+    /// <summary>
+    /// Configuration class for log level patterns
+    /// </summary>
+    public class LoggingConfig
+    {
+        public Dictionary<string, LogLevelConfig> LogLevelPatterns { get; set; } = new();
+        public FallbackRules FallbackRules { get; set; } = new();
+        public LoggingSettings Settings { get; set; } = new();
+    }
+
+    public class LogLevelConfig
+    {
+        public List<string> Patterns { get; set; } = new();
+        public List<string> Keywords { get; set; } = new();
+    }
+
+    public class FallbackRules
+    {
+        public string ErrorStreamDefault { get; set; } = "WARN";
+        public string StandardStreamDefault { get; set; } = "INFO";
+        public string EmptyMessageDefault { get; set; } = "INFO";
+    }
+
+    public class LoggingSettings
+    {
+        public bool CaseSensitive { get; set; } = false;
+        public bool UseRegexPatterns { get; set; } = true;
+        public bool UseKeywordMatching { get; set; } = true;
+        public int PatternTimeout { get; set; } = 100;
+    }
+
     /// <summary>
     /// Main functions for using an app
     /// </summary>
@@ -104,11 +136,18 @@ namespace darts_hub.model
         private Process process;
         private const int defaultProcessId = 0;
         private int processId;
+        
+        // Daily logging attributes
+        private string? currentLogFilePath;
+        private int currentLogDay = -1;
+        private readonly object logFileLock = new object();
+        
+        // Configurable logging system
+        private static LoggingConfig? loggingConfig;
+        private static readonly object configLock = new object();
+        private static DateTime lastConfigLoad = DateTime.MinValue;
+        
         public event PropertyChangedEventHandler PropertyChanged;
-
-
-
-
 
         // METHODS
 
@@ -139,7 +178,272 @@ namespace darts_hub.model
             AppRunningState = false;
         }
 
+        /// <summary>
+        /// Loads logging configuration from JSON file
+        /// </summary>
+        private static LoggingConfig LoadLoggingConfig()
+        {
+            lock (configLock)
+            {
+                // Check if we need to reload config (every 60 seconds or first time)
+                if (loggingConfig == null || DateTime.Now.Subtract(lastConfigLoad).TotalSeconds > 60)
+                {
+                    try
+                    {
+                        var configPath = Path.Combine(Environment.CurrentDirectory, "logging-config.json");
+                        
+                        System.Diagnostics.Debug.WriteLine($"[AppBase] Looking for logging config at: {configPath}");
+                        System.Diagnostics.Debug.WriteLine($"[AppBase] Current working directory: {Environment.CurrentDirectory}");
+                        System.Diagnostics.Debug.WriteLine($"[AppBase] File exists check: {File.Exists(configPath)}");
+                        
+                        if (File.Exists(configPath))
+                        {
+                            var jsonContent = File.ReadAllText(configPath);
+                            System.Diagnostics.Debug.WriteLine($"[AppBase] Config file content length: {jsonContent.Length} characters");
+                            
+                            loggingConfig = JsonConvert.DeserializeObject<LoggingConfig>(jsonContent);
+                            lastConfigLoad = DateTime.Now;
+                            System.Diagnostics.Debug.WriteLine("[AppBase] Logging configuration loaded successfully from file");
+                            
+                            // Debug output for loaded config
+                            var totalKeywords = loggingConfig.LogLevelPatterns.Sum(p => p.Value.Keywords?.Count ?? 0);
+                            System.Diagnostics.Debug.WriteLine($"[AppBase] Loaded {loggingConfig.LogLevelPatterns.Count} log levels with {totalKeywords} total keywords");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine("[AppBase] Logging config file not found, using default configuration");
+                            System.Diagnostics.Debug.WriteLine($"[AppBase] Searched in: {configPath}");
+                            
+                            // List all files in current directory for debugging
+                            try
+                            {
+                                var filesInCurrentDir = Directory.GetFiles(Environment.CurrentDirectory, "*.json");
+                                System.Diagnostics.Debug.WriteLine($"[AppBase] JSON files in current directory ({Environment.CurrentDirectory}):");
+                                foreach (var file in filesInCurrentDir)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[AppBase]   - {Path.GetFileName(file)}");
+                                }
+                                
+                                if (filesInCurrentDir.Length == 0)
+                                {
+                                    System.Diagnostics.Debug.WriteLine("[AppBase]   No JSON files found in current directory");
+                                }
+                            }
+                            catch (Exception dirEx)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[AppBase] Error listing directory contents: {dirEx.Message}");
+                            }
+                            
+                            loggingConfig = CreateDefaultLoggingConfig();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[AppBase] Failed to load logging config: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"[AppBase] Exception type: {ex.GetType().Name}");
+                        System.Diagnostics.Debug.WriteLine($"[AppBase] Stack trace: {ex.StackTrace}");
+                        System.Diagnostics.Debug.WriteLine("[AppBase] Using default configuration as fallback");
+                        loggingConfig = CreateDefaultLoggingConfig();
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AppBase] Using cached logging config (last loaded: {lastConfigLoad})");
+                }
+                
+                return loggingConfig;
+            }
+        }
 
+        /// <summary>
+        /// Creates default logging configuration as fallback
+        /// </summary>
+        private static LoggingConfig CreateDefaultLoggingConfig()
+        {
+            return new LoggingConfig
+            {
+                LogLevelPatterns = new Dictionary<string, LogLevelConfig>
+                {
+                    ["ERROR"] = new LogLevelConfig
+                    {
+                        Patterns = new List<string>
+                        {
+                            @"\b(error|exception|fail|crash|abort|fatal|critical)\b",
+                            @"\[ERROR\]|\[ERR\]|\[FATAL\]"
+                        },
+                        Keywords = new List<string> { "error", "exception", "fail", "crash" }
+                    },
+                    ["WARN"] = new LogLevelConfig
+                    {
+                        Patterns = new List<string> { @"\b(warn|warning|caution)\b" },
+                        Keywords = new List<string> { "warn", "warning", "caution" }
+                    },
+                    ["DEBUG"] = new LogLevelConfig
+                    {
+                        Patterns = new List<string> { @"\[DEBUG\]|\[DBG\]" },
+                        Keywords = new List<string> { "debug", "trace", "verbose" }
+                    },
+                    ["WEBSOCKET"] = new LogLevelConfig
+                    {
+                        Patterns = new List<string> { @"\b(websocket|ws:|wss:)\b" },
+                        Keywords = new List<string> { "websocket", "ws:", "wss:" }
+                    },
+                    ["INFO"] = new LogLevelConfig
+                    {
+                        Patterns = new List<string> { @"\[INFO\]|\[INFORMATION\]" },
+                        Keywords = new List<string> { "started", "starting", "ready" }
+                    }
+                }
+            };
+        }
+
+        /// <summary>
+        /// Ensures the correct log file path for the current day and creates directories if needed
+        /// </summary>
+        private void EnsureLogFile()
+        {
+            lock (logFileLock)
+            {
+                var today = DateTime.Now.Day;
+                
+                // Check if we need to create a new log file (new day or first time)
+                if (currentLogDay != today || string.IsNullOrEmpty(currentLogFilePath))
+                {
+                    var logsDir = Path.Combine(Environment.CurrentDirectory, "logs", SanitizeFileName(CustomName));
+                    
+                    // Create directory if it doesn't exist
+                    if (!Directory.Exists(logsDir))
+                    {
+                        Directory.CreateDirectory(logsDir);
+                    }
+                    
+                    // Create daily log file name: DD_AppName.log
+                    var fileName = $"{today:D2}_{SanitizeFileName(CustomName)}.log";
+                    currentLogFilePath = Path.Combine(logsDir, fileName);
+                    currentLogDay = today;
+                    
+                    // Log application start to file (if restarted on same day, append)
+                    try
+                    {
+                        var startMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [SYSTEM] === {CustomName} started/restarted ==={Environment.NewLine}";
+                        File.AppendAllText(currentLogFilePath, startMessage);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[{CustomName}] Failed to write to log file: {ex.Message}");
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Analyzes message content to determine the appropriate log level using configurable patterns
+        /// </summary>
+        private string DetermineLogLevel(string message, bool isFromErrorStream)
+        {
+            var config = LoadLoggingConfig();
+            
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return config.FallbackRules.EmptyMessageDefault;
+            }
+            
+            var messageToCheck = config.Settings.CaseSensitive ? message : message.ToLowerInvariant();
+            
+            // **IMPORTANT: Check DEBUG first to catch JSON and detailed output**
+            // Then check ERROR, WEBSOCKET, INFO, and finally WARN as catch-all
+            foreach (var level in new[] { "DEBUG", "ERROR", "WEBSOCKET", "INFO", "WARN" })
+            {
+                if (!config.LogLevelPatterns.TryGetValue(level, out var levelConfig))
+                    continue;
+
+                // Check regex patterns if enabled
+                if (config.Settings.UseRegexPatterns && levelConfig.Patterns?.Any() == true)
+                {
+                    foreach (var pattern in levelConfig.Patterns)
+                    {
+                        try
+                        {
+                            var regexOptions = config.Settings.CaseSensitive ? RegexOptions.None : RegexOptions.IgnoreCase;
+                            var timeout = TimeSpan.FromMilliseconds(config.Settings.PatternTimeout);
+                            
+                            if (Regex.IsMatch(messageToCheck, pattern, regexOptions, timeout))
+                            {
+                                return level;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[{CustomName}] Regex error in pattern '{pattern}': {ex.Message}");
+                        }
+                    }
+                }
+
+                // Check simple keyword matching if enabled
+                if (config.Settings.UseKeywordMatching && levelConfig.Keywords?.Any() == true)
+                {
+                    foreach (var keyword in levelConfig.Keywords)
+                    {
+                        var keywordToCheck = config.Settings.CaseSensitive ? keyword : keyword.ToLowerInvariant();
+                        if (messageToCheck.Contains(keywordToCheck))
+                        {
+                            return level;
+                        }
+                    }
+                }
+            }
+            
+            // Fallback logic based on stream source
+            if (isFromErrorStream)
+            {
+                return config.FallbackRules.ErrorStreamDefault;
+            }
+            
+            // Default for stdout
+            return config.FallbackRules.StandardStreamDefault;
+        }
+        
+        /// <summary>
+        /// Writes a console output line to the daily log file with timestamp and smart log level detection
+        /// </summary>
+        private void WriteToLogFile(string message, bool isFromErrorStream = false, string? forceLogLevel = null)
+        {
+            if (string.IsNullOrEmpty(message)) return;
+            
+            try
+            {
+                EnsureLogFile();
+                
+                if (!string.IsNullOrEmpty(currentLogFilePath))
+                {
+                    var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                    var logLevel = forceLogLevel ?? DetermineLogLevel(message, isFromErrorStream);
+                    var logLine = $"[{timestamp}] [{logLevel}] {message}{Environment.NewLine}";
+                    
+                    lock (logFileLock)
+                    {
+                        File.AppendAllText(currentLogFilePath, logLine);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[{CustomName}] Failed to write to log file: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Sanitizes filename to remove invalid characters
+        /// </summary>
+        private string SanitizeFileName(string fileName)
+        {
+            var invalidChars = Path.GetInvalidFileNameChars();
+            foreach (var invalidChar in invalidChars)
+            {
+                fileName = fileName.Replace(invalidChar, '_');
+            }
+            return fileName;
+        }
 
         public bool Run(Dictionary<string, string>? runtimeArguments = null)
         {
@@ -186,6 +490,9 @@ namespace darts_hub.model
                 {
                     //Console.WriteLine(Name + " tries to exit");
                     
+                    // Log application stop
+                    WriteToLogFile($"=== {CustomName} stopping ===", false, "SYSTEM");
+                    
                     if(process != null)
                     {
                         process.CloseMainWindow();
@@ -200,10 +507,14 @@ namespace darts_hub.model
                         Helper.KillProcess(executable);
                     }
                     AppRunningState = false;
+                    
+                    // Final log entry
+                    WriteToLogFile($"=== {CustomName} stopped ===", false, "SYSTEM");
                 }
                 catch(Exception ex)
                 {
                     Console.WriteLine($"Can't close {executable}: {ex.Message}");
+                    WriteToLogFile($"Error closing application: {ex.Message}", true, "ERROR");
                 }
             }
         }
@@ -223,8 +534,6 @@ namespace darts_hub.model
             var arguments = ComposeArguments(this, runtimeArguments);
             //if (arguments == null) return;
 
-
-
             eventHandled = new TaskCompletionSource<bool>();
 
             try
@@ -235,6 +544,14 @@ namespace darts_hub.model
                 AppConsoleStdError = String.Empty;
                 AppMonitor = String.Empty;
                 AppMonitorEntries = 0; // Reset counter only on application start/restart
+
+                // Initialize logging for this session
+                EnsureLogFile();
+                WriteToLogFile($"Starting process: {executable}", false, "SYSTEM");
+                if (!string.IsNullOrEmpty(arguments))
+                {
+                    WriteToLogFile($"Arguments: {arguments}", false, "SYSTEM");
+                }
 
                 // For testing purposes
                 //AppConsoleStdOutput = arguments;
@@ -256,6 +573,11 @@ namespace darts_hub.model
                     //    $"Exit code    : {process.ExitCode}\n" +
                     //    $"Elapsed time : {Math.Round((process.ExitTime - process.StartTime).TotalMilliseconds)}");
                     //Console.WriteLine("Process " + Name + " exited");
+                    
+                    // Log process exit with appropriate level based on exit code
+                    var exitLogLevel = process.ExitCode == 0 ? "SYSTEM" : "ERROR";
+                    WriteToLogFile($"Process exited with code: {process.ExitCode}", false, exitLogLevel);
+                    
                     processId = defaultProcessId;
                     if (!isUri) {
                         AppRunningState = false;
@@ -266,6 +588,9 @@ namespace darts_hub.model
                 {   
                     if (!String.IsNullOrEmpty(e.Data))
                     {
+                        // Write to daily log file with smart log level detection
+                        WriteToLogFile(e.Data, false);
+                        
                         // Instead of hard reset, trim old lines to prevent memory issues
                         // but keep output continuous during application execution
                         if (AppMonitorEntries >= MaxAppMonitorEntries * 2) // Allow double the limit before trimming
@@ -295,6 +620,9 @@ namespace darts_hub.model
                 {
                     if (!String.IsNullOrEmpty(e.Data))
                     {
+                        // Write to daily log file with smart log level detection (from error stream)
+                        WriteToLogFile(e.Data, true);
+                        
                         // Instead of hard reset, trim old lines to prevent memory issues
                         // but keep output continuous during application.execution
                         if (AppMonitorEntries >= MaxAppMonitorEntries * 2) // Allow double the limit before trimming
@@ -351,6 +679,8 @@ namespace darts_hub.model
                 }
 
                 process.Start();
+                WriteToLogFile($"Process started with PID: {process.Id}", false, "SYSTEM");
+                
                 if(process.StartInfo.RedirectStandardOutput == true)
                 {
                     process.BeginOutputReadLine();
@@ -364,7 +694,9 @@ namespace darts_hub.model
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred trying to start \"{executable}\" with \"{arguments}\":\n{ex.Message}");
+                var errorMessage = $"An error occurred trying to start \"{executable}\" with \"{arguments}\":\n{ex.Message}";
+                Console.WriteLine(errorMessage);
+                WriteToLogFile(errorMessage, true, "ERROR");
                 throw;
             }
 

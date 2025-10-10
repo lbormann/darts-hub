@@ -58,6 +58,9 @@
       <Content Include="control\wizard\WizardArgumentsConfig.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
+      <Content Include="logging-config.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
     <ItemGroup>
       <Compile Update="SettingsWindow.axaml.cs">

@@ -1,6 +1,8 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Data;
 using darts_hub.model;
 using darts_hub.control.wizard.wled;
 using System.Collections.Generic;
@@ -272,6 +274,18 @@ namespace darts_hub.control.wizard
                 PlaceholderText = "Select discovered WLED device...",
                 HorizontalAlignment = HorizontalAlignment.Center
             };
+
+            // Create ItemTemplate to properly display device names
+            var itemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<WledDevice>((device, nameScope) =>
+            {
+                return new TextBlock
+                {
+                    Text = device?.Name ?? "",
+                    Foreground = Brushes.White,
+                    FontSize = 14
+                };
+            });
+            discoveredDevicesComboBox.ItemTemplate = itemTemplate;
 
             discoveredDevicesComboBox.SelectionChanged += (s, e) =>
             {
@@ -674,8 +688,8 @@ namespace darts_hub.control.wizard
                         discoveredDevicesComboBox.IsVisible = false;
                         
                         var deviceInfo = discoveredDevices[0].LedCount > 0 
-                            ? $"✅ Auto-selected: {discoveredDevices[0].Name} at {discoveredDevices[0].IpAddress} ({discoveredDevices[0].LedCount} LEDs)"
-                            : $"✅ Auto-selected: {discoveredDevices[0].Name} at {discoveredDevices[0].IpAddress}";
+                            ? $"✅ Auto-selected: {discoveredDevices[0].Name} ({discoveredDevices[0].LedCount} LEDs)"
+                            : $"✅ Auto-selected: {discoveredDevices[0].Name}";
                         
                         UpdateConnectionStatus(deviceInfo, new SolidColorBrush(Color.FromRgb(40, 167, 69)));
                     }
@@ -935,7 +949,32 @@ namespace darts_hub.control.wizard
 
             try
             {
-                // Configuration changes are already applied through the input controls
+                // Apply saved essential effects (IDE)
+                essentialSettingsStep?.ApplySavedEssentialEffects();
+                System.Diagnostics.Debug.WriteLine($"Applied saved essential effects");
+
+                // Apply saved player colors only (not all selected colors)
+                if (playerColorsStep?.ShowPlayerSpecificColors == true)
+                {
+                    playerColorsStep.ApplySavedPlayerColors();
+                    System.Diagnostics.Debug.WriteLine($"Applied {playerColorsStep.GetSavedColorsCount()} saved player colors");
+                }
+
+                // Apply saved game win effects
+                if (gameWinEffectsStep?.ShowGameWinEffects == true)
+                {
+                    gameWinEffectsStep.ApplySavedGameWinEffects();
+                    System.Diagnostics.Debug.WriteLine($"Applied {gameWinEffectsStep.GetSavedEffectsCount()} saved game win effects");
+                }
+
+                // Apply saved board status effects
+                if (boardStatusStep?.ShowBoardStatusConfiguration == true)
+                {
+                    boardStatusStep.ApplySavedBoardStatusEffects();
+                    System.Diagnostics.Debug.WriteLine($"Applied {boardStatusStep.GetSavedEffectsCount()} saved board status effects");
+                }
+
+                // Configuration changes are already applied through the input controls for other settings
                 if (wledApp.Configuration?.Arguments != null)
                 {
                     foreach (var argument in wledApp.Configuration.Arguments)
@@ -1043,7 +1082,7 @@ namespace darts_hub.control.wizard
                     {
                         // Use enhanced control for score effects - these are effect parameters
                         var control = WledArgumentControlFactory.CreateEnhancedArgumentControl(argument, argumentControls, 
-                            arg => $"Effect for score {score} - select from available WLED effects, colors, and durations", wledApp);
+                            arg => $"Effect for score {score} - select from available WLED effects, colors, presets, and durations with test buttons", wledApp);
                         scoreArgsPanel.Children.Add(control);
                         System.Diagnostics.Debug.WriteLine($"[WLED] Added enhanced control for score {score} argument: {argName}");
                     }
@@ -1254,7 +1293,7 @@ namespace darts_hub.control.wizard
                 {
                     // Fallback to regular enhanced control
                     var control = WledArgumentControlFactory.CreateEnhancedArgumentControl(argument, argumentControls, 
-                        arg => $"Effects for score area {areaNumber} (A{areaNumber}) - configure LED strip region effects with WLED controls", wledApp);
+                        arg => $"Effects for score area {areaNumber} (A{areaNumber}) - configure LED strip region effects with WLED test buttons", wledApp);
                     parentPanel.Children.Add(control);
                     System.Diagnostics.Debug.WriteLine($"[WLED] Added fallback enhanced control for area {areaNumber} argument: {argName}");
                 }
@@ -1338,7 +1377,7 @@ namespace darts_hub.control.wizard
 
             var descLabel = new TextBlock
             {
-                Text = $"Configure LED effects for score area {areaNumber} with range selection and effect parameters",
+                Text = $"Configure LED effects for score area {areaNumber} with range selection, effect parameters, and test buttons",
                 FontSize = 12,
                 Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
                 TextWrapping = TextWrapping.Wrap

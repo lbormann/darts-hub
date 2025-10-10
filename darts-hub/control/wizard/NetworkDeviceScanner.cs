@@ -7,6 +7,7 @@ using System.Net.NetworkInformation;
 using System.Net;
 using System.Threading;
 using Newtonsoft.Json;
+using System.Xml.Linq;
 
 namespace darts_hub.control.wizard
 {
@@ -304,13 +305,12 @@ namespace darts_hub.control.wizard
             var ipRanges = new List<int>();
             
             // Router and common device ranges - expanded for better coverage
-            for (int i = 1; i <= 20; i++) ipRanges.Add(i);       // 192.168.1.1-20 (routers and common devices)
-            for (int i = 30; i <= 60; i++) ipRanges.Add(i);      // 192.168.1.30-60 (static devices)
-            for (int i = 100; i <= 140; i++) ipRanges.Add(i);    // 192.168.1.100-140 (DHCP range start)
-            for (int i = 200; i <= 240; i++) ipRanges.Add(i);    // 192.168.1.200-240 (high DHCP range)
+            for (int i = 1; i <= 29; i++) ipRanges.Add(i);       // 192.168.1.1-29 (routers and common devices)
+            for (int i = 30; i <= 99; i++) ipRanges.Add(i);      // 192.168.1.30-99 (static devices)
+            for (int i = 100; i <= 199; i++) ipRanges.Add(i);    // 192.168.1.100-199 (DHCP range) - includes 141
+            for (int i = 200; i <= 250; i++) ipRanges.Add(i);    // 192.168.1.200-250 (high DHCP range)
             
             // Add specific examples if not already included
-            if (!ipRanges.Contains(117)) ipRanges.Add(117);      // Pixelit example
             if (!ipRanges.Contains(254)) ipRanges.Add(254);      // Common router IP
 
             System.Diagnostics.Debug.WriteLine($"[Scanner] Will scan {ipRanges.Count} IP addresses in subnet");
@@ -331,112 +331,69 @@ namespace darts_hub.control.wizard
                     return null;
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {ipAddress} - Ping successful, testing HTTP endpoints");
+                System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {ipAddress} - Ping successful, testing WLED /win endpoint");
 
-                // Test WLED specific endpoints - check both web UI and JSON API
-                var testUrls = new[]
-                {
-                    $"http://{ipAddress}/",              // Root page - WLED WebUI with <title>WLED</title>
-                    $"http://{ipAddress}/json/info",     // JSON API info endpoint
-                    $"http://{ipAddress}/json"           // JSON API state endpoint
-                };
+                // Test WLED specific /win endpoint for XML response
+                var wledWinUrl = $"http://{ipAddress}/win";
 
                 using var client = new HttpClient() { Timeout = TimeSpan.FromSeconds(3) };
 
-                foreach (var testUrl in testUrls)
+                try
                 {
-                    try
+                    System.Diagnostics.Debug.WriteLine($"[WLED Scanner] Testing WLED endpoint: {wledWinUrl}");
+                    
+                    using var response = await client.GetAsync(wledWinUrl, cancellationToken);
+                    if (response.IsSuccessStatusCode)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[WLED Scanner] Testing URL with GET: {testUrl}");
+                        var content = await response.Content.ReadAsStringAsync(cancellationToken);
                         
-                        // Always use GET - WLED responds to GET requests
-                        using var response = await client.GetAsync(testUrl, cancellationToken);
-                        if (response.IsSuccessStatusCode)
+                        System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {wledWinUrl} - Response length: {content.Length} chars");
+                        
+                        // Parse XML response and check for WLED identifier
+                        if (IsWledXmlResponse(content))
                         {
-                            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                            System.Diagnostics.Debug.WriteLine($"[WLED Scanner] ✅ Found WLED device via /win XML at {ipAddress}");
                             
-                            System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {testUrl} - GET Response length: {content.Length} chars");
+                            // Use IP address as device name for clear identification
+                            var deviceName = $"WLED ({ipAddress})";
+                            var ledCount = ExtractWledLedCountFromXml(content);
                             
-                            // Check for WLED title tag (main web UI)
-                            if (content.Contains("<title>WLED</title>", StringComparison.OrdinalIgnoreCase))
+                            System.Diagnostics.Debug.WriteLine($"[WLED Scanner] ✅ Confirmed WLED device: {deviceName} with {ledCount} LEDs");
+                            
+                            return new WledDevice
                             {
-                                System.Diagnostics.Debug.WriteLine($"[WLED Scanner] ✅ Found WLED title tag at {testUrl}");
-                                
-                                var deviceName = ExtractWledDeviceName(content) ?? $"WLED-{ipAddress.Split('.').Last()}";
-                                var ledCount = ExtractWledLedCount(content);
-                                
-                                System.Diagnostics.Debug.WriteLine($"[WLED Scanner] ✅ Confirmed WLED device: {deviceName} at {ipAddress} with {ledCount} LEDs");
-                                
-                                return new WledDevice
-                                {
-                                    IpAddress = ipAddress,
-                                    Name = deviceName,
-                                    Endpoint = testUrl,
-                                    ResponseContent = content,
-                                    LedCount = ledCount
-                                };
-                            }
-                            // Check for WLED JSON API response
-                            else if (testUrl.Contains("/json") && content.TrimStart().StartsWith("{"))
-                            {
-                                try
-                                {
-                                    dynamic json = JsonConvert.DeserializeObject(content);
-                                    
-                                    // Check for WLED-specific JSON fields
-                                    if (json?.ver != null || json?.info?.ver != null || 
-                                        json?.leds != null || json?.info?.leds != null ||
-                                        (json?.name != null && json.name.ToString().ToLower().Contains("wled")))
-                                    {
-                                        System.Diagnostics.Debug.WriteLine($"[WLED Scanner] ✅ Found WLED JSON API response at {testUrl}");
-                                        
-                                        var deviceName = ExtractWledDeviceNameFromJson(json) ?? $"WLED-{ipAddress.Split('.').Last()}";
-                                        var ledCount = ExtractWledLedCountFromJson(json);
-                                        
-                                        System.Diagnostics.Debug.WriteLine($"[WLED Scanner] ✅ Confirmed WLED device via JSON: {deviceName} at {ipAddress} with {ledCount} LEDs");
-                                        
-                                        return new WledDevice
-                                        {
-                                            IpAddress = ipAddress,
-                                            Name = deviceName,
-                                            Endpoint = $"http://{ipAddress}/", // Use root URL as main endpoint
-                                            ResponseContent = content,
-                                            LedCount = ledCount
-                                        };
-                                    }
-                                }
-                                catch (Exception jsonEx)
-                                {
-                                    System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {testUrl} - JSON parsing failed: {jsonEx.Message}");
-                                }
-                            }
-                            else
-                            {
-                                System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {testUrl} - No WLED indicators found");
-                                
-                                // Log a snippet of the content for debugging
-                                var snippet = content.Length > 200 ? content.Substring(0, 200) + "..." : content;
-                                System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {testUrl} - Response snippet: {snippet}");
-                            }
+                                IpAddress = ipAddress,
+                                Name = deviceName,
+                                Endpoint = $"http://{ipAddress}/",
+                                ResponseContent = content,
+                                LedCount = ledCount
+                            };
                         }
                         else
                         {
-                            System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {testUrl} - HTTP GET returned {response.StatusCode}");
+                            System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {wledWinUrl} - No WLED XML indicators found");
+                            
+                            // Log a snippet of the content for debugging
+                            var snippet = content.Length > 200 ? content.Substring(0, 200) + "..." : content;
+                            System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {wledWinUrl} - Response snippet: {snippet}");
                         }
                     }
-                    catch (OperationCanceledException)
+                    else
                     {
-                        System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {testUrl} - GET request cancelled");
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {testUrl} - GET request exception: {ex.Message}");
-                        continue;
+                        System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {wledWinUrl} - HTTP GET returned {response.StatusCode}");
                     }
                 }
+                catch (OperationCanceledException)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {wledWinUrl} - GET request cancelled");
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {wledWinUrl} - GET request exception: {ex.Message}");
+                }
 
-                System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {ipAddress} - No WLED device detected on any endpoint");
+                System.Diagnostics.Debug.WriteLine($"[WLED Scanner] {ipAddress} - No WLED device detected");
             }
             catch (OperationCanceledException)
             {
@@ -448,6 +405,93 @@ namespace darts_hub.control.wizard
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Checks if the XML response is from a WLED device by looking for the <ds>WLED</ds> tag
+        /// </summary>
+        private static bool IsWledXmlResponse(string xmlContent)
+        {
+            try
+            {
+                // First check if it looks like XML
+                if (!xmlContent.TrimStart().StartsWith("<?xml") && !xmlContent.TrimStart().StartsWith("<vs>"))
+                {
+                    return false;
+                }
+
+                // Parse XML and look for <ds>WLED</ds>
+                var doc = XDocument.Parse(xmlContent);
+                var dsElement = doc.Descendants("ds").FirstOrDefault();
+                
+                if (dsElement != null && dsElement.Value.Equals("WLED", StringComparison.OrdinalIgnoreCase))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[WLED Scanner] ✅ Found WLED identifier in XML: <ds>{dsElement.Value}</ds>");
+                    return true;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[WLED Scanner] XML parsed but no WLED identifier found. DS value: {dsElement?.Value ?? "null"}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[WLED Scanner] Error parsing XML response: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Extracts device name from WLED XML response
+        /// </summary>
+        private static string? ExtractWledDeviceNameFromXml(string xmlContent)
+        {
+            try
+            {
+                var doc = XDocument.Parse(xmlContent);
+                var dsElement = doc.Descendants("ds").FirstOrDefault();
+                
+                if (dsElement != null && !string.IsNullOrEmpty(dsElement.Value))
+                {
+                    return dsElement.Value;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[WLED Scanner] Error extracting device name from XML: {ex.Message}");
+            }
+
+            return "WLED"; // Default name
+        }
+
+        /// <summary>
+        /// Extracts LED count from WLED XML response
+        /// </summary>
+        private static int ExtractWledLedCountFromXml(string xmlContent)
+        {
+            try
+            {
+                var doc = XDocument.Parse(xmlContent);
+                
+                // Look for common LED count elements in WLED XML
+                // The exact element name may vary, so we'll try a few possibilities
+                var ledCountElements = new[] { "ac", "lc", "count", "leds" };
+                
+                foreach (var elementName in ledCountElements)
+                {
+                    var element = doc.Descendants(elementName).FirstOrDefault();
+                    if (element != null && int.TryParse(element.Value, out var count) && count > 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[WLED Scanner] Extracted LED count from XML <{elementName}>: {count}");
+                        return count;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[WLED Scanner] Error extracting LED count from XML: {ex.Message}");
+            }
+
+            return 0; // Default/unknown
         }
 
         private static async Task<PixelitDevice?> TestPixelitDevice(string ipAddress, CancellationToken cancellationToken)
@@ -495,9 +539,10 @@ namespace darts_hub.control.wizard
                             {
                                 System.Diagnostics.Debug.WriteLine($"[Pixelit Scanner] ✅ Found PixelIt WebUI title tag at {testUrl}");
                                 
-                                var deviceName = ExtractPixelitDeviceName(content) ?? $"Pixelit-{ipAddress.Split('.').Last()}";
+                                // Use IP address as device name for clear identification
+                                var deviceName = $"PixelIt ({ipAddress})";
                                 
-                                System.Diagnostics.Debug.WriteLine($"[Pixelit Scanner] ✅ Confirmed Pixelit device: {deviceName} at {ipAddress}");
+                                System.Diagnostics.Debug.WriteLine($"[Pixelit Scanner] ✅ Confirmed Pixelit device: {deviceName}");
                                 
                                 return new PixelitDevice
                                 {

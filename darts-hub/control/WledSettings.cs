@@ -1392,7 +1392,7 @@ namespace darts_hub.control
                 Spacing = 5
             };
 
-            // Simple dropdown without duration for color effects
+            // Enhanced dropdown with better keyboard navigation
             var colorDropdown = new ComboBox
             {
                 Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
@@ -1402,8 +1402,15 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(3),
                 FontSize = 13,
                 PlaceholderText = "Select color effect...",
-                MinWidth = 200
+                MinWidth = 200,
+                MaxWidth = 280, // Set consistent maximum width
+                Width = 240, // Set fixed width for consistency
+                IsTextSearchEnabled = true, // Enable text search for better keyboard navigation
+                MaxDropDownHeight = 300 // Limit dropdown height for better usability
             };
+
+            // Add tooltip with keyboard navigation help
+            ToolTip.SetTip(colorDropdown, "Select a color effect\nType letters to jump to colors (e.g. 'r' for red)\nUse arrow keys to navigate");
 
             var testButton = new Button
             {
@@ -1434,13 +1441,104 @@ namespace darts_hub.control
 
             // Determine the current color value (remove "solid|" prefix if present)
             string currentColorValue = param.Value ?? "";
-            if (currentColorValue.StartsWith("solid|", StringComparison.OrdinalIgnoreCase))
+            System.Diagnostics.Debug.WriteLine($"=== WLED COLOR DROPDOWN INIT ===");
+            System.Diagnostics.Debug.WriteLine($"App: {app?.Name ?? "NULL"}");
+            System.Diagnostics.Debug.WriteLine($"Parameter Name: {param.Name}");
+            System.Diagnostics.Debug.WriteLine($"Original Parameter Value: '{param.Value}'");
+            
+            // Check for parameter-specific default color first
+            string defaultColorForParam = NewSettingsContentProvider.DEFAULT_WLED_COLOR; // fallback
+            if (NewSettingsContentProvider.ParameterColorDefaults.TryGetValue(param.Name, out var specificDefault))
+            {
+                defaultColorForParam = specificDefault;
+                System.Diagnostics.Debug.WriteLine($"Found specific default color for '{param.Name}': '{defaultColorForParam}'");
+            }
+            
+            // Handle default placeholder values - set default color if no real value is configured
+            if (string.IsNullOrEmpty(currentColorValue) || currentColorValue == "change to activate")
+            {
+                currentColorValue = defaultColorForParam; // Use parameter-specific default
+                System.Diagnostics.Debug.WriteLine($"Using parameter-specific default color: '{currentColorValue}'");
+            }
+            else if (currentColorValue.StartsWith("solid|", StringComparison.OrdinalIgnoreCase))
             {
                 currentColorValue = currentColorValue.Substring(6);
+                System.Diagnostics.Debug.WriteLine($"Removed 'solid|' prefix, new value: '{currentColorValue}'");
             }
 
+            System.Diagnostics.Debug.WriteLine($"Final Current Color Value: '{currentColorValue}'");
+
+            // Flag to prevent updates during initialization
+            bool isInitializing = true;
+
+            // Sort colors alphabetically for better navigation
+            var sortedColors = NewSettingsContentProvider.ColorEffects.OrderBy(c => c).ToList();
+
+            // Add keyboard navigation enhancement
+            var searchBuffer = "";
+            var lastSearchTime = DateTime.MinValue;
+            
+            // Enhanced keyboard handler for better search functionality
+            colorDropdown.KeyDown += (s, e) =>
+            {
+                var currentTime = DateTime.Now;
+                var key = e.Key.ToString();
+                
+                // Reset search buffer if more than 1 second has passed
+                if ((currentTime - lastSearchTime).TotalMilliseconds > 1000)
+                {
+                    searchBuffer = "";
+                }
+                lastSearchTime = currentTime;
+                
+                // Only handle letter/number keys for search
+                if (key.Length == 1 && char.IsLetterOrDigit(key[0]))
+                {
+                    searchBuffer += key.ToLower();
+                    
+                    // Find first color that starts with search buffer
+                    var matchingColor = sortedColors.FirstOrDefault(color => 
+                        color.StartsWith(searchBuffer, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (matchingColor != null)
+                    {
+                        var matchingItem = colorDropdown.Items.OfType<ComboBoxItem>()
+                            .FirstOrDefault(item => item.Tag?.ToString() == matchingColor);
+                        if (matchingItem != null)
+                        {
+                            colorDropdown.SelectedItem = matchingItem;
+                            System.Diagnostics.Debug.WriteLine($"Keyboard search: '{searchBuffer}' -> selected '{matchingColor}'");
+                        }
+                    }
+                    
+                    e.Handled = true; // Prevent default behavior
+                }
+            };
+
+            // Function to save the current selected color to the parameter
+            Action saveCurrentSelection = () =>
+            {
+                if (colorDropdown.SelectedItem is ComboBoxItem selectedItem && 
+                    selectedItem.Tag is string colorEffect)
+                {
+                    // CRITICAL FIX: Always store color effects with "solid|" prefix
+                    param.Value = $"solid|{colorEffect}";
+                    param.IsValueChanged = true;
+                    saveCallback?.Invoke();
+                    
+                    System.Diagnostics.Debug.WriteLine($"Updated color effect parameter with solid prefix: {param.Value}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Warning: No color selected or invalid selection");
+                }
+            };
+
             // Populate color effects
-            foreach (var colorEffect in NewSettingsContentProvider.ColorEffects)
+            ComboBoxItem? selectedColorItem = null;
+            System.Diagnostics.Debug.WriteLine($"Available colors count: {sortedColors.Count}");
+            
+            foreach (var colorEffect in sortedColors)
             {
                 var colorItem = new ComboBoxItem
                 {
@@ -1451,11 +1549,70 @@ namespace darts_hub.control
                 colorDropdown.Items.Add(colorItem);
                 
                 // Pre-select if this matches current value (compare just the color name)
-                if (currentColorValue == colorEffect)
+                if (string.Equals(currentColorValue, colorEffect, StringComparison.OrdinalIgnoreCase))
                 {
-                    colorDropdown.SelectedItem = colorItem;
+                    selectedColorItem = colorItem;
+                    System.Diagnostics.Debug.WriteLine($"MATCH FOUND: Will select color '{colorEffect}' (case-insensitive match)");
                 }
             }
+
+            // Set selected item after all items have been added
+            if (selectedColorItem != null)
+            {
+                colorDropdown.SelectedItem = selectedColorItem;
+                System.Diagnostics.Debug.WriteLine($"SELECTED COLOR: '{selectedColorItem.Content}' was set as selected item");
+            }
+            else if (!string.IsNullOrEmpty(currentColorValue))
+            {
+                System.Diagnostics.Debug.WriteLine($"NO COLOR MATCH: '{currentColorValue}' was not found in available colors");
+                // Try a partial match as fallback
+                var partialMatch = sortedColors
+                    .FirstOrDefault(color => color.Contains(currentColorValue, StringComparison.OrdinalIgnoreCase) ||
+                                           currentColorValue.Contains(color, StringComparison.OrdinalIgnoreCase));
+                if (partialMatch != null)
+                {
+                    var partialItem = colorDropdown.Items.OfType<ComboBoxItem>()
+                        .FirstOrDefault(item => item.Tag?.ToString() == partialMatch);
+                    if (partialItem != null)
+                    {
+                        colorDropdown.SelectedItem = partialItem;
+                        System.Diagnostics.Debug.WriteLine($"PARTIAL MATCH FOUND: Selected '{partialMatch}' for value '{currentColorValue}'");
+                    }
+                }
+                else
+                {
+                    // If no match found at all, select the parameter-specific default color
+                    var defaultItem = colorDropdown.Items.OfType<ComboBoxItem>()
+                        .FirstOrDefault(item => item.Tag?.ToString() == defaultColorForParam);
+                    if (defaultItem != null)
+                    {
+                        colorDropdown.SelectedItem = defaultItem;
+                        System.Diagnostics.Debug.WriteLine($"NO MATCH: Selected parameter-specific default color '{defaultColorForParam}'");
+                    }
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"Current color value is empty - selecting parameter-specific default color '{defaultColorForParam}'");
+                // Select parameter-specific default color for empty values
+                var defaultItem = colorDropdown.Items.OfType<ComboBoxItem>()
+                    .FirstOrDefault(item => item.Tag?.ToString() == defaultColorForParam);
+                if (defaultItem != null)
+                {
+                    colorDropdown.SelectedItem = defaultItem;
+                    System.Diagnostics.Debug.WriteLine($"EMPTY VALUE: Selected parameter-specific default color '{defaultColorForParam}'");
+                }
+            }
+
+            // CRITICAL FIX: Save the initial selection if it exists and the parameter is empty
+            if (colorDropdown.SelectedItem != null && string.IsNullOrEmpty(param.Value))
+            {
+                System.Diagnostics.Debug.WriteLine($"CRITICAL FIX: Saving initial selection because parameter was empty");
+                saveCurrentSelection();
+            }
+
+            // Allow updates after initialization
+            isInitializing = false;
 
             // Event handlers - FIXED: Properly capture references and handle async operations
             testButton.Click += async (s, e) =>
@@ -1563,21 +1720,18 @@ namespace darts_hub.control
 
             colorDropdown.SelectionChanged += (s, e) =>
             {
-                if (colorDropdown.SelectedItem is ComboBoxItem selectedItem && 
-                    selectedItem.Tag is string colorEffect)
+                if (!isInitializing)
                 {
-                    // CRITICAL FIX: Always store color effects with "solid|" prefix
-                    param.Value = $"solid|{colorEffect}";
-                    param.IsValueChanged = true;
-                    saveCallback?.Invoke();
-                    
-                    System.Diagnostics.Debug.WriteLine($"Updated color effect parameter with solid prefix: {param.Value}");
+                    saveCurrentSelection();
                 }
             };
 
             panel.Children.Add(colorDropdown);
             panel.Children.Add(testButton);
             panel.Children.Add(stopButton);
+            
+            System.Diagnostics.Debug.WriteLine($"=== WLED COLOR DROPDOWN COMPLETE ===");
+            
             return panel;
         }
 

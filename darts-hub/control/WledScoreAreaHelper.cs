@@ -883,8 +883,13 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(3),
                 FontSize = 13,
                 PlaceholderText = "Loading WLED effects...",
-                MinWidth = 180
+                MinWidth = 180,
+                IsTextSearchEnabled = true, // Enable text search for better keyboard navigation
+                MaxDropDownHeight = 300 // Limit dropdown height for better usability
             };
+
+            // Add tooltip with keyboard navigation help
+            ToolTip.SetTip(effectDropdown, "Select a WLED effect for score area\nType letters to jump to effects (e.g. 'f' for fire)\nUse arrow keys to navigate");
 
             var refreshButton = new Button
             {
@@ -1642,8 +1647,13 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(3),
                 FontSize = 13,
                 PlaceholderText = "Loading WLED presets...",
-                MinWidth = 180
+                MinWidth = 180,
+                IsTextSearchEnabled = true, // Enable text search for better keyboard navigation
+                MaxDropDownHeight = 300 // Limit dropdown height for better usability
             };
+
+            // Add tooltip with keyboard navigation help
+            ToolTip.SetTip(presetDropdown, "Select a preset for score area\nType letters to jump to presets (e.g. '1' for ps|1)\nUse arrow keys to navigate");
 
             var refreshButton = new Button
             {
@@ -1729,12 +1739,12 @@ namespace darts_hub.control
             };
 
             // Parse current value to determine what should be selected
+            // Try to parse format: "ps|1|duration" or just "ps|1"
             string? targetPreset = initialSelectedPreset; // Use initialSelectedPreset first
             decimal targetDuration = 0m;
             
             if (!string.IsNullOrEmpty(param.Value))
             {
-                // Try to parse format: "ps|1|duration" or just "ps|1"
                 var parts = param.Value.Split('|');
                 if (parts.Length >= 2 && parts[0].Equals("ps", StringComparison.OrdinalIgnoreCase))
                 {
@@ -1860,6 +1870,7 @@ namespace darts_hub.control
                         };
                         presetDropdown.Items.Add(presetItem);
                         
+                        // Check if this should be selected
                         if (targetPreset == presetValue)
                         {
                             itemToSelect = presetItem;
@@ -1956,7 +1967,7 @@ namespace darts_hub.control
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine($"Invalid preset tag format: {presetTag}");
+                        System.Diagnostics.Debug.WriteLine($"Invalid preset tag format: {presetTag}/ Parts: {string.Join(", ", parts)}");
                     }
                 }
                 else
@@ -2061,8 +2072,15 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(3),
                 FontSize = 13,
                 PlaceholderText = "Select color effect...",
-                MinWidth = 200
+                MinWidth = 200,
+                MaxWidth = 280, // Set consistent maximum width
+                Width = 240, // Set fixed width for consistency
+                IsTextSearchEnabled = true, // Enable text search for better keyboard navigation
+                MaxDropDownHeight = 300 // Limit dropdown height for better usability
             };
+
+            // Add tooltip with keyboard navigation help
+            ToolTip.SetTip(colorDropdown, "Select a color effect for score area\nType letters to jump to colors (e.g. 'r' for red)\nUse arrow keys to navigate");
 
             var testButton = new Button
             {
@@ -2093,19 +2111,104 @@ namespace darts_hub.control
 
             // Determine the current color value (remove "solid|" prefix if present)
             string currentColorValue = param.Value ?? "";
-            if (currentColorValue.StartsWith("solid|", StringComparison.OrdinalIgnoreCase))
-            {
-                currentColorValue = currentColorValue.Substring(6);
-            }
-
             System.Diagnostics.Debug.WriteLine($"=== SCORE AREA COLOR DROPDOWN INIT ===");
             System.Diagnostics.Debug.WriteLine($"App: {app?.Name ?? "NULL"}");
-            System.Diagnostics.Debug.WriteLine($"Param Value: '{param.Value}'");
-            System.Diagnostics.Debug.WriteLine($"Current Color Value: '{currentColorValue}'");
+            System.Diagnostics.Debug.WriteLine($"Parameter Name: {param.Name}");
+            System.Diagnostics.Debug.WriteLine($"Original Parameter Value: '{param.Value}'");
+            
+            // Check for parameter-specific default color first
+            string defaultColorForParam = NewSettingsContentProvider.DEFAULT_WLED_SCORE_AREA_COLOR; // fallback
+            if (NewSettingsContentProvider.ParameterColorDefaults.TryGetValue(param.Name, out var specificDefault))
+            {
+                defaultColorForParam = specificDefault;
+                System.Diagnostics.Debug.WriteLine($"Found specific default color for score area '{param.Name}': '{defaultColorForParam}'");
+            }
+            
+            // Handle default placeholder values - set default color if no real value is configured
+            if (string.IsNullOrEmpty(currentColorValue) || currentColorValue == "change to activate")
+            {
+                currentColorValue = defaultColorForParam; // Use parameter-specific default
+                System.Diagnostics.Debug.WriteLine($"Using parameter-specific default color for score area: '{currentColorValue}'");
+            }
+            else if (currentColorValue.StartsWith("solid|", StringComparison.OrdinalIgnoreCase))
+            {
+                currentColorValue = currentColorValue.Substring(6);
+                System.Diagnostics.Debug.WriteLine($"Removed 'solid|' prefix, new value: '{currentColorValue}'");
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Final Current Color Value: '{currentColorValue}'");
+
+            // Flag to prevent updates during initialization
+            bool isInitializing = true;
+
+            // Sort colors alphabetically for better navigation
+            var sortedColors = NewSettingsContentProvider.ColorEffects.OrderBy(c => c).ToList();
+
+            // Add keyboard navigation enhancement
+            var searchBuffer = "";
+            var lastSearchTime = DateTime.MinValue;
+            
+            // Enhanced keyboard handler for better search functionality
+            colorDropdown.KeyDown += (s, e) =>
+            {
+                var currentTime = DateTime.Now;
+                var key = e.Key.ToString();
+                
+                // Reset search buffer if more than 1 second has passed
+                if ((currentTime - lastSearchTime).TotalMilliseconds > 1000)
+                {
+                    searchBuffer = "";
+                }
+                lastSearchTime = currentTime;
+                
+                // Only handle letter/number keys for search
+                if (key.Length == 1 && char.IsLetterOrDigit(key[0]))
+                {
+                    searchBuffer += key.ToLower();
+                    
+                    // Find first color that starts with search buffer
+                    var matchingColor = sortedColors.FirstOrDefault(color => 
+                        color.StartsWith(searchBuffer, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (matchingColor != null)
+                    {
+                        var matchingItem = colorDropdown.Items.OfType<ComboBoxItem>()
+                            .FirstOrDefault(item => item.Tag?.ToString() == matchingColor);
+                        if (matchingItem != null)
+                        {
+                            colorDropdown.SelectedItem = matchingItem;
+                            System.Diagnostics.Debug.WriteLine($"Score area keyboard search: '{searchBuffer}' -> selected '{matchingColor}'");
+                        }
+                    }
+                    
+                    e.Handled = true; // Prevent default behavior
+                }
+            };
+
+            // Function to save the current selected color to the parameter
+            Action saveCurrentSelection = () =>
+            {
+                if (colorDropdown.SelectedItem is ComboBoxItem selectedItem && 
+                    selectedItem.Tag is string colorEffect)
+                {
+                    // CRITICAL FIX: Always store color effects with "solid|" prefix for score areas
+                    param.Value = $"solid|{colorEffect}";
+                    param.IsValueChanged = true;
+                    saveCallback?.Invoke();
+                    
+                    System.Diagnostics.Debug.WriteLine($"Updated score area color effect parameter with solid prefix: {param.Value}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Warning: No color selected or invalid selection for score area");
+                }
+            };
 
             // Populate color effects
             ComboBoxItem? selectedColorItem = null;
-            foreach (var colorEffect in NewSettingsContentProvider.ColorEffects)
+            System.Diagnostics.Debug.WriteLine($"Available colors count: {sortedColors.Count}");
+            
+            foreach (var colorEffect in sortedColors)
             {
                 var colorItem = new ComboBoxItem
                 {
@@ -2116,10 +2219,10 @@ namespace darts_hub.control
                 colorDropdown.Items.Add(colorItem);
                 
                 // Pre-select if this matches current value (compare just the color name)
-                if (currentColorValue == colorEffect)
+                if (string.Equals(currentColorValue, colorEffect, StringComparison.OrdinalIgnoreCase))
                 {
                     selectedColorItem = colorItem;
-                    System.Diagnostics.Debug.WriteLine($"MATCH FOUND: Will select color '{colorEffect}'");
+                    System.Diagnostics.Debug.WriteLine($"MATCH FOUND: Will select color '{colorEffect}' (case-insensitive match)");
                 }
             }
 
@@ -2129,10 +2232,57 @@ namespace darts_hub.control
                 colorDropdown.SelectedItem = selectedColorItem;
                 System.Diagnostics.Debug.WriteLine($"SELECTED COLOR: '{selectedColorItem.Content}' was set as selected item");
             }
-            else
+            else if (!string.IsNullOrEmpty(currentColorValue))
             {
                 System.Diagnostics.Debug.WriteLine($"NO COLOR MATCH: '{currentColorValue}' was not found in available colors");
+                // Try a partial match as fallback
+                var partialMatch = sortedColors
+                    .FirstOrDefault(color => color.Contains(currentColorValue, StringComparison.OrdinalIgnoreCase) ||
+                                           currentColorValue.Contains(color, StringComparison.OrdinalIgnoreCase));
+                if (partialMatch != null)
+                {
+                    var partialItem = colorDropdown.Items.OfType<ComboBoxItem>()
+                        .FirstOrDefault(item => item.Tag?.ToString() == partialMatch);
+                    if (partialItem != null)
+                    {
+                        colorDropdown.SelectedItem = partialItem;
+                        System.Diagnostics.Debug.WriteLine($"PARTIAL MATCH FOUND: Selected '{partialMatch}' for value '{currentColorValue}'");
+                    }
+                }
+                else
+                {
+                    // If no match found at all, select the parameter-specific default color
+                    var defaultItem = colorDropdown.Items.OfType<ComboBoxItem>()
+                        .FirstOrDefault(item => item.Tag?.ToString() == defaultColorForParam);
+                    if (defaultItem != null)
+                    {
+                        colorDropdown.SelectedItem = defaultItem;
+                        System.Diagnostics.Debug.WriteLine($"NO MATCH: Selected parameter-specific default score area color '{defaultColorForParam}'");
+                    }
+                }
             }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"Current color value is empty - selecting parameter-specific default color '{defaultColorForParam}'");
+                // Select parameter-specific default color for empty values
+                var defaultItem = colorDropdown.Items.OfType<ComboBoxItem>()
+                    .FirstOrDefault(item => item.Tag?.ToString() == defaultColorForParam);
+                if (defaultItem != null)
+                {
+                    colorDropdown.SelectedItem = defaultItem;
+                    System.Diagnostics.Debug.WriteLine($"EMPTY VALUE: Selected parameter-specific default score area color '{defaultColorForParam}'");
+                }
+            }
+
+            // CRITICAL FIX: Save the initial selection if it exists and the parameter is empty
+            if (colorDropdown.SelectedItem != null && string.IsNullOrEmpty(param.Value))
+            {
+                System.Diagnostics.Debug.WriteLine($"CRITICAL FIX: Saving initial score area selection because parameter was empty");
+                saveCurrentSelection();
+            }
+
+            // Allow updates after initialization
+            isInitializing = false;
 
             // Event handlers - FIXED: Properly capture references and handle async operations
             testButton.Click += async (s, e) =>
@@ -2254,15 +2404,9 @@ namespace darts_hub.control
 
             colorDropdown.SelectionChanged += (s, e) =>
             {
-                if (colorDropdown.SelectedItem is ComboBoxItem selectedItem && 
-                    selectedItem.Tag is string colorEffect)
+                if (!isInitializing)
                 {
-                    // CRITICAL FIX: Always store color effects with "solid|" prefix for score areas
-                    param.Value = $"solid|{colorEffect}";
-                    param.IsValueChanged = true;
-                    saveCallback?.Invoke();
-                    
-                    System.Diagnostics.Debug.WriteLine($"Updated score area color effect parameter with solid prefix: {param.Value}");
+                    saveCurrentSelection();
                 }
             };
 

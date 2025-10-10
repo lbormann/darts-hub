@@ -21,6 +21,44 @@ namespace darts_hub.control
         private static readonly ReadmeParser readmeParser = new ReadmeParser();
         private static readonly Dictionary<string, Dictionary<string, string>> argumentDescriptionsCache = new();
 
+        // Default color configurations for WLED apps
+        public const string DEFAULT_WLED_COLOR = "blue";
+        public const string DEFAULT_WLED_SCORE_AREA_COLOR = "green";
+
+        // Specific parameter color mappings - extend this for more parameters
+        public static readonly Dictionary<string, string> ParameterColorDefaults = new()
+        {
+            // WLED specific parameters
+            { "TOE", "yellow" },     // Turn on effect
+            { "CE", "pink" },        // Calibration effect  
+            { "IDE", "green" },  // Idle effect
+            { "IDE2", "lightcoral" }, // Player 2 idle
+            { "IDE3", "lightgoldenrod1" }, // Player 3 idle
+            { "IDE4", "lightyellow1" }, // Player 4 idle
+            { "IDE5", "lightpink" },  // Player 5 idle
+            { "IDE6", "lightcyan1" },  // Player 6 idle
+            { "B", "red3" },  // Busted effect
+            { "BSE", "red1" },  // Bord Stop effect
+            
+            // Score area effects (A1-A12)
+            { "A1", "red1" },
+            { "A2", "green1" },
+            { "A3", "blue1" },
+            { "A4", "yellow1" },
+            { "A5", "purple1" },
+            { "A6", "orange1" },
+            { "A7", "pink1" },
+            { "A8", "cyan" },
+            { "A9", "magenta" },
+            { "A10", "lime" },
+            { "A11", "violet" },
+            { "A12", "turquoise" },
+            
+            // General fallbacks
+            { "EFFECT", "blue" },
+            { "COLOR", "white" },
+        };
+
         public static readonly List<string> ColorEffects = new List<string>
         {
             "aliceblue",
@@ -935,6 +973,7 @@ namespace darts_hub.control
             System.Diagnostics.Debug.WriteLine($"=== PARAMETER INPUT CONTROL CREATION ===");
             System.Diagnostics.Debug.WriteLine($"App Name: {app?.Name ?? "NULL"}");
             System.Diagnostics.Debug.WriteLine($"Parameter Name: {param.Name}");
+            System.Diagnostics.Debug.WriteLine($"Parameter Value: '{param.Value}'");
             System.Diagnostics.Debug.WriteLine($"Parameter Type: {type}");
             
             // Check if this is a Pixelit effect parameter (includes both regular and score area effects for darts-pixelit)
@@ -1357,7 +1396,7 @@ namespace darts_hub.control
                         System.Diagnostics.Debug.WriteLine($"Parameter section: {selectedParam.Section ?? "General"}");
                         
                         // Set a default value to make it "configured"
-                        selectedParam.Value = GetDefaultValueForParameter(selectedParam.GetTypeClear());
+                        selectedParam.Value = GetDefaultValueForParameter(selectedParam.GetTypeClear(), selectedParam, app);
                         selectedParam.IsValueChanged = true;
                         System.Diagnostics.Debug.WriteLine($"Set parameter value to: {selectedParam.Value}");
 
@@ -1577,6 +1616,53 @@ namespace darts_hub.control
         /// </summary>
         private static string GetDefaultValueForParameter(string type)
         {
+            return type switch
+            {
+                Argument.TypeBool => "False",
+                Argument.TypeInt => "0",
+                Argument.TypeFloat => "0.0",
+                _ => "change to activate" // String, Password, File, Path get a non-empty default value
+            };
+        }
+
+        /// <summary>
+        /// Gets a default value for a parameter type with special handling for WLED color effects
+        /// </summary>
+        private static string GetDefaultValueForParameter(string type, Argument? param = null, AppBase? app = null)
+        {
+            // Special handling for WLED color effect parameters
+            if (app?.Name == "darts-wled" && param != null)
+            {
+                // First check if we have a specific color mapping for this parameter
+                if (ParameterColorDefaults.TryGetValue(param.Name, out var specificColor))
+                {
+                    System.Diagnostics.Debug.WriteLine($"Using specific color '{specificColor}' for parameter '{param.Name}'");
+                    return $"solid|{specificColor}";
+                }
+                
+                // Check if it's a score area effect parameter
+                if (WledScoreAreaHelper.IsScoreAreaEffectParameter(param))
+                {
+                    return $"solid|{DEFAULT_WLED_SCORE_AREA_COLOR}"; // Green for score areas
+                }
+                // Check if it's a regular effect parameter
+                else if (WledSettings.IsEffectParameter(param))
+                {
+                    return $"solid|{DEFAULT_WLED_COLOR}"; // Blue for regular effects
+                }
+            }
+
+            // Special handling for other apps that might use color effects
+            if (param != null && (param.Name.ToLower().Contains("color") || param.Name.ToLower().Contains("effect")))
+            {
+                // Check if we have a specific color mapping for this parameter
+                if (ParameterColorDefaults.TryGetValue(param.Name, out var specificColor))
+                {
+                    System.Diagnostics.Debug.WriteLine($"Using specific color '{specificColor}' for parameter '{param.Name}' in app '{app?.Name}'");
+                    return $"solid|{specificColor}";
+                }
+            }
+
             return type switch
             {
                 Argument.TypeBool => "False",
