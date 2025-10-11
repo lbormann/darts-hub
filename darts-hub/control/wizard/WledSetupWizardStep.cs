@@ -1133,6 +1133,9 @@ namespace darts_hub.control.wizard
                 TextAlignment = TextAlignment.Center
             });
 
+            // Flag to prevent multiple clicks for score areas
+            bool isScoreAreasProcessing = false;
+
             // Yes/No buttons for Score Areas
             var areasButtonPanel = new StackPanel
             {
@@ -1169,12 +1172,42 @@ namespace darts_hub.control.wizard
 
             yesAreasButton.Click += (s, e) =>
             {
-                ShowScoreAreasConfigurationInline(parentContent, areasButtonPanel);
+                // ⭐ Prevent multiple clicks
+                if (isScoreAreasProcessing) return;
+                isScoreAreasProcessing = true;
+                
+                try
+                {
+                    // Disable both buttons after selection
+                    yesAreasButton.IsEnabled = false;
+                    noAreasButton.IsEnabled = false;
+                    
+                    ShowScoreAreasConfigurationInline(parentContent, areasButtonPanel);
+                }
+                finally
+                {
+                    isScoreAreasProcessing = false;
+                }
             };
 
             noAreasButton.Click += (s, e) =>
             {
-                CompleteGuidedSetup();
+                // ⭐ Prevent multiple clicks
+                if (isScoreAreasProcessing) return;
+                isScoreAreasProcessing = true;
+                
+                try
+                {
+                    // Disable both buttons after selection
+                    yesAreasButton.IsEnabled = false;
+                    noAreasButton.IsEnabled = false;
+                    
+                    CompleteGuidedSetup();
+                }
+                finally
+                {
+                    isScoreAreasProcessing = false;
+                }
             };
 
             areasButtonPanel.Children.Add(yesAreasButton);
@@ -1208,7 +1241,7 @@ namespace darts_hub.control.wizard
 
             parentContent.Children.Add(new TextBlock
             {
-                Text = "Configure effects for different areas/segments of your LED strip (A1-A12) with range selection:",
+                Text = "Configure effects for different areas/segments of your LED strip (A1-A12) with range selection, effect parameters, and test buttons:",
                 FontSize = 14,
                 Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
                 HorizontalAlignment = HorizontalAlignment.Center,
@@ -1227,6 +1260,9 @@ namespace darts_hub.control.wizard
 
             parentContent.Children.Add(areasPanel);
 
+            // Flag to prevent multiple clicks for add area button
+            bool isAddAreaProcessing = false;
+
             // Add Area button
             var addAreaButton = new Button
             {
@@ -1244,11 +1280,27 @@ namespace darts_hub.control.wizard
 
             addAreaButton.Click += (s, e) =>
             {
-                currentAreaCount++;
-                AddScoreAreaControlWithRangeSelection(areasPanel, currentAreaCount);
+                // ⭐ Prevent multiple clicks
+                if (isAddAreaProcessing) return;
+                isAddAreaProcessing = true;
+                
+                try
+                {
+                    currentAreaCount++;
+                    AddScoreAreaControlWithRangeSelection(areasPanel, currentAreaCount);
+                    
+                    System.Diagnostics.Debug.WriteLine($"[WLED] Added score area {currentAreaCount}");
+                }
+                finally
+                {
+                    isAddAreaProcessing = false;
+                }
             };
 
             parentContent.Children.Add(addAreaButton);
+
+            // Flag to prevent multiple clicks for complete button
+            bool isCompleteProcessing = false;
 
             // Complete button
             var completeButton = new Button
@@ -1267,7 +1319,21 @@ namespace darts_hub.control.wizard
 
             completeButton.Click += (s, e) =>
             {
-                CompleteGuidedSetup();
+                // ⭐ Prevent multiple clicks
+                if (isCompleteProcessing) return;
+                isCompleteProcessing = true;
+                
+                try
+                {
+                    // Disable button after selection
+                    completeButton.IsEnabled = false;
+                    
+                    CompleteGuidedSetup();
+                }
+                finally
+                {
+                    isCompleteProcessing = false;
+                }
             };
 
             parentContent.Children.Add(completeButton);

@@ -141,7 +141,7 @@ namespace darts_hub.UI
                     if (app.App.AppRunningState || hasOutput)
                     {
                         var executable = AppExecutableHelper.GetAppExecutable(app.App);
-                        var arguments = AppExecutableHelper.GetAppArguments(app.App);
+                        var arguments = AppExecutableHelper.GetAppArgumentsSafe(app.App);
                         
                         overviewText.AppendLine($"  Executable: {executable}");
                         if (!string.IsNullOrEmpty(arguments))
@@ -504,7 +504,7 @@ namespace darts_hub.UI
                 var arguments = "";
                 try
                 {
-                    arguments = AppExecutableHelper.GetAppArguments(app);
+                    arguments = AppExecutableHelper.GetAppArgumentsSafe(app);
                     if (!string.IsNullOrEmpty(arguments))
                     {
                         // Show truncated version in console if too long

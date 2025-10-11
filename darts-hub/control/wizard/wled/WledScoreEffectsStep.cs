@@ -21,6 +21,7 @@ namespace darts_hub.control.wizard.wled
         private readonly Action onScoreEffectsSelected;
         private readonly Action onScoreEffectsSkipped;
         private readonly Action<HashSet<int>> onScoreEffectsCompleted;
+        private bool isProcessing = false; // ⭐ Flag to prevent multiple clicks
 
         public bool ShowScoreEffects { get; private set; }
         public HashSet<int> SelectedScores { get; private set; } = new HashSet<int>();
@@ -104,14 +105,46 @@ namespace darts_hub.control.wizard.wled
 
             yesButton.Click += (s, e) =>
             {
-                ShowScoreEffects = true;
-                onScoreEffectsSelected?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowScoreEffects = true;
+                    
+                    // Disable both buttons after selection
+                    yesButton.IsEnabled = false;
+                    noButton.IsEnabled = false;
+                    
+                    onScoreEffectsSelected?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             noButton.Click += (s, e) =>
             {
-                ShowScoreEffects = false;
-                onScoreEffectsSkipped?.Invoke();
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ShowScoreEffects = false;
+                    
+                    // Disable both buttons after selection
+                    yesButton.IsEnabled = false;
+                    noButton.IsEnabled = false;
+                    
+                    onScoreEffectsSkipped?.Invoke();
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             buttonPanel.Children.Add(yesButton);
@@ -174,8 +207,23 @@ namespace darts_hub.control.wizard.wled
 
             applyButton.Click += (s, e) =>
             {
-                ApplySelectedScores();
-                onScoreEffectsCompleted?.Invoke(SelectedScores);
+                // ⭐ Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                try
+                {
+                    ApplySelectedScores();
+                    
+                    // Disable button after selection
+                    applyButton.IsEnabled = false;
+                    
+                    onScoreEffectsCompleted?.Invoke(SelectedScores);
+                }
+                finally
+                {
+                    isProcessing = false;
+                }
             };
 
             content.Children.Add(applyButton);

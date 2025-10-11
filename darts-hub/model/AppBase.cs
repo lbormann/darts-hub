@@ -418,7 +418,11 @@ namespace darts_hub.model
                 {
                     var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
                     var logLevel = forceLogLevel ?? DetermineLogLevel(message, isFromErrorStream);
-                    var logLine = $"[{timestamp}] [{logLevel}] {message}{Environment.NewLine}";
+                    
+                    // Mask sensitive information before writing to log
+                    var sanitizedMessage = MaskSensitiveInformation(message);
+                    
+                    var logLine = $"[{timestamp}] [{logLevel}] {sanitizedMessage}{Environment.NewLine}";
                     
                     lock (logFileLock)
                     {
@@ -430,6 +434,105 @@ namespace darts_hub.model
             {
                 System.Diagnostics.Debug.WriteLine($"[{CustomName}] Failed to write to log file: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Masks sensitive information like passwords in log messages
+        /// </summary>
+        private string MaskSensitiveInformation(string message)
+        {
+            if (string.IsNullOrEmpty(message))
+                return message;
+
+            try
+            {
+                // If this app has a configuration with password arguments, mask them
+                if (Configuration?.Arguments != null)
+                {
+                    var passwordArguments = Configuration.Arguments
+                        .Where(arg => IsPasswordArgument(arg))
+                        .ToList();
+
+                    var maskedMessage = message;
+
+                    foreach (var passwordArg in passwordArguments)
+                    {
+                        if (!string.IsNullOrEmpty(passwordArg.Value))
+                        {
+                            var actualValue = passwordArg.MappedValue() ?? passwordArg.Value;
+                            
+                            // Create patterns to find the password value in the message
+                            var patterns = new[]
+                            {
+                                // Command line argument patterns
+                                $"{Configuration.Prefix}{passwordArg.Name}{Configuration.Delimitter}\"{actualValue}\"",
+                                $"{Configuration.Prefix}{passwordArg.Name}{Configuration.Delimitter}{actualValue}",
+                                $"{Configuration.Prefix}{passwordArg.Name}=\"{actualValue}\"", 
+                                $"{Configuration.Prefix}{passwordArg.Name}={actualValue}",
+                                // Direct value patterns
+                                $"\"{actualValue}\"",
+                                actualValue
+                            };
+
+                            foreach (var pattern in patterns)
+                            {
+                                if (maskedMessage.Contains(pattern))
+                                {
+                                    var maskedValue = GetMaskedPassword(actualValue);
+                                    var replacement = pattern.Replace(actualValue, maskedValue);
+                                    maskedMessage = maskedMessage.Replace(pattern, replacement);
+                                }
+                            }
+                        }
+                    }
+
+                    return maskedMessage;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[{CustomName}] Error masking sensitive information: {ex.Message}");
+            }
+
+            return message;
+        }
+
+        /// <summary>
+        /// Determines if an argument contains password information
+        /// </summary>
+        private bool IsPasswordArgument(Argument argument)
+        {
+            if (argument.Type.ToLower().Contains("password"))
+                return true;
+                
+            var argName = argument.Name?.ToLower() ?? "";
+            var argHuman = argument.NameHuman?.ToLower() ?? "";
+            
+            // Check for common password argument patterns
+            var passwordIndicators = new[]
+            {
+                "password", "pass", "pwd", "secret", "key", "token", "auth",
+                "autodarts_password", "lidarts_password", "dartboards_password"
+            };
+            
+            return passwordIndicators.Any(indicator => 
+                argName.Contains(indicator) || argHuman.Contains(indicator));
+        }
+
+        /// <summary>
+        /// Creates a masked version of a password
+        /// </summary>
+        private string GetMaskedPassword(string password)
+        {
+            if (string.IsNullOrEmpty(password))
+                return "";
+                
+            // For very short passwords, mask completely
+            if (password.Length <= 3)
+                return "***";
+                
+            // For longer passwords, show first character and mask the rest
+            return password[0] + new string('*', Math.Min(password.Length - 1, 8));
         }
         
         /// <summary>
@@ -694,7 +797,7 @@ namespace darts_hub.model
             }
             catch (Exception ex)
             {
-                var errorMessage = $"An error occurred trying to start \"{executable}\" with \"{arguments}\":\n{ex.Message}";
+                var errorMessage = $"An error occurred trying to start \"{executable}\":\n{ex.Message}";
                 Console.WriteLine(errorMessage);
                 WriteToLogFile(errorMessage, true, "ERROR");
                 throw;

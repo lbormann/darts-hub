@@ -1,6 +1,7 @@
 using darts_hub.model;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace darts_hub.UI
 {
@@ -113,7 +114,7 @@ namespace darts_hub.UI
                             {
                                 var arg = app.Configuration.Arguments[i];
                                 var name = arg.Name ?? "NULL";
-                                var value = arg.Value ?? "NULL";
+                                var value = IsPasswordArgument(arg) ? GetMaskedPassword(arg.Value ?? "") : (arg.Value ?? "NULL");
                                 var typeClear = arg.GetTypeClear() ?? "NULL";
                                 
                                 System.Diagnostics.Debug.WriteLine($"[DEBUG] Argument {i} OK: {name}={value} (Type: {typeClear})");
@@ -137,6 +138,119 @@ namespace darts_hub.UI
                 
                 return "Error determining arguments - see debug output for details";
             }
+        }
+
+        /// <summary>
+        /// Gets app arguments with password masking for console display
+        /// </summary>
+        public static string GetAppArgumentsSafe(AppBase app)
+        {
+            try
+            {
+                if (app.Configuration == null)
+                {
+                    var msg = $"Configuration is null for app {app.CustomName}";
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] {msg}");
+                    return "";
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Getting safe arguments for {app.CustomName} ({app.Configuration.Arguments.Count} total arguments)");
+
+                // Get the original arguments string
+                var arguments = app.Configuration.GenerateArgumentString(app, null);
+                
+                if (string.IsNullOrEmpty(arguments))
+                {
+                    return "";
+                }
+
+                // Find and mask password arguments
+                var safeArguments = arguments;
+                
+                // Get password arguments from configuration
+                var passwordArguments = app.Configuration.Arguments
+                    .Where(arg => IsPasswordArgument(arg))
+                    .ToList();
+
+                foreach (var passwordArg in passwordArguments)
+                {
+                    if (!string.IsNullOrEmpty(passwordArg.Value))
+                    {
+                        var mappedValue = passwordArg.MappedValue() ?? passwordArg.Value;
+                        
+                        // Create different patterns to match the argument in the command line
+                        var patterns = new[]
+                        {
+                            $"{app.Configuration.Prefix}{passwordArg.Name}{app.Configuration.Delimitter}\"{mappedValue}\"",
+                            $"{app.Configuration.Prefix}{passwordArg.Name}{app.Configuration.Delimitter}{mappedValue}",
+                            $"{app.Configuration.Prefix}{passwordArg.Name}=\"{mappedValue}\"",
+                            $"{app.Configuration.Prefix}{passwordArg.Name}={mappedValue}",
+                            $"\"{mappedValue}\"",
+                            mappedValue
+                        };
+
+                        foreach (var pattern in patterns)
+                        {
+                            if (safeArguments.Contains(pattern))
+                            {
+                                var maskedValue = GetMaskedPassword(mappedValue);
+                                var replacement = pattern.Replace(mappedValue, maskedValue);
+                                safeArguments = safeArguments.Replace(pattern, replacement);
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                var result = safeArguments.Trim();
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Generated safe arguments result length: {result.Length} characters");
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                var errorMsg = $"Error getting safe arguments for {app.CustomName}: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] {errorMsg}");
+                return "Error determining arguments - see debug output for details";
+            }
+        }
+
+        /// <summary>
+        /// Determines if an argument contains password information
+        /// </summary>
+        private static bool IsPasswordArgument(Argument argument)
+        {
+            if (argument.Type.ToLower().Contains("password"))
+                return true;
+                
+            var argName = argument.Name?.ToLower() ?? "";
+            var argHuman = argument.NameHuman?.ToLower() ?? "";
+            
+            // Check for common password argument patterns
+            var passwordIndicators = new[]
+            {
+                "password", "pass", "pwd", "secret", "key", "token", "auth",
+                "autodarts_password", "lidarts_password", "dartboards_password"
+            };
+            
+            return passwordIndicators.Any(indicator => 
+                argName.Contains(indicator) || argHuman.Contains(indicator));
+        }
+
+        /// <summary>
+        /// Creates a masked version of a password
+        /// </summary>
+        private static string GetMaskedPassword(string password)
+        {
+            if (string.IsNullOrEmpty(password))
+                return "";
+                
+            // For very short passwords, mask completely
+            if (password.Length <= 3)
+                return "***";
+                
+            // For longer passwords, show first character and mask the rest
+            return password[0] + new string('*', Math.Min(password.Length - 1, 8));
         }
     }
 }
