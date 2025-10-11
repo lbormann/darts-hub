@@ -449,6 +449,16 @@
 									BorderThickness="0"
 									CornerRadius="3"
 									Click="ConsoleExportButton_Click"/>
+							<Button x:Name="ConsoleTestUpdaterButton" 
+									Content="🧪 Test Updater" 
+									Margin="10,0,0,0" 
+									Padding="8,4"
+									Background="#FF28A745" 
+									Foreground="White"
+									BorderThickness="0"
+									CornerRadius="3"
+									Click="ConsoleTestUpdaterButton_Click"
+									ToolTip.Tip="Test the update system functionality"/>
 							<CheckBox x:Name="ConsoleAutoScrollCheckBox" 
 									  Content="Auto-scroll" 
 									  Margin="10,0,0,0" 

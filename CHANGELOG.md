@@ -1,4 +1,13 @@
-## v1.1.11
+## v1.2.0
+### Improvements
+    - Updater System Overhaul
+        - New robust update checking and installation system
+        - Retry mechanism with exponential backoff for network requests
+    - Comprehensive logging system with daily log files
+    - Improved error handling and user feedback during updates
+    - Setup Wizard Enhancements
+      - Improved user guidance and error handling in setup wizards
+
 ### Bug Fixes
     - fixed skip this step button in setup wizard
     - build routine bugfixes

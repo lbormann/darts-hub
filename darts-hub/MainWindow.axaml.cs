@@ -146,7 +146,7 @@ namespace darts_hub
             catch (ConfigurationException ex)
             {
                 SetWait(false);
-                ShowCorruptedConfigHandlingBox(ex);
+                await ShowCorruptedConfigHandlingBox(ex);
             }
             catch (Exception ex)
             {
@@ -159,13 +159,17 @@ namespace darts_hub
         {
             try
             {
+                // Unsubscribe from events
+                RetryHelper.RetryProgressChanged -= RetryHelper_ProgressChanged;
+                
                 consoleManager?.Dispose();
                 navigationManager?.Dispose();
                 profileManager?.CloseApps();
             }
             catch (Exception ex)
             {
-                RenderMessageBox("", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
+                // Use fire-and-forget for closing events to prevent hanging
+                _ = Task.Run(async () => await RenderMessageBox("", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error));
             }
         }
         #endregion
@@ -230,6 +234,7 @@ namespace darts_hub
         private async Task InitializeUpdater()
         {
             SetupUpdaterEvents();
+            SetupRetryProgressEvents();
             Updater.CheckNewVersion();
             SetWait(true, "Checking for update...");
         }
@@ -498,6 +503,102 @@ namespace darts_hub
                 await RenderMessageBox("Export Error", 
                     $"Failed to export console log:\n{ex.Message}", 
                     MsBox.Avalonia.Enums.Icon.Error);
+            }
+        }
+
+        private async void ConsoleTestUpdaterButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                UpdaterLogger.LogInfo("Opening updater test window from console");
+                
+                var testWindow = new UpdaterTestWindow()
+                {
+                    WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.CenterOwner
+                };
+                
+                // Use ShowDialog with this window as owner
+                await testWindow.ShowDialog(this);
+                
+                UpdaterLogger.LogInfo("Updater test window closed successfully");
+            }
+            catch (System.NotSupportedException ex) when (ex.Message.Contains("Markdown.Avalonia"))
+            {
+                // Handle the specific markdown binding issue - run a quick test instead
+                UpdaterLogger.LogError("Markdown binding issue detected, running quick test instead", ex);
+                
+                SetWait(true, "Running quick updater test...");
+                
+                try
+                {
+                    var quickResults = await UpdaterTestRunner.RunQuickVersionTest();
+                    var connectivityResults = await UpdaterTestRunner.RunConnectivityTest();
+                    
+                    var combinedResults = "=== QUICK TEST RESULTS ===\n\n" +
+                                         "VERSION CHECK:\n" + quickResults + "\n" +
+                                         "CONNECTIVITY:\n" + connectivityResults + "\n" +
+                                         "=== TEST COMPLETED ===\n\n" +
+                                         "For more detailed tests use:\n" +
+                                         "• dotnet run -- --full (Full Test)\n" +
+                                         "• dotnet run -- --version (Version Check)\n" +
+                                         "• dotnet run -- --retry (Retry Test)";
+                    
+                    SetWait(false);
+                    
+                    await RenderMessageBox("Updater Quick Test", combinedResults, 
+                        MsBox.Avalonia.Enums.Icon.Info, ButtonEnum.Ok, 500, 400);
+                }
+                catch (Exception quickTestEx)
+                {
+                    SetWait(false);
+                    UpdaterLogger.LogError("Quick test also failed", quickTestEx);
+                    
+                    await RenderMessageBox("Test Interface Error", 
+                        "The test interface could not be opened and the quick test also failed.\n\n" +
+                        "Please use command line tests:\n\n" +
+                        "• dotnet run -- --full (Full Test)\n" +
+                        "• dotnet run -- --version (Version Check)\n" +
+                        "• dotnet run -- --retry (Retry Test)\n\n" +
+                        $"Error details:\n{quickTestEx.Message}", 
+                        MsBox.Avalonia.Enums.Icon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                UpdaterLogger.LogError("Failed to open updater test window", ex);
+                
+                // Try quick test as fallback
+                SetWait(true, "Running fallback quick test...");
+                
+                try
+                {
+                    var quickResults = await UpdaterTestRunner.RunQuickVersionTest();
+                    
+                    SetWait(false);
+                    
+                    await RenderMessageBox("Updater Quick Test (Fallback)", 
+                        "The test interface could not be opened.\n" +
+                        "Here are the results of a quick test:\n\n" +
+                        quickResults + "\n" +
+                        "For more detailed tests use command line:\n" +
+                        "• dotnet run -- --full\n" +
+                        "• dotnet run -- --version\n" +
+                        "• dotnet run -- --retry", 
+                        MsBox.Avalonia.Enums.Icon.Info);
+                }
+                catch (Exception fallbackEx)
+                {
+                    SetWait(false);
+                    
+                    await RenderMessageBox("Test Error", 
+                        $"Error opening test interface:\n{ex.Message}\n\n" +
+                        $"Fallback test also failed:\n{fallbackEx.Message}\n\n" +
+                        "Please use command line tests:\n" +
+                        "• dotnet run -- --full\n" +
+                        "• dotnet run -- --version\n" +
+                        "• dotnet run -- --retry", 
+                        MsBox.Avalonia.Enums.Icon.Error);
+                }
             }
         }
 
@@ -1126,7 +1227,7 @@ namespace darts_hub
 
         private void ProfileManager_AppDownloadFailed(object? sender, AppEventArgs e)
         {
-            SetWait(false, "Download " + e.App.Name + " failed. Bitte überprüfe deine Internetverbindung und versuche es erneut. " + e.Message);
+            SetWait(false, "Download " + e.App.Name + " failed. Please check your internet connection and try again. " + e.Message);
         }
 
         private void ProfileManager_AppDownloadProgressed(object? sender, DownloadProgressChangedEventArgs e)
@@ -1167,6 +1268,19 @@ namespace darts_hub
             Updater.ReleaseDownloadProgressed += Updater_ReleaseDownloadProgressed;
         }
 
+        private void SetupRetryProgressEvents()
+        {
+            RetryHelper.RetryProgressChanged += RetryHelper_ProgressChanged;
+        }
+
+        private async void RetryHelper_ProgressChanged(object? sender, RetryProgressEventArgs e)
+        {
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                SetWait(true, e.Message);
+            });
+        }
+
         private async void Updater_NoNewReleaseFound(object? sender, ReleaseEventArgs e)
         {
             await Dispatcher.UIThread.InvokeAsync(async () =>
@@ -1197,7 +1311,7 @@ namespace darts_hub
                     update = await RenderMessageBox($"Update available",
                         $"New Version '{e.Version}' available!\r\n\r\nDO YOU WANT TO UPDATE?\r\n\r\n" +
                         $"------------------  CHANGELOG  ------------------\r\n\r\n{e.Message}",
-                        MsBox.Avalonia.Enums.Icon.Success, ButtonEnum.YesNo, 600.0, 800.0);
+                        MsBox.Avalonia.Enums.Icon.Success, ButtonEnum.YesNo, 800.0, 600.0);
                 }
                 else
                 {
@@ -1276,7 +1390,7 @@ namespace darts_hub
                 var changelogText = await Helper.AsyncHttpGet("https://raw.githubusercontent.com/lbormann/darts-hub/main/CHANGELOG.md", 4);
                 if (string.IsNullOrEmpty(changelogText))
                     changelogText = "Changelog not available. Please try again later.";
-               
+       
                 ChangelogContent.Text = changelogText;
             }
             catch (Exception ex)
@@ -1331,7 +1445,7 @@ namespace darts_hub
             }
             catch (Exception ex)
             {
-                RenderMessageBox("Error", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
+                _ = RenderMessageBox("Error", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
             }
         }
 
@@ -1343,7 +1457,7 @@ namespace darts_hub
             }
             catch (Exception ex)
             {
-                RenderMessageBox("", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
+                _ = RenderMessageBox("", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
             }
         }
 
@@ -1381,58 +1495,180 @@ namespace darts_hub
 
         private async Task<ButtonResult> RenderMessageBox(string title, string message, MsBox.Avalonia.Enums.Icon icon, ButtonEnum buttons = ButtonEnum.Ok, double? width = null, double? height = null, int autoCloseDelayInSeconds = 0)
         {
-            var messageBoxParams = new MessageBoxStandardParams
+            try
             {
-                ContentTitle = title,
-                ContentMessage = message,
-                Icon = icon,
-                ButtonDefinitions = buttons,
-                WindowIcon = Icon,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            };
-
-            if (width.HasValue)
-                messageBoxParams.Width = width.Value;
-            if (height.HasValue)
-                messageBoxParams.Height = height.Value;
-
-            var messageBox = MessageBoxManager.GetMessageBoxStandard(messageBoxParams);
-            
-            if (autoCloseDelayInSeconds > 0)
-            {
-                _ = Task.Delay(TimeSpan.FromSeconds(autoCloseDelayInSeconds)).ContinueWith(_ =>
+                var messageBoxParams = new MessageBoxStandardParams
                 {
-                    // The MessageBox will auto-close on timeout
-                });
-            }
+                    ContentTitle = title,
+                    ContentMessage = message,
+                    Icon = icon,
+                    ButtonDefinitions = buttons,
+                    WindowIcon = Icon,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                };
 
-            return await messageBox.ShowWindowDialogAsync(this);
+                if (width.HasValue)
+                    messageBoxParams.Width = width.Value;
+                if (height.HasValue)
+                    messageBoxParams.Height = height.Value;
+
+                var messageBox = MessageBoxManager.GetMessageBoxStandard(messageBoxParams);
+                
+                if (autoCloseDelayInSeconds > 0)
+                {
+                    _ = Task.Delay(TimeSpan.FromSeconds(autoCloseDelayInSeconds)).ContinueWith(_ =>
+                    {
+                        // The MessageBox will auto-close on timeout
+                    });
+                }
+
+                return await messageBox.ShowWindowDialogAsync(this);
+            }
+            catch (System.NotSupportedException ex) when (ex.Message.Contains("Markdown.Avalonia") || ex.Message.Contains("StaticBinding"))
+            {
+                // Fallback to simple Avalonia MessageBox for markdown binding issues
+                UpdaterLogger.LogWarning($"MessageBox markdown binding issue, using fallback: {ex.Message}");
+                return await ShowFallbackMessageBox(title, message, buttons);
+            }
+            catch (Exception ex)
+            {
+                // Log the error and show a simple fallback
+                UpdaterLogger.LogError("MessageBox failed completely, using system fallback", ex);
+                return await ShowFallbackMessageBox(title, message, buttons);
+            }
         }
 
-        private async void ShowCorruptedConfigHandlingBox(ConfigurationException ex)
+        private async Task<ButtonResult> ShowFallbackMessageBox(string title, string message, ButtonEnum buttons)
         {
-            var result = await RenderMessageBox("Configuration Error", 
-                $"Configuration file is corrupted:\n{ex.Message}\n\nWould you like to reset to default settings?",
-                MsBox.Avalonia.Enums.Icon.Error, 
-                ButtonEnum.YesNo);
-
-            if (result == ButtonResult.Yes)
+            return await Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 try
                 {
-                    configurator = new Configurator("config.json");
-                    await RenderMessageBox("", "Configuration has been reset to defaults.", MsBox.Avalonia.Enums.Icon.Info);
+                    // Determine appropriate size based on content
+                    double dialogWidth = 500;
+                    double dialogHeight = 400;
+                    
+                    // For update messages (longer content), use larger dialog
+                    if (title.Contains("Update") || message.Length > 500)
+                    {
+                        dialogWidth = 900;
+                        dialogHeight = 700;
+                    }
+                    
+                    // Create a simple custom dialog
+                    var dialog = new Window
+                    {
+                        Title = title,
+                        Width = dialogWidth,
+                        Height = dialogHeight,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        CanResize = true,
+                        ShowInTaskbar = false,
+                        MinWidth = 400,
+                        MinHeight = 300
+                    };
+
+                    var mainGrid = new Grid();
+                    mainGrid.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+                    mainGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+
+                    // Scrollable message content
+                    var scrollViewer = new ScrollViewer
+                    {
+                        Margin = new Thickness(20),
+                        VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
+                        HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto
+                    };
+
+                    var messageText = new TextBlock
+                    {
+                        Text = message,
+                        TextWrapping = TextWrapping.Wrap,
+                        Margin = new Thickness(10),
+                        FontSize = 14
+                    };
+                    
+                    scrollViewer.Content = messageText;
+                    Grid.SetRow(scrollViewer, 0);
+                    mainGrid.Children.Add(scrollViewer);
+
+                    // Button panel at bottom
+                    var buttonPanel = new StackPanel
+                    {
+                        Orientation = Orientation.Horizontal,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        Spacing = 15,
+                        Margin = new Thickness(20)
+                    };
+                    
+                    Grid.SetRow(buttonPanel, 1);
+                    mainGrid.Children.Add(buttonPanel);
+
+                    ButtonResult result = ButtonResult.Ok;
+
+                    if (buttons == ButtonEnum.YesNo)
+                    {
+                        var yesButton = new Button
+                        {
+                            Content = "Yes",
+                            Width = 100,
+                            Height = 35,
+                            FontSize = 14,
+                            Margin = new Thickness(5)
+                        };
+                        yesButton.Click += (s, e) =>
+                        {
+                            result = ButtonResult.Yes;
+                            dialog.Close();
+                        };
+                        buttonPanel.Children.Add(yesButton);
+
+                        var noButton = new Button
+                        {
+                            Content = "No",
+                            Width = 100,
+                            Height = 35,
+                            FontSize = 14,
+                            Margin = new Thickness(5)
+                        };
+                        noButton.Click += (s, e) =>
+                        {
+                            result = ButtonResult.No;
+                            dialog.Close();
+                        };
+                        buttonPanel.Children.Add(noButton);
+                    }
+                    else
+                    {
+                        var okButton = new Button
+                        {
+                            Content = "OK",
+                            Width = 100,
+                            Height = 35,
+                            FontSize = 14,
+                            Margin = new Thickness(5)
+                        };
+                        okButton.Click += (s, e) =>
+                        {
+                            result = ButtonResult.Ok;
+                            dialog.Close();
+                        };
+                        buttonPanel.Children.Add(okButton);
+                    }
+
+                    dialog.Content = mainGrid;
+
+                    await dialog.ShowDialog(this);
+                    return result;
                 }
-                catch (Exception resetEx)
+                catch (Exception ex)
                 {
-                    await RenderMessageBox("", "Failed to reset configuration: " + resetEx.Message, MsBox.Avalonia.Enums.Icon.Error);
-                    Environment.Exit(1);
+                    // Last resort fallback
+                    UpdaterLogger.LogError("Even fallback dialog failed", ex);
+                    System.Diagnostics.Debug.WriteLine($"MessageBox Error: {title} - {message}");
+                    return ButtonResult.Ok;
                 }
-            }
-            else
-            {
-                Environment.Exit(1);
-            }
+            });
         }
         #endregion
 
@@ -1515,6 +1751,34 @@ namespace darts_hub
                 await RenderMessageBox("Setup Wizard Error", 
                     $"An error occurred while running the setup wizard:\n{ex.Message}", 
                     MsBox.Avalonia.Enums.Icon.Error);
+            }
+        }
+        #endregion
+
+        #region Configuration Error Handling
+        private async Task ShowCorruptedConfigHandlingBox(ConfigurationException ex)
+        {
+            var result = await RenderMessageBox("Configuration Error", 
+                $"Configuration file is corrupted:\n{ex.Message}\n\nWould you like to reset to default settings?",
+                MsBox.Avalonia.Enums.Icon.Error, 
+                ButtonEnum.YesNo);
+
+            if (result == ButtonResult.Yes)
+            {
+                try
+                {
+                    configurator = new Configurator("config.json");
+                    await RenderMessageBox("", "Configuration has been reset to defaults.", MsBox.Avalonia.Enums.Icon.Info);
+                }
+                catch (Exception resetEx)
+                {
+                    await RenderMessageBox("", "Failed to reset configuration: " + resetEx.Message, MsBox.Avalonia.Enums.Icon.Error);
+                    Environment.Exit(1);
+                }
+            }
+            else
+            {
+                Environment.Exit(1);
             }
         }
         #endregion
