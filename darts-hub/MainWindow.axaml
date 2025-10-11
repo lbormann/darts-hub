@@ -132,8 +132,7 @@
 								  VerticalScrollBarVisibility="Auto" 
 								  HorizontalScrollBarVisibility="Hidden"
 								  Background="Transparent"
-								  Padding="0,0"
-								  ScrollChanged="SettingsScrollViewer_ScrollChanged">
+								  Padding="0,0">
 						<StackPanel x:Name="SettingsPanel">
 							<TextBlock Text="Select an app from the navigation panel to configure its settings" 
 									   Foreground="#FF999999" 
@@ -518,8 +517,7 @@
 								  VerticalScrollBarVisibility="Auto" 
 								  HorizontalScrollBarVisibility="Hidden"
 								  Background="Transparent"
-								  Padding="20,0,0,0"
-								  ScrollChanged="NewSettingsScrollViewer_ScrollChanged">
+								  Padding="20,0,0,0">
 						<StackPanel x:Name="NewSettingsContent">
 							<TextBlock Text="Enhanced settings will appear here..." 
 									   Foreground="#FF999999" 
