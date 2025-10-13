@@ -229,6 +229,10 @@ namespace darts_hub.control
             var headerPanel = CreateHeaderPanel(app);
             mainPanel.Children.Add(headerPanel);
 
+            // Custom Name section
+            var customNameSection = CreateCustomNameSection(app, saveCallback);
+            mainPanel.Children.Add(customNameSection);
+
             // Status section
             var statusSection = CreateStatusSection(app);
             mainPanel.Children.Add(statusSection);
@@ -1505,6 +1509,11 @@ namespace darts_hub.control
                 mainPanel.Children.Add(headerPanel);
                 System.Diagnostics.Debug.WriteLine("Added header panel");
                 
+                // Recreate custom name section
+                var customNameSection = CreateCustomNameSection(app, saveCallback);
+                mainPanel.Children.Add(customNameSection);
+                System.Diagnostics.Debug.WriteLine("Added custom name section");
+                
                 // Recreate status section
                 var statusSection = CreateStatusSection(app);
                 mainPanel.Children.Add(statusSection);
@@ -1743,6 +1752,246 @@ namespace darts_hub.control
 
             noticePanel.Child = noticeText;
             return noticePanel;
+        }
+
+        /// <summary>
+        /// Creates a section for editing the CustomName of the app
+        /// </summary>
+        private static Control CreateCustomNameSection(AppBase app, Action? saveCallback = null)
+        {
+            // Check if this app should allow CustomName editing
+            var protectedAppNames = new[] { "darts-caller", "darts-wled", "darts-voice", "darts-gif", "darts-pixelit", "cam-loader" };
+            bool isProtectedApp = protectedAppNames.Contains(app.Name, StringComparer.OrdinalIgnoreCase);
+            
+            if (isProtectedApp)
+            {
+                // For protected apps, show a read-only display name section
+                var readOnlyPanel = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromArgb(50, 108, 117, 125)), // Gray background for read-only
+                    CornerRadius = new CornerRadius(8),
+                    Padding = new Thickness(15),
+                    Margin = new Thickness(0, 0, 0, 15),
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    MaxWidth = 650
+                };
+
+                var readOnlyContent = new StackPanel();
+
+                var readOnlyTitle = new TextBlock
+                {
+                    Text = "Application Name",
+                    FontSize = 16,
+                    FontWeight = FontWeight.Bold,
+                    Foreground = Brushes.White,
+                    Margin = new Thickness(0, 0, 0, 10),
+                    TextWrapping = TextWrapping.Wrap
+                };
+
+                var readOnlyName = new TextBlock
+                {
+                    Text = app.CustomName ?? app.Name,
+                    FontSize = 14,
+                    Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
+                    Margin = new Thickness(0, 0, 0, 5),
+                    TextWrapping = TextWrapping.Wrap
+                };
+
+                var readOnlyInfo = new TextBlock
+                {
+                    Text = "The name of this official darts extension cannot be modified to maintain consistency.",
+                    FontSize = 12,
+                    Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                    FontStyle = FontStyle.Italic,
+                    Margin = new Thickness(0, 5, 0, 0),
+                    TextWrapping = TextWrapping.Wrap
+                };
+
+                readOnlyContent.Children.Add(readOnlyTitle);
+                readOnlyContent.Children.Add(readOnlyName);
+                readOnlyContent.Children.Add(readOnlyInfo);
+                readOnlyPanel.Child = readOnlyContent;
+                
+                return readOnlyPanel;
+            }
+
+            // For non-protected apps, show the editable CustomName section
+            var customNamePanel = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(50, 255, 193, 7)), // Amber background
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(15),
+                Margin = new Thickness(0, 0, 0, 15),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MaxWidth = 650
+            };
+
+            var contentPanel = new StackPanel();
+
+            var customNameTitle = new TextBlock
+            {
+                Text = "Custom Display Name",
+                FontSize = 16,
+                FontWeight = FontWeight.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(33, 37, 41)), // Dark text for amber background
+                Margin = new Thickness(0, 0, 0, 10),
+                TextWrapping = TextWrapping.Wrap
+            };
+
+            // Create input grid
+            var inputGrid = new Grid();
+            inputGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            inputGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var customNameTextBox = new TextBox
+            {
+                Text = app.CustomName ?? app.Name,
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)), // Dark gray background like other textboxes
+                Foreground = Brushes.White, // White text like other textboxes
+                BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(8), // Consistent padding with other textboxes
+                CornerRadius = new CornerRadius(3), // Consistent corner radius with other textboxes
+                FontSize = 13, // Consistent font size with other textboxes
+                MaxLength = 50, // Reasonable limit for display names
+                Watermark = "Enter custom display name..."
+            };
+
+            // Fix focus/caret issues with consistent dark theme styling
+            customNameTextBox.SelectionBrush = new SolidColorBrush(Color.FromRgb(0, 123, 255)); // Blue selection
+            customNameTextBox.CaretBrush = Brushes.White; // White caret for dark background
+            
+            // Enhanced focus behavior for dark theme consistency
+            customNameTextBox.GotFocus += (s, e) =>
+            {
+                // Keep consistent dark theme when focused
+                customNameTextBox.Background = new SolidColorBrush(Color.FromRgb(45, 45, 48));
+                customNameTextBox.Foreground = Brushes.White;
+                customNameTextBox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 123, 255)); // Blue border when focused
+                customNameTextBox.CaretBrush = Brushes.White;
+                customNameTextBox.SelectionBrush = new SolidColorBrush(Color.FromRgb(0, 123, 255));
+            };
+            
+            customNameTextBox.LostFocus += (s, e) =>
+            {
+                // Restore normal dark theme styling when focus is lost
+                customNameTextBox.Background = new SolidColorBrush(Color.FromRgb(45, 45, 48));
+                customNameTextBox.Foreground = Brushes.White;
+                customNameTextBox.BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100));
+            };
+
+            // Also handle pointer events to ensure consistent dark theme
+            customNameTextBox.PointerEntered += (s, e) =>
+            {
+                // Keep dark theme on hover
+                customNameTextBox.Background = new SolidColorBrush(Color.FromRgb(45, 45, 48));
+                customNameTextBox.Foreground = Brushes.White;
+            };
+
+            customNameTextBox.PointerExited += (s, e) =>
+            {
+                // Keep dark theme after hover
+                customNameTextBox.Background = new SolidColorBrush(Color.FromRgb(45, 45, 48));
+                customNameTextBox.Foreground = Brushes.White;
+            };
+
+            var resetButton = new Button
+            {
+                Content = "🔄",
+                Background = new SolidColorBrush(Color.FromRgb(108, 117, 125)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(4),
+                Width = 35,
+                Height = 35,
+                Margin = new Thickness(8, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+
+            ToolTip.SetTip(resetButton, "Reset to original name");
+
+            // Info text - adjusted for dark theme context
+            var infoText = new TextBlock
+            {
+                Text = $"Customize how this app appears in the interface. Original name: '{app.Name}'",
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.FromRgb(33, 37, 41)), // Dark text for amber background
+                Margin = new Thickness(0, 8, 0, 0),
+                TextWrapping = TextWrapping.Wrap
+            };
+
+            // Event handlers
+            customNameTextBox.TextChanged += (s, e) =>
+            {
+                var newName = customNameTextBox.Text?.Trim();
+                if (!string.IsNullOrEmpty(newName) && newName != app.CustomName)
+                {
+                    var oldName = app.CustomName;
+                    app.CustomName = newName;
+                    
+                    System.Diagnostics.Debug.WriteLine($"CustomName changed from '{oldName}' to '{newName}' for app '{app.Name}'");
+                    
+                    // Trigger save callback
+                    saveCallback?.Invoke();
+                    
+                    // Update info text to show current vs original
+                    infoText.Text = $"Custom name: '{newName}' (Original: '{app.Name}')";
+                }
+                else if (string.IsNullOrEmpty(newName))
+                {
+                    // Reset to original name if empty
+                    app.CustomName = app.Name;
+                    customNameTextBox.Text = app.Name;
+                    infoText.Text = $"Using original name: '{app.Name}'";
+                    saveCallback?.Invoke();
+                }
+            };
+
+            resetButton.Click += (s, e) =>
+            {
+                // ⭐ Prevent multiple clicks
+                if (resetButton.Tag?.ToString() == "processing") return;
+                resetButton.Tag = "processing";
+                resetButton.IsEnabled = false;
+                
+                try
+                {
+                    var originalName = app.Name;
+                    customNameTextBox.Text = originalName;
+                    app.CustomName = originalName;
+                    infoText.Text = $"Reset to original name: '{originalName}'";
+                    
+                    System.Diagnostics.Debug.WriteLine($"CustomName reset to original '{originalName}' for app '{app.Name}'");
+                    
+                    // Trigger save callback
+                    saveCallback?.Invoke();
+                }
+                finally
+                {
+                    // Re-enable button after short delay
+                    Task.Delay(500).ContinueWith(_ =>
+                    {
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            resetButton.Tag = null;
+                            resetButton.IsEnabled = true;
+                        });
+                    });
+                }
+            };
+
+            // Assemble the UI
+            Grid.SetColumn(customNameTextBox, 0);
+            Grid.SetColumn(resetButton, 1);
+            inputGrid.Children.Add(customNameTextBox);
+            inputGrid.Children.Add(resetButton);
+
+            contentPanel.Children.Add(customNameTitle);
+            contentPanel.Children.Add(inputGrid);
+            contentPanel.Children.Add(infoText);
+
+            customNamePanel.Child = contentPanel;
+            return customNamePanel;
         }
     }
 }

@@ -120,6 +120,10 @@ namespace darts_hub.UI
             var headerPanel = CreateAppSettingsHeader(app);
             settingsPanel?.Children.Add(headerPanel);
 
+            // Add Custom Name section
+            var customNameSection = CreateCustomNameSection(app);
+            settingsPanel?.Children.Add(customNameSection);
+
             // Add Autostart section
             var autostartSection = CreateAutostartSection(app);
             settingsPanel?.Children.Add(autostartSection);
@@ -150,6 +154,210 @@ namespace darts_hub.UI
             headerPanel.Children.Add(buttonPanel);
 
             return headerPanel;
+        }
+
+        /// <summary>
+        /// Creates a section for editing the CustomName of the app
+        /// </summary>
+        private Control CreateCustomNameSection(AppBase app)
+        {
+            var expander = new Expander
+            {
+                Header = "Display Name",
+                IsExpanded = false, // Start collapsed in classic mode
+                Margin = new Thickness(0, 10),
+                FontSize = 16,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White,
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            var sectionPanel = new StackPanel 
+            { 
+                Margin = new Thickness(10),
+                Background = Brushes.Transparent,
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            // Description
+            var descriptionText = new TextBlock
+            {
+                Text = "Customize how this app appears in the interface",
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
+                Margin = new Thickness(0, 0, 0, 10),
+                TextWrapping = TextWrapping.Wrap
+            };
+            sectionPanel.Children.Add(descriptionText);
+
+            // Input panel
+            var inputPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 5, 0, 10)
+            };
+
+            var customNameLabel = new TextBlock
+            {
+                Text = "Display Name:",
+                FontSize = 14,
+                Foreground = Brushes.White,
+                VerticalAlignment = VerticalAlignment.Center,
+                MinWidth = 120,
+                Margin = new Thickness(0, 0, 10, 0)
+            };
+
+            var customNameTextBox = new TextBox
+            {
+                Text = app.CustomName ?? app.Name,
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
+                Foreground = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(8),
+                CornerRadius = new CornerRadius(3),
+                FontSize = 13,
+                MinWidth = 200,
+                MaxLength = 50, // Reasonable limit for display names
+                Watermark = "Enter custom display name..."
+            };
+
+            var resetButton = new Button
+            {
+                Content = "Reset",
+                Background = new SolidColorBrush(Color.FromRgb(108, 117, 125)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(3),
+                Padding = new Thickness(10, 6),
+                Margin = new Thickness(10, 0, 0, 0),
+                FontSize = 12
+            };
+
+            ToolTip.SetTip(resetButton, "Reset to original name");
+
+            // Info text
+            var infoText = new TextBlock
+            {
+                Text = $"Original name: '{app.Name}'",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(153, 153, 153)),
+                Margin = new Thickness(0, 8, 0, 0),
+                TextWrapping = TextWrapping.Wrap
+            };
+
+            // Event handlers
+            customNameTextBox.TextChanged += (s, e) =>
+            {
+                var newName = customNameTextBox.Text?.Trim();
+                if (!string.IsNullOrEmpty(newName) && newName != app.CustomName)
+                {
+                    var oldName = app.CustomName;
+                    app.CustomName = newName;
+                    
+                    System.Diagnostics.Debug.WriteLine($"CustomName changed from '{oldName}' to '{newName}' for app '{app.Name}'");
+                    
+                    // Update the header immediately
+                    UpdateAppHeaderTitle(app);
+                    
+                    // Trigger save
+                    mainWindow.Save();
+                    
+                    // Update info text
+                    infoText.Text = $"Custom name: '{newName}' (Original: '{app.Name}')";
+                }
+                else if (string.IsNullOrEmpty(newName))
+                {
+                    // Reset to original name if empty
+                    app.CustomName = app.Name;
+                    customNameTextBox.Text = app.Name;
+                    
+                    // Update the header immediately
+                    UpdateAppHeaderTitle(app);
+                    
+                    infoText.Text = $"Using original name: '{app.Name}'";
+                    mainWindow.Save();
+                }
+            };
+
+            resetButton.Click += (s, e) =>
+            {
+                // ? Prevent multiple clicks
+                if (resetButton.Tag?.ToString() == "processing") return;
+                resetButton.Tag = "processing";
+                resetButton.IsEnabled = false;
+                
+                try
+                {
+                    var originalName = app.Name;
+                    customNameTextBox.Text = originalName;
+                    app.CustomName = originalName;
+                    
+                    // Update the header immediately
+                    UpdateAppHeaderTitle(app);
+                    
+                    infoText.Text = $"Reset to original name: '{originalName}'";
+                    
+                    System.Diagnostics.Debug.WriteLine($"CustomName reset to original '{originalName}' for app '{app.Name}'");
+                    
+                    // Trigger save
+                    mainWindow.Save();
+                }
+                finally
+                {
+                    // Re-enable button after short delay
+                    Task.Delay(500).ContinueWith(_ =>
+                    {
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            resetButton.Tag = null;
+                            resetButton.IsEnabled = true;
+                        });
+                    });
+                }
+            };
+
+            // Assemble the input panel
+            inputPanel.Children.Add(customNameLabel);
+            inputPanel.Children.Add(customNameTextBox);
+            inputPanel.Children.Add(resetButton);
+
+            // Assemble the section
+            sectionPanel.Children.Add(inputPanel);
+            sectionPanel.Children.Add(infoText);
+
+            expander.Content = sectionPanel;
+            return expander;
+        }
+
+        /// <summary>
+        /// Updates the app header title to reflect the current CustomName
+        /// </summary>
+        private void UpdateAppHeaderTitle(AppBase app)
+        {
+            try
+            {
+                var settingsPanel = mainWindow.FindControl<StackPanel>("SettingsPanel");
+                if (settingsPanel?.Children.Count > 0)
+                {
+                    // Find the header panel (should be the first child)
+                    if (settingsPanel.Children[0] is StackPanel headerPanel)
+                    {
+                        // Find the title TextBlock (should be the first child)
+                        if (headerPanel.Children.Count > 0 && headerPanel.Children[0] is TextBlock titleBlock)
+                        {
+                            titleBlock.Text = app.CustomName;
+                            System.Diagnostics.Debug.WriteLine($"Updated header title to: {app.CustomName}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating app header title: {ex.Message}");
+            }
         }
 
         private StackPanel CreateAppActionButtons(AppBase app)

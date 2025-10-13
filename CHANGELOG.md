@@ -1,3 +1,8 @@
+## v1.2.3
+### Bug Fixes
+    - custom names for Links and apps whear leading into darts-hub crash. Fixed now.
+    - removed cmd window on windows at startup
+
 ## v1.2.2
 ### New Features
     - Command Line Interface (CLI) Support

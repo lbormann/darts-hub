@@ -82,12 +82,37 @@ namespace darts_hub.UI
             ConsoleTabControl.Items.Add(overviewTab);
             consoleTabs.Add("Overview", overviewTab);
 
-            // Create tabs for each app
+            // Create tabs for each app using unique keys to prevent duplicates
+            var appCounter = new Dictionary<string, int>(); // Count apps with same CustomName
+            
             foreach (var app in selectedProfile.Apps.Values.OrderBy(a => a.App.CustomName))
             {
-                var tab = CreateConsoleTab(app.App);
+                var baseName = app.App.CustomName;
+                string uniqueKey;
+                
+                // Check if we already have an app with this CustomName
+                if (appCounter.ContainsKey(baseName))
+                {
+                    appCounter[baseName]++;
+                    uniqueKey = $"{baseName} ({appCounter[baseName]})"; // Add number suffix
+                }
+                else
+                {
+                    appCounter[baseName] = 1;
+                    uniqueKey = baseName; // Use original name for first occurrence
+                }
+                
+                // Ensure the key is truly unique in the dictionary
+                int suffix = 2;
+                while (consoleTabs.ContainsKey(uniqueKey))
+                {
+                    uniqueKey = $"{baseName} ({suffix})";
+                    suffix++;
+                }
+                
+                var tab = CreateConsoleTab(app.App, uniqueKey);
                 ConsoleTabControl.Items.Add(tab);
-                consoleTabs.Add(app.App.CustomName, tab);
+                consoleTabs.Add(uniqueKey, tab);
             }
 
             // Select overview tab by default
@@ -103,9 +128,29 @@ namespace darts_hub.UI
             // Update all console tabs
             if (selectedProfile != null && consoleTabs.Any())
             {
+                var appCounter = new Dictionary<string, int>(); // Same logic as InitializeConsoleTabs
+                
                 foreach (var app in selectedProfile.Apps.Values.OrderBy(a => a.App.CustomName))
                 {
-                    UpdateConsoleTab(app.App);
+                    var baseName = app.App.CustomName;
+                    string uniqueKey;
+                    
+                    if (appCounter.ContainsKey(baseName))
+                    {
+                        appCounter[baseName]++;
+                        uniqueKey = $"{baseName} ({appCounter[baseName]})";
+                    }
+                    else
+                    {
+                        appCounter[baseName] = 1;
+                        uniqueKey = baseName;
+                    }
+                    
+                    // Find the existing tab and update it
+                    if (consoleTabs.ContainsKey(uniqueKey))
+                    {
+                        UpdateConsoleTab(app.App, uniqueKey);
+                    }
                 }
             }
         }
@@ -228,10 +273,11 @@ namespace darts_hub.UI
                 }
                 else if (selectedProfile != null)
                 {
-                    var app = selectedProfile.Apps.Values.FirstOrDefault(appState => appState.App.CustomName == currentConsoleTab)?.App;
+                    // Find the app by matching the uniqueKey logic
+                    var app = FindAppByUniqueKey(currentConsoleTab);
                     if (app != null)
                     {
-                        UpdateConsoleTab(app);
+                        UpdateConsoleTab(app, currentConsoleTab);
                     }
                 }
             }
@@ -265,7 +311,7 @@ namespace darts_hub.UI
             else
             {
                 // Export specific app console
-                var app = selectedProfile.Apps.Values.FirstOrDefault(appState => appState.App.CustomName == currentConsoleTab)?.App;
+                var app = FindAppByUniqueKey(currentConsoleTab);
                 if (app == null)
                     return null;
 
@@ -296,6 +342,37 @@ namespace darts_hub.UI
             // Save to file
             System.IO.File.WriteAllText(filePath, content);
             return filePath;
+        }
+
+        private AppBase? FindAppByUniqueKey(string uniqueKey)
+        {
+            if (selectedProfile == null) return null;
+            
+            var appCounter = new Dictionary<string, int>();
+            
+            foreach (var app in selectedProfile.Apps.Values.OrderBy(a => a.App.CustomName))
+            {
+                var baseName = app.App.CustomName;
+                string currentUniqueKey;
+                
+                if (appCounter.ContainsKey(baseName))
+                {
+                    appCounter[baseName]++;
+                    currentUniqueKey = $"{baseName} ({appCounter[baseName]})";
+                }
+                else
+                {
+                    appCounter[baseName] = 1;
+                    currentUniqueKey = baseName;
+                }
+                
+                if (currentUniqueKey == uniqueKey)
+                {
+                    return app.App;
+                }
+            }
+            
+            return null;
         }
 
         public void OnTabSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -400,11 +477,11 @@ namespace darts_hub.UI
             return tab;
         }
 
-        private TabItem CreateConsoleTab(AppBase app)
+        private TabItem CreateConsoleTab(AppBase app, string uniqueKey)
         {
             var tab = new TabItem
             {
-                Header = app.CustomName,
+                Header = uniqueKey, // Use unique key as header
                 FontSize = 11
             };
 
@@ -418,7 +495,7 @@ namespace darts_hub.UI
 
                 headerPanel.Children.Add(new TextBlock 
                 { 
-                    Text = app.CustomName, 
+                    Text = uniqueKey, // Use unique key for display
                     VerticalAlignment = VerticalAlignment.Center,
                     Margin = new Avalonia.Thickness(0, 0, 5, 0),
                     FontSize = 11
@@ -446,7 +523,7 @@ namespace darts_hub.UI
             var textBox = new TextBox
             {
                 Name = $"{app.CustomName}ConsoleOutput",
-                Text = $"Console output for {app.CustomName}...",
+                Text = $"Console output for {uniqueKey}...",
                 Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
                 Background = Brushes.Transparent,
                 TextWrapping = Avalonia.Media.TextWrapping.NoWrap,
@@ -458,8 +535,8 @@ namespace darts_hub.UI
                 UseLayoutRounding = true
             };
 
-            // Add scroll change tracking for this specific app
-            scrollViewer.ScrollChanged += (s, e) => OnScrollChanged(s, e, app.CustomName);
+            // Add scroll change tracking for this specific app using uniqueKey
+            scrollViewer.ScrollChanged += (s, e) => OnScrollChanged(s, e, uniqueKey);
 
             scrollViewer.Content = textBox;
             tab.Content = scrollViewer;
@@ -467,16 +544,22 @@ namespace darts_hub.UI
             return tab;
         }
 
-        private void UpdateConsoleTab(AppBase app)
+        private void UpdateConsoleTab(AppBase app, string? uniqueKey = null)
         {
-            if (!consoleTabs.TryGetValue(app.CustomName, out var tab)) return;
+            // If no uniqueKey provided, try to find it
+            if (string.IsNullOrEmpty(uniqueKey))
+            {
+                uniqueKey = app.CustomName;
+            }
+            
+            if (!consoleTabs.TryGetValue(uniqueKey, out var tab)) return;
 
             var scrollViewer = tab.Content as ScrollViewer;
             var textBox = scrollViewer?.Content as TextBox;
             if (textBox == null) return;
 
             var consoleText = new StringBuilder();
-            consoleText.AppendLine($"=== {app.CustomName} Console Output ===");
+            consoleText.AppendLine($"=== {uniqueKey} Console Output ===");
             consoleText.AppendLine($"Status: {(app.AppRunningState ? "RUNNING" : "STOPPED")}");
             consoleText.AppendLine($"Last updated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
             consoleText.AppendLine();
@@ -584,10 +667,10 @@ namespace darts_hub.UI
             textBox.Text = consoleText.ToString();
 
             // Update tab header with running indicator
-            UpdateTabHeader(tab, app);
+            UpdateTabHeader(tab, app, uniqueKey);
 
             // Auto-scroll to bottom if enabled and this is the current tab
-            if (isAutoScrollEnabled && !isUserScrolling && currentConsoleTab == app.CustomName)
+            if (isAutoScrollEnabled && !isUserScrolling && currentConsoleTab == uniqueKey)
             {
                 Dispatcher.UIThread.Post(() =>
                 {
@@ -596,7 +679,7 @@ namespace darts_hub.UI
             }
         }
 
-        private void UpdateTabHeader(TabItem tab, AppBase app)
+        private void UpdateTabHeader(TabItem tab, AppBase app, string uniqueKey)
         {
             if (app.AppRunningState)
             {
@@ -605,7 +688,7 @@ namespace darts_hub.UI
                     var headerPanel = new StackPanel { Orientation = Orientation.Horizontal };
                     headerPanel.Children.Add(new TextBlock 
                     { 
-                        Text = app.CustomName, 
+                        Text = uniqueKey, 
                         VerticalAlignment = VerticalAlignment.Center,
                         Margin = new Avalonia.Thickness(0, 0, 5, 0),
                         FontSize = 11
@@ -624,7 +707,7 @@ namespace darts_hub.UI
             {
                 if (tab.Header is StackPanel)
                 {
-                    tab.Header = app.CustomName;
+                    tab.Header = uniqueKey;
                 }
             }
         }
