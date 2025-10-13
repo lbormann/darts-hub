@@ -1,46 +1,69 @@
 using Avalonia;
 using System;
 using System.Threading;
-
+using System.Threading.Tasks;
+using darts_hub.UI;
 
 namespace darts_hub
 {
-
-
     internal class Program
     {
         private static Mutex _mutex;
 
-
-        // Initialization code. Don't use any Avalonia, third-party APIs or any
-        // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
-        // yet and stuff might break.
         [STAThread]
-        public static void Main(string[] args) {
-            const string MutexName = "YourAppName-UniqueMutexName";
+        public static async Task<int> Main(string[] args) 
+        {
+            // Process command line arguments first
+            try
+            {
+                bool shouldStartGui = await ShouldStartGui(args);
+                if (!shouldStartGui)
+                {
+                    return 0; // Exit after command line operation
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"Error processing command line arguments: {ex.Message}");
+                return 1;
+            }
+
+            // Continue with normal GUI startup
+            const string MutexName = "DartsHub-UniqueMutexName";
             bool createdNew;
 
             _mutex = new Mutex(true, MutexName, out createdNew);
 
             if (!createdNew)
             {
-                // Die Anwendung ist bereits gestartet.
-                // Hier k�nnen Sie die gew�nschte Aktion ausf�hren, z.B. das Hauptfenster der anderen Instanz fokussieren.
-                // Da Avalonia jedoch keine native Win32-API verwendet, ist es schwierig, das Hauptfenster der anderen Instanz direkt zu finden.
-                // Eine m�gliche L�sung k�nnte die Verwendung von IPC (Inter-Process Communication) sein, um die beiden Instanzen miteinander kommunizieren zu lassen.
-                return;
+                System.Console.WriteLine("Application is already running.");
+                return 0;
             }
 
             try
             {
-                //BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
                 BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"Application startup failed: {ex.Message}");
+                return 1;
             }
             finally
             {
                 _mutex?.Close();
             }
-        } 
+        }
+
+        private static async Task<bool> ShouldStartGui(string[] args)
+        {
+            // Process command line arguments
+            // Returns false if a command was executed and GUI should not start
+            // Returns true if GUI should start (no command or --verbose/--beta flags)
+            bool processedCommand = await CommandLineHelper.ProcessCommandLineArgs(args);
+            return !processedCommand;
+        }
 
         // Avalonia configuration, don't remove; also used by visual designer.
         public static AppBuilder BuildAvaloniaApp()

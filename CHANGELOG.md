@@ -1,3 +1,27 @@
+## v1.2.1
+### New Features
+    - Command Line Interface (CLI) Support
+        - Complete CLI functionality for headless operations
+        - Interactive and non-interactive command execution
+        - Support for PowerShell, CMD, and Bash environments
+    - Comprehensive Backup & Restore System
+        - Full system backups (configuration, profiles, logs)
+        - Configuration-only backups for quick saves
+        - Interactive backup restoration with safety confirmations
+        - Automatic backup cleanup with configurable retention
+        - Detailed backup manifests with version tracking
+    - Enhanced Testing Framework
+        - Extended CLI testing commands for all updater components
+        - Interactive test menus for guided testing
+        - Comprehensive logging test functionality
+        - Version checking and retry mechanism testing
+
+### Bug Fixes
+    - Fixed PowerShell CLI output issues by changing from WinExe to Exe output type
+    - Resolved console allocation problems for CLI operations
+    - Corrected backup restoration to include all configuration files
+    - Fixed CLI argument processing and command recognition
+
 ## v1.2.0
 ### Improvements
     - Updater System Overhaul

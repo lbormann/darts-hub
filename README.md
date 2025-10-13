@@ -1,4 +1,4 @@
-# DARTS-HUB
+﻿# DARTS-HUB
 [![Downloads](https://img.shields.io/github/downloads/lbormann/darts-hub/total.svg)](https://github.com/lbormann/darts-hub/releases/latest)
 
 Darts-hub (formerly autodarts-desktop) manages several extension-apps for https://autodarts.io.
@@ -121,9 +121,8 @@ You can also rename every app: use a right click for that; you can always return
 
 ### App-configuration
 
-Some Apps have mandatory configuration fields to work properly. Those fields are highlighted by a red colored frame. You can also spot a mandatory field by asterik character (*) at the end of the particular field-name. To reset a field-value click on the rubber-symbol.
-For an extensive App explaintion and its configuration click the question mark-symbol in the upper-right corner.
-If your done filling out configuration fields just close the dialog window to save configuration. In case the app is still running, darts-hub will automatically restart it to apply current configuration. 
+Some Apps have mandatory configuration fields to work properly. You can also spot a mandatory field by asterik character (*) at the end of the particular field-name. To reset a field-value click on the rubber-symbol or the X behind an Argument to delete it. 
+After Changing a configuration field, you have to restart the extension to apply changes. 
 
 Side note: a grayed out configuration field means, that it uses the default value of the app itself. The displayed value doesn't match the app`s default value necessarily. If you would like to know which default value will be used, have a look at specific app README.
 
@@ -143,11 +142,51 @@ Disclaimer: If you're using a specific version of an app with configuration, lik
 
 If you're running darts-hub on windows the affected app is probably classified as a virus. The easiest way to verify this is to close darts-hub. After that, add the main folder (darts-hub) as an exception for screening. Restart darts-hub and try to start the app.
 
-## CONTRIBUTING
+## Using CLI Features
 
-You just finished your new extension and wonder how to integrate it in darts-hub -> just send me a message on discord ;)
+### Available Commands
 
+| Command | Short | Description |
+|---------|-------|-------------|
+| `--help` | `-h` | Shows help information |
+| `--version` | `-v` | Shows version information (from Updater.cs) |
+| `--info` | | Shows detailed application information |
+| `--system-info` | `--sysinfo` | Shows system and environment information |
 
+### Profile Management // NOT FINALLY IMPLEMENTED YET
+
+| Command | Alias | Description |
+|---------|-------|-------------|
+| `--list-profiles` | `--profiles` | Lists all available dart profiles |
+
+### Backup & Restore 🆕
+
+| Command | Description |
+|---------|-------------|
+| `--backup [name]` | Creates full backup (configuration, profiles, logs) |
+| `--backup-config [name]` | Creates configuration-only backup |
+| `--backup-list` | Lists all available backups |
+| `--backup-restore <file>` | Restores backup from file |
+| `--backup-cleanup [count]` | Deletes old backups (keeps the last N) |
+
+### Testing Commands
+
+| Command | Description |
+|---------|-------------|
+| `--test-updater` | Starts interactive updater test menu |
+| `--test-full` | Runs complete updater test suite |
+| `--test-version` | Tests version checking |
+| `--test-retry` | Tests retry mechanism |
+| `--test-logging` | Tests logging system |
+
+### Runtime Options
+
+| Command | Short | Description |
+|---------|-------|-------------|
+| `--verbose` | `-vv` | Enables verbose logging (starts GUI) |
+| `--beta` | | Enables beta tester mode (starts GUI) |
+
+For more information, run `darts-hub --help` or `darts-hub -h` in your terminal Or have a look at the command-line-interface.md file.
 
 ## RESOURCES
 

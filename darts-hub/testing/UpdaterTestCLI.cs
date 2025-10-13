@@ -9,7 +9,7 @@ namespace darts_hub.testing
     /// </summary>
     public static class UpdaterTestCLI
     {
-        public static async Task Main(string[] args)
+        public static async Task RunCLI(string[] args)
         {
             Console.WriteLine("=== DARTS-HUB UPDATER TEST CONSOLE ===");
             Console.WriteLine();

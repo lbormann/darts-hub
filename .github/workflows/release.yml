@@ -41,17 +41,20 @@ jobs:
             CHANGELOG=$(awk "/^## ${VERSION}$/{flag=1; next} /^## / && flag{flag=0} flag" CHANGELOG.md)
             
             if [ -n "$CHANGELOG" ]; then
-              # Escape Zeichen für GitHub Output aber behalte Markdown-Formatierung
-              CHANGELOG="${CHANGELOG//'%'/'%25'}"
-              CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
-              CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
-              echo "changelog=${CHANGELOG}" >> $GITHUB_OUTPUT
+              # Speichere in temporärer Datei ohne Escaping für bessere Lesbarkeit
+              echo "$CHANGELOG" > changelog.txt
             else
-              echo "changelog=No changelog found for version ${VERSION}" >> $GITHUB_OUTPUT
+              echo "No changelog found for version ${VERSION}" > changelog.txt
             fi
           else
-            echo "changelog=No CHANGELOG.md file found" >> $GITHUB_OUTPUT
+            echo "No CHANGELOG.md file found" > changelog.txt
           fi
+
+      - name: Upload changelog
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog-content
+          path: changelog.txt
 
   # MACOS BUILDS
   build-macos:
@@ -289,34 +292,54 @@ jobs:
             echo "release_name=Release ${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Prepare release body
+        id: prepare_body
+        run: |
+          # Lese Changelog aus Datei
+          if [ -f "changelog-content/changelog.txt" ]; then
+            CHANGELOG_CONTENT=$(cat changelog-content/changelog.txt)
+          else
+            CHANGELOG_CONTENT="No changelog available"
+          fi
+          
+          # Erstelle Release Body mit korrekter Markdown-Formatierung
+          cat > release_body.md << 'EOF'
+          # Changelog for ${{ needs.extract-changelog.outputs.version }}
+          
+          ${CHANGELOG_CONTENT}
+          
+          ---
+          
+          ## Download Links
+          
+          ### Windows
+          - **x64**: [darts-hub-windows-x64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-windows-x64.zip)
+          - **x86**: [darts-hub-windows-x86.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-windows-x86.zip)
+          - **ARM**: [darts-hub-windows-arm.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-windows-arm.zip)
+          - **ARM64**: [darts-hub-windows-arm64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-windows-arm64.zip)
+          
+          ### macOS
+          - **x64 (Intel)**: [darts-hub-macOS-x64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-macOS-x64.zip)
+          - **ARM64 (Apple Silicon)**: [darts-hub-macOS-arm64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-macOS-arm64.zip)
+          
+          ### Linux
+          - **x64**: [darts-hub-linux-x64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-linux-x64.zip)
+          - **ARM**: [darts-hub-linux-arm.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-linux-arm.zip)
+          - **ARM64**: [darts-hub-linux-arm64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-linux-arm64.zip)
+          EOF
+          
+          # Ersetze Variablen
+          sed -i "s/\${{ needs.extract-changelog.outputs.version }}/${{ needs.extract-changelog.outputs.version }}/g" release_body.md
+          sed -i "s/\${{ github.repository }}/${{ github.repository }}/g" release_body.md
+          sed -i "s/\${{ steps.release_info.outputs.tag_name }}/${{ steps.release_info.outputs.tag_name }}/g" release_body.md
+          sed -i "s/\${CHANGELOG_CONTENT}/$(cat changelog-content/changelog.txt | sed 's/[[\.*^$()+?{|]/\\&/g')/g" release_body.md
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.release_info.outputs.tag_name }}
           name: ${{ steps.release_info.outputs.release_name }}
-          body: |
-            # Changelog for ${{ needs.extract-changelog.outputs.version }}
-            
-            ${{ needs.extract-changelog.outputs.changelog }}
-            
-            ---
-            
-            ## Download Links
-            
-            ### Windows
-            - **x64**: [darts-hub-windows-x64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-windows-x64.zip)
-            - **x86**: [darts-hub-windows-x86.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-windows-x86.zip)
-            - **ARM**: [darts-hub-windows-arm.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-windows-arm.zip)
-            - **ARM64**: [darts-hub-windows-arm64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-windows-arm64.zip)
-            
-            ### macOS
-            - **x64 (Intel)**: [darts-hub-macOS-x64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-macOS-x64.zip)
-            - **ARM64 (Apple Silicon)**: [darts-hub-macOS-arm64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-macOS-arm64.zip)
-            
-            ### Linux
-            - **x64**: [darts-hub-linux-x64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-linux-x64.zip)
-            - **ARM**: [darts-hub-linux-arm.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-linux-arm.zip)
-            - **ARM64**: [darts-hub-linux-arm64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-linux-arm64.zip)
+          body_path: release_body.md
           draft: false
           prerelease: false
           files: |
