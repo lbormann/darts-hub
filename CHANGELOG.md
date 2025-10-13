@@ -1,4 +1,4 @@
-## v1.2.1
+## v1.2.2
 ### New Features
     - Command Line Interface (CLI) Support
         - Complete CLI functionality for headless operations

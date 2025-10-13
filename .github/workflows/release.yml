@@ -41,10 +41,10 @@ jobs:
             CHANGELOG=$(awk "/^## ${VERSION}$/{flag=1; next} /^## / && flag{flag=0} flag" CHANGELOG.md)
             
             if [ -n "$CHANGELOG" ]; then
-              # Speichere in temporärer Datei ohne Escaping für bessere Lesbarkeit
+              # Speichere Changelog in Datei
               echo "$CHANGELOG" > changelog.txt
             else
-              echo "No changelog found for version ${VERSION}" > changelog.txt
+              echo "No changelog entries found for version ${VERSION}" > changelog.txt
             fi
           else
             echo "No CHANGELOG.md file found" > changelog.txt
@@ -304,7 +304,9 @@ jobs:
           
           # Erstelle Release Body mit korrekter Markdown-Formatierung
           cat > release_body.md << 'EOF'
-          # Changelog for ${{ needs.extract-changelog.outputs.version }}
+          # Release ${{ needs.extract-changelog.outputs.version }}
+          
+          ## Changelog
           
           ${CHANGELOG_CONTENT}
           
@@ -328,11 +330,30 @@ jobs:
           - **ARM64**: [darts-hub-linux-arm64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_info.outputs.tag_name }}/darts-hub-linux-arm64.zip)
           EOF
           
-          # Ersetze Variablen
-          sed -i "s/\${{ needs.extract-changelog.outputs.version }}/${{ needs.extract-changelog.outputs.version }}/g" release_body.md
-          sed -i "s/\${{ github.repository }}/${{ github.repository }}/g" release_body.md
-          sed -i "s/\${{ steps.release_info.outputs.tag_name }}/${{ steps.release_info.outputs.tag_name }}/g" release_body.md
-          sed -i "s/\${CHANGELOG_CONTENT}/$(cat changelog-content/changelog.txt | sed 's/[[\.*^$()+?{|]/\\&/g')/g" release_body.md
+          # Ersetze ${CHANGELOG_CONTENT} mit dem tatsächlichen Inhalt
+          if [ -f "changelog-content/changelog.txt" ]; then
+            # Verwende Python für saubere Text-Ersetzung
+            python3 << 'PYTHON_SCRIPT'
+          import re
+          
+          # Lese Changelog-Inhalt
+          with open('changelog-content/changelog.txt', 'r', encoding='utf-8') as f:
+              changelog_content = f.read()
+          
+          # Lese Release Body Template
+          with open('release_body.md', 'r', encoding='utf-8') as f:
+              release_body = f.read()
+          
+          # Ersetze Placeholder
+          release_body = release_body.replace('${CHANGELOG_CONTENT}', changelog_content)
+          
+          # Schreibe zurück
+          with open('release_body.md', 'w', encoding='utf-8') as f:
+              f.write(release_body)
+          PYTHON_SCRIPT
+          else
+            sed -i "s/\${CHANGELOG_CONTENT}/No changelog available/g" release_body.md
+          fi
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
