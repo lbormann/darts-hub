@@ -41,6 +41,9 @@ namespace darts_hub.UI
             settingsPanel?.Children.Clear();
             newSettingsContent?.Children.Clear();
             
+            // Check if this is a custom app
+            bool isCustomApp = app.Name.StartsWith("custom-") || app.Name.StartsWith("custom-url-");
+            
             if (!app.IsConfigurable())
             {
                 var message = new TextBlock
@@ -61,7 +64,7 @@ namespace darts_hub.UI
                 else
                 {
                     var contentModeManager = mainWindow.GetContentModeManager();
-                    contentModeManager.ShowClassicSettingsMode();
+                    contentModeManager.ShowClassicSettingsMode(hideTooltipForCustomApp: isCustomApp);
                     settingsPanel?.Children.Add(message);
                 }
                 return;
@@ -83,8 +86,9 @@ namespace darts_hub.UI
             var contentModeManager = mainWindow.GetContentModeManager();
             contentModeManager.ShowNewSettingsMode();
             
-            // Load new settings content with save callback
-            var newSettingsContent = await NewSettingsContentProvider.CreateNewSettingsContent(app, () => mainWindow.Save());
+            // Load new settings content with save callback and selected profile
+            var selectedProfile = mainWindow.SelectedProfile;
+            var newSettingsContent = await NewSettingsContentProvider.CreateNewSettingsContent(app, () => mainWindow.Save(), selectedProfile);
             
             // Clear existing content and add new content
             var newSettingsPanel = mainWindow.FindControl<StackPanel>("NewSettingsContent");
@@ -108,11 +112,17 @@ namespace darts_hub.UI
 
         private async Task RenderClassicSettingsMode(AppBase app)
         {
-            var contentModeManager = mainWindow.GetContentModeManager();
-            contentModeManager.ShowClassicSettingsMode();
+            // Check if this is a custom app (custom-1 to custom-5, or custom-url-1 to custom-url-5)
+            bool isCustomApp = app.Name.StartsWith("custom-") || app.Name.StartsWith("custom-url-");
             
-            // Load tooltips for this app
-            await LoadTooltipsForApp(app);
+            var contentModeManager = mainWindow.GetContentModeManager();
+            contentModeManager.ShowClassicSettingsMode(hideTooltipForCustomApp: isCustomApp);
+            
+            // Load tooltips for this app (only for non-custom apps since custom apps won't show tooltips)
+            if (!isCustomApp)
+            {
+                await LoadTooltipsForApp(app);
+            }
 
             var settingsPanel = mainWindow.FindControl<StackPanel>("SettingsPanel");
             

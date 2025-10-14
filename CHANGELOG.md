@@ -1,3 +1,8 @@
+## v1.2.4
+### Improvements
+    - added enable on startup checkbox in newsettingsmode
+    - remove toolbar area for custom apps
+
 ## v1.2.3
 ### Bug Fixes
     - custom names for Links and apps whear leading into darts-hub crash. Fixed now.

@@ -46,7 +46,7 @@ namespace darts_hub.control
                     StartProfileOnStart = false,
                     SkipUpdateConfirmation = false,
                     IsBetaTester = false,
-                    NewSettingsMode = false,
+                    NewSettingsMode = true, // Changed from false to true - new installations get enhanced settings mode by default
                     WizardCompleted = false
                 };
                 SaveSettings();

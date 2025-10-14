@@ -10,6 +10,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Avalonia.Interactivity;
 using System;
+using darts_hub.control; // Add this using directive to enable access to MainWindow
 
 namespace darts_hub.control
 {
@@ -198,12 +199,15 @@ namespace darts_hub.control
         /// </remarks>
         /// </summary>
         /// <param name="app">The app to create settings for</param>
+        /// <param name="saveCallback">Callback to save changes</param>
+        /// <param name="selectedProfile">The currently selected profile (for autostart functionality)</param>
         /// <returns>A control containing the new settings UI</returns>
-        public static async Task<Control> CreateNewSettingsContent(AppBase app, Action? saveCallback = null)
+        public static async Task<Control> CreateNewSettingsContent(AppBase app, Action? saveCallback = null, Profile? selectedProfile = null)
         {
             System.Diagnostics.Debug.WriteLine($"=== CREATE NEW SETTINGS CONTENT START ===");
             System.Diagnostics.Debug.WriteLine($"App: {app.Name} ({app.CustomName})");
             System.Diagnostics.Debug.WriteLine($"App type: {app.GetType().Name}");
+            System.Diagnostics.Debug.WriteLine($"Selected profile: {selectedProfile?.Name ?? "NULL"}");
             
             var mainPanel = new StackPanel
             {
@@ -232,6 +236,10 @@ namespace darts_hub.control
             // Custom Name section
             var customNameSection = CreateCustomNameSection(app, saveCallback);
             mainPanel.Children.Add(customNameSection);
+
+            // Enable at startup section - NEW!
+            var autostartSection = CreateAutostartSection(app, saveCallback, selectedProfile);
+            mainPanel.Children.Add(autostartSection);
 
             // Status section
             var statusSection = CreateStatusSection(app);
@@ -1499,6 +1507,24 @@ namespace darts_hub.control
                         System.Diagnostics.Debug.WriteLine("Could not find better main panel, proceeding with current one");
                     }
                 }
+
+                // Try to get the selected profile for autostart functionality
+                Profile? selectedProfile = null;
+                try
+                {
+                    if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+                    {
+                        if (desktop.MainWindow is MainWindow mainWindow)
+                        {
+                            selectedProfile = mainWindow.SelectedProfile;
+                            System.Diagnostics.Debug.WriteLine($"Retrieved selected profile: {selectedProfile?.Name ?? "NULL"}");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Could not get selected profile: {ex.Message}");
+                }
                 
                 // Clear the entire main panel
                 mainPanel.Children.Clear();
@@ -1513,6 +1539,11 @@ namespace darts_hub.control
                 var customNameSection = CreateCustomNameSection(app, saveCallback);
                 mainPanel.Children.Add(customNameSection);
                 System.Diagnostics.Debug.WriteLine("Added custom name section");
+                
+                // Recreate autostart section
+                var autostartSection = CreateAutostartSection(app, saveCallback, selectedProfile);
+                mainPanel.Children.Add(autostartSection);
+                System.Diagnostics.Debug.WriteLine("Added autostart section");
                 
                 // Recreate status section
                 var statusSection = CreateStatusSection(app);
@@ -1992,6 +2023,111 @@ namespace darts_hub.control
 
             customNamePanel.Child = contentPanel;
             return customNamePanel;
+        }
+
+        /// <summary>
+        /// Creates the autostart section for controlling whether the app starts with the profile
+        /// </summary>
+        private static Control CreateAutostartSection(AppBase app, Action? saveCallback = null, Profile? selectedProfile = null)
+        {
+            var autostartPanel = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(50, 255, 99, 71)), // Orange-red background for startup control
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(15),
+                Margin = new Thickness(0, 0, 0, 15),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MaxWidth = 650
+            };
+
+            var contentPanel = new StackPanel();
+
+            var autostartTitle = new TextBlock
+            {
+                Text = "⚡ Enable at Startup",
+                FontSize = 16,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White,
+                Margin = new Thickness(0, 0, 0, 10),
+                TextWrapping = TextWrapping.Wrap
+            };
+
+            // Find the profile state for this app
+            ProfileState? appState = null;
+            if (selectedProfile != null)
+            {
+                appState = selectedProfile.Apps.Values.FirstOrDefault(a => a.App.CustomName == app.CustomName);
+                System.Diagnostics.Debug.WriteLine($"Found app state for {app.CustomName}: TaggedForStart={appState?.TaggedForStart}, IsRequired={appState?.IsRequired}");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"No selected profile provided for autostart section");
+            }
+
+            var autostartCheckBox = new CheckBox
+            {
+                Content = "Start this application automatically when the profile is launched",
+                IsChecked = appState?.TaggedForStart ?? false,
+                FontSize = 13,
+                Foreground = Brushes.White,
+                Margin = new Thickness(0, 0, 0, 10),
+                HorizontalAlignment = HorizontalAlignment.Left
+            };
+
+            var infoText = new TextBlock
+            {
+                Text = appState?.IsRequired == true 
+                    ? "This is a required application and will always start with the profile."
+                    : "Control whether this application starts automatically when you launch your darts profile.",
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
+                Margin = new Thickness(0, 5, 0, 0),
+                TextWrapping = TextWrapping.Wrap
+            };
+
+            // Event handlers for the checkbox
+            autostartCheckBox.Checked += (s, e) =>
+            {
+                if (appState != null && !appState.IsRequired)
+                {
+                    appState.TaggedForStart = true;
+                    saveCallback?.Invoke();
+                    System.Diagnostics.Debug.WriteLine($"Enabled autostart for {app.CustomName}");
+                }
+            };
+
+            autostartCheckBox.Unchecked += (s, e) =>
+            {
+                if (appState != null && !appState.IsRequired)
+                {
+                    appState.TaggedForStart = false;
+                    if (appState.App.AppRunningState)
+                    {
+                        appState.App.Close(); // Stop the app if it's running and autostart is disabled
+                    }
+                    saveCallback?.Invoke();
+                    System.Diagnostics.Debug.WriteLine($"Disabled autostart for {app.CustomName}");
+                }
+            };
+
+            // Disable checkbox for required apps or if no profile state is available
+            if (appState?.IsRequired == true)
+            {
+                autostartCheckBox.IsEnabled = false;
+                autostartCheckBox.IsChecked = true; // Required apps are always enabled
+            }
+            else if (appState == null)
+            {
+                autostartCheckBox.IsEnabled = false;
+                infoText.Text = "Autostart control is not available (no profile selected).";
+            }
+
+            contentPanel.Children.Add(autostartTitle);
+            contentPanel.Children.Add(autostartCheckBox);
+            contentPanel.Children.Add(infoText);
+
+            autostartPanel.Child = contentPanel;
+            return autostartPanel;
         }
     }
 }

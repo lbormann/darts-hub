@@ -198,6 +198,31 @@ namespace darts_hub.UI
                 TooltipDescription.Text = "";
         }
 
+        public void ShowClassicSettingsMode(bool hideTooltipForCustomApp = false)
+        {
+            if (hideTooltipForCustomApp)
+            {
+                // Hide tooltip panel for custom apps to give more space for content
+                HideTooltipPanel();
+            }
+            else
+            {
+                // Show tooltip panel for official apps
+                ShowTooltipPanel();
+            }
+            
+            // Hide new settings panel, show classic settings
+            if (NewSettingsPanel != null)
+                NewSettingsPanel.IsVisible = false;
+            if (SettingsScrollViewer != null)
+                SettingsScrollViewer.IsVisible = true;
+            
+            if (TooltipTitle != null)
+                TooltipTitle.Text = "Tooltips";
+            if (TooltipDescription != null)
+                TooltipDescription.Text = "";
+        }
+
         public void ShowNewSettingsMode()
         {
             HideTooltipPanel();
@@ -221,6 +246,14 @@ namespace darts_hub.UI
             {
                 MainGrid.ColumnDefinitions[4].Width = new GridLength(250, GridUnitType.Pixel);
                 MainGrid.ColumnDefinitions[3].Width = new GridLength(2, GridUnitType.Pixel);
+                
+                // Reset content area to normal spanning (single column)
+                var settingsBorder = MainGrid.Children.OfType<Border>()
+                    .FirstOrDefault(b => Grid.GetColumn(b) == 2);
+                if (settingsBorder != null)
+                {
+                    Grid.SetColumnSpan(settingsBorder, 1);
+                }
             }
             if (TooltipPanel != null)
                 TooltipPanel.IsVisible = true;
@@ -234,6 +267,14 @@ namespace darts_hub.UI
             {
                 MainGrid.ColumnDefinitions[4].Width = new GridLength(0);
                 MainGrid.ColumnDefinitions[3].Width = new GridLength(0);
+                
+                // Expand content area to span across the hidden columns (2, 3, 4)
+                var settingsBorder = MainGrid.Children.OfType<Border>()
+                    .FirstOrDefault(b => Grid.GetColumn(b) == 2);
+                if (settingsBorder != null)
+                {
+                    Grid.SetColumnSpan(settingsBorder, 3); // Span columns 2, 3, and 4
+                }
             }
             if (TooltipPanel != null)
                 TooltipPanel.IsVisible = false;

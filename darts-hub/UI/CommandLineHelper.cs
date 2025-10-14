@@ -16,8 +16,17 @@ namespace darts_hub.UI
         private const string APP_NAME = "DartsHub";
         
         // Use System.Console for better PowerShell compatibility
-        private static void WriteLine(string text = "") => System.Console.WriteLine(text);
-        private static void Write(string text) => System.Console.Write(text);
+        private static void WriteLine(string text = "") 
+        {
+            System.Console.WriteLine(text);
+            System.Console.Out.Flush(); // Ensure immediate output in PowerShell
+        }
+        
+        private static void Write(string text) 
+        {
+            System.Console.Write(text);
+            System.Console.Out.Flush(); // Ensure immediate output in PowerShell
+        }
         
         /// <summary>
         /// Processes command line arguments and executes corresponding actions
@@ -670,11 +679,11 @@ namespace darts_hub.UI
         /// </summary>
         public static void ShowBanner()
         {
-            // Force console output in PowerShell
-            WriteLine($"????????????????????????????????????????????????????????????????");
-            WriteLine($"?                          {APP_NAME}                           ?");
-            WriteLine($"?                     {Updater.version} - CLI Mode                      ?");
-            WriteLine($"????????????????????????????????????????????????????????????????");
+            // Use ASCII characters that work reliably in PowerShell
+            WriteLine("================================================");
+            WriteLine($"                    {APP_NAME}");
+            WriteLine($"                 {Updater.version} - CLI Mode");
+            WriteLine("================================================");
             WriteLine();
         }
 

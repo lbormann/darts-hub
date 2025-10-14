@@ -21,41 +21,63 @@ namespace darts_hub
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetConsoleWindow();
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool AttachConsole(int dwProcessId);
+
+        private const int ATTACH_PARENT_PROCESS = -1;
+
         [STAThread]
         public static async Task<int> Main(string[] args) 
         {
-            // Check if we have command line arguments that need console output
             bool needsConsole = HasConsoleCommands(args);
-            bool consoleAllocated = false;
-
-            // Process command line arguments first
+            bool consoleAttached = false;
+            
             try
             {
-                // Only allocate console if we need it and we're on Windows
+                // Handle console for CLI commands
                 if (needsConsole && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    if (GetConsoleWindow() == IntPtr.Zero)
+                    // Try to attach to parent console first (PowerShell, CMD, etc.)
+                    if (AttachConsole(ATTACH_PARENT_PROCESS))
                     {
+                        consoleAttached = true;
+                        
+                        // Redirect console streams
+                        System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });
+                        System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError()) { AutoFlush = true });
+                    }
+                    else
+                    {
+                        // If attach fails, allocate a new console
                         AllocConsole();
-                        consoleAllocated = true;
                     }
                 }
 
+                // Process command line arguments
                 bool shouldStartGui = await ShouldStartGui(args);
+                
                 if (!shouldStartGui)
                 {
-                    // Free console before exiting if we allocated it
-                    if (consoleAllocated && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    // For CLI commands, we need to ensure output is flushed
+                    if (consoleAttached)
+                    {
+                        System.Console.Out.Flush();
+                        System.Console.Error.Flush();
+                        
+                        // Send a newline to separate from parent process prompt
+                        System.Console.WriteLine();
+                    }
+                    
+                    return 0;
+                }
+
+                // For GUI startup, free console if we allocated it
+                if (needsConsole && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    if (!consoleAttached) // Only free if we allocated, not if we attached
                     {
                         FreeConsole();
                     }
-                    return 0; // Exit after command line operation
-                }
-
-                // Free console before starting GUI if we allocated it
-                if (consoleAllocated && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    FreeConsole();
                 }
             }
             catch (Exception ex)
@@ -63,17 +85,18 @@ namespace darts_hub
                 if (needsConsole)
                 {
                     System.Console.WriteLine($"Error processing command line arguments: {ex.Message}");
-                }
-                
-                // Free console on error if we allocated it
-                if (consoleAllocated && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    FreeConsole();
+                    
+                    if (consoleAttached)
+                    {
+                        System.Console.Out.Flush();
+                        System.Console.Error.Flush();
+                        System.Console.WriteLine();
+                    }
                 }
                 return 1;
             }
 
-            // Continue with normal GUI startup (no console window)
+            // Continue with GUI startup
             const string MutexName = "DartsHub-UniqueMutexName";
             bool createdNew;
 
@@ -81,7 +104,7 @@ namespace darts_hub
 
             if (!createdNew)
             {
-                // For GUI startup, we don't want to show console errors
+                // Application already running
                 return 0;
             }
 
@@ -90,9 +113,10 @@ namespace darts_hub
                 BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
                 return 0;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // For GUI startup, we don't want to show console errors
+                // Log GUI startup errors (but don't show in console for GUI mode)
+                System.Diagnostics.Debug.WriteLine($"GUI startup error: {ex.Message}");
                 return 1;
             }
             finally
@@ -122,7 +146,12 @@ namespace darts_hub
                         lowerArg.Contains("restore") || 
                         lowerArg.Contains("test") || 
                         lowerArg.Contains("status") ||
-                        lowerArg.Contains("verbose"))
+                        lowerArg.Contains("info") ||
+                        lowerArg.Contains("profiles") ||
+                        lowerArg.Contains("list") ||
+                        lowerArg.Contains("cleanup") ||
+                        lowerArg.Equals("--verbose") == false && // verbose starts GUI
+                        lowerArg.Equals("--beta") == false)     // beta starts GUI
                     {
                         return true;
                     }

@@ -1307,7 +1307,7 @@ namespace darts_hub.control
             {
                 var p1Name = "darts-caller";
                 var p1Apps = new Dictionary<string, ProfileState>();
-                if (dartsCaller) p1Apps.Add("darts-caller", new ProfileState(true));
+                if (dartsCaller) p1Apps.Add("darts-caller", new ProfileState(false, true)); // Changed: isRequired=false, taggedForStart=true
                 if (dartsWled) p1Apps.Add("darts-wled", new ProfileState());
                 if (dartsPixelit) p1Apps.Add("darts-pixelit", new ProfileState());
                 if (dartsGif) p1Apps.Add("darts-gif", new ProfileState());
@@ -1331,12 +1331,12 @@ namespace darts_hub.control
                 var p2Name = "darts-extern: lidarts.org";
                 var p2Args = new Dictionary<string, string> { { "extern_platform", "lidarts" } };
                 var p2Apps = new Dictionary<string, ProfileState>();
-                if (dartsCaller) p2Apps.Add("darts-caller", new ProfileState(true));
+                if (dartsCaller) p2Apps.Add("darts-caller", new ProfileState(false, true)); // Changed: isRequired=false, taggedForStart=true
                 if (dartsWled) p2Apps.Add("darts-wled", new ProfileState());
                 if (dartsPixelit) p2Apps.Add("darts-pixelit", new ProfileState());
                 if (dartsGif) p2Apps.Add("darts-gif", new ProfileState());
                 if (dartsVoice) p2Apps.Add("darts-voice", new ProfileState());
-                if (dartsExtern) p2Apps.Add("darts-extern", new ProfileState(true, runtimeArguments: p2Args));
+                if (dartsExtern) p2Apps.Add("darts-extern", new ProfileState(true, true, runtimeArguments: p2Args)); // extern stays required
                 if (virtualDartsZoom) p2Apps.Add("virtual-darts-zoom", new ProfileState());
                 if (camLoader) p2Apps.Add("cam-loader", new ProfileState());
                 if (droidCam) p2Apps.Add("droid-cam", new ProfileState());
@@ -1359,12 +1359,12 @@ namespace darts_hub.control
                 var p3Name = "darts-extern: nakka.com/n01/online";
                 var p3Args = new Dictionary<string, string> { { "extern_platform", "nakka" } };
                 var p3Apps = new Dictionary<string, ProfileState>();
-                if (dartsCaller) p3Apps.Add("darts-caller", new ProfileState(true));
+                if (dartsCaller) p3Apps.Add("darts-caller", new ProfileState(false, true)); // Changed: isRequired=false, taggedForStart=true
                 if (dartsWled) p3Apps.Add("darts-wled", new ProfileState());
                 if (dartsPixelit) p3Apps.Add("darts-pixelit", new ProfileState());
                 if (dartsGif) p3Apps.Add("darts-gif", new ProfileState());
                 if (dartsVoice) p3Apps.Add("darts-voice", new ProfileState());
-                if (dartsExtern) p3Apps.Add("darts-extern", new ProfileState(true, runtimeArguments: p3Args));
+                if (dartsExtern) p3Apps.Add("darts-extern", new ProfileState(true, true, runtimeArguments: p3Args)); // extern stays required
                 if (virtualDartsZoom) p3Apps.Add("virtual-darts-zoom", new ProfileState());
                 if (camLoader) p3Apps.Add("cam-loader", new ProfileState());
                 if (droidCam) p3Apps.Add("droid-cam", new ProfileState());
@@ -1387,12 +1387,12 @@ namespace darts_hub.control
                 var p4Name = "darts-extern: dartboards.online";
                 var p4Args = new Dictionary<string, string> { { "extern_platform", "dartboards" } };
                 var p4Apps = new Dictionary<string, ProfileState>();
-                if (dartsCaller) p4Apps.Add("darts-caller", new ProfileState(true));
+                if (dartsCaller) p4Apps.Add("darts-caller", new ProfileState(false, true)); // Changed: isRequired=false, taggedForStart=true
                 if (dartsWled) p4Apps.Add("darts-wled", new ProfileState());
                 if (dartsPixelit) p4Apps.Add("darts-pixelit", new ProfileState());
                 if (dartsGif) p4Apps.Add("darts-gif", new ProfileState());
                 if (dartsVoice) p4Apps.Add("darts-voice", new ProfileState());
-                if (dartsExtern) p4Apps.Add("darts-extern", new ProfileState(true, runtimeArguments: p4Args));
+                if (dartsExtern) p4Apps.Add("darts-extern", new ProfileState(true, true, runtimeArguments: p4Args)); // extern stays required
                 if (virtualDartsZoom) p4Apps.Add("virtual-darts-zoom", new ProfileState());
                 if (camLoader) p4Apps.Add("cam-loader", new ProfileState());
                 if (dartboardsClient) p4Apps.Add("dartboards-client", new ProfileState());

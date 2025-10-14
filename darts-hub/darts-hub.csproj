@@ -55,6 +55,12 @@
       <Content Include="update.sh">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
+      <Content Include="darts-hub-cli.bat">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <Content Include="test-cli.ps1">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
       <Content Include="control\wizard\WizardArgumentsConfig.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
