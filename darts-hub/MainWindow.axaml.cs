@@ -305,6 +305,7 @@ namespace darts_hub
         private async void ConsoleExportButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleConsoleExportButton(sender, e);
         private async void ConsoleTestUpdaterButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleConsoleTestUpdaterButton(sender, e);
         private void ConsoleAutoScrollCheckBox_Changed(object sender, RoutedEventArgs e) => buttonEventManager.HandleConsoleAutoScrollCheckBox(sender, e);
+        private async void Robbel3DConfigButton_Click(object sender, RoutedEventArgs e) => await ShowRobbel3DConfiguration();
         #endregion
 
         #region Profile and App Management
@@ -454,5 +455,38 @@ namespace darts_hub
             }
         }
         #endregion
+
+        private async Task ShowRobbel3DConfiguration()
+        {
+            try
+            {
+                var robbel3DWindow = new Robbel3DConfigWindow(profileManager);
+                var result = await robbel3DWindow.ShowDialog<bool?>(this);
+                
+                if (result == true)
+                {
+                    // Configuration was applied successfully
+                    // Refresh the UI to reflect any updated settings
+                    navigationManager.RenderAppNavigation();
+                    
+                    // Re-render current app settings if any app is selected
+                    if (selectedApp != null)
+                    {
+                        var appSettingsRenderer = new AppSettingsRenderer(this, configurator);
+                        await appSettingsRenderer.RenderAppSettings(selectedApp);
+                    }
+                    
+                    await RenderMessageBox("Robbel3D Configuration", 
+                        "Your WLED device and darts applications have been configured successfully with Robbel3D presets!", 
+                        MsBox.Avalonia.Enums.Icon.Success);
+                }
+            }
+            catch (Exception ex)
+            {
+                await RenderMessageBox("Robbel3D Configuration Error", 
+                    $"An error occurred while opening the Robbel3D configuration:\n{ex.Message}", 
+                    MsBox.Avalonia.Enums.Icon.Error);
+            }
+        }
     }
 }

@@ -1,0 +1,523 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" 
+        d:DesignWidth="800" 
+        d:DesignHeight="900"
+        x:Class="darts_hub.UI.Robbel3DConfigWindow"
+        Title="🎯 Robbel3D One-Click Configuration"
+        Icon="/Assets/favicon.ico"
+        Width="800"
+        Height="700"
+        MaxHeight="900"
+        MinWidth="600"
+        MinHeight="500"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True"
+        Background="#FF2D2D30">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#FF1E1E1E" Padding="20,15">
+            <StackPanel>
+                <TextBlock Text="🎯 Robbel3D One-Click Configuration" 
+                           FontSize="24" 
+                           FontWeight="Bold" 
+                           Foreground="White" 
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="Configure your WLED printed parts from Robbel3D with optimized settings" 
+                           FontSize="14" 
+                           Foreground="#FFCCCCCC" 
+                           HorizontalAlignment="Center" 
+                           Margin="0,5,0,0"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content with proper scrolling and full width -->
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto" 
+                      HorizontalScrollBarVisibility="Disabled"
+                      Background="Transparent">
+            <StackPanel Spacing="20" Margin="20">
+                
+                <!-- Step 1: Select Configuration Preset -->
+                <Border Background="#FF252526" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="📋 Step 1: Select Configuration Preset" 
+                                   FontSize="18" 
+                                   FontWeight="Bold" 
+                                   Foreground="White" 
+                                   Margin="0,0,0,10"/>
+                        
+                        <TextBlock Text="Choose a pre-configured setup that matches your LED configuration:" 
+                                   Foreground="#FFCCCCCC" 
+                                   TextWrapping="Wrap" 
+                                   Margin="0,0,0,10"/>
+                        
+                        <ComboBox x:Name="PresetComboBox" 
+                                  Margin="0,0,0,10"
+                                  SelectionChanged="PresetComboBox_SelectionChanged"
+                                  MinHeight="35"/>
+                        
+                        <Border x:Name="PresetDetailsPanel" 
+                                Background="#FF1E1E1E" 
+                                CornerRadius="4" 
+                                Padding="10" 
+                                IsVisible="False">
+                            <StackPanel>
+                                <TextBlock x:Name="PresetDescription" 
+                                           Text="Select a preset to view details..." 
+                                           Foreground="#FFCCCCCC" 
+                                           TextWrapping="Wrap" 
+                                           FontSize="12"/>
+                                           
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <TextBlock Grid.Column="0" Text="LEDs: " Foreground="#FF888888" FontSize="11"/>
+                                    <TextBlock Grid.Column="1" x:Name="PresetLedCount" Text="?" Foreground="White" FontSize="11" Margin="0,0,20,0"/>
+                                    <TextBlock Grid.Column="2" Text="Version: " Foreground="#FF888888" FontSize="11"/>
+                                    <TextBlock Grid.Column="3" x:Name="PresetVersion" Text="?" Foreground="White" FontSize="11"/>
+                                </Grid>
+                                
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <TextBlock Grid.Column="0" Text="Author: " Foreground="#FF888888" FontSize="11"/>
+                                    <TextBlock Grid.Column="1" x:Name="PresetAuthor" Text="?" Foreground="White" FontSize="11"/>
+                                </Grid>
+                                
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <TextBlock Grid.Column="0" Text="Tags: " Foreground="#FF888888" FontSize="11"/>
+                                    <TextBlock Grid.Column="1" x:Name="PresetTags" Text="?" Foreground="White" FontSize="11" TextWrapping="Wrap"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Required Caller Parameters -->
+                        <Border Background="#FF1E1E1E" 
+                                CornerRadius="4" 
+                                Padding="15" 
+                                Margin="0,15,0,0">
+                            <StackPanel>
+                                <TextBlock Text="🎯 Required Caller Parameters" 
+                                           FontSize="14" 
+                                           FontWeight="Bold" 
+                                           Foreground="White" 
+                                           Margin="0,0,0,10"/>
+                                
+                                <TextBlock Text="Please configure the following required parameters for darts-caller:" 
+                                           Foreground="#FFCCCCCC" 
+                                           FontSize="12" 
+                                           TextWrapping="Wrap" 
+                                           Margin="0,0,0,10"/>
+                                
+                                <!-- Autodarts Email (U) -->
+                                <StackPanel Margin="0,0,0,8">
+                                    <TextBlock Text="Autodarts Email (U) *" 
+                                               Foreground="White" 
+                                               FontSize="12" 
+                                               Margin="0,0,0,4"/>
+                                    <TextBox x:Name="AutodartsEmailTextBox" 
+                                             Watermark="Enter your autodarts.io email address" 
+                                             MinHeight="32"
+                                             TextChanged="RequiredParameter_TextChanged"/>
+                                </StackPanel>
+                                
+                                <!-- Autodarts Password (P) -->
+                                <StackPanel Margin="0,0,0,8">
+                                    <TextBlock Text="Autodarts Password (P) *" 
+                                               Foreground="White" 
+                                               FontSize="12" 
+                                               Margin="0,0,0,4"/>
+                                    <TextBox x:Name="AutodartsPasswordTextBox" 
+                                             Watermark="Enter your autodarts.io password" 
+                                             PasswordChar="●"
+                                             MinHeight="32"
+                                             TextChanged="RequiredParameter_TextChanged"/>
+                                </StackPanel>
+                                
+                                <!-- Autodarts Board ID (B) -->
+                                <StackPanel Margin="0,0,0,8">
+                                    <TextBlock Text="Autodarts Board ID (B) *" 
+                                               Foreground="White" 
+                                               FontSize="12" 
+                                               Margin="0,0,0,4"/>
+                                    <TextBox x:Name="AutodartsBoardIdTextBox" 
+                                             Watermark="Enter your autodarts.io board ID" 
+                                             MinHeight="32"
+                                             TextChanged="RequiredParameter_TextChanged"/>
+                                </StackPanel>
+                                
+                                <!-- Media Path (M) -->
+                                <StackPanel Margin="0,0,0,8">
+                                    <TextBlock Text="Media Path (M) *" 
+                                               Foreground="White" 
+                                               FontSize="12" 
+                                               Margin="0,0,0,4"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <TextBox x:Name="MediaPathTextBox" 
+                                                 Grid.Column="0"
+                                                 Watermark="Select folder containing caller sounds/media" 
+                                                 MinHeight="32" 
+                                                 Margin="0,0,8,0"
+                                                 TextChanged="RequiredParameter_TextChanged"/>
+                                        
+                                        <Button x:Name="MediaPathBrowseButton" 
+                                                Grid.Column="1"
+                                                Content="📁 Browse" 
+                                                Padding="10,6"
+                                                Background="#FF0078D4"
+                                                Foreground="White"
+                                                BorderThickness="0"
+                                                CornerRadius="4"
+                                                Click="MediaPathBrowseButton_Click"/>
+                                    </Grid>
+                                </StackPanel>
+                                
+                                <TextBlock Text="* These parameters are required for darts-caller to connect and function properly" 
+                                           Foreground="#FF888888" 
+                                           FontSize="11" 
+                                           FontStyle="Italic" 
+                                           Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Required Parameters Validation Warning -->
+                        <Border x:Name="ValidationWarningPanel" 
+                                Background="#FFAA4400" 
+                                CornerRadius="4" 
+                                Padding="12" 
+                                Margin="0,10,0,0"
+                                BorderBrush="#FFFF6600" 
+                                BorderThickness="1"
+                                IsVisible="False">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⚠️" 
+                                           FontSize="16" 
+                                           Foreground="#FFFFAA00" 
+                                           VerticalAlignment="Top" 
+                                           Margin="0,0,8,0"/>
+                                <TextBlock x:Name="ValidationWarningText" 
+                                           Text="Required parameters missing..." 
+                                           Foreground="White" 
+                                           TextWrapping="Wrap" 
+                                           FontSize="12"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Step 2: Discover WLED Device -->
+                <Border Background="#FF252526" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="🔍 Step 2: Discover WLED Device" 
+                                   FontSize="18" 
+                                   FontWeight="Bold" 
+                                   Foreground="White" 
+                                   Margin="0,0,0,10"/>
+                        
+                        <TextBlock Text="Scan your network to find your WLED controller, or enter the IP address manually:" 
+                                   Foreground="#FFCCCCCC" 
+                                   TextWrapping="Wrap" 
+                                   Margin="0,0,0,10"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBox x:Name="WledIpTextBox" 
+                                     Grid.Column="0"
+                                     Watermark="Enter WLED IP address (e.g., 192.168.1.141)" 
+                                     Margin="0,0,10,0"
+                                     MinHeight="35"
+                                     TextChanged="WledIpTextBox_TextChanged"/>
+                            
+                            <Button x:Name="ScanButton" 
+                                    Grid.Column="1"
+                                    Content="🔍 Scan Network" 
+                                    Padding="10,8"
+                                    Background="#FF0078D4"
+                                    Foreground="White"
+                                    BorderThickness="0"
+                                    CornerRadius="4"
+                                    Click="ScanButton_Click"/>
+                        </Grid>
+                        
+                        <!-- Device Discovery Results -->
+                        <StackPanel x:Name="DeviceDiscoveryPanel" IsVisible="False" Margin="0,10,0,0">
+                            <TextBlock Text="Discovered WLED Devices:" 
+                                       FontWeight="Bold" 
+                                       Foreground="White" 
+                                       Margin="0,0,0,5"/>
+                            <ListBox x:Name="DiscoveredDevicesListBox" 
+                                     Background="#FF1E1E1E"
+                                     MaxHeight="120"
+                                     SelectionChanged="DiscoveredDevicesListBox_SelectionChanged">
+                            </ListBox>
+                        </StackPanel>
+                        
+                        <!-- Validation Status -->
+                        <StackPanel x:Name="ValidationPanel" 
+                                    Orientation="Horizontal" 
+                                    IsVisible="False" 
+                                    Margin="0,10,0,0">
+                            <Ellipse x:Name="ValidationIndicator" 
+                                     Width="12" 
+                                     Height="12" 
+                                     Fill="Orange" 
+                                     Margin="0,0,8,0" 
+                                     VerticalAlignment="Center"/>
+                            <TextBlock x:Name="ValidationText" 
+                                       Text="Validating device..." 
+                                       Foreground="#FFCCCCCC" 
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Step 3: Review Configuration -->
+                <Border Background="#FF252526" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="⚙️ Step 3: Review Configuration" 
+                                   FontSize="18" 
+                                   FontWeight="Bold" 
+                                   Foreground="White" 
+                                   Margin="0,0,0,10"/>
+                        
+                        <TextBlock Text="Review the settings that will be applied to your WLED device and darts applications:" 
+                                   Foreground="#FFCCCCCC" 
+                                   TextWrapping="Wrap" 
+                                   Margin="0,0,0,10"/>
+                        
+                        <TabControl x:Name="ConfigurationTabControl" Background="#FF1E1E1E" Height="280">
+                            <TabItem Header="WLED Settings">
+                                <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
+                                    <TextBlock x:Name="WledSettingsText" 
+                                               Text="Select a preset and WLED device to preview settings..." 
+                                               Foreground="#FFCCCCCC" 
+                                               FontFamily="Consolas" 
+                                               FontSize="11" 
+                                               TextWrapping="Wrap"/>
+                                </ScrollViewer>
+                            </TabItem>
+                            <TabItem Header="Caller Settings">
+                                <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
+                                    <TextBlock x:Name="CallerSettingsText" 
+                                               Text="Select a preset to preview settings..." 
+                                               Foreground="#FFCCCCCC" 
+                                               FontFamily="Consolas" 
+                                               FontSize="11" 
+                                               TextWrapping="Wrap"/>
+                                </ScrollViewer>
+                            </TabItem>
+                            <TabItem Header="WLED Files">
+                                <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
+                                    <TextBlock x:Name="WledPresetsText" 
+                                               Text="Select a preset to preview WLED files..." 
+                                               Foreground="#FFCCCCCC" 
+                                               FontFamily="Consolas" 
+                                               FontSize="11" 
+                                               TextWrapping="Wrap"/>
+                                </ScrollViewer>
+                            </TabItem>
+                            <TabItem Header="Metadata">
+                                <ScrollViewer Padding="10" VerticalScrollBarVisibility="Auto">
+                                    <TextBlock x:Name="MetadataText" 
+                                               Text="Select a preset to view metadata..." 
+                                               Foreground="#FFCCCCCC" 
+                                               FontFamily="Consolas" 
+                                               FontSize="11" 
+                                               TextWrapping="Wrap"/>
+                                </ScrollViewer>
+                            </TabItem>
+                        </TabControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Advanced Options -->
+                <Border Background="#FF252526" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="🔧 Advanced Options" 
+                                       FontSize="16" 
+                                       FontWeight="Bold" 
+                                       Foreground="White" 
+                                       VerticalAlignment="Center"/>
+                            <Button x:Name="AdvancedToggleButton" 
+                                    Content="🔽 Show Advanced Options" 
+                                    Background="Transparent" 
+                                    BorderThickness="0" 
+                                    Foreground="#FF0078D4" 
+                                    Margin="10,0,0,0"
+                                    Click="AdvancedToggleButton_Click"/>
+                        </StackPanel>
+                        
+                        <StackPanel x:Name="AdvancedOptionsPanel" IsVisible="False">
+                            <TextBlock Text="⚠️ Warning: These options can affect your existing WLED configuration!" 
+                                       Foreground="#FFFFAA00" 
+                                       FontSize="12" 
+                                       Margin="0,0,0,10" 
+                                       TextWrapping="Wrap"/>
+                                       
+                            <CheckBox x:Name="BackupExistingConfigCheckBox" 
+                                      Content="Create backup of existing WLED configuration" 
+                                      IsChecked="True" 
+                                      Foreground="White" 
+                                      Margin="0,0,0,8"/>
+                            <CheckBox x:Name="ResetBeforeConfigCheckBox" 
+                                      Content="Reset WLED to factory defaults before configuration (⚠️ Will erase all existing settings!)" 
+                                      IsChecked="False" 
+                                      Foreground="White" 
+                                      Margin="0,0,0,8"/>
+                            <CheckBox x:Name="ValidateAfterConfigCheckBox" 
+                                      Content="Validate configuration after upload" 
+                                      IsChecked="True" 
+                                      Foreground="White"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Step 4: Ready to Apply -->
+                <Border Background="#FF1B5E20" CornerRadius="8" Padding="15" BorderBrush="#FF4CAF50" BorderThickness="2">
+                    <StackPanel>
+                        <TextBlock Text="🚀 Step 4: Ready to Apply Configuration" 
+                                   FontSize="18" 
+                                   FontWeight="Bold" 
+                                   Foreground="White" 
+                                   Margin="0,0,0,10"/>
+                        
+                        <TextBlock Text="Once you've reviewed all settings above and validated your WLED device, click 'Apply Configuration' to:" 
+                                   Foreground="#FFCCCCCC" 
+                                   TextWrapping="Wrap" 
+                                   Margin="0,0,0,10"/>
+                        
+                        <StackPanel Margin="20,0,0,10">
+                            <TextBlock Text="✅ Upload WLED configuration file to your device" 
+                                       Foreground="#FF90EE90" 
+                                       FontSize="14" 
+                                       Margin="0,0,0,5"/>
+                            <TextBlock Text="✅ Upload WLED presets to your device" 
+                                       Foreground="#FF90EE90" 
+                                       FontSize="14" 
+                                       Margin="0,0,0,5"/>
+                            <TextBlock Text="✅ Configure darts-hub WLED extension settings" 
+                                       Foreground="#FF90EE90" 
+                                       FontSize="14" 
+                                       Margin="0,0,0,5"/>
+                            <TextBlock Text="✅ Configure darts-hub Caller application settings" 
+                                       Foreground="#FF90EE90" 
+                                       FontSize="14" 
+                                       Margin="0,0,0,5"/>
+                        </StackPanel>
+                        
+                        <TextBlock Text="This process typically takes 30-60 seconds depending on your network and WLED device performance." 
+                                   Foreground="#FFAAAAAA" 
+                                   FontStyle="Italic" 
+                                   FontSize="12" 
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Additional padding at bottom to ensure scrolling works -->
+                <Border Height="30" Background="Transparent"/>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer Actions -->
+        <Border Grid.Row="2" Background="#FF1E1E1E" Padding="20,15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Progress Info -->
+                <StackPanel Grid.Column="0" 
+                            x:Name="ProgressPanel" 
+                            Orientation="Horizontal" 
+                            IsVisible="False">
+                    <Border Width="16" Height="16" CornerRadius="8" Background="#FF0078D4" Margin="0,0,8,0">
+                        <Ellipse Width="8" Height="8" Fill="White"/>
+                    </Border>
+                    <TextBlock x:Name="ProgressText" 
+                               Text="Configuring..." 
+                               Foreground="White" 
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+                
+                <!-- Action Buttons -->
+                <Button Grid.Column="1" 
+                        x:Name="CancelButton" 
+                        Content="Cancel" 
+                        Padding="20,10" 
+                        Margin="0,0,10,0"
+                        Background="#FF666666"
+                        Foreground="White"
+                        BorderThickness="0"
+                        CornerRadius="4"
+                        Click="CancelButton_Click"/>
+                        
+                <Button Grid.Column="2" 
+                        x:Name="ApplyConfigButton" 
+                        Content="🚀 Apply Configuration" 
+                        Padding="20,10"
+                        Background="#FF28A745"
+                        Foreground="White"
+                        BorderThickness="0"
+                        CornerRadius="4"
+                        IsEnabled="False"
+                        Click="ApplyConfigButton_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- Loading Overlay -->
+        <Border x:Name="LoadingOverlay" 
+                Grid.RowSpan="3"
+                Background="#AA000000" 
+                IsVisible="False"
+                ZIndex="1000">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border Width="60" Height="60" CornerRadius="30" BorderBrush="White" BorderThickness="4" Margin="0,0,0,20">
+                    <Ellipse Width="40" Height="40" Fill="Transparent" Stroke="White" StrokeThickness="3" StrokeDashArray="5,3"/>
+                </Border>
+                <TextBlock x:Name="LoadingText"
+                           Text="Please wait..."
+                           TextAlignment="Center"
+                           Foreground="White"
+                           FontSize="18"
+                           FontWeight="Bold"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

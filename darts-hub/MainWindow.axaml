@@ -231,6 +231,21 @@
 										Margin="0,0,0,10"
 										Click="SetupWizardButton_Click"
 										ToolTip.Tip="Re-run the initial setup wizard to configure your applications"/>
+								
+								<!-- Robbel3D Configuration Button -->
+								<Button x:Name="Robbel3DConfigButton"
+										Content="🚀 Robbel3D One-Click Setup"
+										Padding="15,10"
+										Background="#FF28A745"
+										BorderBrush="#FF1E7E34"
+										BorderThickness="1"
+										CornerRadius="5"
+										Foreground="White"
+										FontWeight="Bold"
+										HorizontalAlignment="Left"
+										Margin="0,0,0,10"
+										Click="Robbel3DConfigButton_Click"
+										ToolTip.Tip="Configure WLED and Caller with optimized Robbel3D presets"/>
 							</StackPanel>
 							<StackPanel Margin="10,10,50,10" Spacing="5" MaxWidth="450">
 								<TextBlock Text="Information"

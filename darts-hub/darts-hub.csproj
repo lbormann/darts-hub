@@ -67,6 +67,11 @@
       <Content Include="logging-config.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
+      <!-- Copy all configuration files from configs/ directory -->
+      <Content Include="configs\**\*">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        <Link>configs\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      </Content>
     </ItemGroup>
     <ItemGroup>
       <Compile Update="SettingsWindow.axaml.cs">

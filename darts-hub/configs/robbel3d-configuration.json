@@ -1,0 +1,69 @@
+{
+  "version": "1.0",
+  "created": "2025-10-14T10:00:00Z",
+  "description": "Robbel3D Configuration File - Contains presets for one-click WLED and Caller setup",
+  "configurations": [
+    {
+      "name": "Robbel3D Complete Configuration",
+      "description": "Complete Robbel3D configuration with all WLED and Caller settings, references external WLED config and presets files",
+      "version": "2.0",
+      "created": "2025-10-14T10:00:00Z",
+      "author": "Robbel3D System",
+      "tags": [ "complete", "all-features", "advanced" ],
+      "led_count": 141,
+      "dartboard_type": "Standard",
+      "wled_config_file": "cfg.json",
+      "wled_presets_file": "presets.json",
+      "caller_settings": {
+        "V": "1.0",
+        "CC": "True",
+        "R": "0",
+        "CCP": "2",
+        "CBA": "1",
+        "CRL": "1",
+        "E": "0",
+        "ETS": "1",
+        "PCC": "3",
+        "PCCYO": "0",
+        "DL": "5",
+        "HP": "8079",
+        "DEB": "False"
+      },
+      "wled_settings": {
+        "DEB": "False",
+        "OFF": "False",
+        "BWS": "False",
+        "BRI": "255",
+        "SOFF": "False",
+        "IDE": "solid|green1",
+        "IDE2": "solid|lightblue1",
+        "IDE3": "solid|mint",
+        "IDE4": "solid|orchid",
+        "IDE5": "solid|pink",
+        "IDE6": "solid|sepia",
+        "BSE": "solid|red1",
+        "CE": "solid|purple",
+        "TOE": "solid|yellow1",
+        "G": "solid|blue1",
+        "M": "solid|magenta1",
+        "B": "solid|cyan1",
+        "PL": "solid|white",
+        "PJ": "solid|orange",
+        "S180": "solid|greenyellow",
+        "S140": "solid|lightgreen"
+      },
+      "metadata": {
+        "created_with": "Darts-Hub",
+        "created_with_version": "1.2.4",
+        "target_wled_version": "0.14+",
+        "target_caller_version": "2.17+",
+        "compatibility_notes": "Complete configuration with all available arguments for Robbel3D WLED Setup.",
+        "changelog": [
+          "Initial complete configuration created",
+          "References external WLED config and presets files from configs directory",
+          "Added support for all WLED and Caller arguments"
+        ]
+      }
+    }
+  ]
+}
