@@ -2,6 +2,8 @@
 ### Improvements
     - added enable on startup checkbox in newsettingsmode
     - remove toolbar area for custom apps
+### Robbel3D Mode
+    - Stay Tuned for more Infos
 ### Darts-WLED
     - Stability and Performance improvements
 
