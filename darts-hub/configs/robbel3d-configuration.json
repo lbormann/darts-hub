@@ -5,8 +5,8 @@
   "configurations": [
     {
       "name": "Robbel3D Complete Configuration",
-      "description": "Complete Robbel3D configuration with all WLED and Caller settings, references external WLED config and presets files",
-      "version": "2.0",
+      "description": "Complete Robbel3D configuration with all WLED and Caller settings, recommended by Robbel3D and I3uLL3t",
+      "version": "1.0",
       "created": "2025-10-14T10:00:00Z",
       "author": "Robbel3D System",
       "tags": [ "complete", "all-features", "advanced" ],

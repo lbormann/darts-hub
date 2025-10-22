@@ -2,6 +2,8 @@
 ### Improvements
     - added enable on startup checkbox in newsettingsmode
     - remove toolbar area for custom apps
+### Darts-WLED
+    - Stability and Performance improvements
 
 ## v1.2.3
 ### Bug Fixes

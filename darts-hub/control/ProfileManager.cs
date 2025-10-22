@@ -499,14 +499,14 @@ namespace darts_hub.control
 
             var dartsWledDownloadMap = new DownloadMap
             {
-                WindowsX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled",
-                LinuxArm64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-arm",
-                MacX64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac64",
-                MacArm64 = "https://github.com/lbormann/darts-wled/releases/download/v***VERSION***/darts-wled-mac"
+                WindowsX64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled.exe",
+                LinuxX64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled",
+                LinuxArm64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-arm64",
+                //LinuxArm = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-arm",
+                MacX64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-mac64",
+                MacArm64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-mac"
             };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("1.8.3");
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b1.9.0");
 
 
             var dartsPixelitDownloadMap = new DownloadMap

@@ -47,7 +47,18 @@ namespace darts_hub.control
             if (value.StartsWith("solid|", StringComparison.OrdinalIgnoreCase))
             {
                 var colorName = value.Substring(6); // Remove "solid|" prefix
-                return NewSettingsContentProvider.ColorEffects.Contains(colorName);
+                bool isColorEffect = NewSettingsContentProvider.ColorEffects.Contains(colorName);
+                System.Diagnostics.Debug.WriteLine($"IsColorEffect check: '{value}' -> colorName: '{colorName}' -> isColorEffect: {isColorEffect}");
+                
+                // Also check with case insensitive comparison for better matching
+                if (!isColorEffect)
+                {
+                    isColorEffect = NewSettingsContentProvider.ColorEffects.Any(color => 
+                        string.Equals(color, colorName, StringComparison.OrdinalIgnoreCase));
+                    System.Diagnostics.Debug.WriteLine($"IsColorEffect case-insensitive check: '{colorName}' -> isColorEffect: {isColorEffect}");
+                }
+                
+                return isColorEffect;
             }
             
             return false;
@@ -168,21 +179,33 @@ namespace darts_hub.control
             System.Diagnostics.Debug.WriteLine($"Parameter Value: '{param.Value}'");
             System.Diagnostics.Debug.WriteLine($"Parameter Name: '{param.Name}'");
 
-            // Set default selection based on current value
+            // CRITICAL FIX: Improve detection logic to prioritize color effects
+            // Set default selection based on current value with better detection
             if (!string.IsNullOrEmpty(param.Value))
             {
+                // Check for preset parameters first (ps|X format)
                 if (IsPresetParameter(param.Value))
                 {
                     modeSelector.SelectedItem = presetsItem;
                     isManualMode = false;
                     System.Diagnostics.Debug.WriteLine($"MODE: PRESETS (detected preset parameter)");
                 }
+                // CRITICAL FIX: Check for color effects more thoroughly, including solid|color format
                 else if (IsColorEffect(param.Value))
                 {
                     modeSelector.SelectedItem = colorsItem;
                     isManualMode = false;
                     System.Diagnostics.Debug.WriteLine($"MODE: COLORS (detected color effect)");
                 }
+                // ADDITIONAL CHECK: Explicitly check for solid|color pattern as backup
+                else if (param.Value.StartsWith("solid|", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Even if the color wasn't found in the list, if it has solid| prefix, treat as color
+                    modeSelector.SelectedItem = colorsItem;
+                    isManualMode = false;
+                    System.Diagnostics.Debug.WriteLine($"MODE: COLORS (detected solid| prefix - forcing color mode)");
+                }
+                // Check for WLED effect parameters (only if not a color effect)
                 else if (IsWledEffectParameter(param.Value))
                 {
                     modeSelector.SelectedItem = effectsItem;
@@ -1604,10 +1627,11 @@ namespace darts_hub.control
                 }
             }
 
-            // CRITICAL FIX: Save the initial selection if it exists and the parameter is empty
-            if (colorDropdown.SelectedItem != null && string.IsNullOrEmpty(param.Value))
+            // CRITICAL FIX: Save the initial selection if it exists and the parameter is empty or doesn't have solid| prefix
+            if (colorDropdown.SelectedItem != null && 
+                (string.IsNullOrEmpty(param.Value) || !param.Value.StartsWith("solid|", StringComparison.OrdinalIgnoreCase)))
             {
-                System.Diagnostics.Debug.WriteLine($"CRITICAL FIX: Saving initial selection because parameter was empty");
+                System.Diagnostics.Debug.WriteLine($"CRITICAL FIX: Saving initial selection because parameter was empty or missing solid| prefix");
                 saveCurrentSelection();
             }
 
