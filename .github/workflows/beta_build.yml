@@ -3,7 +3,7 @@ name: "Beta Build"
 on:
   push:
     tags:
-    - 'b*' # Push events to matching b*, i.e. b1.0, b20.15.10
+    - 'no*' # Push events to matching b*, i.e. b1.0, b20.15.10
   workflow_dispatch: # Ermöglicht manuellen Start
     inputs:
       tag_name:

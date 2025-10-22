@@ -4,10 +4,11 @@ on:
   push:
     tags:
       - 'v*' # Automatischer Trigger bei v-Tags (z.B. v1.0.0, v1.2.3)
+      - 'b*' # Automatischer Trigger bei b-Tags (z.B. b1.0.0-beta, b1.2.3-alpha)
   workflow_dispatch: # Ermöglicht manuellen Start
     inputs:
       tag_name:
-        description: 'Tag name for the release (e.g., v1.0.0)'
+        description: 'Tag name for the release (e.g., v1.0.0 or b1.0.0-beta)'
         required: true
         type: string
 
@@ -20,6 +21,7 @@ jobs:
     outputs:
       changelog: ${{ steps.extract.outputs.changelog }}
       version: ${{ steps.extract.outputs.version }}
+      is_prerelease: ${{ steps.extract.outputs.is_prerelease }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -34,6 +36,13 @@ jobs:
             VERSION="${GITHUB_REF#refs/tags/}"
           fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          
+          # Prüfe ob es sich um eine Prerelease handelt (Tag beginnt mit 'b')
+          if [[ "${VERSION}" =~ ^b.* ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
           
           # Extrahiere Changelog für die spezifische Version
           if [ -f "CHANGELOG.md" ]; then
@@ -286,10 +295,18 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "tag_name=${{ inputs.tag_name }}" >> $GITHUB_OUTPUT
-            echo "release_name=Release ${{ inputs.tag_name }}" >> $GITHUB_OUTPUT
+            if [[ "${{ inputs.tag_name }}" =~ ^b.* ]]; then
+              echo "release_name=BETA Release ${{ inputs.tag_name }}" >> $GITHUB_OUTPUT
+            else
+              echo "release_name=Release ${{ inputs.tag_name }}" >> $GITHUB_OUTPUT
+            fi
           else
             echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-            echo "release_name=Release ${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            if [[ "${GITHUB_REF#refs/tags/}" =~ ^b.* ]]; then
+              echo "release_name=BETA Release ${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            else
+              echo "release_name=Release ${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: Prepare release body
@@ -306,6 +323,19 @@ jobs:
           cat > release_body.md << 'EOF'
           # Release ${{ needs.extract-changelog.outputs.version }}
           
+          EOF
+          
+          # Füge BETA-Warnung hinzu, wenn es sich um eine Prerelease handelt
+          if [ "${{ needs.extract-changelog.outputs.is_prerelease }}" = "true" ]; then
+            cat >> release_body.md << 'EOF'
+          > **?? BETA VERSION WARNING**  
+          > This is a beta/prerelease version and may contain bugs or incomplete features.  
+          > Use at your own risk and consider backing up your data before installation.
+          
+          EOF
+          fi
+          
+          cat >> release_body.md << 'EOF'
           ## Changelog
           
           ${CHANGELOG_CONTENT}
@@ -362,7 +392,7 @@ jobs:
           name: ${{ steps.release_info.outputs.release_name }}
           body_path: release_body.md
           draft: false
-          prerelease: false
+          prerelease: ${{ needs.extract-changelog.outputs.is_prerelease == 'true' }}
           files: |
             darts-hub-macOS-x64/darts-hub-macOS-x64.zip
             darts-hub-macOS-arm64/darts-hub-macOS-arm64.zip
