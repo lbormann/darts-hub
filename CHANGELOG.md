@@ -1,4 +1,12 @@
-## v1.2.4
+## b1.2.5
+### Robbel3D Mode
+    - Stay Tuned for more Infos
+### Darts-WLED
+    - Stability and Performance improvements
+### Darts-CALLER
+    - Stability and Performance improvements
+
+## b1.2.4
 ### Improvements
     - added enable on startup checkbox in newsettingsmode
     - remove toolbar area for custom apps
