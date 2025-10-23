@@ -1,3 +1,9 @@
+## b1.2.6
+### Robbel3D Mode
+    - Stay Tuned for more Infos
+### Darts-WLED
+    - Stability and Performance improvements
+
 ## b1.2.5
 ### Robbel3D Mode
     - Stay Tuned for more Infos
