@@ -21,7 +21,7 @@ namespace darts_hub.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "b1.2.6";
+        public static readonly string version = "b1.2.7";
         
 
         public static event EventHandler<ReleaseEventArgs>? NoNewReleaseFound;

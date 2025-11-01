@@ -1,3 +1,39 @@
+## b1.2.7
+### Improvements
+    - added new Robbel3D Mode
+### Darts-WLED
+    - Fixed segment handling when switching from multi-segment presets to color/effect control
+        - All segments except segment 0 are now properly deactivated
+        - Segment 0 is completely recreated with clean default values
+        - Layout fields (grouping, spacing, offset) are explicitly reset to defaults
+        - Only effect-specific fields are preserved from the command
+    - Endpoint-specific LED count management
+        - Each WLED controller now uses its own LED count for segment configuration
+        - LED counts are cached per endpoint for improved performance
+        - Automatic LED count detection on connection
+    - Improved thread management and reconnect behavior
+        - Old WebSocket threads are properly closed before creating new connections
+        - Thread-safe reconnect mechanism prevents duplicate connection attempts
+        - Daemon threads prevent zombie processes
+        - Named threads for better debugging (e.g., "WLED-192.168.1.144")
+    - Enhanced error handling
+        - Better validation of empty effect lists to prevent IndexError
+        - Improved debug output for segment operations
+        - More detailed error messages showing affected configuration
+### Darts-CALLER
+    - Stability and Performance improvements
+    - Added CustomArgumentParser class for improved error output on invalid arguments
+        - Shows only relevant error messages instead of full help text
+        - Provides helpful hints based on error type
+    - Added Blind Support feature (-CBS / --call_blind_support)
+        - New BlindSupport class in separate blind_support.py module
+        - Announces target field at the start of each player's turn
+        - Announces exact dart position after every throw (bed type + number)
+        - Supported game modes: X01, ATC, RTW, Bermuda, Shanghai
+        - Replaces normal game mode calls when enabled to prevent duplicates
+        - Required sound files: bs_target_is, bs_single, bs_single_inner, bs_single_outer, bs_double, bs_triple, bs_outside, bs_any_double, bs_any_triple
+
+
 ## b1.2.6
 ### Robbel3D Mode
     - Stay Tuned for more Infos
