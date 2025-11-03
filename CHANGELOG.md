@@ -1,3 +1,43 @@
+## b1.2.8
+### Darts-Hub Core
+    - Enhanced NumericUpDown Controls with Type-Based Range Validation
+        - Introduced ArgumentTypeHelper class for centralized numeric range management
+        - Automatic extraction of min/max values from type definitions (e.g., int[0..1000], float[0.0..10.0])
+        - Applied to all NumericUpDown controls across all settings modes:
+            - New Settings Content Mode
+            - Classic Settings Mode (ArgumentControlFactory)
+            - All Extension Wizards (WLED, Caller, Pixelit, GIF, Generic)
+        - Prevents invalid input values (e.g., negative values for BSS parameter)
+        - Intelligent fallback system:
+            1. Primary: Type-based ranges from argument definitions
+            2. Secondary: Named parameter-specific ranges (BRI, HFO, DU, BSS, etc.)
+            3. Tertiary: Safe default ranges (0-999 for int, 0-999.9 for float)
+        - Automatic increment and format string configuration based on argument type
+        - Enhanced debugging output for range constraint application
+
+    - Parameter-Specific Improvements
+        - DU (effect_duration) parameter: Expanded range from [0..10] to [0..1000] seconds
+        - BSS (board_stop_start) parameter: Enforced [0.0..10.0] range (no negative values)
+        - All float parameters: Default positive-only ranges to prevent unintended negative values
+        - Automatic migration of old DU values to new range limits
+
+### Darts-CALLER
+    - Added Blind Support feature (-CBS / --call_blind_support)
+        - Announces target field at the start of each player's turn (for applicable game modes)
+        - Announces exact dart position after every throw with intelligent sound file usage
+        - Supported game modes: X01, ATC, RTW, Bermuda, Shanghai, Count-Up, Gotcha
+        - Replaces normal game mode calls when enabled to prevent duplicates
+    - Smart dart position announcements:
+        - Outer Single: Only number (e.g., "20")
+        - Inner Single: "inside" + number (e.g., "inside 20")
+        - Triple: Uses t-prefix files (e.g., "t20") with fallback to "triple 20"
+        - Double: Uses d-prefix files (e.g., "d20") with fallback to "double 20"
+        - Outside: Uses m-prefix files (e.g., "m20") with fallback to "outside 20"
+        - Bull/Bullseye: Direct announcement
+    - Corrected Bermuda rounds mapping (12-13-14-D-15-16-17-T-18-19-20-25-50)
+    - Required sound files: bs_target_is, bs_single_inner, bs_any_double, bs_any_triple, plus existing t*, d*, m* files
+        - the soundfiles are included in new pack versions for all googleai and openai voices. 
+
 ## b1.2.7
 ### Improvements
     - added new Robbel3D Mode

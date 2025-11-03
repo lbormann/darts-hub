@@ -482,7 +482,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-macx64",
                 MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("b2.19.3");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("b2.19.4");
 
 
             var dartsExternDownloadMap = new DownloadMap
@@ -699,7 +699,7 @@ namespace darts_hub.control
                 var dartsWledArguments = new List<Argument> {
                         new(name: "CON", type: "string", required: false, nameHuman: "-CON / --connection", section: "Service"),
                         new(name: "WEPS", type: "string", required: true, isMulti: true, nameHuman: "-WEPS / --wled_endpoints", section: "Service"),
-                        new(name: "DU", type: "int[0..10]", required: false, nameHuman: "-DU / --effect_duration", section: "Board Stop Start"),
+                        new(name: "DU", type: "int[0..1000]", required: false, nameHuman: "-DU / --effect_duration", section: "Board Stop Start"),
                         new(name: "BSS", type: "float[0.0..10.0]", required: false, nameHuman: "-BSS / --board_stop_start", section: "Board Stop Start"),
                         new(name: "BRI", type: "int[1..255]", required: false, nameHuman: "-BRI / --effect_brightness", section: "Service"),
                         new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "-HFO / --high_finish_on", section: "Effects"),
@@ -1196,7 +1196,7 @@ namespace darts_hub.control
                     {
                         var argS = i.ToString();
                         var WLEDDescMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "S" + i);
-                        if (WLEDDescMig != null) { WLEDDescMig.Section ="Score Effects" ; }
+                        if ( WLEDDescMig != null) { WLEDDescMig.Section ="Score Effects" ; }
                     }
                     for (int i = 1; i <= 12; i++)
                     {
@@ -1224,7 +1224,17 @@ namespace darts_hub.control
                     var WEPSWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "WEPS");
                     if (WEPSWLEDMig != null) { WEPSWLEDMig.Section = "Service"; }
                     var DUWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "DU");
-                    if (DUWLEDMig != null) { DUWLEDMig.Section = "Board Stop Start"; }
+                    if (DUWLEDMig != null) 
+                    { 
+                        DUWLEDMig.Section = "Board Stop Start";
+                        // Migrate old type to new range
+                        if (DUWLEDMig.Type == "int[0..10]")
+                        {
+                            DUWLEDMig.Type = "int[0..1000]";
+                            DUWLEDMig.ValidateType();
+                            System.Diagnostics.Debug.WriteLine("[Migration] Updated DU argument type from int[0..10] to int[0..1000]");
+                        }
+                    }
                     var BSSWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "BSS");
                     if (BSSWLEDMig != null) { BSSWLEDMig.Section = "Board Stop Start"; }
                     var BRIWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "BRI");

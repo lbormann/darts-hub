@@ -314,13 +314,25 @@ namespace darts_hub.control.wizard.pixelit
                 CornerRadius = new Avalonia.CornerRadius(4),
                 Padding = new Avalonia.Thickness(10, 8),
                 Width = 150,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Increment = isFloat ? 0.1m : 1m,
-                FormatString = isFloat ? "F1" : "F0"
+                HorizontalAlignment = HorizontalAlignment.Left
             };
 
-            // Set appropriate limits FIRST before setting value
-            SetNumericLimits(numericUpDown, argument, isFloat);
+            // ⭐ Use ArgumentTypeHelper for range constraints
+            if (ArgumentTypeHelper.TryGetNumericRange(argument, out var minimum, out var maximum))
+            {
+                numericUpDown.Minimum = minimum;
+                numericUpDown.Maximum = maximum;
+                System.Diagnostics.Debug.WriteLine($"[PixelitArgFactory] Applied type-based range constraints to {argument.Name}: Min={minimum}, Max={maximum}");
+            }
+            else
+            {
+                // Fallback to named parameter-based limits
+                SetNamedParameterLimits(numericUpDown, argument, isFloat);
+            }
+
+            // Set increment and format
+            numericUpDown.Increment = ArgumentTypeHelper.GetIncrementStep(argument);
+            numericUpDown.FormatString = ArgumentTypeHelper.GetFormatString(argument);
 
             // Set value AFTER limits are set
             if (isFloat)
@@ -354,6 +366,32 @@ namespace darts_hub.control.wizard.pixelit
             };
 
             return numericUpDown;
+        }
+
+        /// <summary>
+        /// Sets named-parameter-based limits as fallback when ArgumentTypeHelper doesn't find a range
+        /// </summary>
+        private static void SetNamedParameterLimits(NumericUpDown control, Argument argument, bool isFloat)
+        {
+            var argName = argument.Name.ToLower();
+            
+            switch (argName)
+            {
+                case "bri" or "brightness":
+                    control.Minimum = 1;
+                    control.Maximum = 255;
+                    break;
+                case "hfo":
+                    control.Minimum = 2;
+                    control.Maximum = 170;
+                    break;
+                default:
+                    // Use reasonable default ranges (positive only for most cases)
+                    control.Minimum = isFloat ? 0m : 0;
+                    control.Maximum = isFloat ? 999.9m : 999;
+                    System.Diagnostics.Debug.WriteLine($"[PixelitArgFactory] Using default positive range for {argument.Name}: Min={control.Minimum}, Max={control.Maximum}");
+                    break;
+            }
         }
 
         private static Control CreatePathSelector(Argument argument)
@@ -434,9 +472,10 @@ namespace darts_hub.control.wizard.pixelit
                     control.Maximum = 170;
                     break;
                 default:
-                    // Use reasonable default ranges instead of extreme values
-                    control.Minimum = isFloat ? -999.9m : -999;
+                    // Use reasonable default ranges (positive only for most cases)
+                    control.Minimum = isFloat ? 0m : 0;
                     control.Maximum = isFloat ? 999.9m : 999;
+                    System.Diagnostics.Debug.WriteLine($"[PixelitArgFactory] Using default positive range for {argument.Name}: Min={control.Minimum}, Max={control.Maximum}");
                     break;
             }
         }

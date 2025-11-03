@@ -1072,9 +1072,6 @@ namespace darts_hub.control
                     var intUpDown = new NumericUpDown
                     {
                         Value = int.TryParse(param.Value, out var intVal) ? intVal : 0,
-                        Increment = 1,
-                        Minimum = -999,
-                        Maximum = 999,
                         Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
                         Foreground = Brushes.White,
                         BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
@@ -1082,11 +1079,33 @@ namespace darts_hub.control
                         CornerRadius = new CornerRadius(3),
                         FontSize = 13
                     };
+
+                    // Apply type-based range constraints
+                    if (ArgumentTypeHelper.TryGetNumericRange(param, out var minInt, out var maxInt))
+                    {
+                        intUpDown.Minimum = minInt;
+                        intUpDown.Maximum = maxInt;
+                        System.Diagnostics.Debug.WriteLine($"[NewSettings] Applied int range constraints to {param.Name}: Min={minInt}, Max={maxInt}");
+                    }
+                    else
+                    {
+                        // Fallback to reasonable defaults
+                        intUpDown.Minimum = int.MinValue;
+                        intUpDown.Maximum = int.MaxValue;
+                    }
+
+                    // Set increment step based on type
+                    intUpDown.Increment = ArgumentTypeHelper.GetIncrementStep(param);
+                    intUpDown.FormatString = ArgumentTypeHelper.GetFormatString(param);
+
                     intUpDown.ValueChanged += (s, e) =>
                     {
-                        param.Value = intUpDown.Value?.ToString() ?? "";
-                        param.IsValueChanged = true;
-                        saveCallback?.Invoke();
+                        if (intUpDown.Value.HasValue)
+                        {
+                            param.Value = ((int)intUpDown.Value.Value).ToString();
+                            param.IsValueChanged = true;
+                            saveCallback?.Invoke();
+                        }
                     };
                     return intUpDown;
 
@@ -1095,10 +1114,6 @@ namespace darts_hub.control
                     {
                         Value = double.TryParse(param.Value, System.Globalization.NumberStyles.Float, 
                                 System.Globalization.CultureInfo.InvariantCulture, out var doubleVal) ? (decimal)doubleVal : 0,
-                        Increment = 0.1m,
-                        Minimum = -999.9m,
-                        Maximum = 999.9m,
-                        FormatString = "F2",
                         Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
                         Foreground = Brushes.White,
                         BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
@@ -1106,11 +1121,33 @@ namespace darts_hub.control
                         CornerRadius = new CornerRadius(3),
                         FontSize = 13
                     };
+
+                    // Apply type-based range constraints
+                    if (ArgumentTypeHelper.TryGetNumericRange(param, out var minFloat, out var maxFloat))
+                    {
+                        floatUpDown.Minimum = minFloat;
+                        floatUpDown.Maximum = maxFloat;
+                        System.Diagnostics.Debug.WriteLine($"[NewSettings] Applied float range constraints to {param.Name}: Min={minFloat}, Max={maxFloat}");
+                    }
+                    else
+                    {
+                        // Fallback to reasonable defaults
+                        floatUpDown.Minimum = decimal.MinValue;
+                        floatUpDown.Maximum = decimal.MaxValue;
+                    }
+
+                    // Set increment step and format based on type
+                    floatUpDown.Increment = ArgumentTypeHelper.GetIncrementStep(param);
+                    floatUpDown.FormatString = ArgumentTypeHelper.GetFormatString(param);
+
                     floatUpDown.ValueChanged += (s, e) =>
                     {
-                        param.Value = floatUpDown.Value?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
-                        param.IsValueChanged = true;
-                        saveCallback?.Invoke();
+                        if (floatUpDown.Value.HasValue)
+                        {
+                            param.Value = floatUpDown.Value.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                            param.IsValueChanged = true;
+                            saveCallback?.Invoke();
+                        }
                     };
                     return floatUpDown;
 

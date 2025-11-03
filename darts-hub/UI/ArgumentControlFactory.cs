@@ -4,6 +4,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using darts_hub.model;
+using darts_hub.control; // ? Add this using for ArgumentTypeHelper
 using System;
 using System.Globalization;
 using System.Linq;
@@ -118,35 +119,86 @@ namespace darts_hub.UI
 
         private NumericUpDown CreateIntControl(Argument argument)
         {
-            return new NumericUpDown
+            var numericUpDown = new NumericUpDown
             {
-                Value = int.TryParse(argument.Value, out var intVal) ? intVal : 0,
-                Increment = 1,
-                Minimum = -999,
-                Maximum = 999,
                 FontSize = 14,
                 Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
                 Foreground = Brushes.White,
                 BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
+
+            // ? Use ArgumentTypeHelper for range constraints
+            if (ArgumentTypeHelper.TryGetNumericRange(argument, out var minimum, out var maximum))
+            {
+                numericUpDown.Minimum = minimum;
+                numericUpDown.Maximum = maximum;
+                System.Diagnostics.Debug.WriteLine($"[ArgControlFactory] Applied type-based range constraints to {argument.Name}: Min={minimum}, Max={maximum}");
+            }
+            else
+            {
+                // Fallback to default positive range
+                numericUpDown.Minimum = 0;
+                numericUpDown.Maximum = 999;
+            }
+
+            // Set increment and format
+            numericUpDown.Increment = ArgumentTypeHelper.GetIncrementStep(argument);
+            numericUpDown.FormatString = ArgumentTypeHelper.GetFormatString(argument);
+
+            // Parse and set value
+            if (int.TryParse(argument.Value, out var intVal))
+            {
+                numericUpDown.Value = intVal;
+            }
+            else
+            {
+                numericUpDown.Value = 0;
+            }
+
+            return numericUpDown;
         }
 
         private NumericUpDown CreateFloatControl(Argument argument)
         {
-            return new NumericUpDown
+            var numericUpDown = new NumericUpDown
             {
-                Value = double.TryParse(argument.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var doubleVal) ? (decimal)doubleVal : 0,
-                Increment = 0.1m,
-                Minimum = -999.9m,
-                Maximum = 999.9m,
-                FormatString = "F1",
                 FontSize = 14,
                 Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
                 Foreground = Brushes.White,
                 BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
+
+            // ? Use ArgumentTypeHelper for range constraints
+            if (ArgumentTypeHelper.TryGetNumericRange(argument, out var minimum, out var maximum))
+            {
+                numericUpDown.Minimum = minimum;
+                numericUpDown.Maximum = maximum;
+                System.Diagnostics.Debug.WriteLine($"[ArgControlFactory] Applied type-based range constraints to {argument.Name}: Min={minimum}, Max={maximum}");
+            }
+            else
+            {
+                // Fallback to default positive range
+                numericUpDown.Minimum = 0m;
+                numericUpDown.Maximum = 999.9m;
+            }
+
+            // Set increment and format
+            numericUpDown.Increment = ArgumentTypeHelper.GetIncrementStep(argument);
+            numericUpDown.FormatString = ArgumentTypeHelper.GetFormatString(argument);
+
+            // Parse and set value
+            if (double.TryParse(argument.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var doubleVal))
+            {
+                numericUpDown.Value = (decimal)doubleVal;
+            }
+            else
+            {
+                numericUpDown.Value = 0;
+            }
+
+            return numericUpDown;
         }
 
         private async Task<Grid> CreateFilePathControl(Argument argument, string type)
