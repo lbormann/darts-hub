@@ -1,3 +1,8 @@
+## b1.2.9
+### Version Updates
+    - Darts-Wled b1.9.5
+### Darts-WLED
+    - bugfix Endpoint reconnects
 ## b1.2.8
 ### Darts-Hub Core
     - Enhanced NumericUpDown Controls with Type-Based Range Validation
