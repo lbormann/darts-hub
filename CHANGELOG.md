@@ -1,3 +1,7 @@
+## b1.2.10
+### Version Updates
+    - Darts-Caller b2.19.5
+
 ## b1.2.9
 ### Version Updates
     - Darts-Wled b1.9.5
