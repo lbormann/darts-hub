@@ -31,10 +31,10 @@
       },
       "wled_settings": {
         "DEB": "False",
-        "OFF": "False",
+        "OFF": "True",
         "BWS": "False",
         "BRI": "255",
-        "SOFF": "False",
+        "SOFF": "True",
         "IDE": "solid|green1",
         "IDE2": "solid|lightblue1",
         "IDE3": "solid|mint",
@@ -44,13 +44,12 @@
         "BSE": "solid|red1",
         "CE": "solid|purple",
         "TOE": "solid|yellow1",
-        "G": "solid|blue1",
-        "M": "solid|magenta1",
-        "B": "solid|cyan1",
-        "PL": "solid|white",
-        "PJ": "solid|orange",
-        "S180": "solid|greenyellow",
-        "S140": "solid|lightgreen"
+        "G": "ps|1",
+        "M": "ps|2",
+        "B": "ps|3",
+        "PL": "ps|6",
+        "PJ": "ps5",
+        "S180": "ps|4"
       },
       "metadata": {
         "created_with": "Darts-Hub",

@@ -1,3 +1,14 @@
+## b1.2.11
+### Version Updates
+    - Darts-Caller b2.19.6
+        - blind support: fixed wrong soundfile played for required. 
+        - blind support: fixed overlapping sound files
+        - blind support: stability improvements
+
+### Darts-Hub Features
+    - added new Robbel3D one click install mode. 
+    - added enable on startup checkbox in newsettingsmode for all extensions
+
 ## b1.2.10
 ### Version Updates
     - Darts-Caller b2.19.5
