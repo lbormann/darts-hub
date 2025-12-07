@@ -47,6 +47,12 @@ namespace darts_hub.model
         public string? WledPresetsFile { get; set; }
         
         /// <summary>
+        /// Auto-start WLED extension after configuration has been applied
+        /// </summary>
+        [JsonProperty("auto_start_wled")]
+        public bool AutoStartWled { get; set; } = true;
+        
+        /// <summary>
         /// Darts-Caller application settings (all arguments)
         /// </summary>
         [JsonProperty("caller_settings")]
@@ -73,6 +79,13 @@ namespace darts_hub.model
         // Runtime properties - loaded from external files
         [JsonIgnore]
         public WledConfiguration? WledConfig { get; set; }
+        
+        /// <summary>
+        /// Raw WLED config as dynamic object (preserves ALL fields from cfg.json)
+        /// This is used instead of WledConfig to avoid losing fields during serialization
+        /// </summary>
+        [JsonIgnore]
+        public dynamic? WledConfigRaw { get; set; }
         
         [JsonIgnore]
         public Dictionary<int, object>? WledPresets { get; set; }

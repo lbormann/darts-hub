@@ -97,8 +97,15 @@ namespace darts_hub.control
                                 try
                                 {
                                     var wledConfigJson = File.ReadAllText(wledConfigPath);
+                                    
+                                    // Load as dynamic to preserve ALL fields
+                                    config.WledConfigRaw = JsonConvert.DeserializeObject(wledConfigJson);
+                                    
+                                    // Also load as WledConfiguration for backward compatibility
                                     config.WledConfig = JsonConvert.DeserializeObject<WledConfiguration>(wledConfigJson);
-                                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] Successfully loaded WLED config: {config.WledConfig?.Hardware?.Led?.Total ?? 0} LEDs");
+                                    
+                                    var ledCount = config.WledConfigRaw?.hw?.led?.total ?? config.WledConfig?.Hardware?.Led?.Total ?? 0;
+                                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] Successfully loaded WLED config: {ledCount} LEDs (as dynamic + typed)");
                                 }
                                 catch (Exception ex)
                                 {
@@ -428,9 +435,13 @@ namespace darts_hub.control
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Applying configuration '{config.Name}' to WLED at {wledIpAddress}");
                 
                 // Step 1: Upload WLED config.json if available
-                if (config.WledConfig != null)
+                if (config.WledConfigRaw != null || config.WledConfig != null)
                 {
-                    var configUploadResult = await UploadWledConfig(config.WledConfig, wledIpAddress);
+                    // Prefer raw dynamic config to preserve ALL fields
+                    var configUploadResult = config.WledConfigRaw != null
+                        ? await UploadWledConfigDynamic(config.WledConfigRaw, wledIpAddress)
+                        : await UploadWledConfig(config.WledConfig, wledIpAddress);
+                    
                     if (!configUploadResult)
                     {
                         System.Diagnostics.Debug.WriteLine("[Robbel3D] Failed to upload WLED config");
@@ -476,6 +487,25 @@ namespace darts_hub.control
                 // Step 3: Apply darts-hub settings for Caller and WLED apps with UI parameter overrides
                 ApplyDartsHubSettings(config, wledIpAddress, profileManager, uiParameters);
                 
+                // Step 4: Start WLED extension if configured to auto-start
+                if (config.AutoStartWled)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] Auto-start WLED extension is enabled, starting WLED extension...");
+                    var wledStarted = await StartWledExtension(profileManager);
+                    if (wledStarted)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED extension started successfully");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("[Robbel3D] Failed to start WLED extension (continuing anyway)");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] Auto-start WLED extension is disabled, skipping WLED start");
+                }
+                
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Successfully applied configuration '{config.Name}'");
                 return true;
             }
@@ -489,27 +519,46 @@ namespace darts_hub.control
         /// <summary>
         /// Uploads WLED configuration file to the device via complete file replacement
         /// Enhanced to preserve network settings from existing config before uploading
+        /// FIXED: Use raw dynamic config to preserve ALL WLED fields
         /// </summary>
         private static async Task<bool> UploadWledConfig(WledConfiguration config, string wledIpAddress)
         {
+            // NOTE: This method signature still accepts WledConfiguration for backward compatibility
+            // but we should use the dynamic version from the caller
+            System.Diagnostics.Debug.WriteLine("[Robbel3D] WARNING: UploadWledConfig called with typed config - may lose fields!");
+            return false;
+        }
+        
+        /// <summary>
+        /// Uploads WLED configuration file to the device via complete file replacement
+        /// Uses dynamic config to preserve ALL WLED fields
+        /// </summary>
+        private static async Task<bool> UploadWledConfigDynamic(dynamic? configRaw, string wledIpAddress)
+        {
             try
             {
+                if (configRaw == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] No WLED config to upload (configRaw is null)");
+                    return false;
+                }
+                
                 var endpoint = wledIpAddress.StartsWith("http") ? wledIpAddress : $"http://{wledIpAddress}";
                 
-                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Starting complete WLED config file replacement to {endpoint}");
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Starting complete WLED config file replacement to {endpoint} (using dynamic config)");
                 
                 // Step 1: Download existing config to preserve network settings
                 var existingConfig = await DownloadExistingWledConfig(endpoint);
                 
                 // Step 2: Merge network settings from existing config into new config
-                var mergedConfig = await MergeNetworkSettings(config, existingConfig);
+                var mergedConfig = await MergeNetworkSettingsDynamic(configRaw, existingConfig);
                 
                 // Step 3: Delete existing config files (try all possible names and extensions)
                 await DeleteWledFile(endpoint, "/cfg.json");       // Standard WLED config file
                 await DeleteWledFile(endpoint, "/cfg.jso");        // Controller might save as .jso
                 
-                // Step 4: Upload new config file with preserved network settings
-                var configJson = JsonConvert.SerializeObject(mergedConfig, Formatting.Indented);
+                // Step 4: Upload new config file with preserved network settings (use compact JSON format!)
+                var configJson = JsonConvert.SerializeObject(mergedConfig, Formatting.None);
                 var success = await UploadWledConfigFile(endpoint, "cfg.json", configJson);
                 
                 if (success)
@@ -522,10 +571,9 @@ namespace darts_hub.control
                     // Step 6: Wait for restart - longer wait for config changes
                     System.Diagnostics.Debug.WriteLine("[Robbel3D] Waiting for WLED restart after config upload...");
                     await Task.Delay(15000); // 15 seconds for config restart (longer than presets)
-                    
-                    // Step 7: Verify file was saved (check both .json and .jso)
-                    var verified = await VerifyWledFile(endpoint, "/cfg.json") || 
-                                  await VerifyWledFile(endpoint, "/cfg.jso");
+
+                    // Step 7: Verify file was saved
+                    var verified = await VerifyWledFile(endpoint, "/cfg.json");
                     if (verified)
                     {
                         System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED config file verified successfully after restart");
@@ -562,8 +610,7 @@ namespace darts_hub.control
                 // Try to download existing config file (check both .json and .jso)
                 var downloadUrls = new[]
                 {
-                    $"{endpoint}/edit?download={Uri.EscapeDataString("/cfg.json")}",
-                    $"{endpoint}/edit?download={Uri.EscapeDataString("/cfg.jso")}"
+                    $"{endpoint}/edit?download={Uri.EscapeDataString("/cfg.json")}"
                 };
 
                 foreach (var url in downloadUrls)
@@ -601,67 +648,192 @@ namespace darts_hub.control
 
         /// <summary>
         /// Merges network settings from existing config into new config
+        /// STRATEGY: Use NEW config as base, but preserve network settings from EXISTING config
+        /// This ensures WiFi connection stays active while updating all other settings
         /// </summary>
         private static async Task<object> MergeNetworkSettings(WledConfiguration newConfig, dynamic? existingConfig)
         {
             try
             {
-                // Convert new config to dynamic object for easier manipulation
+                // Convert new config to dynamic object for manipulation
                 var newConfigJson = JsonConvert.SerializeObject(newConfig);
-                dynamic mergedConfig = JsonConvert.DeserializeObject(newConfigJson);
+                dynamic mergedConfig = JsonConvert.DeserializeObject(newConfigJson)!;
                 
-                // Extract network settings from existing config if available
-                if (existingConfig?.nw != null)
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] New config JSON preview: {newConfigJson.Substring(0, Math.Min(200, newConfigJson.Length))}...");
+                
+                // If no existing config, use new config as-is
+                if (existingConfig == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("[Robbel3D] Found network settings in existing config, preserving them");
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] No existing config found, using new config as-is (WARNING: WiFi settings may be lost!)");
+                    return mergedConfig;
+                }
+                
+                // Preserve network settings from existing config (critical for maintaining connection!)
+                if (existingConfig.nw != null)
+                {
+                    mergedConfig.nw = existingConfig.nw;
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] Preserved network settings (nw) from existing config");
                     
-                    // Log network settings being preserved
+                    // Log preserved WiFi SSID for confirmation
                     try
                     {
-                        var networkJson = JsonConvert.SerializeObject(existingConfig.nw, Formatting.Indented);
-                        System.Diagnostics.Debug.WriteLine($"[Robbel3D] Preserving network settings:\n{networkJson}");
-                        
-                        // Extract key network info for logging
                         if (existingConfig.nw.ins != null && existingConfig.nw.ins.Count > 0)
                         {
                             var firstNetwork = existingConfig.nw.ins[0];
                             var ssid = firstNetwork?.ssid?.ToString() ?? "Unknown";
-                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] Preserving WiFi SSID: {ssid}");
+                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] Preserved WiFi SSID: {ssid}");
                         }
                     }
-                    catch (Exception logEx)
+                    catch { }
+                }
+                
+                // Preserve device identification to maintain mDNS and device name
+                if (existingConfig.id != null)
+                {
+                    // Keep device ID but allow name override if specified in new config
+                    if (mergedConfig.id == null || string.IsNullOrEmpty(mergedConfig.id.mdns?.ToString()))
                     {
-                        System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error logging network settings: {logEx.Message}");
+                        if (mergedConfig.id == null)
+                            mergedConfig.id = new { };
+                        
+                        mergedConfig.id.mdns = existingConfig.id.mdns;
+                        System.Diagnostics.Debug.WriteLine($"[Robbel3D] Preserved mDNS name: {existingConfig.id.mdns}");
                     }
                     
-                    // Preserve the entire network section
-                    mergedConfig.nw = existingConfig.nw;
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("[Robbel3D] No network settings found in existing config, using new config as-is");
-                }
-                
-                // Also preserve other critical settings if they exist
-                if (existingConfig?.id != null)
-                {
-                    mergedConfig.id = existingConfig.id;
-                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] Preserved device ID from existing config");
+                    // Preserve device name if not specified in new config
+                    if (string.IsNullOrEmpty(mergedConfig.id.name?.ToString()))
+                    {
+                        mergedConfig.id.name = existingConfig.id.name;
+                        System.Diagnostics.Debug.WriteLine($"[Robbel3D] Preserved device name: {existingConfig.id.name}");
+                    }
                 }
                 
-                if (existingConfig?.nme != null)
+                // Preserve AP (Access Point) settings to maintain fallback WiFi
+                if (existingConfig.ap != null)
                 {
-                    mergedConfig.nme = existingConfig.nme;
-                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] Preserved device name: {existingConfig.nme}");
+                    mergedConfig.ap = existingConfig.ap;
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] Preserved Access Point settings (ap) from existing config");
                 }
                 
-                System.Diagnostics.Debug.WriteLine("[Robbel3D] Successfully merged network settings into new config");
+                // Preserve WiFi settings (sleep mode, PHY settings)
+                if (existingConfig.wifi != null)
+                {
+                    mergedConfig.wifi = existingConfig.wifi;
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] Preserved WiFi settings (wifi) from existing config");
+                }
+                
+                // Log merged result
+                var mergedJson = JsonConvert.SerializeObject(mergedConfig, Formatting.None);
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Merged config preview: {mergedJson.Substring(0, Math.Min(200, mergedJson.Length))}...");
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Merged config total size: {mergedJson.Length} chars");
+                System.Diagnostics.Debug.WriteLine("[Robbel3D] Successfully merged: NEW config with PRESERVED network settings");
+                
                 return mergedConfig;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error merging network settings: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine("[Robbel3D] Falling back to new config without network preservation");
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error merging settings: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Stack trace: {ex.StackTrace}");
+                
+                // Fallback to new config (may lose network connection!)
+                System.Diagnostics.Debug.WriteLine("[Robbel3D] WARNING: Falling back to new config - network connection may be lost!");
+                var newConfigJson = JsonConvert.SerializeObject(newConfig);
+                return JsonConvert.DeserializeObject(newConfigJson)!;
+            }
+        }
+
+        /// <summary>
+        /// Merges network settings from existing config into new config (dynamic version)
+        /// STRATEGY: Use NEW config as base, but preserve network settings from EXISTING config
+        /// This ensures WiFi connection stays active while updating all other settings
+        /// </summary>
+        private static async Task<dynamic> MergeNetworkSettingsDynamic(dynamic newConfig, dynamic? existingConfig)
+        {
+            try
+            {
+                // Clone new config to avoid modifying original
+                var newConfigJson = JsonConvert.SerializeObject(newConfig);
+                dynamic mergedConfig = JsonConvert.DeserializeObject(newConfigJson)!;
+                
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] New config JSON preview: {newConfigJson.Substring(0, Math.Min(200, newConfigJson.Length))}...");
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] New config total size: {newConfigJson.Length} chars");
+                
+                // If no existing config, use new config as-is
+                if (existingConfig == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] No existing config found, using new config as-is (WARNING: WiFi settings may be lost!)");
+                    return mergedConfig;
+                }
+                
+                // Preserve network settings from existing config (critical for maintaining connection!)
+                if (existingConfig.nw != null)
+                {
+                    mergedConfig.nw = existingConfig.nw;
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] Preserved network settings (nw) from existing config");
+                    
+                    // Log preserved WiFi SSID for confirmation
+                    try
+                    {
+                        if (existingConfig.nw.ins != null && existingConfig.nw.ins.Count > 0)
+                        {
+                            var firstNetwork = existingConfig.nw.ins[0];
+                            var ssid = firstNetwork?.ssid?.ToString() ?? "Unknown";
+                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] Preserved WiFi SSID: {ssid}");
+                        }
+                    }
+                    catch { }
+                }
+                
+                // Preserve device identification to maintain mDNS and device name
+                if (existingConfig.id != null)
+                {
+                    // Keep device ID but allow name override if specified in new config
+                    if (mergedConfig.id == null || string.IsNullOrEmpty(mergedConfig.id.mdns?.ToString()))
+                    {
+                        if (mergedConfig.id == null)
+                            mergedConfig.id = new { };
+                        
+                        mergedConfig.id.mdns = existingConfig.id.mdns;
+                        System.Diagnostics.Debug.WriteLine($"[Robbel3D] Preserved mDNS name: {existingConfig.id.mdns}");
+                    }
+                    
+                    // Preserve device name if not specified in new config
+                    if (string.IsNullOrEmpty(mergedConfig.id.name?.ToString()))
+                    {
+                        mergedConfig.id.name = existingConfig.id.name;
+                        System.Diagnostics.Debug.WriteLine($"[Robbel3D] Preserved device name: {existingConfig.id.name}");
+                    }
+                }
+                
+                // Preserve AP (Access Point) settings to maintain fallback WiFi
+                if (existingConfig.ap != null)
+                {
+                    mergedConfig.ap = existingConfig.ap;
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] Preserved Access Point settings (ap) from existing config");
+                }
+                
+                // Preserve WiFi settings (sleep mode, PHY settings)
+                if (existingConfig.wifi != null)
+                {
+                    mergedConfig.wifi = existingConfig.wifi;
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] Preserved WiFi settings (wifi) from existing config");
+                }
+                
+                // Log merged result
+                var mergedJson = JsonConvert.SerializeObject(mergedConfig, Formatting.None);
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Merged config preview: {mergedJson.Substring(0, Math.Min(200, mergedJson.Length))}...");
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Merged config total size: {mergedJson.Length} chars");
+                System.Diagnostics.Debug.WriteLine("[Robbel3D] Successfully merged: NEW config with PRESERVED network settings");
+                
+                return mergedConfig;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error merging settings: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Stack trace: {ex.StackTrace}");
+                
+                // Fallback to new config (may lose network connection!)
+                System.Diagnostics.Debug.WriteLine("[Robbel3D] WARNING: Falling back to new config - network connection may be lost!");
                 return newConfig;
             }
         }
@@ -728,7 +900,8 @@ namespace darts_hub.control
 
         /// <summary>
         /// Upload via /edit endpoint (multipart form)
-        /// Enhanced with better debugging and chunked upload support
+        /// Enhanced with better debugging and proper file upload handling
+        /// Fixed: Proper Content-Disposition headers for WLED compatibility
         /// </summary>
         private static async Task<bool> UploadViaEditEndpoint(string endpoint, string fileName, string jsonContent)
         {
@@ -737,49 +910,59 @@ namespace darts_hub.control
                 var url = $"{endpoint}/edit";
                 
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Attempting multipart upload to {url} for {fileName} (size: {jsonContent.Length} chars)");
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] JSON content preview: {jsonContent.Substring(0, Math.Min(100, jsonContent.Length))}...");
                 
-                using var content = new MultipartFormDataContent();
-                using var fileContent = new ByteArrayContent(System.Text.Encoding.UTF8.GetBytes(jsonContent));
+                // Create multipart form data with proper headers for WLED
+                var form = new MultipartFormDataContent();
+                var fileBytes = System.Text.Encoding.UTF8.GetBytes(jsonContent);
+                var fileContent = new ByteArrayContent(fileBytes);
                 
-                // Set proper headers for WLED compatibility
-                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+                // Set Content-Disposition header exactly as browser does (with leading slash!)
                 fileContent.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("form-data")
                 {
-                    Name = "\"data\"",
-                    FileName = $"\"{fileName}\""
+                    Name = "data",
+                    FileName = $"/{fileName}"  // WICHTIG: Mit führendem Slash wie Browser!
                 };
                 
-                content.Add(fileContent, "data", fileName);
+                // Set Content-Type to application/json (wie Browser)
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
                 
-                // Set a longer timeout for large files
-                var originalTimeout = httpClient.Timeout;
-                httpClient.Timeout = TimeSpan.FromSeconds(60);
+                form.Add(fileContent);
                 
-                try
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Uploading {fileBytes.Length} bytes as {fileName}");
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Content-Disposition: form-data; name=data; filename=/{fileName}");
+                
+                var response = await httpClient.PostAsync(url, form);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] /edit upload {fileName}: {response.StatusCode}");
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Response content: {responseContent}");
+                
+                // WLED manchmal InternalServerError selbst bei erfolgreichem Upload!
+                // Überprüfen, ob die Antwort Erfolg anzeigt ODER ob es sich um eine Upload-Antwort handelt
+                if (response.IsSuccessStatusCode || responseContent.Contains("UPLOADED"))
                 {
-                    var response = await httpClient.PostAsync(url, content);
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    
-                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] /edit upload {fileName}: {response.StatusCode}");
-                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] Response content: {responseContent}");
-                    
-                    if (response.IsSuccessStatusCode)
-                    {
-                        // Give WLED time to process the file
-                        await Task.Delay(2000);
-                        return true;
-                    }
-                    
-                    return false;
+                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] Upload scheint erfolgreich, warte auf WLED zur Verarbeitung...");
+                    // Gebe WLED Zeit zur Verarbeitung und zum Speichern der Datei
+                    await Task.Delay(3000); // 3 Sekunden
+                    return true;
                 }
-                finally
+                else
                 {
-                    httpClient.Timeout = originalTimeout;
+                    // InternalServerError könnte trotzdem Erfolg bedeuten - wir überprüfen später in VerifyWledFile
+                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] Upload-Status: {response.StatusCode}, Datei wird später verifiziert");
+                    
+                    // Gebe WLED trotzdem Zeit zur Verarbeitung
+                    await Task.Delay(2000);
+                    
+                    // Gebe hier true zurück, auch bei InternalServerError - wird in VerifyWledFile überprüft
+                    return true;
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] /edit upload failed for {fileName}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Exception stack trace: {ex.StackTrace}");
                 return false;
             }
         }
@@ -792,22 +975,10 @@ namespace darts_hub.control
         {
             try
             {
-                var url = $"{endpoint}/json";
-                
                 // This method is NOT for file uploads - it's for WLED state changes
-                // Skip this method for preset file uploads
-                if (fileName.Contains("preset"))
-                {
-                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] Skipping JSON API for file {fileName} - not suitable for file uploads");
-                    return false;
-                }
-                
-                // Try to upload as JSON payload
-                using var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
-                var response = await httpClient.PostAsync(url, content);
-                System.Diagnostics.Debug.WriteLine($"[Robbel3D] JSON API upload {fileName}: {response.StatusCode}");
-                
-                return response.IsSuccessStatusCode;
+                // Skip this method for ALL file uploads
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Skipping JSON API for file {fileName} - not suitable for file uploads");
+                return false;
             }
             catch (Exception ex)
             {
@@ -928,7 +1099,7 @@ namespace darts_hub.control
 
         /// <summary>
         /// Verifies that a file exists on WLED device and shows its content
-        /// Enhanced to check both .json and .jso extensions
+        /// Enhanced to check both .json and .jso extensions with detailed content preview
         /// </summary>
         private static async Task<bool> VerifyWledFile(string endpoint, string remotePath)
         {
@@ -946,25 +1117,44 @@ namespace darts_hub.control
                     try
                     {
                         var url = $"{endpoint}/edit?download={Uri.EscapeDataString(path)}";
+                        System.Diagnostics.Debug.WriteLine($"[Robbel3D] Verifying file at: {url}");
+                        
                         var response = await httpClient.GetAsync(url);
                         
                         if (response.IsSuccessStatusCode)
                         {
                             var content = await response.Content.ReadAsStringAsync();
                             System.Diagnostics.Debug.WriteLine($"[Robbel3D] File {path} verified successfully (size: {content.Length} chars)");
-                            
+                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] Content preview (first 200 chars): {content.Substring(0, Math.Min(200, content.Length))}");
+
+
                             // Try to parse and log structure info
                             try
                             {
                                 var jsonDoc = JsonConvert.DeserializeObject(content);
                                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] File {path} contains valid JSON structure");
+                                
+                                // For cfg.json, check if it's actually our config
+                                if (path.Contains("cfg"))
+                                {
+                                    dynamic config = jsonDoc;
+                                    if (config?.hw?.led?.total != null)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine($"[Robbel3D] Config contains LED count: {config.hw.led.total}");
+                                    }
+                                }
                             }
-                            catch
+                            catch (Exception parseEx)
                             {
-                                System.Diagnostics.Debug.WriteLine($"[Robbel3D] File {path} contains non-JSON content");
+                                System.Diagnostics.Debug.WriteLine($"[Robbel3D] File {path} contains non-JSON content or parsing error: {parseEx.Message}");
                             }
                             
+
                             return true;
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] File {path} not found: {response.StatusCode}");
                         }
                     }
                     catch (Exception pathEx)
@@ -999,6 +1189,11 @@ namespace darts_hub.control
                 // Step 1: Delete existing presets files (try all possible names and extensions)     
                 await DeleteWledFile(endpoint, "/presets.json");     // Standard WLED presets file
                 await DeleteWledFile(endpoint, "/presets.jso");      // Controller might save as .jso
+                await DeleteWledFile(endpoint, "/preset.json");      // Alternative name (without 's')
+                await DeleteWledFile(endpoint, "/preset.jso");       // Alternative with .jso
+                await DeleteWledFile(endpoint, "/config.json");      // Another alternative
+                await DeleteWledFile(endpoint, "/wled_config.json"); // Another alternative
+                await DeleteWledFile(endpoint, "/wled_presets.json");// Another alternative
                 
                 // Step 2: Convert presets to proper JSON format and check size
                 var presetsForFile = new Dictionary<string, object>();
@@ -1032,18 +1227,21 @@ namespace darts_hub.control
                     success = await UploadViaDirectPost(endpoint, "presets.json", json);
                 }
                 
+                // Upload attempt was made - always trigger restart and verify
+                // (InternalServerError from WLED doesn't necessarily mean failure)
                 if (success)
                 {
-                    System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED presets file uploaded successfully, triggering restart...");
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED presets file upload attempt completed, triggering restart...");
                     
-                    // Step 5: Trigger restart to apply presets
+                    // Step 5: Trigger restart to apply presets (CRITICAL for presets to become active!)
                     await TriggerWledRestart(endpoint);
                     
                     // Step 6: Wait for restart
                     System.Diagnostics.Debug.WriteLine("[Robbel3D] Waiting for WLED restart after presets upload...");
-                    await Task.Delay(8000); // 8 seconds for restart
+                    await Task.Delay(10000); // 10 seconds for restart (increased from 8s)
                     
                     // Step 7: Verify file was saved and show preview (check both .json and .jso)
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] Verifying presets file after restart...");
                     var verified = await VerifyWledFile(endpoint, "/presets.json") || 
                                   await VerifyWledFile(endpoint, "/presets.jso");
                     if (verified)
@@ -1054,7 +1252,7 @@ namespace darts_hub.control
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED presets file verification failed, falling back to individual upload");
+                        System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED presets file verification failed after restart, falling back to individual upload");
                         return await UploadWledPresets(presets, wledIpAddress);
                     }
                 }
@@ -1115,7 +1313,8 @@ namespace darts_hub.control
                         {
                             System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error extracting preset name for {preset.Key}: {nameEx.Message}");
                         }
-                        
+                                            
+
                         // First, apply the preset data to current state
                         var presetStateJson = JsonConvert.SerializeObject(preset.Value);
                         using var presetContent = new StringContent(presetStateJson, System.Text.Encoding.UTF8, "application/json");
@@ -1132,9 +1331,11 @@ namespace darts_hub.control
                                 n = presetName // Use original or fallback name
                             };
                             
+
                             var saveJson = JsonConvert.SerializeObject(savePresetPayload);
                             using var saveContent = new StringContent(saveJson, System.Text.Encoding.UTF8, "application/json");
                             
+
                             var saveResponse = await httpClient.PostAsync(url, saveContent);
                             if (saveResponse.IsSuccessStatusCode)
                             {
@@ -1249,6 +1450,7 @@ namespace darts_hub.control
         /// <summary>
         /// Applies the complete darts-hub settings for Caller and WLED applications
         /// Enhanced to handle all arguments and UI parameter overrides
+        /// Fixed: Proper handling of path arguments with spaces
         /// </summary>
         private static void ApplyDartsHubSettings(Robbel3DConfiguration config, string wledIpAddress, ProfileManager profileManager, Dictionary<string, string>? uiParameters = null)
         {
@@ -1325,15 +1527,41 @@ namespace darts_hub.control
                             // Apply setting if it has a meaningful value (not empty placeholders)
                             if (!string.IsNullOrEmpty(setting.Value))
                             {
-                                arg.Value = setting.Value;
+                                // Clean the value - remove any existing surrounding quotes and trailing slashes
+                                var cleanValue = setting.Value.Trim().Trim('"').TrimEnd('\\', '/');
+                                
+                                arg.Value = cleanValue;
                                 arg.IsValueChanged = true;
-                                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Updated Caller setting {setting.Key} = {setting.Value}");
+                                
+                                // Log with type information for debugging
+                                var argType = arg.Type;
+                                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Updated Caller setting {setting.Key} ({argType}) = '{cleanValue}'");
+                                
+                                // Special logging for path arguments
+                                if (argType == Argument.TypePath || argType == Argument.TypeFile)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] Path/File argument {setting.Key}: '{cleanValue}' (will be auto-quoted during execution)");
+                                }
                             }
                         }
                         else
                         {
                             System.Diagnostics.Debug.WriteLine($"[Robbel3D] Caller argument not found: {setting.Key}");
                         }
+                    }
+                }
+                
+                // Set "Enable at Startup" for WLED extension if auto_start_wled is configured
+                if (config.AutoStartWled)
+                {
+                    var wledAppState = targetProfile.Apps.Values.FirstOrDefault(profileState => 
+                        profileState.App?.CustomName?.Contains("wled", StringComparison.OrdinalIgnoreCase) == true ||
+                        profileState.App?.CustomName?.Contains("WLED", StringComparison.OrdinalIgnoreCase) == true);
+                    
+                    if (wledAppState != null)
+                    {
+                        wledAppState.TaggedForStart = true;
+                        System.Diagnostics.Debug.WriteLine("[Robbel3D] Set WLED extension 'Enable at Startup' = true");
                     }
                 }
                 
@@ -1380,7 +1608,7 @@ namespace darts_hub.control
                             if (response.IsSuccessStatusCode)
                             {
                                 var content = await response.Content.ReadAsStringAsync();
-                                
+                        
                                 // Check if the response looks like WLED
                                 if (content.Contains("WLED") || content.Contains("wled") || 
                                     content.Contains("\"bri\":") || content.Contains("\"on\":"))
@@ -1449,6 +1677,11 @@ namespace darts_hub.control
                 await DeleteWledFile(endpoint, "/cfg.jso");          // Controller format
                 await DeleteWledFile(endpoint, "/presets.json");     // Standard WLED presets
                 await DeleteWledFile(endpoint, "/presets.jso");      // Controller format
+                await DeleteWledFile(endpoint, "/preset.json");      // Alternative name (without 's')
+                await DeleteWledFile(endpoint, "/preset.jso");       // Alternative with .jso
+                await DeleteWledFile(endpoint, "/config.json");      // Another alternative
+                await DeleteWledFile(endpoint, "/wled_config.json"); // Another alternative
+                await DeleteWledFile(endpoint, "/wled_presets.json");// Another alternative
                 
                 // Step 2: Trigger restart
                 await TriggerWledRestart(endpoint);
@@ -1555,6 +1788,73 @@ namespace darts_hub.control
         }
 
         /// <summary>
+        /// Starts the WLED extension after configuration has been applied
+        /// </summary>
+        private static async Task<bool> StartWledExtension(ProfileManager profileManager)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[Robbel3D] Looking for WLED extension to start...");
+                
+                var profiles = profileManager.GetProfiles();
+                if (profiles.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] No profiles found to start WLED extension");
+                    return false;
+                }
+                
+                // Find the first profile
+                var targetProfile = profiles.First();
+                
+                // Find WLED extension app
+                var wledAppState = targetProfile.Apps.Values.FirstOrDefault(profileState => 
+                    profileState.App?.CustomName?.Contains("wled", StringComparison.OrdinalIgnoreCase) == true ||
+                    profileState.App?.CustomName?.Contains("WLED", StringComparison.OrdinalIgnoreCase) == true);
+                
+                if (wledAppState?.App == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED extension app not found in profile");
+                    return false;
+                }
+                
+                var wledApp = wledAppState.App;
+                
+                // Check if already running
+                if (wledApp.AppRunningState)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED extension is already running");
+                    return true;
+                }
+                
+                // Start the WLED extension
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Starting WLED extension: {wledApp.CustomName ?? wledApp.Name}");
+                
+                // Use the Run method from AppBase (synchronous)
+                wledApp.Run();
+                
+                // Wait a moment for the app to start
+                await Task.Delay(2000);
+                
+                // Verify it started
+                if (wledApp.AppRunningState)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED extension started and running");
+                    return true;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED extension started but running state not confirmed");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error starting WLED extension: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Ensures configuration files are copied to build directory during build process
         /// </summary>
         public static void EnsureConfigurationFilesInBuildDirectory()
@@ -1570,7 +1870,7 @@ namespace darts_hub.control
                 {
                     Path.Combine(buildDirectory, "..", "..", "..", ConfigsDirectory), // Debug build context
                     Path.Combine(buildDirectory, "..", ConfigsDirectory),             // Release build context
-                    sourceConfigsPath                                                // Already in correct location
+                    sourceConfigsPath                                               // Already in correct location
                 };
                 
                 string? actualSourcePath = null;
@@ -1594,6 +1894,12 @@ namespace darts_hub.control
                         Robbel3DConfigFile,
                         "cfg.json",            // Standard WLED config file
                         "presets.json",        // Standard WLED presets file
+                        "preset.json",         // Alternative presets name (without 's')
+                        "wled_cfg.json",       // Alternative config name
+                        "wled_config.json",    // Alternative config name
+                        "wled_presets.json",   // Alternative presets name
+                        "wled_cfg (1).json",   // Another alternative
+                        "wled_presets (2).json" // Another alternative
                     };
                     
                     foreach (var fileName in configFilesToCopy)

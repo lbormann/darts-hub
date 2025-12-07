@@ -269,7 +269,9 @@ namespace darts_hub.UI
                         var mediaPathTextBox = this.FindControl<TextBox>("MediaPathTextBox");
                         if (mediaPathTextBox != null)
                         {
-                            mediaPathTextBox.Text = folders[0].Path.LocalPath;
+                            // Remove trailing backslash to prevent escape character issues
+                            var path = folders[0].Path.LocalPath;
+                            mediaPathTextBox.Text = path.TrimEnd('\\', '/');
                         }
                     }
                 }

@@ -9,15 +9,16 @@
       "version": "1.0",
       "created": "2025-10-14T10:00:00Z",
       "author": "Robbel3D System",
-      "tags": [ "complete", "all-features", "advanced" ],
-      "led_count": 141,
+      "tags": [ "complete", "all-features", "advanced", "quick-start" ],
+      "led_count": 145,
       "dartboard_type": "Standard",
       "wled_config_file": "cfg.json",
       "wled_presets_file": "presets.json",
+      "auto_start_wled": true,
       "caller_settings": {
         "V": "1.0",
         "CC": "True",
-        "R": "0",
+        "R": "1",
         "CCP": "2",
         "CBA": "1",
         "CRL": "1",
@@ -25,7 +26,7 @@
         "ETS": "1",
         "PCC": "3",
         "PCCYO": "0",
-        "DL": "5",
+        "DL": "10",
         "HP": "8079",
         "DEB": "False"
       },
@@ -48,19 +49,21 @@
         "M": "ps|2",
         "B": "ps|3",
         "PL": "ps|6",
-        "PJ": "ps5",
+        "PJ": "ps|5",
         "S180": "ps|4"
       },
       "metadata": {
         "created_with": "Darts-Hub",
         "created_with_version": "1.2.4",
-        "target_wled_version": "0.14+",
-        "target_caller_version": "2.17+",
-        "compatibility_notes": "Complete configuration with all available arguments for Robbel3D WLED Setup.",
+        "target_wled_version": "1.9.5+",
+        "target_caller_version": "2.19+",
+        "compatibility_notes": "Complete configuration with all available arguments for Robbel3D WLED Setup. Quick Start option prominently displayed at top of Setup Wizard welcome screen.",
         "changelog": [
           "Initial complete configuration created",
           "References external WLED config and presets files from configs directory",
-          "Added support for all WLED and Caller arguments"
+          "Added support for all WLED and Caller arguments",
+          "Added auto_start_wled option to automatically start WLED extension after configuration",
+          "Added Quick Start button at top of Setup Wizard - closes wizard immediately and opens Robbel3D configuration"
         ]
       }
     }

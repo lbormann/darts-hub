@@ -35,6 +35,13 @@ namespace darts_hub.control
             var json = JsonConvert.SerializeObject(Settings, Formatting.Indented);
             File.WriteAllText(ConfigFilePath, json);
         }
+        
+        public void SetSetupWizardCompleted(bool completed)
+        {
+            Settings.WizardCompleted = completed;
+            SaveSettings();
+            System.Diagnostics.Debug.WriteLine($"[Configurator] Setup wizard completed status set to: {completed}");
+        }
 
 
         private void LoadSettings()

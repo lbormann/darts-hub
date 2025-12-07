@@ -1,3 +1,19 @@
+## b1.2.12
+### Darts-Hub Features
+    - Robbel3D One-Click Setup Enhancements
+        - Added prominent Quick Start button at top of Setup Wizard welcome screen
+        - Improved user guidance with clear alternative to traditional wizard
+    - Robbel3D Configuration Improvements
+        - Implemented automatic file size check for WLED presets (30KB limit)
+        - Automatic fallback to individual preset upload for large files
+        - Smart trailing slash removal from media paths to prevent escape character issues
+        - Enhanced "Enable at Startup" checkbox - now properly set based on auto_start_wled config
+        - WLED extension auto-start after successful configuration
+    - Bug Fixes
+        - Fixed Media Path argument escaping issue caused by trailing backslash
+        - Fixed Enable at Startup checkbox not being set from configuration
+        - Improved WLED device readiness detection after config upload
+
 ## b1.2.11
 ### Version Updates
     - Darts-Caller b2.19.6

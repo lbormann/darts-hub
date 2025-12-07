@@ -1,7 +1,9 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using darts_hub.model;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace darts_hub.control.wizard
@@ -35,6 +37,19 @@ namespace darts_hub.control.wizard
                 MaxWidth = 600,
                 HorizontalAlignment = HorizontalAlignment.Center
             };
+
+            // Robbel3D One-Click Setup Button - FIRST!
+            var robbel3DButton = CreateRobbel3DButton();
+            mainPanel.Children.Add(robbel3DButton);
+            
+            // Separator
+            var separator = new Border
+            {
+                Height = 2,
+                Background = new SolidColorBrush(Color.FromArgb(51, 255, 255, 255)),
+                Margin = new Avalonia.Thickness(0, 10, 0, 10)
+            };
+            mainPanel.Children.Add(separator);
 
             // Welcome message
             var welcomePanel = new StackPanel { Spacing = 15 };
@@ -216,6 +231,113 @@ namespace darts_hub.control.wizard
 
             item.Children.Add(textPanel);
             return item;
+        }
+        
+        private Control CreateRobbel3DButton()
+        {
+            var section = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(76, 255, 140, 0)), // Semi-transparent orange
+                CornerRadius = new Avalonia.CornerRadius(8),
+                Padding = new Avalonia.Thickness(20),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(255, 140, 0)),
+                BorderThickness = new Avalonia.Thickness(2)
+            };
+
+            var panel = new StackPanel { Spacing = 15 };
+
+            panel.Children.Add(new TextBlock
+            {
+                Text = "🚀 Quick Start: Robbel3D One-Click Setup",
+                FontSize = 20,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Center
+            });
+
+            panel.Children.Add(new TextBlock
+            {
+                Text = "Perfect for Robbel3D WLED setups! Skip the wizard and configure your WLED dartboard with optimized settings in just one click.",
+                FontSize = 14,
+                Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)),
+                TextWrapping = TextWrapping.Wrap,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextAlignment = TextAlignment.Center
+            });
+
+            var button = new Button
+            {
+                Content = "🎯 Start Robbel3D Setup Now",
+                FontSize = 16,
+                FontWeight = FontWeight.Bold,
+                Padding = new Avalonia.Thickness(25, 12),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Background = new SolidColorBrush(Color.FromRgb(255, 140, 0)),
+                Foreground = Brushes.White,
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand)
+            };
+
+            button.Click += async (s, e) => await OnRobbel3DSetupClicked();
+
+            panel.Children.Add(button);
+            
+            // Add small info text
+            panel.Children.Add(new TextBlock
+            {
+                Text = "Or use the traditional wizard below for step-by-step configuration",
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+                FontStyle = FontStyle.Italic,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Avalonia.Thickness(0, 5, 0, 0)
+            });
+            
+            section.Child = panel;
+
+            return section;
+        }
+
+        private async Task OnRobbel3DSetupClicked()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[WelcomeWizard] Robbel3D One-Click Setup clicked - closing wizard immediately");
+                
+                // Get parent window before closing
+                var wizardWindow = GetParentWindow();
+                
+                // Close the wizard window immediately - user doesn't need it anymore
+                wizardWindow?.Close();
+                
+                // Mark wizard as completed immediately
+                configurator?.SetSetupWizardCompleted(true);
+                
+                // Small delay to ensure window is closed
+                await Task.Delay(100);
+                
+                // Open Robbel3D Configuration Window
+                System.Diagnostics.Debug.WriteLine("[WelcomeWizard] Opening Robbel3D Configuration Window");
+                var robbel3DWindow = new darts_hub.UI.Robbel3DConfigWindow(profileManager);
+                
+                // Show as standalone window (not as dialog since parent is already closed)
+                robbel3DWindow.Show();
+                
+                System.Diagnostics.Debug.WriteLine("[WelcomeWizard] Robbel3D Configuration Window opened successfully");
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[WelcomeWizard] Error in Robbel3D setup: {ex.Message}");
+            }
+        }
+        
+        private Window? GetParentWindow()
+        {
+            // Try to get the parent wizard window
+            // This is a helper method to find the parent window
+            return Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.Windows.FirstOrDefault(w => w is WizardWindow)
+                : null;
         }
 
         private bool HasAppInProfile(string appNamePart)
