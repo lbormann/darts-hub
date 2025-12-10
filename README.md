@@ -188,6 +188,11 @@ If you're running darts-hub on windows the affected app is probably classified a
 
 For more information, run `darts-hub --help` or `darts-hub -h` in your terminal Or have a look at the command-line-interface.md file.
 
+## VIDEO INSTRUCTIONS
+at the moment just in german:
+[![asciicast](https://img.youtube.com/vi/3Y7oXWbXnRA/0.jpg)](https://youtu.be/iklm8nUlnRs)
+
+
 ## RESOURCES
 
 - Icon by <a href="https://freeicons.io/profile/8178">Ognjen Vukomanov</a> on <a href="https://freeicons.io">freeicons.io</a>

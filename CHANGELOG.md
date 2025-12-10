@@ -1,3 +1,9 @@
+## b1.2.13
+### Version Updates
+    - Darts-Caller 2.19.7
+        - Improved Blind Support busted announcments
+        - just play a fixed busted sound to not confuse the blind player with different calls like "thrown to high"
+  
 ## b1.2.12
 ### Darts-Hub Features
     - Robbel3D One-Click Setup Enhancements
