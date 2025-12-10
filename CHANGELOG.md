@@ -1,6 +1,6 @@
-## b1.2.13
+## b1.2.14
 ### Version Updates
-    - Darts-Caller 2.19.7
+    - Darts-Caller 2.19.8
         - Improved Blind Support busted announcments
         - just play a fixed busted sound to not confuse the blind player with different calls like "thrown to high"
   
