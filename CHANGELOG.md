@@ -1,4 +1,4 @@
-﻿## b1.2.15
+﻿## b1.2.16
 ### New Features
     - **Configuration Export/Import System** 🆕
         - Export full configuration or specific extensions
