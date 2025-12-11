@@ -193,6 +193,64 @@ at the moment just in german:
 [![asciicast](https://img.youtube.com/vi/3Y7oXWbXnRA/0.jpg)](https://youtu.be/iklm8nUlnRs)
 
 
+## CONFIGURATION EXPORT/IMPORT 🆕
+
+Darts-hub now includes a powerful configuration export/import system that allows you to:
+
+- **Backup your settings**: Create full or partial backups of your extension configurations
+- **Share configurations**: Export settings to share with friends or the community
+- **Move to new devices**: Easily transfer your complete setup to a new computer
+- **Test different setups**: Create multiple configuration exports for different scenarios
+- **Protect your credentials** 🆕: Automatic prompt to exclude sensitive Autodarts credentials when exporting
+
+### Security Feature 🔒
+
+When exporting configurations containing **darts-caller**, the system automatically prompts:
+```
+⚠ WARNING: Your configuration includes 'darts-caller'
+   This extension contains sensitive Autodarts credentials
+
+Do you want to EXCLUDE these credentials from export? (y/N):
+```
+
+- Answer **'y'** to safely share exports with others (excludes Email, Password, Board ID)
+- Answer **'n'** for personal backups (includes everything)
+
+### Interactive CLI Tool (Windows)
+
+For Windows users, we provide an easy-to-use interactive tool:
+
+**`config-manager.bat`** - Double-click to open an interactive menu for:
+- Creating exports (Full / Extensions / Parameters)
+- Importing configurations (Merge / Replace modes)
+- Viewing available exports
+- Checking export information before importing
+- Built-in help and safety features
+
+[📖 Config Manager Documentation](docs/config-manager-cli.md)
+
+### Command Line Interface
+
+For advanced users and automation:
+
+```bash
+# Export complete configuration
+darts-hub --export my-backup
+
+# Export specific extensions
+darts-hub --export-ext darts-caller darts-wled
+
+# Import configuration
+darts-hub --import my-backup.json
+
+# List available exports
+darts-hub --list-exports
+```
+
+For detailed documentation, see:
+- [📖 Configuration Export/Import Guide](docs/config-export-import.md)
+- [📖 Command Line Interface Documentation](docs/command-line-interface.md)
+
 ## RESOURCES
 
 - Icon by <a href="https://freeicons.io/profile/8178">Ognjen Vukomanov</a> on <a href="https://freeicons.io">freeicons.io</a>

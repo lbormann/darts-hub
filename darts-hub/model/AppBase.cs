@@ -322,6 +322,26 @@ namespace darts_hub.model
                     currentLogFilePath = Path.Combine(logsDir, fileName);
                     currentLogDay = today;
                     
+                    // Check if log file exists and is from previous month
+                    if (File.Exists(currentLogFilePath))
+                    {
+                        try
+                        {
+                            var lastWriteTime = File.GetLastWriteTime(currentLogFilePath);
+                            var now = DateTime.Now;
+                            
+                            // If file was last modified in a different month or year, delete it
+                            if (lastWriteTime.Year != now.Year || lastWriteTime.Month != now.Month)
+                            {
+                                File.Delete(currentLogFilePath);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[{CustomName}] Failed to rotate log file: {ex.Message}");
+                        }
+                    }
+                    
                     // Log application start to file (if restarted on same day, append)
                     try
                     {

@@ -34,7 +34,7 @@
         "DEB": "False",
         "OFF": "True",
         "BWS": "False",
-        "BRI": "255",
+        "BRI": "200",
         "SOFF": "True",
         "IDE": "solid|green1",
         "IDE2": "solid|lightblue1",

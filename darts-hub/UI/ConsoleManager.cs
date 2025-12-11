@@ -163,6 +163,9 @@ namespace darts_hub.UI
             var textBox = scrollViewer?.Content as TextBox;
             if (textBox == null) return;
 
+            // Save horizontal scroll position before update
+            var horizontalOffset = scrollViewer?.Offset.X ?? 0;
+
             var overviewText = new StringBuilder();
             overviewText.AppendLine("=== Darts-Hub Console Overview ===");
             overviewText.AppendLine($"Profile: {selectedProfile?.Name ?? "None"}");
@@ -226,12 +229,24 @@ namespace darts_hub.UI
 
             textBox.Text = overviewText.ToString();
 
-            // Auto-scroll if this is the current tab
+            // Auto-scroll vertically if this is the current tab, but preserve horizontal position
             if (isAutoScrollEnabled && !isUserScrolling && currentConsoleTab == "Overview")
             {
                 Dispatcher.UIThread.Post(() =>
                 {
-                    scrollViewer?.ScrollToEnd();
+                    if (scrollViewer != null)
+                    {
+                        // Scroll to end vertically, but restore horizontal position
+                        scrollViewer.Offset = new Avalonia.Vector(horizontalOffset, scrollViewer.ScrollBarMaximum.Y);
+                    }
+                });
+            }
+            else if (scrollViewer != null)
+            {
+                // Always restore horizontal position even when not auto-scrolling
+                Dispatcher.UIThread.Post(() =>
+                {
+                    scrollViewer.Offset = scrollViewer.Offset.WithX(horizontalOffset);
                 });
             }
         }
@@ -453,7 +468,7 @@ namespace darts_hub.UI
             {
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-                Padding = new Avalonia.Thickness(10)
+                Padding = new Avalonia.Thickness(10, 10, 10, -30) // Increased bottom padding to prevent cutoff
             };
 
             var textBox = new TextBox
@@ -517,7 +532,7 @@ namespace darts_hub.UI
                 Name = $"{app.CustomName}ScrollViewer",
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-                Padding = new Avalonia.Thickness(10)
+                Padding = new Avalonia.Thickness(10, 10, 10, -30) // Increased bottom padding to prevent cutoff
             };
 
             var textBox = new TextBox
@@ -557,6 +572,9 @@ namespace darts_hub.UI
             var scrollViewer = tab.Content as ScrollViewer;
             var textBox = scrollViewer?.Content as TextBox;
             if (textBox == null) return;
+
+            // Save horizontal scroll position before update
+            var horizontalOffset = scrollViewer?.Offset.X ?? 0;
 
             var consoleText = new StringBuilder();
             consoleText.AppendLine($"=== {uniqueKey} Console Output ===");
@@ -669,12 +687,24 @@ namespace darts_hub.UI
             // Update tab header with running indicator
             UpdateTabHeader(tab, app, uniqueKey);
 
-            // Auto-scroll to bottom if enabled and this is the current tab
+            // Auto-scroll to bottom vertically if enabled and this is the current tab, but preserve horizontal position
             if (isAutoScrollEnabled && !isUserScrolling && currentConsoleTab == uniqueKey)
             {
                 Dispatcher.UIThread.Post(() =>
                 {
-                    scrollViewer?.ScrollToEnd();
+                    if (scrollViewer != null)
+                    {
+                        // Scroll to end vertically, but restore horizontal position
+                        scrollViewer.Offset = new Avalonia.Vector(horizontalOffset, scrollViewer.ScrollBarMaximum.Y);
+                    }
+                });
+            }
+            else if (scrollViewer != null)
+            {
+                // Always restore horizontal position even when not auto-scrolling
+                Dispatcher.UIThread.Post(() =>
+                {
+                    scrollViewer.Offset = scrollViewer.Offset.WithX(horizontalOffset);
                 });
             }
         }

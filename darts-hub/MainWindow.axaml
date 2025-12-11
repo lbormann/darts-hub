@@ -422,75 +422,76 @@
 
 			<!-- Console Content - spans across Settings and Tooltip columns -->
 			<Border Grid.Column="2" Grid.ColumnSpan="3" Background="#FF1A1A1A" x:Name="ConsolePanel" IsVisible="False">
-				<Grid>
-					<Grid.RowDefinitions>
-						<RowDefinition Height="Auto"/>
-						<RowDefinition Height="*"/>
-					</Grid.RowDefinitions>
-					
-					<!-- Console Header -->
-					<Border Grid.Row="0" Background="#FF2D2D30" Padding="10,5">
-						<StackPanel Orientation="Horizontal">
-							<TextBlock Text="Console Output" 
-									   Foreground="White" 
-									   FontSize="16" 
-									   FontWeight="Bold" 
-									   VerticalAlignment="Center"/>
-							<Button x:Name="ConsoleClearButton" 
-									Content="Clear All" 
-									Margin="10,0,0,0" 
-									Padding="8,4"
-									Background="#FF444444" 
-									Foreground="White"
-									BorderThickness="0"
-									CornerRadius="3"
-									Click="ConsoleClearButton_Click"/>
-							<Button x:Name="ConsoleClearCurrentButton" 
-									Content="Clear Current" 
-									Margin="5,0,0,0" 
-									Padding="8,4"
-									Background="#FF666666" 
-									Foreground="White"
-									BorderThickness="0"
-									CornerRadius="3"
-									Click="ConsoleClearCurrentButton_Click"/>
-							<Button x:Name="ConsoleExportButton" 
-									Content="Export Log" 
-									Margin="5,0,0,0" 
-									Padding="8,4"
-									Background="#FF0078D4" 
-									Foreground="White"
-									BorderThickness="0"
-									CornerRadius="3"
-									Click="ConsoleExportButton_Click"/>
-							<Button x:Name="ConsoleTestUpdaterButton" 
-									Content="🧪 Test Updater" 
-									Margin="10,0,0,0" 
-									Padding="8,4"
-									Background="#FF28A745" 
-									Foreground="White"
-									BorderThickness="0"
-									CornerRadius="3"
-									Click="ConsoleTestUpdaterButton_Click"
-									ToolTip.Tip="Test the update system functionality"/>
-							<CheckBox x:Name="ConsoleAutoScrollCheckBox" 
-									  Content="Auto-scroll" 
-									  Margin="10,0,0,0" 
-									  Foreground="White"
-									  IsChecked="True"
-									  Checked="ConsoleAutoScrollCheckBox_Changed"
-									  Unchecked="ConsoleAutoScrollCheckBox_Changed"/>
-						</StackPanel>
-					</Border>
-					
-					<!-- Console Tabs -->
-					<TabControl x:Name="ConsoleTabControl" 
-								Grid.Row="1"
-								Background="#FF252526"
-								BorderThickness="0">
-					</TabControl>
-				</Grid>
-			</Border>
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto"/>
+					<RowDefinition Height="*"/>
+				</Grid.RowDefinitions>
+				
+				<!-- Console Header -->
+				<Border Grid.Row="0" Background="#FF2D2D30" Padding="10,5">
+					<StackPanel Orientation="Horizontal">
+						<TextBlock Text="Console Output" 
+								   Foreground="White" 
+								   FontSize="16" 
+								   FontWeight="Bold" 
+								   VerticalAlignment="Center"/>
+						<Button x:Name="ConsoleClearButton" 
+								Content="Clear All" 
+								Margin="10,0,0,0" 
+								Padding="8,4"
+								Background="#FF444444" 
+								Foreground="White"
+								BorderThickness="0"
+								CornerRadius="3"
+								Click="ConsoleClearButton_Click"/>
+						<Button x:Name="ConsoleClearCurrentButton" 
+								Content="Clear Current" 
+								Margin="5,0,0,0" 
+								Padding="8,4"
+								Background="#FF666666" 
+								Foreground="White"
+								BorderThickness="0"
+								CornerRadius="3"
+								Click="ConsoleClearCurrentButton_Click"/>
+						<Button x:Name="ConsoleExportButton" 
+								Content="Export Log" 
+								Margin="5,0,0,0" 
+								Padding="8,4"
+								Background="#FF0078D4" 
+								Foreground="White"
+								BorderThickness="0"
+								CornerRadius="3"
+								Click="ConsoleExportButton_Click"/>
+						<Button x:Name="ConsoleTestUpdaterButton" 
+								Content="🧪 Test Updater" 
+								Margin="10,0,0,0" 
+								Padding="8,4"
+								Background="#FF28A745" 
+								Foreground="White"
+								BorderThickness="0"
+								CornerRadius="3"
+								Click="ConsoleTestUpdaterButton_Click"
+								ToolTip.Tip="Test the update system functionality"/>
+						<CheckBox x:Name="ConsoleAutoScrollCheckBox" 
+								  Content="Auto-scroll" 
+								  Margin="10,0,0,0" 
+								  Foreground="White"
+								  IsChecked="True"
+								  Checked="ConsoleAutoScrollCheckBox_Changed"
+								  Unchecked="ConsoleAutoScrollCheckBox_Changed"/>
+					</StackPanel>
+				</Border>
+				
+				<!-- Console Tabs -->
+				<TabControl x:Name="ConsoleTabControl" 
+							Grid.Row="1"
+							Background="#FF252526"
+							BorderThickness="0"
+							Padding="0,0,0,15">
+				</TabControl>
+			</Grid>
+		</Border>
 
 			<!-- New Settings Content - spans across Settings and Tooltip columns -->
 			<Border Grid.Column="2" Grid.ColumnSpan="3" Background="#FF252526" x:Name="NewSettingsPanel" IsVisible="False">

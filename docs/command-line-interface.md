@@ -1,20 +1,21 @@
 ﻿# DartsHub Command Line Interface (CLI)
 
-DartsHub supports various command line commands for testing, debugging, backup/restore, and system management.
+DartsHub supports various command line commands for testing, debugging, backup/restore, configuration export/import, and system management.
 
 ## Overview
 
 ```bash
 # General usage
-darts-hub [COMMAND] [OPTIONS]
+dartshub [COMMAND] [OPTIONS]
 
 # Examples
-darts-hub --help
-darts-hub --version
-darts-hub --test-full
-darts-hub --backup my-backup
-darts-hub --backup-list
-darts-hub --list-profiles
+dartshub --help
+dartshub --version
+dartshub --test-full
+dartshub --backup my-backup
+dartshub --export my-config
+dartshub --import my-config.json
+dartshub --list-profiles
 ```
 
 ## Available Commands
@@ -33,6 +34,19 @@ darts-hub --list-profiles
 | Command | Alias | Description |
 |---------|-------|-------------|
 | `--list-profiles` | `--profiles` | Lists all available dart profiles |
+
+### Configuration Export/Import 🆕
+
+| Command | Alias | Description |
+|---------|-------|-------------|
+| `--export [name]` | `--export-full` | Exports complete configuration (all extensions) |
+| `--export-ext <names...>` | `--export-extension` | Exports specific extension(s) |
+| `--export-params` | `--export-parameters` | Exports specific parameters (interactive) |
+| `--import <file> [mode]` | | Imports configuration (mode: merge/replace) |
+| `--list-extensions` | `--extensions` | Lists all available extensions |
+| `--list-params <ext>` | `--params` | Lists parameters for an extension |
+| `--list-exports` | `--exports` | Lists all export files |
+| `--export-info <file>` | `--info-export` | Shows information about an export file |
 
 ### Backup & Restore 🆕
 
@@ -67,16 +81,16 @@ darts-hub --list-profiles
 
 ```bash
 # Shows complete help
-darts-hub --help
+dartshub --help
 
 # Shows version (automatically retrieved from Updater.cs)
-darts-hub --version
+dartshub --version
 
 # Shows detailed application information
-darts-hub --info
+dartshub --info
 
 # Shows system and environment information
-darts-hub --system-info
+dartshub --system-info
 ```
 
 **Example output for `--version`:**
@@ -88,408 +102,191 @@ Platform: Microsoft Windows NT 10.0.22631.0
 Architecture: X64
 ```
 
-### Backup & Restore Functionality 🆕
+### Configuration Export/Import 🆕
 
-#### Full Backup
-```bash
-# Automatically named with timestamp
-darts-hub --backup
+The configuration export/import system allows you to backup, share, and restore extension configurations. See [Configuration Export/Import Guide](config-export-import.md) for detailed documentation.
 
-# With custom name
-darts-hub --backup my-important-backup
-```
-
-**Contents of a full backup:**
-- Configuration files (`config.json`, `apps-downloadable.json`, `apps-local.json`, `apps-open.json`)
-- Current log files (last 30 days)
-- Wizard configuration
-- Backup manifest with metadata
-
-#### Configuration Backup
-```bash
-# Only save configuration
-darts-hub --backup-config
-
-# With custom name
-darts-hub --backup-config my-config-backup
-```
-
-**Contents of a configuration backup:**
-- `config.json`
-- `apps-downloadable.json`
-- `apps-local.json`
-- `apps-open.json`
-- Wizard configuration
-- Backup manifest
-
-#### Backup Management
-```bash
-# List all backups
-darts-hub --backup-list
-
-# Restore backup
-darts-hub --backup-restore my-backup.zip
-darts-hub --backup-restore backups/dartshub-backup-2024-01-15_14-30-25.zip
-
-# Delete old backups (default: keep 10)
-darts-hub --backup-cleanup
-darts-hub --backup-cleanup 5  # Keep only the last 5
-```
-
-**Example output for `--backup-list`:**
-```
-=== AVAILABLE BACKUPS ===
-
-1. dartshub-backup-2024-01-15_14-30-25
-   Created: 2024-01-15 14:30:25
-   Size: 2.45 MB
-   Type: Full Backup
-   Path: C:\path\to\backups\dartshub-backup-2024-01-15_14-30-25.zip
-
-2. my-config-backup
-   Created: 2024-01-15 12:15:10
-   Size: 125.3 KB
-   Type: Configuration Only
-   Path: C:\path\to\backups\my-config-backup.zip
-```
-
-### Profile Management // NOT FINALLY IMPLEMENTED YET
+#### Export Full Configuration
 
 ```bash
-# Lists all profiles with details
-darts-hub --list-profiles
+# Export all extensions with automatic name
+darts-hub --export
+
+# Export with custom name
+darts-hub --export my-config
+
+# Export with name and description
+darts-hub --export my-config "Backup before v2.0 update"
+```
+
+#### Export Specific Extensions
+
+```bash
+# Export single extension
+darts-hub --export-ext darts-caller
+
+# Export multiple extensions
+darts-hub --export-ext darts-caller darts-wled darts-pixelit
 ```
 
 **Example output:**
 ```
-=== DART PROFILES ===
+=== CONFIG EXPORT - EXTENSIONS ===
 
-Found 2 profile(s):
+Exporting 2 extension(s)...
 
-1. My Dart Setup
-   Tagged for Start: Yes
-   Applications: 3
-     • darts-caller (Auto-start)
-     • darts-wled (Auto-start)
-     • darts-pixelit (Manual)
+✓ Export successful!
+   Export file: C:\Users\...\darts-hub\exports\export_extensions_darts-caller-darts-wled_20240115_143022.json
 
-2. Test Configuration
-   Tagged for Start: No
-   Applications: 1
-     • darts-caller (Manual)
+   Exported extensions:
+      • darts-caller
+      • darts-wled
 ```
 
-### Testing Functions
-
-#### Full Test
-```bash
-# Runs all updater tests
-darts-hub --test-full
-```
-
-#### Interactive Test Menu
-```bash
-# Starts interactive menu for tests
-darts-hub --test-updater
-```
-
-**Menu example:**
-```
-Available Tests:
-1. Full Test Suite (all components)
-2. Version Check Test
-3. Retry Mechanism Test
-4. Logging System Test
-5. Exit
-
-Select option (1-5):
-```
-
-#### Specific Tests
-```bash
-# Individual test types
-darts-hub --test-version    # Only version checking
-darts-hub --test-retry      # Only retry mechanism
-darts-hub --test-logging    # Only logging system
-```
-
-### Runtime Options
-
-#### Verbose Mode // NOT FINALLY IMPLEMENTED YET
-```bash
-# Starts GUI with verbose logging
-darts-hub --verbose
-```
-- Enables detailed log outputs
-- Sets environment variable `DARTSHUB_VERBOSE=true`
-- Still starts the GUI
-
-#### Beta Mode
-```bash
-# Starts GUI in beta tester mode
-darts-hub --beta
-```
-- Enables beta release checking
-- Enables experimental features
-- Sets `Updater.IsBetaTester = true`
-
-## Backup-Restore Workflow Examples
-
-### Scenario 1: Regular Backup
-```bash
-# Weekly backup with date
-darts-hub --backup weekly-backup-$(date +%Y-%m-%d)
-
-# Clean up old backups (keep only last 4 weeks)
-darts-hub --backup-cleanup 4
-```
-
-### Scenario 2: Before Important Changes
-```bash
-# Backup before changes
-darts-hub --backup before-major-changes
-
-# Make changes...
-# If something goes wrong:
-darts-hub --backup-restore before-major-changes.zip
-```
-
-### Scenario 3: Migration to New System
-```bash
-# On old system:
-darts-hub --backup migration-backup
-
-# Copy backup file to new system
-# On new system:
-darts-hub --backup-restore migration-backup.zip
-```
-
-### Scenario 4: Configuration Only Backup
-```bash
-# Quick configuration backup before experiments
-darts-hub --backup-config quick-config-save
-
-# Experiment with settings...
-# If restoration needed:
-darts-hub --backup-restore quick-config-save.zip
-```
-
-## Implementation Details
-
-### CommandLineHelper Class
-
-The `CommandLineHelper` class in `darts-hub/UI/CommandLineHelper.cs` manages all CLI functions and now automatically uses the version from `Updater.cs`:
-
-```csharp
-// Version is automatically retrieved from Updater.cs
-Console.WriteLine($"Version: {Updater.version}");
-
-// Main function for argument processing
-public static async Task<bool> ProcessCommandLineArgs(string[] args)
-
-// Backup functions
-await BackupHelper.CreateFullBackup(customName);
-await BackupHelper.CreateConfigBackup(customName);
-BackupHelper.ListBackups();
-await BackupHelper.RestoreBackup(backupFile);
-BackupHelper.CleanupOldBackups(keepCount);
-```
-
-### BackupHelper Class
-
-The new `BackupHelper` class in `darts-hub/UI/BackupHelper.cs` manages all backup operations:
-
-```csharp
-// Backup creation
-public static async Task<string> CreateFullBackup(string customName = null)
-public static async Task<string> CreateConfigBackup(string customName = null)
-
-// Backup management
-public static void ListBackups()
-public static async Task<bool> RestoreBackup(string backupPath, bool interactive = true)
-public static void CleanupOldBackups(int keepCount = 10)
-```
-
-### Integration in Program.cs
-
-```csharp
-[STAThread]
-public static async Task<int> Main(string[] args) 
-{
-    // 1. Process CLI arguments
-    bool shouldStartGui = await ShouldStartGui(args);
-    
-    if (!shouldStartGui)
-        return 0; // Exit after CLI operation
-    
-    // 2. Start GUI normally
-    BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-}
-```
-
-### Backup File Structure
-
-```
-backup.zip
-├── backup-manifest.txt           # Metadata and file list
-├── config.json                  # Main configuration
-├── apps-downloadable.json       # Downloadable apps configuration
-├── apps-local.json              # Local apps configuration
-├── apps-open.json               # Open apps configuration
-├── control/
-│   └── wizard/
-│       └── WizardArgumentsConfig.json  # Wizard settings
-├── profiles/                    # User profiles (only in Full Backup)
-│   ├── profile1.json
-│   └── profile2.json
-└── logs/                       # Current logs (only in Full Backup)
-    ├── 
-    └── 
-```
-
-### Manifest Example
-
-```
-DartsHub Backup Manifest
-========================
-
-Backup Name: my-important-backup
-Type: Full Backup
-Created: 2024-01-15 14:30:25
-DartsHub Version: v1.2.0
-Platform: Microsoft Windows NT 10.0.22631.0
-
-Files included:
-  - config.json
-  - apps-downloadable.json
-  - apps-local.json
-  - apps-open.json
-  - control/wizard/WizardArgumentsConfig.json
-  - profiles/profile1.json
-  - profiles/profile2.json
-  - logs/updater-2024-01-15.log
-
-Total Files: 8
-```
-
-## Return Values
-
-| Return Value | Meaning |
-|--------------|---------|
-| `0` | Successful execution |
-| `1` | Execution error |
-
-## Advanced Usage
-
-### Combined Commands
+#### Export Specific Parameters (Interactive)
 
 ```bash
-# Verbose mode with other commands (starts GUI)
-darts-hub --verbose --beta
-
-# Test commands with parameters
-darts-hub --test-updater full    # Direct full test
-darts-hub --test-updater version # Direct version test
+darts-hub --export-params
 ```
 
-### Automation
+> **Note for Windows users**: Interactive commands (those requiring keyboard input) will open in a new console window. This is necessary to properly capture your input. The window will remain open after the command completes - press Enter to close it.
+
+This starts an interactive session where you can:
+1. Select which extensions to export from
+2. For each extension, select which parameters to export
+
+**Example session:**
+```
+=== CONFIG EXPORT - PARAMETERS ===
+
+This command exports specific parameters from specific extensions.
+
+Available extensions:
+  1. darts-caller
+  2. darts-wled
+  3. darts-pixelit
+
+Select extensions (comma-separated numbers, or 'all'): 1,2
+
+Selected 2 extension(s).
+
+--- darts-caller ---
+  Available parameters:
+    1. U
+    2. P
+    3. B
+    4. M
+    5. C
+    ...
+
+  Select parameters (comma-separated numbers, 'all', or 'skip'): 1,2,3,4
+
+  ✓ Selected 4 parameter(s)
+
+--- darts-wled ---
+  ...
+```
+
+#### Import Configuration
 
 ```bash
-# Batch testing with backup (Windows)
-darts-hub --backup pre-test-backup
-darts-hub --test-full > test-results.txt 2>&1
-if %ERRORLEVEL% NEQ 0 darts-hub --backup-restore pre-test-backup.zip
+# Import with merge mode (default) - safe, updates existing
+darts-hub --import my-config.json
 
-# Shell scripting with backup (Linux/macOS)
-#!/bin/bash
-darts-hub --backup pre-test-backup
-if darts-hub --test-full; then
-    echo "Tests passed"
-    darts-hub --backup-cleanup 5
-else
-    echo "Tests failed, restoring backup"
-    darts-hub --backup-restore pre-test-backup.zip
-fi
+# Import with replace mode - replaces everything
+darts-hub --import my-config.json replace
+
+# Short filename works too
+darts-hub --import export_full_20240115_143022.json
 ```
 
-### CI/CD Integration
+> **Note for Windows users**: The import command requires confirmation and will open in a new console window for input.
 
-```yaml
-# GitHub Actions example
-- name: Backup Configuration
-  run: ./darts-hub --backup-config ci-backup
+**Example output:**
+```
+=== CONFIG IMPORT ===
 
-- name: Run DartsHub Tests
-  run: |
-    ./darts-hub --test-full
-    ./darts-hub --test-logging
+Export file: my-config.json
+Export type: Extensions
+Created: 2024-01-15 14:30:22
+Extensions: darts-caller, darts-wled
+Description: Backup before v2.0 update
 
-- name: Restore on Failure
-  if: failure()
-  run: ./darts-hub --backup-restore ci-backup.zip
+Import mode: Merge
+
+Proceed with import? (y/N): y
+
+Importing configuration...
+(A backup will be created automatically)
+
+✓ Import successful!
+
+   Merged configuration: 0 added, 2 updated
+   Backup created: backups/config-backups/apps-config_import_20240115_144530.json
 ```
 
+#### List Available Extensions
 
-## Logging and Debugging
-
-### Log Files
-- All CLI operations are logged
-- Backup operations receive detailed logs
-- Location: `logs/` directory in application folder
-
-### Verbose Output
 ```bash
-# With --verbose flag
-[14:30:25] Verbose mode enabled via command line
-[14:30:26] Starting application initialization
-[14:30:27] Loading configuration files
-[14:30:28] Creating backup: my-backup...
-[14:30:29] Backup completed: 2.45 MB
+darts-hub --list-extensions
 ```
 
-## Platform-Specific Notes
-
-### Windows
-```cmd
-darts-hub.exe --help
-darts-hub.exe --backup my-backup
-darts-hub.exe --backup-list
+**Output:**
+```
+  Found 5 extension(s):
+     • darts-caller
+     • darts-wled
+     • darts-pixelit
+     • darts-gif
+     • darts-voice
 ```
 
-### Linux/macOS
+#### List Extension Parameters
+
 ```bash
-./darts-hub --help
-./darts-hub --backup my-backup
-./darts-hub --backup-list
-
-# Or with chmod +x
-chmod +x darts-hub
-darts-hub --help
+darts-hub --list-params darts-caller
 ```
 
-### PowerShell (Windows)
-```powershell
-.\darts-hub.exe --help
-& ".\darts-hub.exe" --backup "my-backup"
-& ".\darts-hub.exe" --backup-list
+**Output:**
+```
+=== PARAMETERS FOR: darts-caller ===
+
+Found 45 parameter(s):
+   • U
+   • P
+   • B
+   • M
+   • MS
+   • V
+   • C
+   • R
+   ...
 ```
 
-## Troubleshooting
+#### List Export Files
 
-### Common Issues
+```bash
+darts-hub --list-exports
+```
 
-1. **"Command not found"**
-   - Ensure the application path is correct
-   - On Linux/macOS: Check execution permissions with `chmod +x`
+**Output:**
+```
+  Found 3 export file(s):
 
-2. **"Application is already running"**
-   - A GUI instance is already running
-   - Close the GUI or use Task Manager
+     • export_full_20240115_143022.json
+       Created: 2024-01-15 14:30:22
+       Size: 125.45 KB
 
-3. **Backup errors**
-   - Check write permissions in application directory
-   - Ensure sufficient disk space is available
+     • export_extensions_darts-caller_20240114_093015.json
+       Created: 2024-01-14 09:30:15
+       Size: 15.23 KB
 
-4. **Restore errors**
-   - Check if backup file exists and is not corrupted
-   - Ensure no application instance is running
+     • export_parameters_20240113_161045.json
+       Created: 2024-01-13 16:10:45
+       Size: 8.67 KB
+```
+
+#### Show Export Information
+
+```bash
+darts-hub --export-info my-config.json

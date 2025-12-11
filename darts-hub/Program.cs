@@ -26,10 +26,69 @@ namespace darts_hub
 
         private const int ATTACH_PARENT_PROCESS = -1;
 
+        /// <summary>
+        /// Checks if the command line arguments require console output
+        /// </summary>
+        private static bool HasConsoleCommands(string[] args)
+        {
+            if (args == null || args.Length == 0)
+                return false;
+
+            // Check for CLI commands that need console output
+            foreach (var arg in args)
+            {
+                var lowerArg = arg.ToLowerInvariant();
+                if (lowerArg.StartsWith("--") || lowerArg.StartsWith("-"))
+                {
+                    // These are CLI commands that need console
+                    if (lowerArg.Contains("help") || 
+                        lowerArg.Contains("version") || 
+                        lowerArg.Contains("backup") || 
+                        lowerArg.Contains("restore") || 
+                        lowerArg.Contains("test") || 
+                        lowerArg.Contains("status") ||
+                        lowerArg.Contains("info") ||
+                        lowerArg.Contains("profiles") ||
+                        lowerArg.Contains("list") ||
+                        lowerArg.Contains("cleanup") ||
+                        lowerArg.Contains("export") ||
+                        lowerArg.Contains("import") ||
+                        lowerArg.Contains("extensions") ||
+                        lowerArg.Contains("params") ||
+                        lowerArg.Equals("--verbose") == false && // verbose starts GUI
+                        lowerArg.Equals("--beta") == false)     // beta starts GUI
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+        
+        /// <summary>
+        /// Checks if the command requires interactive input (ReadLine)
+        /// </summary>
+        private static bool RequiresInteractiveInput(string[] args)
+        {
+            if (args == null || args.Length == 0)
+                return false;
+
+            var command = args[0].ToLowerInvariant();
+            
+            // Commands that need user input
+            return command == "--export-params" || 
+                   command == "--export-parameters" ||
+                   command == "--import" ||
+                   command == "--backup-restore" ||
+                   command == "--restore";
+        }
+
         [STAThread]
         public static async Task<int> Main(string[] args) 
         {
             bool needsConsole = HasConsoleCommands(args);
+            bool needsInteractive = RequiresInteractiveInput(args);
             bool consoleAttached = false;
             
             try
@@ -37,19 +96,32 @@ namespace darts_hub
                 // Handle console for CLI commands
                 if (needsConsole && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    // Try to attach to parent console first (PowerShell, CMD, etc.)
-                    if (AttachConsole(ATTACH_PARENT_PROCESS))
+                    if (needsInteractive)
                     {
-                        consoleAttached = true;
+                        // For interactive commands, always allocate a NEW console
+                        // Attaching to parent console causes PowerShell to interpret input as commands
+                        AllocConsole();
                         
-                        // Redirect console streams
-                        System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });
-                        System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError()) { AutoFlush = true });
+                        // No need to redirect streams for allocated console
+                        System.Console.WriteLine(); // Add newline for separation
                     }
                     else
                     {
-                        // If attach fails, allocate a new console
-                        AllocConsole();
+                        // For non-interactive commands, try to attach to parent console first
+                        if (AttachConsole(ATTACH_PARENT_PROCESS))
+                        {
+                            consoleAttached = true;
+                            
+                            // Redirect console streams for attached console
+                            System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });
+                            System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError()) { AutoFlush = true });
+                            System.Console.SetIn(new System.IO.StreamReader(System.Console.OpenStandardInput()));
+                        }
+                        else
+                        {
+                            // If attach fails, allocate a new console
+                            AllocConsole();
+                        }
                     }
                 }
 
@@ -66,6 +138,13 @@ namespace darts_hub
                         
                         // Send a newline to separate from parent process prompt
                         System.Console.WriteLine();
+                    }
+                    else if (needsInteractive)
+                    {
+                        // For interactive console, wait for user to press Enter before closing
+                        System.Console.WriteLine();
+                        System.Console.WriteLine("Press Enter to close...");
+                        System.Console.ReadLine();
                     }
                     
                     return 0;
@@ -123,42 +202,6 @@ namespace darts_hub
             {
                 _mutex?.Close();
             }
-        }
-
-        /// <summary>
-        /// Checks if the command line arguments require console output
-        /// </summary>
-        private static bool HasConsoleCommands(string[] args)
-        {
-            if (args == null || args.Length == 0)
-                return false;
-
-            // Check for CLI commands that need console output
-            foreach (var arg in args)
-            {
-                var lowerArg = arg.ToLowerInvariant();
-                if (lowerArg.StartsWith("--") || lowerArg.StartsWith("-"))
-                {
-                    // These are CLI commands that need console
-                    if (lowerArg.Contains("help") || 
-                        lowerArg.Contains("version") || 
-                        lowerArg.Contains("backup") || 
-                        lowerArg.Contains("restore") || 
-                        lowerArg.Contains("test") || 
-                        lowerArg.Contains("status") ||
-                        lowerArg.Contains("info") ||
-                        lowerArg.Contains("profiles") ||
-                        lowerArg.Contains("list") ||
-                        lowerArg.Contains("cleanup") ||
-                        lowerArg.Equals("--verbose") == false && // verbose starts GUI
-                        lowerArg.Equals("--beta") == false)     // beta starts GUI
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
         }
 
         private static async Task<bool> ShouldStartGui(string[] args)

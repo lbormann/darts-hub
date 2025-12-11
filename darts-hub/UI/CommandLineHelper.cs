@@ -13,7 +13,7 @@ namespace darts_hub.UI
     /// </summary>
     public static class CommandLineHelper
     {
-        private const string APP_NAME = "DartsHub";
+        private const string APP_NAME = "Darts-Hub";
         
         // Use System.Console for better PowerShell compatibility
         private static void WriteLine(string text = "") 
@@ -26,6 +26,33 @@ namespace darts_hub.UI
         {
             System.Console.Write(text);
             System.Console.Out.Flush(); // Ensure immediate output in PowerShell
+        }
+        
+        /// <summary>
+        /// Reads a line from console with proper handling for redirected streams
+        /// </summary>
+        private static string ReadLine()
+        {
+            try
+            {
+                System.Console.Out.Flush();
+                
+                // Try to read from standard input
+                var input = System.Console.In.ReadLine();
+                
+                // If we got null or empty, might be redirected
+                if (input == null)
+                {
+                    return string.Empty;
+                }
+                
+                return input;
+            }
+            catch (Exception)
+            {
+                // Fallback if input is redirected or unavailable
+                return string.Empty;
+            }
         }
         
         /// <summary>
@@ -106,6 +133,46 @@ namespace darts_hub.UI
                     await RunBackupCleanup(args.Skip(1).ToArray());
                     return true;
 
+                // Config Export/Import commands
+                case "--export":
+                case "--export-full":
+                    await RunConfigExportFull(args.Skip(1).ToArray());
+                    return true;
+
+                case "--export-extension":
+                case "--export-ext":
+                    await RunConfigExportExtension(args.Skip(1).ToArray());
+                    return true;
+
+                case "--export-params":
+                case "--export-parameters":
+                    await RunConfigExportParameters(args.Skip(1).ToArray());
+                    return true;
+
+                case "--import":
+                    await RunConfigImport(args.Skip(1).ToArray());
+                    return true;
+
+                case "--list-extensions":
+                case "--extensions":
+                    await ListExtensions();
+                    return true;
+
+                case "--list-params":
+                case "--params":
+                    await ListExtensionParams(args.Skip(1).ToArray());
+                    return true;
+
+                case "--list-exports":
+                case "--exports":
+                    ListExports();
+                    return true;
+
+                case "--export-info":
+                case "--info-export":
+                    await ShowExportInfo(args.Skip(1).ToArray());
+                    return true;
+
                 // Application information
                 case "--info":
                 case "info":
@@ -167,6 +234,16 @@ namespace darts_hub.UI
             WriteLine("    --list-profiles         List all available dart profiles");
             WriteLine("    --profiles              Alias for --list-profiles");
             WriteLine();
+            WriteLine("  Configuration Export/Import:");
+            WriteLine("    --export [name]         Export complete configuration (all extensions)");
+            WriteLine("    --export-ext <names...> Export specific extension(s)");
+            WriteLine("    --export-params         Export specific parameters (interactive)");
+            WriteLine("    --import <file> [mode]  Import configuration (mode: merge|replace, default: merge)");
+            WriteLine("    --list-extensions       List all available extensions");
+            WriteLine("    --list-params <ext>     List parameters for an extension");
+            WriteLine("    --list-exports          List all export files");
+            WriteLine("    --export-info <file>    Show information about an export file");
+            WriteLine();
             WriteLine("  Backup & Restore:");
             WriteLine("    --backup [name]         Create full backup (configs, profiles, logs)");
             WriteLine("    --backup-config [name]  Create configuration-only backup");
@@ -186,14 +263,26 @@ namespace darts_hub.UI
             WriteLine("    --beta                  Enable beta tester mode (starts GUI)");
             WriteLine();
             WriteLine("EXAMPLES:");
-            WriteLine($"  {APP_NAME.ToLower()} --help");
-            WriteLine($"  {APP_NAME.ToLower()} --test-full");
-            WriteLine($"  {APP_NAME.ToLower()} --backup my-backup");
-            WriteLine($"  {APP_NAME.ToLower()} --backup-config");
-            WriteLine($"  {APP_NAME.ToLower()} --backup-list");
-            WriteLine($"  {APP_NAME.ToLower()} --backup-restore backups/my-backup.zip");
-            WriteLine($"  {APP_NAME.ToLower()} --list-profiles");
-            WriteLine($"  {APP_NAME.ToLower()} --verbose");
+            WriteLine("  Configuration Export:");
+            WriteLine($"    darts-hub --export my-config");
+            WriteLine($"    darts-hub --export-ext darts-caller darts-wled");
+            WriteLine($"    darts-hub --export-params");
+            WriteLine($"    darts-hub --list-extensions");
+            WriteLine($"    darts-hub --list-params darts-caller");
+            WriteLine();
+            WriteLine("  Configuration Import:");
+            WriteLine($"    darts-hub --import exports/my-config.json");
+            WriteLine($"    darts-hub --import exports/my-config.json replace");
+            WriteLine($"    darts-hub --export-info exports/my-config.json");
+            WriteLine($"    darts-hub --list-exports");
+            WriteLine();
+            WriteLine("  Other:");
+            WriteLine($"    darts-hub --help");
+            WriteLine($"    darts-hub --test-full");
+            WriteLine($"    darts-hub --backup my-backup");
+            WriteLine($"    darts-hub --backup-config");
+            WriteLine($"    darts-hub --list-profiles");
+            WriteLine($"    darts-hub --verbose");
             WriteLine();
             WriteLine("For more information, visit: https://github.com/lbormann/darts-hub");
         }
@@ -280,7 +369,7 @@ namespace darts_hub.UI
         {
             try
             {
-                WriteLine("?? Creating full backup...");
+                WriteLine("Creating full backup...");
                 WriteLine();
                 
                 string customName = null;
@@ -291,12 +380,12 @@ namespace darts_hub.UI
                 
                 var backupPath = await BackupHelper.CreateFullBackup(customName);
                 WriteLine();
-                WriteLine($"?? Full backup completed successfully!");
+                WriteLine($"Full backup completed successfully!");
                 WriteLine($"   Backup location: {backupPath}");
             }
             catch (Exception ex)
             {
-                WriteLine($"? Backup failed: {ex.Message}");
+                WriteLine($"Backup failed: {ex.Message}");
             }
         }
 
@@ -304,7 +393,7 @@ namespace darts_hub.UI
         {
             try
             {
-                WriteLine("?? Creating configuration backup...");
+                WriteLine("Creating configuration backup...");
                 WriteLine();
                 
                 string customName = null;
@@ -315,12 +404,12 @@ namespace darts_hub.UI
                 
                 var backupPath = await BackupHelper.CreateConfigBackup(customName);
                 WriteLine();
-                WriteLine($"?? Configuration backup completed successfully!");
+                WriteLine($"Configuration backup completed successfully!");
                 WriteLine($"   Backup location: {backupPath}");
             }
             catch (Exception ex)
             {
-                WriteLine($"? Configuration backup failed: {ex.Message}");
+                WriteLine($"Configuration backup failed: {ex.Message}");
             }
         }
 
@@ -332,7 +421,7 @@ namespace darts_hub.UI
             }
             catch (Exception ex)
             {
-                WriteLine($"? Failed to list backups: {ex.Message}");
+                WriteLine($"Failed to list backups: {ex.Message}");
             }
         }
 
@@ -342,7 +431,7 @@ namespace darts_hub.UI
             {
                 if (args.Length == 0)
                 {
-                    WriteLine("? Please specify a backup file to restore.");
+                    WriteLine("Please specify a backup file to restore.");
                     WriteLine("Usage: --backup-restore <path-to-backup-file>");
                     WriteLine();
                     WriteLine("Available backups:");
@@ -372,7 +461,7 @@ namespace darts_hub.UI
                     }
                 }
                 
-                WriteLine("?? Restoring backup...");
+                WriteLine("Restoring backup...");
                 WriteLine();
                 
                 var success = await BackupHelper.RestoreBackup(backupFile, interactive: true);
@@ -380,13 +469,13 @@ namespace darts_hub.UI
                 if (success)
                 {
                     WriteLine();
-                    WriteLine("?? Backup restored successfully!");
+                    WriteLine("Backup restored successfully!");
                     WriteLine("   Please restart DartsHub to apply the restored configuration.");
                 }
             }
             catch (Exception ex)
             {
-                WriteLine($"? Restore failed: {ex.Message}");
+                WriteLine($"Restore failed: {ex.Message}");
             }
         }
 
@@ -401,14 +490,635 @@ namespace darts_hub.UI
                     keepCount = Math.Max(1, customKeepCount); // At least 1
                 }
                 
-                WriteLine($"?? Cleaning up old backups (keeping {keepCount} most recent)...");
+                WriteLine($"Cleaning up old backups (keeping {keepCount} most recent)...");
                 WriteLine();
                 
                 BackupHelper.CleanupOldBackups(keepCount);
             }
             catch (Exception ex)
             {
-                WriteLine($"? Cleanup failed: {ex.Message}");
+                WriteLine($"Cleanup failed: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region Config Export/Import Commands
+
+        private static async Task RunConfigExportFull(string[] args)
+        {
+            try
+            {
+                WriteLine("=== CONFIG EXPORT - FULL ===");
+                WriteLine();
+                WriteLine("Exporting complete configuration (all extensions)...");
+                WriteLine();
+
+                string customName = null;
+                string description = null;
+
+                if (args.Length > 0 && !string.IsNullOrWhiteSpace(args[0]))
+                {
+                    customName = args[0];
+                }
+
+                if (args.Length > 1 && !string.IsNullOrWhiteSpace(args[1]))
+                {
+                    description = args[1];
+                }
+
+                // Check if darts-caller is included and ask about credentials
+                var extensions = await ConfigExportManager.ListAvailableExtensions();
+                bool excludeCredentials = false;
+                
+                if (extensions.Any(e => string.Equals(e, "darts-caller", StringComparison.OrdinalIgnoreCase)))
+                {
+                    WriteLine("? WARNING: Your configuration includes 'darts-caller'");
+                    WriteLine("   This extension contains sensitive Autodarts credentials:");
+                    WriteLine("   - Email (U)");
+                    WriteLine("   - Password (P)");
+                    WriteLine("   - Board ID (B)");
+                    WriteLine();
+                    Write("Do you want to EXCLUDE these credentials from export? (y/N): ");
+                    var response = ReadLine();
+                    excludeCredentials = response?.ToLower() == "y";
+                    WriteLine();
+                }
+
+                var exportPath = await ConfigExportManager.ExportFull(customName, description, excludeCredentials);
+
+                WriteLine("? Export successful!");
+                WriteLine($"   Export file: {exportPath}");
+                WriteLine();
+                
+                if (excludeCredentials)
+				{
+					WriteLine("   ? Autodarts credentials (U, P, B) were excluded from export.");
+				}
+                
+                var info = await ConfigExportManager.GetExportInfo(exportPath);
+                WriteLine($"   Exported {info.ExtensionNames.Count} extensions:");
+                foreach (var extName in info.ExtensionNames)
+                {
+                    WriteLine($"      • {extName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"? Export failed: {ex.Message}");
+            }
+        }
+
+        private static async Task RunConfigExportExtension(string[] args)
+        {
+            try
+            {
+                WriteLine("=== CONFIG EXPORT - EXTENSIONS ===");
+                WriteLine();
+
+                if (args.Length == 0)
+                {
+                    WriteLine("Please specify extension name(s) to export.");
+                    WriteLine();
+                    WriteLine("Usage: --export-ext <extension1> [extension2] [extension3]...");
+                    WriteLine();
+                    WriteLine("Available extensions:");
+                    await ListExtensions();
+                    return;
+                }
+
+                var extensionNames = args.Where(a => !a.StartsWith("--")).ToList();
+                
+                if (!extensionNames.Any())
+                {
+                    WriteLine("No valid extension names provided.");
+                    return;
+                }
+
+                // Check if darts-caller is included and ask about credentials
+                bool excludeCredentials = false;
+                bool hasCallerExtension = extensionNames.Any(e => 
+                    string.Equals(e, "darts-caller", StringComparison.OrdinalIgnoreCase));
+                
+                if (hasCallerExtension)
+                {
+                    WriteLine("? WARNING: You are exporting 'darts-caller'");
+                    WriteLine("   This extension contains sensitive Autodarts credentials:");
+                    WriteLine("   - Email (U)");
+                    WriteLine("   - Password (P)");
+                    WriteLine("   - Board ID (B)");
+                    WriteLine();
+                    Write("Do you want to EXCLUDE these credentials from export? (y/N): ");
+                    var response = ReadLine();
+                    excludeCredentials = response?.ToLower() == "y";
+                    WriteLine();
+                }
+
+                WriteLine($"Exporting {extensionNames.Count} extension(s)...");
+                WriteLine();
+
+                var exportPath = await ConfigExportManager.ExportExtensions(extensionNames, null, null, excludeCredentials);
+
+                WriteLine("? Export successful!");
+                WriteLine($"   Export file: {exportPath}");
+                WriteLine();
+                
+                if (excludeCredentials)
+                {
+                    WriteLine("   ? Autodarts credentials (U, P, B) were excluded from export.");
+                }
+                
+                WriteLine($"   Exported extensions:");
+                foreach (var extName in extensionNames)
+                {
+                    WriteLine($"      • {extName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"? Export failed: {ex.Message}");
+            }
+        }
+
+        private static async Task RunConfigExportParameters(string[] args)
+        {
+            try
+            {
+                WriteLine("=== CONFIG EXPORT - PARAMETERS ===");
+                WriteLine();
+                WriteLine("This command exports specific parameters from specific extensions.");
+                WriteLine();
+
+                // Get available extensions
+                var extensions = await ConfigExportManager.ListAvailableExtensions();
+                
+                if (!extensions.Any())
+                {
+                    WriteLine("No extensions found in configuration.");
+                    return;
+                }
+
+                var extensionParameters = new Dictionary<string, List<string>>();
+
+                // Interactive mode
+                WriteLine("Available extensions:");
+                for (int i = 0; i < extensions.Count; i++)
+                {
+                    WriteLine($"  {i + 1}. {extensions[i]}");
+                }
+                WriteLine();
+
+                Write("Select extensions (comma-separated numbers, or 'all'): ");
+                var input = ReadLine();
+
+                List<string> selectedExtensions;
+                if (input?.ToLower() == "all")
+                {
+                    selectedExtensions = extensions;
+                }
+                else
+                {
+                    var indices = input?.Split(',')
+                        .Select(s => s.Trim())
+                        .Where(s => int.TryParse(s, out _))
+                        .Select(s => int.Parse(s) - 1)
+                        .Where(i => i >= 0 && i < extensions.Count)
+                        .ToList() ?? new List<int>();
+
+                    selectedExtensions = indices.Select(i => extensions[i]).ToList();
+                }
+
+                if (!selectedExtensions.Any())
+                {
+                    WriteLine("No valid extensions selected.");
+                    return;
+                }
+
+                WriteLine();
+                WriteLine($"Selected {selectedExtensions.Count} extension(s).");
+                WriteLine();
+
+                // Check for darts-caller and ask about credentials BEFORE parameter selection
+                bool excludeCredentials = false;
+                bool hasCallerExtension = selectedExtensions.Any(e => 
+                    string.Equals(e, "darts-caller", StringComparison.OrdinalIgnoreCase));
+                
+                if (hasCallerExtension)
+                {
+                    WriteLine("? WARNING: You selected 'darts-caller'");
+                    WriteLine("   This extension contains sensitive Autodarts credentials:");
+                    WriteLine("   - Email (U)");
+                    WriteLine("   - Password (P)");
+                    WriteLine("   - Board ID (B)");
+                    WriteLine();
+                    Write("Do you want to EXCLUDE these credentials from export? (y/N): ");
+                    var response = ReadLine();
+                    excludeCredentials = response?.ToLower() == "y";
+                    WriteLine();
+                    
+                    if (excludeCredentials)
+                    {
+                        WriteLine("? Credentials (U, P, B) will be excluded from parameter selection.");
+                        WriteLine();
+                    }
+                }
+
+                // For each selected extension, ask for parameters
+                foreach (var extName in selectedExtensions)
+                {
+                    WriteLine($"--- {extName} ---");
+                    
+                    var parameters = await ConfigExportManager.ListExtensionParameters(extName);
+                    
+                    // If this is darts-caller and user wants to exclude credentials, filter them out
+                    if (excludeCredentials && string.Equals(extName, "darts-caller", StringComparison.OrdinalIgnoreCase))
+                    {
+                        parameters = parameters.Where(p => 
+                            !string.Equals(p, "U", StringComparison.OrdinalIgnoreCase) &&
+                            !string.Equals(p, "P", StringComparison.OrdinalIgnoreCase) &&
+                            !string.Equals(p, "B", StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+                        
+                        WriteLine("  (Credentials U, P, B excluded from selection)");
+                    }
+                    
+                    if (!parameters.Any())
+                    {
+                        WriteLine("  No parameters available for this extension.");
+                        WriteLine();
+                        continue;
+                    }
+
+                    WriteLine("  Available parameters:");
+                    for (int i = 0; i < parameters.Count; i++)
+                    {
+                        WriteLine($"    {i + 1}. {parameters[i]}");
+                    }
+                    WriteLine();
+
+                    Write("  Select parameters (comma-separated numbers, 'all', or 'skip'): ");
+                    var paramInput = ReadLine();
+
+                    if (paramInput?.ToLower() == "skip")
+                    {
+                        continue;
+                    }
+
+                    List<string> selectedParams;
+                    if (paramInput?.ToLower() == "all")
+                    {
+                        selectedParams = parameters;
+                    }
+                    else
+                    {
+                        var paramIndices = paramInput?.Split(',')
+                            .Select(s => s.Trim())
+                            .Where(s => int.TryParse(s, out _))
+                            .Select(s => int.Parse(s) - 1)
+                            .Where(i => i >= 0 && i < parameters.Count)
+                            .ToList() ?? new List<int>();
+
+                        selectedParams = paramIndices.Select(i => parameters[i]).ToList();
+                    }
+
+                    if (selectedParams.Any())
+                    {
+                        extensionParameters[extName] = selectedParams;
+                        WriteLine($"  ? Selected {selectedParams.Count} parameter(s)");
+                    }
+                    else
+                    {
+                        WriteLine("  ? No parameters selected for this extension");
+                    }
+                    WriteLine();
+                }
+
+                if (!extensionParameters.Any())
+                {
+                    WriteLine("No parameters selected for export.");
+                    return;
+                }
+
+                WriteLine("Exporting parameters...");
+                WriteLine();
+
+                var exportPath = await ConfigExportManager.ExportParameters(extensionParameters);
+
+                WriteLine("? Export successful!");
+                WriteLine($"   Export file: {exportPath}");
+                WriteLine();
+                
+                if (excludeCredentials)
+                {
+                    WriteLine("   ? Autodarts credentials (U, P, B) were excluded from export.");
+                }
+                
+                WriteLine("   Exported:");
+                foreach (var kvp in extensionParameters)
+                {
+                    WriteLine($"      • {kvp.Key}: {kvp.Value.Count} parameter(s)");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"? Export failed: {ex.Message}");
+            }
+        }
+
+        private static async Task RunConfigImport(string[] args)
+        {
+            try
+            {
+                WriteLine("=== CONFIG IMPORT ===");
+                WriteLine();
+
+                if (args.Length == 0)
+                {
+                    WriteLine("Please specify an export file to import.");
+                    WriteLine();
+                    WriteLine("Usage: --import <export-file> [mode]");
+                    WriteLine("       mode: merge (default) or replace");
+                    WriteLine();
+                    WriteLine("Available export files:");
+                    ListExports();
+                    return;
+                }
+
+                var exportFile = args[0];
+                var mode = ImportMode.Merge;
+
+                if (args.Length > 1)
+                {
+                    if (args[1].ToLower() == "replace")
+                    {
+                        mode = ImportMode.Replace;
+                    }
+                }
+
+                // If it's just a filename, try to find it in the exports directory
+                if (!Path.IsPathRooted(exportFile) && !exportFile.Contains(Path.DirectorySeparatorChar))
+                {
+                    var exportsDir = Path.Combine(Helper.GetAppBasePath(), "exports");
+                    var possiblePath = Path.Combine(exportsDir, exportFile);
+
+                    if (File.Exists(possiblePath))
+                    {
+                        exportFile = possiblePath;
+                    }
+                    else if (!exportFile.EndsWith(".json"))
+                    {
+                        possiblePath = Path.Combine(exportsDir, exportFile + ".json");
+                        if (File.Exists(possiblePath))
+                        {
+                            exportFile = possiblePath;
+                        }
+                    }
+                }
+
+                // Show export info
+                var info = await ConfigExportManager.GetExportInfo(exportFile);
+                WriteLine($"Export file: {Path.GetFileName(exportFile)}");
+                WriteLine($"Export type: {info.Type}");
+                WriteLine($"Created: {info.Timestamp:yyyy-MM-dd HH:mm:ss}");
+                WriteLine($"Extensions: {string.Join(", ", info.ExtensionNames)}");
+                if (!string.IsNullOrWhiteSpace(info.Description))
+                {
+                    WriteLine($"Description: {info.Description}");
+                }
+                WriteLine();
+                WriteLine($"Import mode: {mode}");
+                WriteLine();
+
+                Write("Proceed with import? (y/N): ");
+                var confirm = ReadLine();
+
+                if (confirm?.ToLower() != "y")
+                {
+                    WriteLine("Import cancelled.");
+                    return;
+                }
+
+                WriteLine();
+                WriteLine("Importing configuration...");
+                WriteLine("(A backup will be created automatically)");
+                WriteLine();
+
+                var result = await ConfigExportManager.Import(exportFile, mode, createBackup: true);
+
+                if (result.Success)
+                {
+                    WriteLine("? Import successful!");
+                    WriteLine();
+                    WriteLine($"   {result.Message}");
+                    
+                    if (!string.IsNullOrWhiteSpace(result.BackupPath))
+                    {
+                        WriteLine($"   Backup created: {result.BackupPath}");
+                    }
+                    
+                    if (result.Warnings.Any())
+                    {
+                        WriteLine();
+                        WriteLine("   Warnings:");
+                        foreach (var warning in result.Warnings)
+                        {
+                            WriteLine($"      ? {warning}");
+                        }
+                    }
+                }
+                else
+                {
+                    WriteLine("? Import failed!");
+                    WriteLine();
+                    foreach (var error in result.Errors)
+                    {
+                        WriteLine($"   ? {error}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"? Import failed: {ex.Message}");
+            }
+        }
+
+        private static async Task ListExtensions()
+        {
+            try
+            {
+                var extensions = await ConfigExportManager.ListAvailableExtensions();
+
+                if (!extensions.Any())
+                {
+                    WriteLine("  No extensions found.");
+                    return;
+                }
+
+                WriteLine($"  Found {extensions.Count} extension(s):");
+                foreach (var ext in extensions)
+                {
+                    WriteLine($"     • {ext}");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"Failed to list extensions: {ex.Message}");
+            }
+        }
+
+        private static async Task ListExtensionParams(string[] args)
+        {
+            try
+            {
+                if (args.Length == 0)
+                {
+                    WriteLine("Please specify an extension name.");
+                    WriteLine();
+                    WriteLine("Usage: --list-params <extension-name>");
+                    WriteLine();
+                    WriteLine("Available extensions:");
+                    await ListExtensions();
+                    return;
+                }
+
+                var extensionName = args[0];
+                WriteLine($"=== PARAMETERS FOR: {extensionName} ===");
+                WriteLine();
+
+                var parameters = await ConfigExportManager.ListExtensionParameters(extensionName);
+
+                if (!parameters.Any())
+                {
+                    WriteLine("No parameters found for this extension.");
+                    return;
+                }
+
+                WriteLine($"Found {parameters.Count} parameter(s):");
+                foreach (var param in parameters)
+                {
+                    WriteLine($"   • {param}");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"Failed to list parameters: {ex.Message}");
+            }
+        }
+
+        private static void ListExports()
+        {
+            try
+            {
+                var exports = ConfigExportManager.ListExports();
+
+                if (!exports.Any())
+                {
+                    WriteLine("  No export files found.");
+                    return;
+                }
+
+                WriteLine($"  Found {exports.Count} export file(s):");
+                WriteLine();
+                foreach (var export in exports)
+                {
+                    WriteLine($"     • {export.Name}");
+                    WriteLine($"       Created: {export.CreationTime:yyyy-MM-dd HH:mm:ss}");
+                    WriteLine($"       Size: {export.Length / 1024.0:F2} KB");
+                    WriteLine();
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"Failed to list exports: {ex.Message}");
+            }
+        }
+
+        private static async Task ShowExportInfo(string[] args)
+        {
+            try
+            {
+                if (args.Length == 0)
+                {
+                    WriteLine("Please specify an export file.");
+                    WriteLine();
+                    WriteLine("Usage: --export-info <export-file>");
+                    WriteLine();
+                    WriteLine("Available export files:");
+                    ListExports();
+                    return;
+                }
+
+                var exportFile = args[0];
+
+                // If it's just a filename, try to find it in the exports directory
+                if (!Path.IsPathRooted(exportFile) && !exportFile.Contains(Path.DirectorySeparatorChar))
+                {
+                    var exportsDir = Path.Combine(Helper.GetAppBasePath(), "exports");
+                    var possiblePath = Path.Combine(exportsDir, exportFile);
+
+                    if (File.Exists(possiblePath))
+                    {
+                        exportFile = possiblePath;
+                    }
+                    else if (!exportFile.EndsWith(".json"))
+                    {
+                        possiblePath = Path.Combine(exportsDir, exportFile + ".json");
+                        if (File.Exists(possiblePath))
+                        {
+                            exportFile = possiblePath;
+                        }
+                    }
+                }
+
+                WriteLine("=== EXPORT FILE INFORMATION ===");
+                WriteLine();
+
+                var info = await ConfigExportManager.GetExportInfo(exportFile);
+
+                WriteLine($"File: {Path.GetFileName(exportFile)}");
+                WriteLine($"Type: {info.Type}");
+                WriteLine($"Version: {info.Version}");
+                WriteLine($"Created: {info.Timestamp:yyyy-MM-dd HH:mm:ss}");
+                WriteLine($"App Version: {info.AppVersion}");
+                WriteLine();
+
+                if (!string.IsNullOrWhiteSpace(info.Description))
+                {
+                    WriteLine($"Description: {info.Description}");
+                    WriteLine();
+                }
+
+                WriteLine($"Extensions ({info.ExtensionNames.Count}):");
+                foreach (var extName in info.ExtensionNames)
+                {
+                    WriteLine($"   • {extName}");
+
+                    // Show parameter data if available (new format for parameter exports)
+                    if (info.ParameterData != null && info.ParameterData.ContainsKey(extName))
+                    {
+                        var paramData = info.ParameterData[extName];
+                        WriteLine($"     Parameters with values ({paramData.Count}):");
+                        foreach (var param in paramData)
+                        {
+                            WriteLine($"        - {param.NameHuman}");
+                            WriteLine($"          Value: {(string.IsNullOrWhiteSpace(param.Value) ? "(empty)" : param.Value)}");
+                        }
+                    }
+                    // Fallback to old format
+                    else if (info.ParameterNames != null && info.ParameterNames.ContainsKey(extName))
+                    {
+                        var paramNames = info.ParameterNames[extName];
+                        WriteLine($"     Parameters ({paramNames.Count}):");
+                        foreach (var paramName in paramNames)
+                        {
+                            WriteLine($"        - {paramName}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"Failed to read export info: {ex.Message}");
             }
         }
 
@@ -418,102 +1128,13 @@ namespace darts_hub.UI
 
         private static async Task RunUpdaterTest(string[] additionalArgs)
         {
-            WriteLine("=== DARTS-HUB UPDATER TEST SUITE ===");
-            WriteLine();
-            
-            // Subscribe to test events for real-time output
-            UpdaterTester.TestStatusChanged += (sender, status) =>
-            {
-                WriteLine($"[{DateTime.Now:HH:mm:ss}] {status}");
-            };
-            
-            UpdaterTester.TestCompleted += (sender, results) =>
-            {
-                WriteLine();
-                WriteLine("=== TEST RESULTS ===");
-                WriteLine(results);
-                WriteLine("=== TEST COMPLETE ===");
-            };
-
-            if (additionalArgs.Length == 0)
-            {
-                await ShowTestMenu();
-            }
-            else
-            {
-                await ProcessTestArguments(additionalArgs);
-            }
-        }
-
-        private static async Task ShowTestMenu()
-        {
-            while (true)
-            {
-                WriteLine();
-                WriteLine("Available Tests:");
-                WriteLine("1. Full Test Suite (all components)");
-                WriteLine("2. Version Check Test");
-                WriteLine("3. Retry Mechanism Test");
-                WriteLine("4. Logging System Test");
-                WriteLine("5. Exit");
-                WriteLine();
-                Write("Select option (1-5): ");
-
-                var input = System.Console.ReadLine();
-                
-                switch (input)
-                {
-                    case "1":
-                        await RunFullUpdaterTest();
-                        break;
-                    case "2":
-                        await RunVersionTest();
-                        break;
-                    case "3":
-                        await RunRetryTest();
-                        break;
-                    case "4":
-                        await RunLoggingTest();
-                        break;
-                    case "5":
-                        WriteLine("Goodbye!");
-                        return;
-                    default:
-                        WriteLine("Invalid selection. Please try again.");
-                        break;
-                }
-            }
-        }
-
-        private static async Task ProcessTestArguments(string[] args)
-        {
-            var testType = args[0].ToLower();
-            
-            switch (testType)
-            {
-                case "full":
-                    await RunFullUpdaterTest();
-                    break;
-                case "version":
-                    await RunVersionTest();
-                    break;
-                case "retry":
-                    await RunRetryTest();
-                    break;
-                case "logging":
-                    await RunLoggingTest();
-                    break;
-                default:
-                    WriteLine($"Unknown test type: {testType}");
-                    WriteLine("Available test types: full, version, retry, logging");
-                    break;
-            }
+            await UpdaterTestCLI.RunCLI(additionalArgs);
         }
 
         private static async Task RunFullUpdaterTest()
         {
             WriteLine();
-            WriteLine("?? Starting comprehensive updater test...");
+            WriteLine("Starting comprehensive updater test...");
             WriteLine("This may take several minutes...");
             
             try
@@ -522,14 +1143,14 @@ namespace darts_hub.UI
             }
             catch (Exception ex)
             {
-                WriteLine($"? Test failed: {ex.Message}");
+                WriteLine($"Test failed: {ex.Message}");
             }
         }
 
         private static async Task RunVersionTest()
         {
             WriteLine();
-            WriteLine("?? Starting version check test...");
+            WriteLine("Starting version check test...");
             
             try
             {
@@ -537,14 +1158,14 @@ namespace darts_hub.UI
             }
             catch (Exception ex)
             {
-                WriteLine($"? Test failed: {ex.Message}");
+                WriteLine($"Test failed: {ex.Message}");
             }
         }
 
         private static async Task RunRetryTest()
         {
             WriteLine();
-            WriteLine("?? Starting retry mechanism test...");
+            WriteLine("Starting retry mechanism test...");
             
             try
             {
@@ -552,14 +1173,14 @@ namespace darts_hub.UI
             }
             catch (Exception ex)
             {
-                WriteLine($"? Test failed: {ex.Message}");
+                WriteLine($"Test failed: {ex.Message}");
             }
         }
 
         private static async Task RunLoggingTest()
         {
             WriteLine();
-            WriteLine("?? Starting logging system test...");
+            WriteLine("Starting logging system test...");
             
             try
             {
@@ -568,11 +1189,11 @@ namespace darts_hub.UI
                 UpdaterLogger.LogError("CLI Test - ERROR Level", new Exception("Test exception"));
                 UpdaterLogger.LogDebug("CLI Test - DEBUG Level");
                 
-                WriteLine("? Logging test completed. Check log files in logs/ directory.");
+                WriteLine("Logging test completed. Check log files in logs/ directory.");
             }
             catch (Exception ex)
             {
-                WriteLine($"? Logging test failed: {ex.Message}");
+                WriteLine($"Logging test failed: {ex.Message}");
             }
         }
 
@@ -633,7 +1254,7 @@ namespace darts_hub.UI
 
         private static void EnableVerboseMode()
         {
-            WriteLine("?? Verbose mode enabled.");
+            WriteLine("Verbose mode enabled.");
             WriteLine("The application will start with detailed logging enabled.");
             WriteLine();
             
@@ -646,7 +1267,7 @@ namespace darts_hub.UI
 
         private static void EnableBetaMode()
         {
-            WriteLine("?? Beta tester mode enabled.");
+            WriteLine("Beta tester mode enabled.");
             WriteLine("The application will check for beta releases and enable experimental features.");
             WriteLine();
             

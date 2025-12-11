@@ -32,6 +32,9 @@ namespace darts_hub.control
             // Generate log filename with day only (will be overwritten monthly)
             var now = DateTime.Now;
             logFileName = Path.Combine(logDirectory, $"{now.Day:D2}_darts-hub.log");
+            
+            // Check if log file needs to be rotated
+            CheckAndRotateLogFile();
         }
 
         private static void EnsureCurrentLogFile()
@@ -42,6 +45,36 @@ namespace darts_hub.control
             if (logFileName != expectedFileName)
             {
                 logFileName = expectedFileName;
+                CheckAndRotateLogFile();
+            }
+            else
+            {
+                // Even if filename is the same, check if it's from previous month
+                CheckAndRotateLogFile();
+            }
+        }
+
+        private static void CheckAndRotateLogFile()
+        {
+            try
+            {
+                if (File.Exists(logFileName))
+                {
+                    var lastWriteTime = File.GetLastWriteTime(logFileName);
+                    var now = DateTime.Now;
+                    
+                    // Check if the file was last modified in a different month or year
+                    if (lastWriteTime.Year != now.Year || lastWriteTime.Month != now.Month)
+                    {
+                        // Delete the old log file from previous month
+                        File.Delete(logFileName);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // If rotation fails, log to console but don't prevent logging
+                Console.WriteLine($"Log file rotation failed: {ex.Message}");
             }
         }
 
