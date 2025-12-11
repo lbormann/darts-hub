@@ -189,8 +189,14 @@ If you're running darts-hub on windows the affected app is probably classified a
 For more information, run `darts-hub --help` or `darts-hub -h` in your terminal Or have a look at the command-line-interface.md file.
 
 ## VIDEO INSTRUCTIONS
-at the moment just in german:
-[![asciicast](https://img.youtube.com/vi/3Y7oXWbXnRA/0.jpg)](https://youtu.be/iklm8nUlnRs)
+
+### at the moment just in german: <br>
+<br>
+
+### Darts-Hub Installation & Setup Wizard 2025 <br>
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/iklm8nUlnRs/0.jpg)](https://www.youtube.com/watch?v=iklm8nUlnRs)
+
 
 
 ## CONFIGURATION EXPORT/IMPORT 🆕
