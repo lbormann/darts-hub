@@ -235,19 +235,37 @@ For Windows users, we provide an easy-to-use interactive tool:
 
 [📖 Config Manager Documentation](docs/config-manager-cli.md)
 
+### Interactive CLI Tool (Linux/macOS) 🆕
+
+For Linux and macOS users:
+
+**`config-manager.sh`** - Run the shell script for the same interactive experience:
+```bash
+chmod +x config-manager.sh  # First time only
+./config-manager.sh
+```
+
+Features:
+- Complete feature parity with Windows version
+- Color-coded interface for better visibility
+- Automatic permission handling
+- All 15 menu options available
+- Backup & Restore, Testing, System Info
+
 ### Command Line Interface
 
 For advanced users and automation:
 
 ```bash
-# Export complete configuration
-darts-hub --export my-backup
+# Windows
+.\darts-hub.exe --export my-backup
+.\darts-hub.exe --export-ext darts-caller darts-wled
+.\darts-hub.exe --import my-backup.json
 
-# Export specific extensions
-darts-hub --export-ext darts-caller darts-wled
-
-# Import configuration
-darts-hub --import my-backup.json
+# Linux/macOS
+./darts-hub --export my-backup
+./darts-hub --export-ext darts-caller darts-wled
+./darts-hub --import my-backup.json
 
 # List available exports
 darts-hub --list-exports

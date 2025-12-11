@@ -61,6 +61,9 @@
       <Content Include="config-manager.bat">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
+      <Content Include="config-manager.sh">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
      <!-- <Content Include="test-cli.ps1">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content> -->

@@ -23,6 +23,13 @@
                 - Testing Tools (Updater, Version, Retry, Logging)
                 - 15 menu options covering all CLI functionality
                 - Comprehensive help system
+        - **Interactive CLI Tool (Linux/macOS)** 🆕:
+            - Shell script: `config-manager.sh`
+            - Complete feature parity with Windows version
+            - Color-coded interface for better visibility
+            - Automatic permission handling
+            - All 15 menu options available
+            - Same functionality across all platforms
     
 ### CLI Enhancements
     - Added `--export` / `--export-full` for complete configuration export
