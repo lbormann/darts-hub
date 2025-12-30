@@ -77,6 +77,13 @@ namespace darts_hub.UI
                     aboutCheckBoxNewSettingsMode.IsChecked = configurator.Settings.NewSettingsMode;
                 }
                 
+                // Set Robbel3D Configuration Button visibility
+                var robbel3DConfigButton = mainWindow.FindControl<Button>("Robbel3DConfigButton");
+                if (robbel3DConfigButton != null)
+                {
+                    robbel3DConfigButton.IsVisible = configurator.Settings.ShowRobbel3DSetup;
+                }
+                
                 // Show the About content by default
                 var contentModeManager = mainWindow.GetContentModeManager();
                 contentModeManager.ShowAboutMode();

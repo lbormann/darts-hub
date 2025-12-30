@@ -11,6 +11,7 @@ namespace darts_hub.control
         public bool IsBetaTester { get; set; } // Neue Eigenschaft für den Betatester-Status
         public bool NewSettingsMode { get; set; } // Neue Eigenschaft für den neuen Settings-Modus
         public bool WizardCompleted { get; set; } // Neue Eigenschaft für den Wizard-Status
+        public bool ShowRobbel3DSetup { get; set; } // Neue Eigenschaft für die Robbel3D Setup Sichtbarkeit
     }
 
 
@@ -54,7 +55,8 @@ namespace darts_hub.control
                     SkipUpdateConfirmation = false,
                     IsBetaTester = false,
                     NewSettingsMode = true, // Changed from false to true - new installations get enhanced settings mode by default
-                    WizardCompleted = false
+                    WizardCompleted = false,
+                    ShowRobbel3DSetup = false // Standardmäßig auf false gesetzt
                 };
                 SaveSettings();
             }
@@ -73,6 +75,13 @@ namespace darts_hub.control
             if (Settings.WizardCompleted == null)
             {
                 Settings.WizardCompleted = false;
+                SaveSettings();
+            }
+            
+            // Ensure ShowRobbel3DSetup property exists (for backward compatibility)
+            if (Settings.ShowRobbel3DSetup == null)
+            {
+                Settings.ShowRobbel3DSetup = false;
                 SaveSettings();
             }
         }

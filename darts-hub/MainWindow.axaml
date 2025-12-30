@@ -245,7 +245,8 @@
 										HorizontalAlignment="Left"
 										Margin="0,0,0,10"
 										Click="Robbel3DConfigButton_Click"
-										ToolTip.Tip="Configure WLED and Caller with optimized Robbel3D presets"/>
+										ToolTip.Tip="Configure WLED and Caller with optimized Robbel3D presets"
+										IsVisible="False"/>
 							</StackPanel>
 							<StackPanel Margin="10,10,50,10" Spacing="5" MaxWidth="450">
 								<TextBlock Text="Information"

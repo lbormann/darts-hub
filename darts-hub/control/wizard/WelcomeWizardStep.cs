@@ -38,18 +38,21 @@ namespace darts_hub.control.wizard
                 HorizontalAlignment = HorizontalAlignment.Center
             };
 
-            // Robbel3D One-Click Setup Button - FIRST!
-            var robbel3DButton = CreateRobbel3DButton();
-            mainPanel.Children.Add(robbel3DButton);
-            
-            // Separator
-            var separator = new Border
+            // Robbel3D One-Click Setup Button - nur anzeigen wenn in Konfiguration aktiviert
+            if (configurator?.Settings?.ShowRobbel3DSetup == true)
             {
-                Height = 2,
-                Background = new SolidColorBrush(Color.FromArgb(51, 255, 255, 255)),
-                Margin = new Avalonia.Thickness(0, 10, 0, 10)
-            };
-            mainPanel.Children.Add(separator);
+                var robbel3DButton = CreateRobbel3DButton();
+                mainPanel.Children.Add(robbel3DButton);
+                
+                // Separator
+                var separator = new Border
+                {
+                    Height = 2,
+                    Background = new SolidColorBrush(Color.FromArgb(51, 255, 255, 255)),
+                    Margin = new Avalonia.Thickness(0, 10, 0, 10)
+                };
+                mainPanel.Children.Add(separator);
+            }
 
             // Welcome message
             var welcomePanel = new StackPanel { Spacing = 15 };

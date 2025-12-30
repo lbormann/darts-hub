@@ -1,4 +1,8 @@
-﻿## b1.2.17
+﻿## b1.2.18
+### Bugfix
+    - caller changed matches endpoint 
+
+## b1.2.17
 ### New Features
     - **Configuration Export/Import System** 🆕
         - Export full configuration or specific extensions

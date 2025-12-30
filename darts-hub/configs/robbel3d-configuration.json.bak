@@ -33,7 +33,7 @@
       "wled_settings": {
         "DEB": "False",
         "OFF": "True",
-        "BSW": "False",
+        "BWS": "False",
         "BRI": "200",
         "SOFF": "True",
         "IDE": "solid|green1",
