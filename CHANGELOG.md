@@ -1,4 +1,8 @@
-﻿## b1.2.18
+﻿## b1.2.19
+### DEBUG
+    - implement debug messages for caller
+
+## b1.2.18
 ### Bugfix
     - caller changed matches endpoint 
 
