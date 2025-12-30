@@ -1,4 +1,4 @@
-﻿## b1.2.19
+﻿## b1.2.20
 ### DEBUG
     - implement debug messages for caller
 

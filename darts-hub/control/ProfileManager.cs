@@ -482,7 +482,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-macx64",
                 MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("b2.19.11");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("b2.19.12");
 
 
             var dartsExternDownloadMap = new DownloadMap
@@ -642,7 +642,8 @@ namespace darts_hub.control
                             new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"} ),
                             new(name: "CC", type: "bool", required: false, nameHuman: "-CC / --cert_check", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "CRL", type: "bool", required: false, nameHuman: "-CRL / --caller_real_life", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "CBS", type: "bool", required: false, nameHuman: "-CBS / --call_blind_support", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"})
+                            new(name: "CBS", type: "bool", required: false, nameHuman: "-CBS / --call_blind_support", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "MLA", type: "bool", required: false, nameHuman: "-MLA / --message_log_all", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"})
                             })
                         );
                 
@@ -1002,6 +1003,11 @@ namespace darts_hub.control
                     if (callBlindSupport == null)
                     {
                         dartsCaller.Configuration.Arguments.Add(new(name: "CBS", type: "bool", required: false, nameHuman: "-CBS / --call_blind_support", section: "Calls", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
+                    }
+                    var messagelogall = dartsCaller.Configuration.Arguments.Find(a => a.Name == "MLA");
+                    if (messagelogall == null)
+                    {
+                        dartsCaller.Configuration.Arguments.Add(new(name: "MLA", type: "bool", required: false, nameHuman: "-MLA / --message_log_all", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
                     }
 
 
