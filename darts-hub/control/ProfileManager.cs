@@ -482,7 +482,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-macx64",
                 MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("b2.19.12");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("v2.20.0");
 
 
             var dartsExternDownloadMap = new DownloadMap
@@ -506,7 +506,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-mac64",
                 MacArm64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-mac"
             };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b1.9.5");
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("v1.10.0");
 
 
             var dartsPixelitDownloadMap = new DownloadMap

@@ -1,4 +1,76 @@
-﻿## b1.2.20
+﻿## v1.3.0
+    - Version Update Darts-Caller v2.20.0
+        - for more information see Darts-Caller changelog
+    -Version Update Darts-WLED v1.3.0
+        - for more information see Darts-WLED changelog
+    ### b1.2.20
+    #### DEBUG
+        - implement debug messages for caller
+
+    ### b1.2.18
+    #### Bugfix
+        - caller changed matches endpoint 
+
+    ### b1.2.17
+    #### New Features
+        - **Configuration Export/Import System** 🆕
+            - Export full configuration or specific extensions
+            - Export specific parameters from extensions
+            - Import with merge or replace mode
+            - Automatic backup before import operations
+            - Metadata tracking (type, timestamp, version, description)
+            - **Interactive CLI Tool (Windows)** 🆕:
+                - User-friendly batch script: `config-manager.bat`
+                - Menu-driven interface for all export/import operations
+                - File browser for selecting exports
+                - Built-in help and safety confirmations
+                - Perfect for non-technical users
+                - Automatic file listing and numbering
+                - Safe defaults (Merge mode) with Replace mode confirmation
+                - Credentials protection integrated
+                - **Complete Feature Set** 🆕:
+                    - Configuration Export/Import (Full, Extensions, Parameters)
+                    - Backup & Restore (Full and Config-only)
+                    - System Information (App, System, Profiles, Version)
+                    - Backup Management (List, Restore, Cleanup)
+                    - Testing Tools (Updater, Version, Retry, Logging)
+                    - 15 menu options covering all CLI functionality
+                    - Comprehensive help system
+            - **Interactive CLI Tool (Linux/macOS)** 🆕:
+                - Shell script: `config-manager.sh`
+                - Complete feature parity with Windows version
+                - Color-coded interface for better visibility
+                - Automatic permission handling
+                - All 15 menu options available
+                - Same functionality across all platforms
+    
+    #### CLI Enhancements
+        - Added `--export` / `--export-full` for complete configuration export
+        - Added `--export-ext` for exporting specific extensions
+        - Added `--export-params` for interactive parameter export (opens new console on Windows)
+        - Added `--import` with merge/replace modes (opens new console on Windows for confirmation)
+        - Added `--list-extensions` to show all available extensions
+        - Added `--list-params` to show parameters for an extension
+        - Added `--list-exports` to show all export files
+        - Added `--export-info` to show detailed export metadata including values
+        - Interactive commands properly handle input on Windows (new console window)
+        - **NEW**: Interactive batch tool `config-manager.bat` for easy GUI-less operation
+    
+
+
+    #### Console Improvements
+        - Fixed console output area scrollbar not reaching bottom
+        - Improved console content display without cutoff at bottom edge
+        - Auto-scrolling now only affects vertical scrolling
+        - Horizontal scroll position is preserved during updates and new output
+        - Enhanced console tab padding for better content visibility
+
+    #### Bug Fixes
+        - Fixed log file rotation issue where files from previous months were not deleted
+        - Log files now correctly rotate when a new month begins
+        - Added month and year check before appending to existing daily log files
+
+## b1.2.20
 ### DEBUG
     - implement debug messages for caller
 
