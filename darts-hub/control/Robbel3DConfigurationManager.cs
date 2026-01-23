@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using darts_hub.model;
 
 namespace darts_hub.control
@@ -433,6 +434,9 @@ namespace darts_hub.control
             try
             {
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Applying configuration '{config.Name}' to WLED at {wledIpAddress}");
+
+                // Apply LED pin override if provided via UI
+                ApplyLedPinOverride(config, uiParameters);
                 
                 // Step 1: Upload WLED config.json if available
                 if (config.WledConfigRaw != null || config.WledConfig != null)
@@ -1926,6 +1930,70 @@ namespace darts_hub.control
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error ensuring configuration files in build directory: {ex.Message}");
+            }
+        }
+
+        private static void ApplyLedPinOverride(Robbel3DConfiguration config, Dictionary<string, string>? uiParameters)
+        {
+            if (config == null || uiParameters == null)
+            {
+                return;
+            }
+
+            if (!uiParameters.TryGetValue("ROB_LED_PIN", out var pinString) || !int.TryParse(pinString, out var selectedPin) || selectedPin < 0)
+            {
+                return; // No override provided
+            }
+
+            if (config.WledConfigRaw == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[Robbel3D] LED pin override skipped - WLED config missing");
+                return;
+            }
+
+            try
+            {
+                var configObj = config.WledConfigRaw as JObject ?? JObject.FromObject(config.WledConfigRaw);
+                var insArray = configObj["hw"]?["led"]?["ins"] as JArray;
+
+                if (insArray == null || insArray.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] LED pin override skipped - no LED inputs defined");
+                    return;
+                }
+
+                var firstEntry = insArray[0] as JObject ?? new JObject();
+                var previousPrimaryPin = (firstEntry["pin"] as JArray)?.FirstOrDefault()?.Value<int?>();
+
+                firstEntry["pin"] = new JArray(selectedPin);
+                insArray[0] = firstEntry;
+
+                if (insArray.Count > 1 && previousPrimaryPin.HasValue)
+                {
+                    var secondEntry = insArray[1] as JObject ?? new JObject();
+                    var secondPinArray = secondEntry["pin"] as JArray;
+                    var secondPin = secondPinArray?.FirstOrDefault()?.Value<int?>();
+
+                    if (secondPin == selectedPin)
+                    {
+                        secondEntry["pin"] = new JArray(previousPrimaryPin.Value);
+                        insArray[1] = secondEntry;
+                        System.Diagnostics.Debug.WriteLine($"[Robbel3D] Second pin duplicated primary; set to previous primary {previousPrimaryPin.Value}");
+                    }
+                }
+
+                var hwObject = configObj["hw"] as JObject ?? new JObject();
+                configObj["hw"] = hwObject;
+                var ledObject = hwObject["led"] as JObject ?? new JObject();
+                hwObject["led"] = ledObject;
+                ledObject["ins"] = insArray;
+                config.WledConfigRaw = configObj;
+
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] LED pin override applied: primary={selectedPin}, previousPrimary={(previousPrimaryPin?.ToString() ?? "none")}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] LED pin override failed: {ex.Message}");
             }
         }
     }

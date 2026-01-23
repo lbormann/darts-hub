@@ -115,6 +115,29 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- LED Pin Selection -->
+                        <Border Background="#FF1E1E1E" 
+                                CornerRadius="4" 
+                                Padding="10" 
+                                Margin="0,12,0,0">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Select LED data pin" 
+                                           FontSize="14" 
+                                           FontWeight="Bold" 
+                                           Foreground="White"/>
+                                <TextBlock Text="Select the GPIO pin for the LED strip. The pin to which you connected the LED strip on the controller." 
+                                           Foreground="#FFCCCCCC" 
+                                           TextWrapping="Wrap" 
+                                           FontSize="12"/>
+                                <ComboBox x:Name="LedPinComboBox"
+                                          MinHeight="32"
+                                          SelectionChanged="LedPinComboBox_SelectionChanged"/>
+                                <TextBlock Text="Note: The PIN is automatically changed in the controller, so there is no longer any need to make manual adjustments" 
+                                           Foreground="#FF888888" 
+                                           FontSize="11"/>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Required Caller Parameters -->
                         <Border Background="#FF1E1E1E" 
                                 CornerRadius="4" 
@@ -439,85 +462,79 @@
                                        Margin="0,0,0,5"/>
                         </StackPanel>
                         
-                        <TextBlock Text="This process typically takes 30-60 seconds depending on your network and WLED device performance." 
-                                   Foreground="#FFAAAAAA" 
-                                   FontStyle="Italic" 
+                        <TextBlock Text="After applying, your darts-caller and WLED should be fully configured and ready to use!" 
+                                   Foreground="#FFCCCCCC" 
                                    FontSize="12" 
-                                   TextWrapping="Wrap"/>
+                                   TextWrapping="Wrap" 
+                                   Margin="0,10,0,0"/>
                     </StackPanel>
                 </Border>
-
-                <!-- Additional padding at bottom to ensure scrolling works -->
-                <Border Height="30" Background="Transparent"/>
-
             </StackPanel>
         </ScrollViewer>
 
-        <!-- Footer Actions -->
-        <Border Grid.Row="2" Background="#FF1E1E1E" Padding="20,15">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                
-                <!-- Progress Info -->
-                <StackPanel Grid.Column="0" 
-                            x:Name="ProgressPanel" 
-                            Orientation="Horizontal" 
-                            IsVisible="False">
-                    <Border Width="16" Height="16" CornerRadius="8" Background="#FF0078D4" Margin="0,0,8,0">
-                        <Ellipse Width="8" Height="8" Fill="White"/>
-                    </Border>
-                    <TextBlock x:Name="ProgressText" 
-                               Text="Configuring..." 
-                               Foreground="White" 
-                               VerticalAlignment="Center"/>
-                </StackPanel>
-                
-                <!-- Action Buttons -->
-                <Button Grid.Column="1" 
-                        x:Name="CancelButton" 
-                        Content="Cancel" 
-                        Padding="20,10" 
-                        Margin="0,0,10,0"
-                        Background="#FF666666"
-                        Foreground="White"
-                        BorderThickness="0"
-                        CornerRadius="4"
-                        Click="CancelButton_Click"/>
-                        
-                <Button Grid.Column="2" 
-                        x:Name="ApplyConfigButton" 
-                        Content="🚀 Apply Configuration" 
-                        Padding="20,10"
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="#FF1E1E1E" Padding="10">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="🚀 Ready to configure!" 
+                           Foreground="White" 
+                           FontWeight="Bold"/>
+                <Button x:Name="ApplyConfigButton" 
+                        Content="Apply Configuration" 
+                        Padding="10,6"
                         Background="#FF28A745"
                         Foreground="White"
                         BorderThickness="0"
                         CornerRadius="4"
-                        IsEnabled="False"
+                        Width="180"
+                        Height="40"
                         Click="ApplyConfigButton_Click"/>
-            </Grid>
+                <Button x:Name="CancelButton" 
+                        Content="❌ Cancel" 
+                        Padding="10,6"
+                        Background="#FFDC3545"
+                        Foreground="White"
+                        BorderThickness="0"
+                        CornerRadius="4"
+                        Width="180"
+                        Height="40"
+                        Click="CancelButton_Click"/>
+            </StackPanel>
         </Border>
 
-        <!-- Loading Overlay -->
-        <Border x:Name="LoadingOverlay" 
+        <!-- Loading Overlay with animation -->
+        <Border x:Name="LoadingOverlay"
                 Grid.RowSpan="3"
-                Background="#AA000000" 
+                Background="#AA000000"
                 IsVisible="False"
-                ZIndex="1000">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Border Width="60" Height="60" CornerRadius="30" BorderBrush="White" BorderThickness="4" Margin="0,0,0,20">
-                    <Ellipse Width="40" Height="40" Fill="Transparent" Stroke="White" StrokeThickness="3" StrokeDashArray="5,3"/>
+                ZIndex="10">
+            <Grid>
+                <Border HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="#FF1E1E1E"
+                        CornerRadius="12"
+                        Padding="20"
+                        BorderBrush="#FF0078D4"
+                        BorderThickness="1">
+                    <StackPanel x:Name="ProgressPanel" Spacing="10" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock x:Name="LoadingText"
+                                   Text="Applying configuration..."
+                                   Foreground="White"
+                                   FontSize="16"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"/>
+                        <ProgressBar IsIndeterminate="True"
+                                     Width="240"
+                                     Height="10"/>
+                        <TextBlock x:Name="ProgressText"
+                                   Text="Please wait"
+                                   Foreground="#FFCCCCCC"
+                                   FontSize="13"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   Width="280"/>
+                    </StackPanel>
                 </Border>
-                <TextBlock x:Name="LoadingText"
-                           Text="Please wait..."
-                           TextAlignment="Center"
-                           Foreground="White"
-                           FontSize="18"
-                           FontWeight="Bold"/>
-            </StackPanel>
+            </Grid>
         </Border>
     </Grid>
 </Window>

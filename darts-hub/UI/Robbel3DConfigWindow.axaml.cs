@@ -14,6 +14,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace darts_hub.UI
 {
@@ -26,12 +27,14 @@ namespace darts_hub.UI
         private List<WledDevice> discoveredDevices = new();
         private CancellationTokenSource? scanCancellationTokenSource;
         private bool isAdvancedExpanded = false;
+        private int? selectedLedPin;
 
         public Robbel3DConfigWindow(ProfileManager profileManager)
         {
             InitializeComponent();
             this.profileManager = profileManager;
             
+            PopulateLedPinComboBox();
             // Configuration files should be included in release, no need to copy at runtime
             
             LoadAvailablePresets();
@@ -144,6 +147,7 @@ namespace darts_hub.UI
                             if (completeItem != null)
                             {
                                 presetComboBox.SelectedItem = completeItem;
+                                UpdateLedPinInputFromPreset(completePreset);
                                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Auto-selected complete preset: {completePreset.Name}");
                             }
                         }
@@ -151,6 +155,10 @@ namespace darts_hub.UI
                         {
                             // Select first preset if no complete preset found
                             presetComboBox.SelectedIndex = 0;
+                            if (presetComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is Robbel3DConfiguration firstPreset)
+                            {
+                                UpdateLedPinInputFromPreset(firstPreset);
+                            }
                             System.Diagnostics.Debug.WriteLine("[Robbel3D] Auto-selected first preset");
                         }
                     }
@@ -217,6 +225,7 @@ namespace darts_hub.UI
                 selectedPreset = preset;
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Selected preset: {preset.Name}");
                 UpdatePresetDetails(preset);
+                UpdateLedPinInputFromPreset(preset);
                 UpdateConfigurationPreview();
                 ValidateCanApplyConfiguration();
             }
@@ -243,6 +252,20 @@ namespace darts_hub.UI
                 if (validationPanel != null) validationPanel.IsVisible = false;
             }
             
+            ValidateCanApplyConfiguration();
+        }
+
+        private void LedPinComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem item &&
+                item.Tag is int pinValue && pinValue >= 0)
+            {
+                selectedLedPin = pinValue;
+            }
+            else
+            {
+                selectedLedPin = null;
+            }
             ValidateCanApplyConfiguration();
         }
 
@@ -323,6 +346,84 @@ namespace darts_hub.UI
             applyButton.IsEnabled = canApply;
         }
 
+        private int? GetPrimaryPinFromPreset(Robbel3DConfiguration preset)
+        {
+            try
+            {
+                if (preset.WledConfigRaw != null)
+                {
+                    var configObj = preset.WledConfigRaw as JObject ?? JObject.FromObject(preset.WledConfigRaw);
+                    var firstPin = configObj?["hw"]?["led"]?["ins"]?.FirstOrDefault()?["pin"]?.FirstOrDefault()?.Value<int?>();
+                    return firstPin;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error extracting primary pin: {ex.Message}");
+            }
+            return null;
+        }
+
+        private void PopulateLedPinComboBox()
+        {
+            var ledPinComboBox = this.FindControl<ComboBox>("LedPinComboBox");
+            if (ledPinComboBox == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[Robbel3D] LedPinComboBox not found");
+                return;
+            }
+
+            ledPinComboBox.Items?.Clear();
+            foreach (var pin in Enumerable.Range(1, 24))
+            {
+                ledPinComboBox.Items?.Add(new ComboBoxItem { Content = pin.ToString(), Tag = pin });
+            }
+
+            var defaultItem = ledPinComboBox.Items
+                .OfType<ComboBoxItem>()
+                .FirstOrDefault(i => i.Tag is int val && val == 2);
+
+            if (defaultItem != null)
+            {
+                ledPinComboBox.SelectedItem = defaultItem;
+                selectedLedPin = 2;
+            }
+        }
+
+        private void UpdateLedPinInputFromPreset(Robbel3DConfiguration preset)
+        {
+            var ledPinComboBox = this.FindControl<ComboBox>("LedPinComboBox");
+            var primaryPin = GetPrimaryPinFromPreset(preset);
+
+            if (ledPinComboBox != null)
+            {
+                ComboBoxItem? match = null;
+                if (primaryPin.HasValue)
+                {
+                    match = ledPinComboBox.Items
+                        .OfType<ComboBoxItem>()
+                        .FirstOrDefault(i => i.Tag is int val && val == primaryPin.Value);
+                }
+
+                if (match != null)
+                {
+                    ledPinComboBox.SelectedItem = match;
+                    selectedLedPin = primaryPin;
+                }
+                else
+                {
+                    var defaultItem = ledPinComboBox.Items
+                        .OfType<ComboBoxItem>()
+                        .FirstOrDefault(i => i.Tag is int val && val == 2);
+                    if (defaultItem != null)
+                    {
+                        ledPinComboBox.SelectedItem = defaultItem;
+                        selectedLedPin = 2;
+                    }
+                }
+            }
+        }
+
         private Dictionary<string, string> GetUIParameterValues()
         {
             var uiParameters = new Dictionary<string, string>();
@@ -333,8 +434,9 @@ namespace darts_hub.UI
                 var passwordTextBox = this.FindControl<TextBox>("AutodartsPasswordTextBox");
                 var boardIdTextBox = this.FindControl<TextBox>("AutodartsBoardIdTextBox");
                 var mediaPathTextBox = this.FindControl<TextBox>("MediaPathTextBox");
+                var ledPinComboBox = this.FindControl<ComboBox>("LedPinComboBox");
 
-                System.Diagnostics.Debug.WriteLine($"[Robbel3D] UI Controls found - Email: {emailTextBox != null}, Password: {passwordTextBox != null}, Board: {boardIdTextBox != null}, Media: {mediaPathTextBox != null}");
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] UI Controls found - Email: {emailTextBox != null}, Password: {passwordTextBox != null}, Board: {boardIdTextBox != null}, Media: {mediaPathTextBox != null}, PinCombo: {ledPinComboBox != null}");
 
                 if (emailTextBox != null && !string.IsNullOrWhiteSpace(emailTextBox.Text))
                 {
@@ -344,7 +446,7 @@ namespace darts_hub.UI
                 if (passwordTextBox != null && !string.IsNullOrWhiteSpace(passwordTextBox.Text))
                 {
                     uiParameters["P"] = passwordTextBox.Text.Trim();
-                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] UI Parameter P: [PASSWORD SET]");
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] UI Parameter P: [PASSWORD SET]");
                 }
                 if (boardIdTextBox != null && !string.IsNullOrWhiteSpace(boardIdTextBox.Text))
                 {
@@ -355,6 +457,12 @@ namespace darts_hub.UI
                 {
                     uiParameters["M"] = mediaPathTextBox.Text.Trim();
                     System.Diagnostics.Debug.WriteLine($"[Robbel3D] UI Parameter M: {mediaPathTextBox.Text.Trim()}");
+                }
+                if (ledPinComboBox != null && ledPinComboBox.SelectedItem is ComboBoxItem item && item.Tag is int ledPinValue && ledPinValue >= 0)
+                {
+                    uiParameters["ROB_LED_PIN"] = ledPinValue.ToString();
+                    selectedLedPin = ledPinValue;
+                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] UI Parameter ROB_LED_PIN: {ledPinValue}");
                 }
             }
             catch (Exception ex)

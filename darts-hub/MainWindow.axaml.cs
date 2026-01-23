@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -53,6 +54,12 @@ namespace darts_hub
             InitializeComponent();
             
             configurator = new Configurator("config.json");
+            
+            if (configurator.RequiresRestart)
+            {
+                RestartApplication();
+                return;
+            }
             
             // Initialize managers
             consoleManager = new ConsoleManager();
@@ -487,6 +494,35 @@ namespace darts_hub
                     $"An error occurred while opening the Robbel3D configuration:\n{ex.Message}", 
                     MsBox.Avalonia.Enums.Icon.Error);
             }
+        }
+
+        private void RestartApplication()
+        {
+            try
+            {
+                var currentExe = Process.GetCurrentProcess().MainModule?.FileName;
+                if (!string.IsNullOrWhiteSpace(currentExe))
+                {
+                    var args = Environment.GetCommandLineArgs()
+                        .Skip(1)
+                        .Select(a => a.Contains(' ') ? $"\"{a}\"" : a);
+
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = currentExe,
+                        Arguments = string.Join(" ", args),
+                        UseShellExecute = true
+                    };
+
+                    Process.Start(startInfo);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainWindow] Failed to restart application: {ex.Message}");
+            }
+
+            Environment.Exit(0);
         }
     }
 }

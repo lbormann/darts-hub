@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.IO;
 
 
@@ -21,6 +23,7 @@ namespace darts_hub.control
         // ATTRIBUTES
         private readonly string ConfigFilePath;
         public AppConfiguration Settings { get; private set; }
+        public bool RequiresRestart { get; private set; }
 
 
 
@@ -49,41 +52,63 @@ namespace darts_hub.control
         {
             if (!File.Exists(ConfigFilePath))
             {
-                Settings = new AppConfiguration
-                {
-                    StartProfileOnStart = false,
-                    SkipUpdateConfirmation = false,
-                    IsBetaTester = false,
-                    NewSettingsMode = true, // Changed from false to true - new installations get enhanced settings mode by default
-                    WizardCompleted = false,
-                    ShowRobbel3DSetup = false // Standardmäßig auf false gesetzt
-                };
+                Settings = CreateDefaultSettings();
                 SaveSettings();
+                return;
             }
 
             var json = File.ReadAllText(ConfigFilePath);
-            Settings = JsonConvert.DeserializeObject<AppConfiguration>(json);
-            
+            var parsedSettings = JObject.Parse(json);
+            var hasRobbel3DFlag = parsedSettings.TryGetValue(nameof(AppConfiguration.ShowRobbel3DSetup), StringComparison.OrdinalIgnoreCase, out var robbel3DToken);
+            var previousRobbel3DValue = robbel3DToken?.Value<bool?>();
+
+            Settings = JsonConvert.DeserializeObject<AppConfiguration>(json) ?? CreateDefaultSettings();
+
+            var settingsUpdated = false;
+
             // Ensure NewSettingsMode property exists (for backward compatibility)
-            if (Settings.NewSettingsMode == null)
+            if (parsedSettings.Property(nameof(AppConfiguration.NewSettingsMode), StringComparison.OrdinalIgnoreCase) == null)
             {
                 Settings.NewSettingsMode = false;
-                SaveSettings();
+                settingsUpdated = true;
             }
             
             // Ensure WizardCompleted property exists (for backward compatibility)
-            if (Settings.WizardCompleted == null)
+            if (parsedSettings.Property(nameof(AppConfiguration.WizardCompleted), StringComparison.OrdinalIgnoreCase) == null)
             {
                 Settings.WizardCompleted = false;
-                SaveSettings();
+                settingsUpdated = true;
             }
             
-            // Ensure ShowRobbel3DSetup property exists (for backward compatibility)
-            if (Settings.ShowRobbel3DSetup == null)
+            // Force Robbel3D setup flag to true and request restart if it was explicitly false
+            if (!Settings.ShowRobbel3DSetup)
             {
-                Settings.ShowRobbel3DSetup = false;
+                Settings.ShowRobbel3DSetup = true;
+                settingsUpdated = true;
+
+                if (hasRobbel3DFlag && previousRobbel3DValue == false)
+                {
+                    RequiresRestart = true;
+                }
+            }
+
+            if (settingsUpdated)
+            {
                 SaveSettings();
             }
+        }
+
+        private static AppConfiguration CreateDefaultSettings()
+        {
+            return new AppConfiguration
+            {
+                StartProfileOnStart = false,
+                SkipUpdateConfirmation = false,
+                IsBetaTester = false,
+                NewSettingsMode = true, // Changed from false to true - new installations get enhanced settings mode by default
+                WizardCompleted = false,
+                ShowRobbel3DSetup = true // Always enable Robbel3D setup by default
+            };
         }
     }
 }

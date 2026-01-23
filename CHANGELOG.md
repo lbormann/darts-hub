@@ -1,4 +1,10 @@
-﻿## v1.3.0
+﻿## v1.3.1
+    - version Update darts-caller to v2.20.1
+        - fix bug where lobby is closed by autodarts and caller stops working.
+
+    - add pin configuration for robbel3d mode
+
+## v1.3.0
     - Version Update Darts-Caller v2.20.0
         - for more information see Darts-Caller changelog
     -Version Update Darts-WLED v1.3.0
