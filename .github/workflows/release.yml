@@ -44,12 +44,17 @@ jobs:
             echo "is_prerelease=false" >> $GITHUB_OUTPUT
           fi
           
-          # Extrahiere Changelog für die spezifische Version (CRLF-sicher)
+          # Extrahiere Changelog für die spezifische Version (CRLF/BOM-sicher, toleriert Leerzeichen)
           if [ -f "CHANGELOG.md" ]; then
-            CHANGELOG=$(tr -d '\r' < CHANGELOG.md | awk -v ver="$VERSION" '$0 == ("## " ver) {flag=1; next} /^## / && flag {flag=0} flag')
+            CHANGELOG=$(awk -v ver="$VERSION" '
+              NR==1 { sub(/^\xef\xbb\xbf/, "") }  # entferne UTF-8 BOM falls vorhanden
+              { gsub(/\r/, "") }                    # entferne CR
+              $0 ~ "^##[[:space:]]+" ver "$" { flag=1; next }
+              flag && /^##[[:space:]]+/ { flag=0 }
+              flag
+            ' CHANGELOG.md)
             
             if [ -n "$CHANGELOG" ]; then
-              # Speichere Changelog in Datei
               echo "$CHANGELOG" > changelog.txt
             else
               echo "No changelog entries found for version ${VERSION}" > changelog.txt
