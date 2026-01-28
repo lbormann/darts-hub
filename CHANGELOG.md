@@ -1,4 +1,11 @@
-﻿## v1.3.1
+﻿## v1.3.2
+    - version Update darts-wled to v1.10.1
+        - fix bug Takeout effect
+    - version Update darts-caller to v2.20.2
+        - Blind support bugfix in RTW
+        - Blind support calls also hit number befor busted
+
+## v1.3.1
     - version Update darts-caller to v2.20.1
         - fix bug where lobby is closed by autodarts and caller stops working.
 
@@ -316,7 +323,7 @@
 
 ## v1.2.0
 ### Improvements
-    - Updater System Overhaul
+- Updater System Overhaul
         - New robust update checking and installation system
         - Retry mechanism with exponential backoff for network requests
     - Comprehensive logging system with daily log files

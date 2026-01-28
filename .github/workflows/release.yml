@@ -44,10 +44,9 @@ jobs:
             echo "is_prerelease=false" >> $GITHUB_OUTPUT
           fi
           
-          # Extrahiere Changelog für die spezifische Version
+          # Extrahiere Changelog für die spezifische Version (CRLF-sicher)
           if [ -f "CHANGELOG.md" ]; then
-            # Suche nach der Version im Changelog - von ## VERSION bis zur nächsten ## 
-            CHANGELOG=$(awk "/^## ${VERSION}$/{flag=1; next} /^## / && flag{flag=0} flag" CHANGELOG.md)
+            CHANGELOG=$(tr -d '\r' < CHANGELOG.md | awk -v ver="$VERSION" '$0 == ("## " ver) {flag=1; next} /^## / && flag {flag=0} flag')
             
             if [ -n "$CHANGELOG" ]; then
               # Speichere Changelog in Datei
@@ -402,4 +401,4 @@ jobs:
             darts-hub-windows-arm64/darts-hub-windows-arm64.zip
             darts-hub-linux-x64/darts-hub-linux-x64.zip
             darts-hub-linux-arm/darts-hub-linux-arm.zip
-            darts-hub-linux-arm64/darts-hub-linux-arm64.zip
+            darts-hub-linux-arm64/darts-hub-linux-arm64.zip            darts-hub-linux-arm64/darts-hub-linux-arm64.zip

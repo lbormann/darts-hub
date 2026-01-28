@@ -35,10 +35,9 @@ jobs:
           fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           
-          # Extrahiere Changelog für die spezifische Version
+          # Extrahiere Changelog für die spezifische Version (CRLF-sicher)
           if [ -f "CHANGELOG.md" ]; then
-            # Suche nach der Version im Changelog - von ## VERSION bis zur nächsten ## 
-            CHANGELOG=$(awk "/^## ${VERSION}$/{flag=1; next} /^## / && flag{flag=0} flag" CHANGELOG.md)
+            CHANGELOG=$(tr -d '\r' < CHANGELOG.md | awk -v ver="$VERSION" '$0 == ("## " ver) {flag=1; next} /^## / && flag {flag=0} flag')
             
             if [ -n "$CHANGELOG" ]; then
               # Escape Zeichen für GitHub Output aber behalte Markdown-Formatierung
