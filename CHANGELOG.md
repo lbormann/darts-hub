@@ -1,4 +1,7 @@
-﻿## v1.3.2
+﻿## v1.3.3
+    - fix release build problem for linux arm64
+
+## v1.3.2
     - version Update darts-wled to v1.10.1
         - fix bug Takeout effect
     - version Update darts-caller to v2.20.2
