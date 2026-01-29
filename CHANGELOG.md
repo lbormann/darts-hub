@@ -1,4 +1,8 @@
-﻿## v1.3.4
+﻿## v1.3.5
+    - version Update darts-wled to v1.10.2
+        - fix bug Takeout effect
+
+## v1.3.4
     - fix release build problem for linux arm64
 
 ## v1.3.2
