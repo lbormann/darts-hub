@@ -1,4 +1,8 @@
-﻿## v1.3.6
+﻿## v1.3.7
+    - WLED Version Update darts-wled to v1.10.3
+        - fix bug Effekt Brightness not working
+
+## v1.3.6
     - Bugfix String escape problem for pixelit
 
 ## v1.3.5
