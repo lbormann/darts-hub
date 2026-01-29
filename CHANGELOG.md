@@ -1,4 +1,7 @@
-﻿## v1.3.5
+﻿## v1.3.6
+    - Bugfix String escape problem for pixelit
+
+## v1.3.5
     - version Update darts-wled to v1.10.2
         - fix bug Takeout effect
 

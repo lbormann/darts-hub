@@ -138,17 +138,16 @@ namespace darts_hub.model
                             else
                             {
                                 var mappedValue = a.MappedValue();
-                                var escapedValue = EscapeArgumentValue(mappedValue);
-                                
+
                                 if (!a.IsMulti || String.IsNullOrEmpty(mappedValue))
                                 {
-                                    composedArguments += " " + Prefix + a.Name + Delimitter + "\"" + escapedValue + "\"";
+                                    composedArguments += " " + Prefix + a.Name + Delimitter + "\"" + mappedValue + "\"";
                                 }
                                 else
                                 {
-                                    var splitted = mappedValue.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+                                    var splitted = mappedValue.Split(" ");
                                     var multiSplitted = String.Empty;
-                                    foreach (var b in splitted) multiSplitted += $" \"{EscapeArgumentValue(b)}\"";
+                                    foreach (var b in splitted) multiSplitted += $" \"{b}\"";
                                     composedArguments += " " + Prefix + a.Name + Delimitter + multiSplitted;
                                 }
                             }
@@ -172,17 +171,6 @@ namespace darts_hub.model
                 
                 throw; // Re-throw to maintain original behavior
             }
-        }
-
-        private string EscapeArgumentValue(string value)
-        {
-            if (value == null)
-            {
-                return string.Empty;
-            }
-
-            // Escape backslashes first, then double quotes for safe CLI passing
-            return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
         }
 
         private void ValidateRequiredOnArgument(Argument a)
