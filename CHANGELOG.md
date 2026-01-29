@@ -1,4 +1,4 @@
-﻿## v1.3.3
+﻿## v1.3.4
     - fix release build problem for linux arm64
 
 ## v1.3.2
