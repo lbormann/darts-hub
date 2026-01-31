@@ -1,5 +1,6 @@
 ﻿## v1.3.8
     - Robbel3D: updated LED cfg merge/confirmation flow and refreshed apply/cancel buttons
+    - UI: Markdown changelog rendering and styled update dialog buttons
 
 ## v1.3.7
     - WLED Version Update darts-wled to v1.10.3

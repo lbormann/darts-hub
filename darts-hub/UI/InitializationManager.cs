@@ -224,20 +224,26 @@ namespace darts_hub.UI
         {
             await Dispatcher.UIThread.InvokeAsync(async () =>
             {
-                var update = ButtonResult.No;
-                if (!configurator.Settings.SkipUpdateConfirmation)
+                if (configurator.Settings.SkipUpdateConfirmation)
                 {
-                    update = await mainWindow.RenderMessageBox($"Update available",
-                        $"New Version '{e.Version}' available!\r\n\r\nDO YOU WANT TO UPDATE?\r\n\r\n" +
-                        $"------------------  CHANGELOG  ------------------\r\n\r\n{e.Message}",
-                        MsBox.Avalonia.Enums.Icon.Success, ButtonEnum.YesNo, 800.0, 600.0, 0);
+                    try
+                    {
+                        Updater.UpdateToNewVersion();
+                    }
+                    catch (Exception ex)
+                    {
+                        await mainWindow.RenderMessageBox("", "Update to new version failed: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error);
+                    }
+                    return;
                 }
-                else
-                {
-                    update = ButtonResult.Yes;
-                }
-                
-                if (update == ButtonResult.Yes)
+
+                var changelogMarkdown = NormalizeChangelogIndentation(e.Message);
+                var dialog = new UpdateDialog();
+                dialog.SetData(e.Version, changelogMarkdown);
+
+                bool? update = await dialog.ShowDialog<bool?>(mainWindow);
+
+                if (update == true)
                 {
                     try
                     {
@@ -253,6 +259,20 @@ namespace darts_hub.UI
                     await HandleNoUpdateSelected();
                 }
             });
+        }
+
+        private static string NormalizeChangelogIndentation(string changelog)
+        {
+            var lines = (changelog ?? string.Empty).Replace("\r\n", "\n").Split('\n');
+            for (var i = 0; i < lines.Length; i++)
+            {
+                if (lines[i].StartsWith("    "))
+                {
+                    lines[i] = lines[i].Substring(4);
+                }
+            }
+
+            return string.Join(Environment.NewLine, lines).Trim();
         }
 
         private async Task HandleNoUpdateSelected()

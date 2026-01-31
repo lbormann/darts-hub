@@ -1,0 +1,56 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        x:Class="darts_hub.UI.UpdateDialog"
+        mc:Ignorable="d"
+        Width="900"
+        Height="700"
+        CanResize="True"
+        WindowStartupLocation="CenterOwner"
+        Title="Update available">
+  <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="16">
+    <StackPanel Orientation="Vertical" Spacing="6">
+      <TextBlock x:Name="TitleTextBlock"
+                 Text="Update available"
+                 FontSize="24"
+                 FontWeight="Bold" />
+      <TextBlock x:Name="VersionTextBlock"
+                 Text="Version"
+                 FontSize="16"
+                 Foreground="#666" />
+    </StackPanel>
+
+    <Separator Grid.Row="1" Margin="0,12,0,12" />
+
+    <Border Grid.Row="2" BorderBrush="#DDD" BorderThickness="1" CornerRadius="6" Padding="8">
+      <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+        <ContentControl x:Name="MarkdownHost" />
+      </ScrollViewer>
+    </Border>
+
+    <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,12,0,0">
+      <Button x:Name="SkipButton"
+              Width="140"
+              Height="38"
+              Content="Later"
+              Background="#ECEFF4"
+              BorderBrush="#D1D5DB"
+              Foreground="#1F2937"
+              FontWeight="SemiBold"
+              Padding="12,8"
+              CornerRadius="6" />
+      <Button x:Name="UpdateButton"
+              Width="160"
+              Height="38"
+              Content="Update now"
+              IsDefault="True"
+              Background="#2563EB"
+              BorderBrush="#1D4ED8"
+              Foreground="White"
+              FontWeight="SemiBold"
+              Padding="14,8"
+              CornerRadius="6" />
+    </StackPanel>
+  </Grid>
+</Window>

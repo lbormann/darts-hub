@@ -357,13 +357,7 @@
 								  HorizontalScrollBarVisibility="Hidden"
 								  IsVisible="False"
 								  Width="750">
-						<TextBox x:Name="ChangelogContent"
-								 Text="Changelog will appear here..."
-								 Foreground="White"
-								 Background="Transparent"
-								 TextWrapping="Wrap"
-								 IsReadOnly="True"
-								 BorderThickness="0"/>
+						<ContentControl x:Name="ChangelogHost" />
 					</ScrollViewer>
 
 					<!-- To Top Button - Fixed position in bottom-right corner of settings area -->

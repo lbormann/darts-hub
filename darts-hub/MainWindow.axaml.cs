@@ -3,7 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Threading;
+using Avalonia.Media;
 using darts_hub.control;
 using darts_hub.control.wizard;
 using darts_hub.model;
@@ -88,7 +90,7 @@ namespace darts_hub
                 contentModeManager,
                 configurator,
                 profileManager,
-                RenderMessageBox,
+                (title, message, icon, buttons, width, height, autoCloseDelay) => RenderMessageBox(title, message, icon, buttons, width, height, autoCloseDelay),
                 LoadChangelogContent,
                 SetWait,
                 RunSelectedProfile,
@@ -176,9 +178,9 @@ namespace darts_hub
             }
         }
 
-        public async Task<ButtonResult> RenderMessageBox(string title, string message, MsBox.Avalonia.Enums.Icon icon, ButtonEnum buttons = ButtonEnum.Ok, double? width = null, double? height = null, int autoCloseDelayInSeconds = 0)
+        public async Task<ButtonResult> RenderMessageBox(string title, string message, MsBox.Avalonia.Enums.Icon icon, ButtonEnum buttons = ButtonEnum.Ok, double? width = null, double? height = null, int autoCloseDelayInSeconds = 0, bool isMarkdown = false)
         {
-            return await MessageBoxHelper.ShowMessageBox(this, title, message, icon, buttons, width, height, autoCloseDelayInSeconds);
+            return await MessageBoxHelper.ShowMessageBox(this, title, message, icon, buttons, width, height, autoCloseDelayInSeconds, isMarkdown);
         }
 
         public async Task<bool> RunSelectedProfile(bool minimize = true)
@@ -405,12 +407,133 @@ namespace darts_hub
                 if (string.IsNullOrEmpty(changelogText))
                     changelogText = "Changelog not available. Please try again later.";
        
-                ChangelogContent.Text = changelogText;
+                var host = this.FindControl<ContentControl>("ChangelogHost");
+                if (host != null)
+                {
+                    host.Content = BuildSimpleMarkdownView(changelogText);
+                }
             }
             catch (Exception ex)
             {
-                ChangelogContent.Text = $"Failed to load changelog: {ex.Message}";
+                var host = this.FindControl<ContentControl>("ChangelogHost");
+                if (host != null)
+                {
+                    host.Content = BuildSimpleMarkdownView($"Failed to load changelog: {ex.Message}");
+                }
             }
+        }
+
+        private Control BuildSimpleMarkdownView(string markdown)
+        {
+            var stack = new StackPanel { Spacing = 8, Margin = new Thickness(12) };
+            var lines = markdown.Replace("\r\n", "\n").Split('\n');
+            var buffer = new List<string>();
+
+            void FlushParagraph()
+            {
+                if (buffer.Count == 0) return;
+                var text = string.Join(" ", buffer).Trim();
+                if (text.Length == 0)
+                {
+                    buffer.Clear();
+                    return;
+                }
+
+                stack.Children.Add(new TextBlock
+                {
+                    Text = text,
+                    TextWrapping = TextWrapping.Wrap,
+                    FontSize = 14
+                });
+                buffer.Clear();
+            }
+
+            foreach (var raw in lines)
+            {
+                var line = raw.Trim();
+
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    FlushParagraph();
+                    stack.Children.Add(new TextBlock { Text = "", Height = 4 });
+                    continue;
+                }
+
+                if (line.StartsWith("### "))
+                {
+                    FlushParagraph();
+                    stack.Children.Add(new TextBlock
+                    {
+                        Text = line[4..].Trim(),
+                        FontSize = 16,
+                        FontWeight = Avalonia.Media.FontWeight.SemiBold,
+                        TextWrapping = TextWrapping.Wrap
+                    });
+                    continue;
+                }
+
+                if (line.StartsWith("## "))
+                {
+                    FlushParagraph();
+                    stack.Children.Add(new TextBlock
+                    {
+                        Text = line[3..].Trim(),
+                        FontSize = 18,
+                        FontWeight = Avalonia.Media.FontWeight.Bold,
+                        TextWrapping = TextWrapping.Wrap
+                    });
+                    continue;
+                }
+
+                if (line.StartsWith("# "))
+                {
+                    FlushParagraph();
+                    stack.Children.Add(new TextBlock
+                    {
+                        Text = line[2..].Trim(),
+                        FontSize = 22,
+                        FontWeight = Avalonia.Media.FontWeight.Bold,
+                        TextWrapping = TextWrapping.Wrap
+                    });
+                    continue;
+                }
+
+                if (line.StartsWith("- ") || line.StartsWith("* "))
+                {
+                    FlushParagraph();
+                    var bullet = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+                    bullet.Children.Add(new TextBlock
+                    {
+                        Text = "•",
+                        FontSize = 14,
+                        FontWeight = Avalonia.Media.FontWeight.Bold
+                    });
+                    bullet.Children.Add(new TextBlock
+                    {
+                        Text = line[2..].Trim(),
+                        TextWrapping = TextWrapping.Wrap,
+                        FontSize = 14
+                    });
+                    stack.Children.Add(bullet);
+                    continue;
+                }
+
+                buffer.Add(line.Trim());
+            }
+
+            FlushParagraph();
+
+            if (stack.Children.Count == 0)
+            {
+                stack.Children.Add(new TextBlock
+                {
+                    Text = markdown,
+                    TextWrapping = TextWrapping.Wrap,
+                    FontSize = 14
+                });
+            }
+
+            return stack;
         }
 
         private void UpdateToTopButtonVisibility(ScrollViewer? scrollViewer)

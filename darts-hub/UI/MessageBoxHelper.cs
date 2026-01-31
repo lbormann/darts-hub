@@ -4,6 +4,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using darts_hub.control;
+using Markdown.Avalonia;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Enums;
@@ -19,13 +20,14 @@ namespace darts_hub.UI
     {
         public static async Task<ButtonResult> ShowMessageBox(
             Window parentWindow,
-            string title, 
-            string message, 
-            Icon icon, 
-            ButtonEnum buttons = ButtonEnum.Ok, 
-            double? width = null, 
-            double? height = null, 
-            int autoCloseDelayInSeconds = 0)
+            string title,
+            string message,
+            Icon icon,
+            ButtonEnum buttons = ButtonEnum.Ok,
+            double? width = null,
+            double? height = null,
+            int autoCloseDelayInSeconds = 0,
+            bool isMarkdown = false)
         {
             try
             {
@@ -36,7 +38,8 @@ namespace darts_hub.UI
                     Icon = icon,
                     ButtonDefinitions = buttons,
                     WindowIcon = parentWindow.Icon,
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    Markdown = isMarkdown
                 };
 
                 if (width.HasValue)
@@ -45,7 +48,7 @@ namespace darts_hub.UI
                     messageBoxParams.Height = height.Value;
 
                 var messageBox = MessageBoxManager.GetMessageBoxStandard(messageBoxParams);
-                
+
                 if (autoCloseDelayInSeconds > 0)
                 {
                     _ = Task.Delay(TimeSpan.FromSeconds(autoCloseDelayInSeconds)).ContinueWith(_ =>
@@ -56,21 +59,20 @@ namespace darts_hub.UI
 
                 return await messageBox.ShowWindowDialogAsync(parentWindow);
             }
-            catch (System.NotSupportedException ex) when (ex.Message.Contains("Markdown.Avalonia") || ex.Message.Contains("StaticBinding"))
+            catch (NotSupportedException ex)
             {
-                // Fallback to simple Avalonia MessageBox for markdown binding issues
-                UpdaterLogger.LogWarning($"MessageBox markdown binding issue, using fallback: {ex.Message}");
-                return await ShowFallbackMessageBox(parentWindow, title, message, buttons);
+                UpdaterLogger.LogWarning($"MessageBox not supported, using fallback: {ex.Message}");
+                return await ShowFallbackMessageBox(parentWindow, title, message, buttons, isMarkdown);
             }
             catch (Exception ex)
             {
                 // Log the error and show a simple fallback
                 UpdaterLogger.LogError("MessageBox failed completely, using system fallback", ex);
-                return await ShowFallbackMessageBox(parentWindow, title, message, buttons);
+                return await ShowFallbackMessageBox(parentWindow, title, message, buttons, isMarkdown);
             }
         }
 
-        private static async Task<ButtonResult> ShowFallbackMessageBox(Window parentWindow, string title, string message, ButtonEnum buttons)
+        private static async Task<ButtonResult> ShowFallbackMessageBox(Window parentWindow, string title, string message, ButtonEnum buttons, bool isMarkdown = false)
         {
             return await Dispatcher.UIThread.InvokeAsync(async () =>
             {
@@ -79,14 +81,14 @@ namespace darts_hub.UI
                     // Determine appropriate size based on content
                     double dialogWidth = 500;
                     double dialogHeight = 400;
-                    
+
                     // For update messages (longer content), use larger dialog
-                    if (title.Contains("Update") || message.Length > 500)
+                    if (title.Contains("Update", StringComparison.OrdinalIgnoreCase) || message.Length > 500)
                     {
                         dialogWidth = 900;
                         dialogHeight = 700;
                     }
-                    
+
                     // Create a simple custom dialog
                     var dialog = new Window
                     {
@@ -112,15 +114,52 @@ namespace darts_hub.UI
                         HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto
                     };
 
-                    var messageText = new TextBlock
+                    Control messageContent;
+                    if (isMarkdown)
                     {
-                        Text = message,
-                        TextWrapping = TextWrapping.Wrap,
-                        Margin = new Thickness(10),
-                        FontSize = 14
-                    };
-                    
-                    scrollViewer.Content = messageText;
+                        try
+                        {
+                            messageContent = new MarkdownScrollViewer
+                            {
+                                Markdown = message,
+                                Margin = new Thickness(10)
+                            };
+                        }
+                        catch (NotSupportedException mdEx)
+                        {
+                            UpdaterLogger.LogWarning($"Markdown not supported in fallback, using plain text: {mdEx.Message}");
+                            messageContent = new TextBlock
+                            {
+                                Text = message,
+                                TextWrapping = TextWrapping.Wrap,
+                                Margin = new Thickness(10),
+                                FontSize = 14
+                            };
+                        }
+                        catch (Exception mdEx)
+                        {
+                            UpdaterLogger.LogWarning($"Markdown fallback failed, using plain text: {mdEx.Message}");
+                            messageContent = new TextBlock
+                            {
+                                Text = message,
+                                TextWrapping = TextWrapping.Wrap,
+                                Margin = new Thickness(10),
+                                FontSize = 14
+                            };
+                        }
+                    }
+                    else
+                    {
+                        messageContent = new TextBlock
+                        {
+                            Text = message,
+                            TextWrapping = TextWrapping.Wrap,
+                            Margin = new Thickness(10),
+                            FontSize = 14
+                        };
+                    }
+
+                    scrollViewer.Content = messageContent;
                     Grid.SetRow(scrollViewer, 0);
                     mainGrid.Children.Add(scrollViewer);
 
@@ -132,7 +171,7 @@ namespace darts_hub.UI
                         Spacing = 15,
                         Margin = new Thickness(20)
                     };
-                    
+
                     Grid.SetRow(buttonPanel, 1);
                     mainGrid.Children.Add(buttonPanel);
 
