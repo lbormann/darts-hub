@@ -551,17 +551,17 @@ namespace darts_hub.control
                 
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Starting complete WLED config file replacement to {endpoint} (using dynamic config)");
                 
-                // Step 1: Download existing config to preserve network settings
+                // Step 1: Download existing config from controller
                 var existingConfig = await DownloadExistingWledConfig(endpoint);
                 
-                // Step 2: Merge network settings from existing config into new config
-                var mergedConfig = await MergeNetworkSettingsDynamic(configRaw, existingConfig);
+                // Step 2: Build upload config: controller config as base, replace hw.led with local (incl. pin override)
+                var mergedConfig = BuildConfigWithLedOverride(configRaw, existingConfig);
                 
                 // Step 3: Delete existing config files (try all possible names and extensions)
                 await DeleteWledFile(endpoint, "/cfg.json");       // Standard WLED config file
                 await DeleteWledFile(endpoint, "/cfg.jso");        // Controller might save as .jso
                 
-                // Step 4: Upload new config file with preserved network settings (use compact JSON format!)
+                // Step 4: Upload new config file with preserved controller settings and updated hw.led (use compact JSON format!)
                 var configJson = JsonConvert.SerializeObject(mergedConfig, Formatting.None);
                 var success = await UploadWledConfigFile(endpoint, "cfg.json", configJson);
                 
@@ -599,6 +599,39 @@ namespace darts_hub.control
             {
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error in complete WLED config replacement: {ex.Message}");
                 return false;
+            }
+        }
+
+        private static dynamic BuildConfigWithLedOverride(dynamic newConfig, dynamic? existingConfig)
+        {
+            try
+            {
+                var newObj = newConfig as JObject ?? JObject.FromObject(newConfig);
+                var newLed = newObj["hw"]?["led"] as JObject;
+
+                if (newLed == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] No hw.led block found in local config - using controller config as-is");
+                    return existingConfig ?? newObj;
+                }
+
+                if (existingConfig != null)
+                {
+                    var existingObj = existingConfig as JObject ?? JObject.FromObject(existingConfig);
+                    var hwNode = existingObj["hw"] as JObject ?? new JObject();
+                    hwNode["led"] = newLed.DeepClone();
+                    existingObj["hw"] = hwNode;
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] Replaced controller hw.led block with local (pin-adjusted) version");
+                    return existingObj;
+                }
+
+                System.Diagnostics.Debug.WriteLine("[Robbel3D] No controller config available - using local config entirely");
+                return newObj;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error building merged config with LED override: {ex.Message}");
+                return newConfig;
             }
         }
 

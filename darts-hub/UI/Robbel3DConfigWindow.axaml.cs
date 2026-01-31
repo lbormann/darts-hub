@@ -906,7 +906,24 @@ namespace darts_hub.UI
                     return;
                 }
 
-                SetLoadingState(true, "Applying Robbel3D configuration...");
+                // Confirmation prompt before flashing
+                var ledCount = GetPresetLedCount(selectedPreset);
+                var confirmation = await ShowMessageBox(
+                    "Confirm Robbel3D flash",
+                    "Please confirm that you are using the Robbel3D setup with the configured LED count and no secondary LED strip attached.\n\n" +
+                    $"• Configured LED count: {ledCount}\n" +
+                    "• No additional LED strip is connected to the controller (secondary strips will be disabled after flashing and must be re-enabled manually).\n" +
+                    "• Existing presets on the controller will be deleted and cannot be restored automatically.\n\n" +
+                    "Do you want to continue?",
+                    MsBox.Avalonia.Enums.Icon.Warning,
+                    ButtonEnum.YesNo);
+
+                if (confirmation != ButtonResult.Yes)
+                {
+                    return;
+                }
+ 
+                 SetLoadingState(true, "Applying Robbel3D configuration...");
 
                 // Step 1: Backup existing configuration (if enabled)
                 var backupCheckBox = this.FindControl<CheckBox>("BackupExistingConfigCheckBox");
@@ -1027,9 +1044,9 @@ namespace darts_hub.UI
             Close(false);
         }
 
-        private async Task<ButtonResult> ShowMessageBox(string title, string message, MsBox.Avalonia.Enums.Icon icon)
+        private async Task<ButtonResult> ShowMessageBox(string title, string message, MsBox.Avalonia.Enums.Icon icon, ButtonEnum buttons = ButtonEnum.Ok, double? width = null, double? height = null, int autoCloseDelayInSeconds = 0)
         {
-            return await MessageBoxHelper.ShowMessageBox(this, title, message, icon);
+            return await MessageBoxHelper.ShowMessageBox(this, title, message, icon, buttons, width, height, autoCloseDelayInSeconds);
         }
 
         protected override void OnClosing(WindowClosingEventArgs e)
@@ -1075,6 +1092,52 @@ namespace darts_hub.UI
 
             // Revalidate if configuration can be applied
             ValidateCanApplyConfiguration();
+        }
+
+        private int GetPresetLedCount(Robbel3DConfiguration preset)
+        {
+            if (preset == null)
+            {
+                return 0;
+            }
+
+            if (preset.LedCount > 0)
+            {
+                return preset.LedCount;
+            }
+
+            try
+            {
+                if (preset.WledConfigRaw is JObject rawObj)
+                {
+                    var total = rawObj["hw"]?["led"]?["total"]?.Value<int?>();
+                    if (total.HasValue && total.Value > 0)
+                    {
+                        return total.Value;
+                    }
+                }
+                else if (preset.WledConfigRaw != null)
+                {
+                    var obj = JObject.FromObject(preset.WledConfigRaw);
+                    var total = obj["hw"]?["led"]?["total"]?.Value<int?>();
+                    if (total.HasValue && total.Value > 0)
+                    {
+                        return total.Value;
+                    }
+                }
+
+                var typedTotal = preset.WledConfig?.Hardware?.Led?.Total;
+                if (typedTotal.HasValue && typedTotal.Value > 0)
+                {
+                    return typedTotal.Value;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Unable to read LED count: {ex.Message}");
+            }
+
+            return 0;
         }
     }
 }

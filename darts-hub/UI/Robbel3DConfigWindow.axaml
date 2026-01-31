@@ -474,31 +474,50 @@
 
         <!-- Status Bar -->
         <Border Grid.Row="2" Background="#FF1E1E1E" Padding="10">
-            <StackPanel Orientation="Horizontal" Spacing="10">
-                <TextBlock Text="🚀 Ready to configure!" 
-                           Foreground="White" 
-                           FontWeight="Bold"/>
-                <Button x:Name="ApplyConfigButton" 
-                        Content="Apply Configuration" 
-                        Padding="10,6"
-                        Background="#FF28A745"
-                        Foreground="White"
-                        BorderThickness="0"
-                        CornerRadius="4"
-                        Width="180"
-                        Height="40"
-                        Click="ApplyConfigButton_Click"/>
-                <Button x:Name="CancelButton" 
-                        Content="❌ Cancel" 
-                        Padding="10,6"
-                        Background="#FFDC3545"
-                        Foreground="White"
-                        BorderThickness="0"
-                        CornerRadius="4"
-                        Width="180"
-                        Height="40"
-                        Click="CancelButton_Click"/>
-            </StackPanel>
+            <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="🚀 Ready to configure!" 
+                               Foreground="White" 
+                               FontWeight="Bold"/>
+                    <TextBlock Text="Robbel3D One-Click" 
+                               Foreground="#FF8A8A8A"
+                               FontSize="12"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button x:Name="ApplyConfigButton" 
+                            Padding="14,10"
+                            Width="190"
+                            Height="44"
+                            Background="#FF2E8B57"
+                            Foreground="White"
+                            BorderBrush="#FF3BBF72"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Click="ApplyConfigButton_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <TextBlock Text="🚀" />
+                            <TextBlock Text="Apply configuration" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="CancelButton" 
+                            Padding="14,10"
+                            Width="150"
+                            Height="44"
+                            Background="#FF2B2B2B"
+                            Foreground="#FFE6E6E6"
+                            BorderBrush="#FF464646"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Click="CancelButton_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <TextBlock Text="✖" />
+                            <TextBlock Text="Cancel" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
         </Border>
 
         <!-- Loading Overlay with animation -->

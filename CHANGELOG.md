@@ -1,4 +1,7 @@
-﻿## v1.3.7
+﻿## v1.3.8
+    - Robbel3D: updated LED cfg merge/confirmation flow and refreshed apply/cancel buttons
+
+## v1.3.7
     - WLED Version Update darts-wled to v1.10.3
         - fix bug Effekt Brightness not working
 
