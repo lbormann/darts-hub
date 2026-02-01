@@ -147,15 +147,42 @@ namespace darts_hub.control
                     "Enter Pixelit effect manually..."
             };
             
+            var warningText = new TextBlock
+            {
+                Text = "⚠️ This argument is enabled but empty. It can cause issues when the extension starts. Clear it with the eraser if you do not need it.",
+                FontSize = 12,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White,
+                Background = new SolidColorBrush(Color.FromRgb(220, 53, 69)),
+                Padding = new Thickness(10, 6, 10, 6),
+                Margin = new Thickness(0, 4, 0, 0),
+                TextWrapping = TextWrapping.Wrap,
+                IsVisible = false
+            };
+
+            void UpdateWarning()
+            {
+                var isEmpty = string.IsNullOrWhiteSpace(textBox.Text);
+                warningText.IsVisible = isEmpty;
+                textBox.BorderBrush = isEmpty
+                    ? new SolidColorBrush(Color.FromRgb(220, 53, 69))
+                    : new SolidColorBrush(Color.FromRgb(100, 100, 100));
+                textBox.BorderThickness = isEmpty ? new Thickness(2) : new Thickness(1);
+            }
+
+            UpdateWarning();
+ 
             textBox.TextChanged += (s, e) =>
             {
                 param.Value = textBox.Text;
                 param.IsValueChanged = true;
                 saveCallback?.Invoke();
+                UpdateWarning();
             };
-            
+ 
             panel.Children.Add(textBox);
-            return panel;
-        }
+            panel.Children.Add(warningText);
+             return panel;
+         }
     }
 }

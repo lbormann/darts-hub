@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -18,6 +18,7 @@ namespace darts_hub.UI
     public class ArgumentControlFactory
     {
         private readonly Window parentWindow;
+        private const string EmptyArgumentWarningMessage = "This argument is enabled but empty. It can cause issues when the extension starts. Clear it with the eraser if you do not need it.";
 
         public ArgumentControlFactory(Window parentWindow)
         {
@@ -26,63 +27,87 @@ namespace darts_hub.UI
 
         public async Task<Control?> CreateControl(Argument argument, Action<Argument> autoSaveCallback, Action<Argument> showTooltipCallback)
         {
-            var mainPanel = new StackPanel 
-            { 
+            var mainPanel = new StackPanel
+            {
                 Margin = new Avalonia.Thickness(0, 5),
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
-            
-            // Label
+
             var label = new TextBlock
             {
-                Text = argument.NameHuman + (argument.Required ? " *" : ""),
+                Text = argument.NameHuman + (argument.Required ? " *" : string.Empty),
                 FontSize = 14,
                 Foreground = Brushes.White,
                 Margin = new Avalonia.Thickness(0, 0, 0, 5)
             };
-            
+
             mainPanel.Children.Add(label);
 
             Control? inputControl = null;
-            string type = argument.GetTypeClear();
+            var type = argument.GetTypeClear();
+            TextBlock? emptyWarningText = null;
 
-            // Create appropriate input control based on argument type
             switch (type)
             {
                 case Argument.TypeString:
                 case Argument.TypePassword:
+                    emptyWarningText = CreateEmptyArgumentWarningTextBlock();
                     inputControl = CreateTextControl(argument, type);
                     break;
-
                 case Argument.TypeBool:
                     inputControl = CreateBoolControl(argument);
                     break;
-
                 case Argument.TypeInt:
                     inputControl = CreateIntControl(argument);
                     break;
-
                 case Argument.TypeFloat:
                     inputControl = CreateFloatControl(argument);
                     break;
-
                 case Argument.TypeFile:
                 case Argument.TypePath:
+                    emptyWarningText = CreateEmptyArgumentWarningTextBlock();
                     inputControl = await CreateFilePathControl(argument, type);
                     break;
             }
 
             if (inputControl != null)
             {
-                var inputContainer = CreateInputContainer(inputControl, argument, type, autoSaveCallback);
-                
+                var inputContainer = CreateInputContainer(inputControl, argument, type, autoSaveCallback, emptyWarningText);
+
                 inputControl.PointerEntered += (s, e) => showTooltipCallback(argument);
                 inputControl.PointerPressed += (s, e) => showTooltipCallback(argument);
-                
+
                 mainPanel.Children.Add(inputContainer);
+
+                if (emptyWarningText != null)
+                {
+                    var textBox = GetTextBoxFromControl(inputControl);
+                    if (textBox != null)
+                    {
+                        UpdateEmptyArgumentWarning(textBox, emptyWarningText, argument);
+                        mainPanel.Children.Add(emptyWarningText);
+                    }
+                }
             }
 
             return mainPanel;
+        }
+
+        private TextBlock CreateEmptyArgumentWarningTextBlock()
+        {
+            return new TextBlock
+            {
+                Text = $"⚠️ {EmptyArgumentWarningMessage}",
+                FontSize = 12,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White,
+                Background = new SolidColorBrush(Color.FromRgb(220, 53, 69)),
+                Padding = new Avalonia.Thickness(10, 6, 10, 6),
+                Margin = new Avalonia.Thickness(0, 4, 0, 0),
+                TextWrapping = TextWrapping.Wrap,
+                MaxWidth = 400,
+                IsVisible = false
+            };
         }
 
         private TextBox CreateTextControl(Argument argument, string type)
@@ -102,12 +127,12 @@ namespace darts_hub.UI
 
         private CheckBox CreateBoolControl(Argument argument)
         {
-            bool isChecked = false;
+            var isChecked = false;
             if (!string.IsNullOrEmpty(argument.Value))
             {
                 isChecked = argument.Value == "True" || argument.Value == "1";
             }
-            
+
             return new CheckBox
             {
                 IsChecked = isChecked,
@@ -128,7 +153,6 @@ namespace darts_hub.UI
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
-            // ? Use ArgumentTypeHelper for range constraints
             if (ArgumentTypeHelper.TryGetNumericRange(argument, out var minimum, out var maximum))
             {
                 numericUpDown.Minimum = minimum;
@@ -137,16 +161,13 @@ namespace darts_hub.UI
             }
             else
             {
-                // Fallback to default positive range
                 numericUpDown.Minimum = 0;
                 numericUpDown.Maximum = 999;
             }
 
-            // Set increment and format
             numericUpDown.Increment = ArgumentTypeHelper.GetIncrementStep(argument);
             numericUpDown.FormatString = ArgumentTypeHelper.GetFormatString(argument);
 
-            // Parse and set value
             if (int.TryParse(argument.Value, out var intVal))
             {
                 numericUpDown.Value = intVal;
@@ -170,7 +191,6 @@ namespace darts_hub.UI
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
-            // ? Use ArgumentTypeHelper for range constraints
             if (ArgumentTypeHelper.TryGetNumericRange(argument, out var minimum, out var maximum))
             {
                 numericUpDown.Minimum = minimum;
@@ -179,16 +199,13 @@ namespace darts_hub.UI
             }
             else
             {
-                // Fallback to default positive range
                 numericUpDown.Minimum = 0m;
                 numericUpDown.Maximum = 999.9m;
             }
 
-            // Set increment and format
             numericUpDown.Increment = ArgumentTypeHelper.GetIncrementStep(argument);
             numericUpDown.FormatString = ArgumentTypeHelper.GetFormatString(argument);
 
-            // Parse and set value
             if (double.TryParse(argument.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var doubleVal))
             {
                 numericUpDown.Value = (decimal)doubleVal;
@@ -255,17 +272,17 @@ namespace darts_hub.UI
             };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            
+
             Grid.SetColumn(fileTextBox, 0);
             Grid.SetColumn(browseButton, 1);
-            
+
             grid.Children.Add(fileTextBox);
             grid.Children.Add(browseButton);
 
             return grid;
         }
 
-        private Grid CreateInputContainer(Control inputControl, Argument argument, string type, Action<Argument> autoSaveCallback)
+        private Grid CreateInputContainer(Control inputControl, Argument argument, string type, Action<Argument> autoSaveCallback, TextBlock? emptyWarningText)
         {
             var inputContainer = new Grid
             {
@@ -277,17 +294,16 @@ namespace darts_hub.UI
             Grid.SetColumn(inputControl, 0);
             inputContainer.Children.Add(inputControl);
 
-            var clearButton = CreateClearButton(inputControl, argument, type, autoSaveCallback);
+            var clearButton = CreateClearButton(inputControl, argument, type, autoSaveCallback, emptyWarningText);
             Grid.SetColumn(clearButton, 1);
             inputContainer.Children.Add(clearButton);
 
-            // Add event handlers to update clear button opacity when value changes
-            SetupValueChangeHandlers(inputControl, argument, type, clearButton, autoSaveCallback);
+            SetupValueChangeHandlers(inputControl, argument, type, clearButton, autoSaveCallback, emptyWarningText);
 
             return inputContainer;
         }
 
-        private Button CreateClearButton(Control inputControl, Argument argument, string type, Action<Argument> autoSaveCallback)
+        private Button CreateClearButton(Control inputControl, Argument argument, string type, Action<Argument> autoSaveCallback, TextBlock? emptyWarningText)
         {
             var clearImage = new Image
             {
@@ -313,18 +329,19 @@ namespace darts_hub.UI
             clearButton.Click += (s, e) =>
             {
                 argument.Value = null;
+                argument.IsValueChanged = false;
                 ResetControlValue(inputControl, type);
                 UpdateClearButtonOpacity(clearButton, argument);
+                UpdateEmptyArgumentWarningState(inputControl, type, emptyWarningText, argument);
                 autoSaveCallback(argument);
             };
 
-            // Set initial opacity
             UpdateClearButtonOpacity(clearButton, argument);
 
             return clearButton;
         }
 
-        private void SetupValueChangeHandlers(Control inputControl, Argument argument, string type, Button clearButton, Action<Argument> autoSaveCallback)
+        private void SetupValueChangeHandlers(Control inputControl, Argument argument, string type, Button clearButton, Action<Argument> autoSaveCallback, TextBlock? emptyWarningText)
         {
             switch (type)
             {
@@ -332,10 +349,12 @@ namespace darts_hub.UI
                 case Argument.TypePassword:
                     if (inputControl is TextBox textBox)
                     {
-                        textBox.TextChanged += (s, e) => 
+                        textBox.TextChanged += (s, e) =>
                         {
                             argument.Value = textBox.Text;
+                            argument.IsValueChanged = true;
                             UpdateClearButtonOpacity(clearButton, argument);
+                            UpdateEmptyArgumentWarningState(inputControl, type, emptyWarningText, argument);
                             autoSaveCallback(argument);
                         };
                     }
@@ -343,15 +362,17 @@ namespace darts_hub.UI
                 case Argument.TypeBool:
                     if (inputControl is CheckBox checkBox)
                     {
-                        checkBox.Checked += (s, e) => 
+                        checkBox.Checked += (s, e) =>
                         {
                             argument.Value = "True";
+                            argument.IsValueChanged = true;
                             UpdateClearButtonOpacity(clearButton, argument);
                             autoSaveCallback(argument);
                         };
-                        checkBox.Unchecked += (s, e) => 
+                        checkBox.Unchecked += (s, e) =>
                         {
                             argument.Value = "False";
+                            argument.IsValueChanged = true;
                             UpdateClearButtonOpacity(clearButton, argument);
                             autoSaveCallback(argument);
                         };
@@ -361,16 +382,12 @@ namespace darts_hub.UI
                 case Argument.TypeFloat:
                     if (inputControl is NumericUpDown numericUpDown)
                     {
-                        numericUpDown.ValueChanged += (s, e) => 
+                        numericUpDown.ValueChanged += (s, e) =>
                         {
-                            if (type == Argument.TypeFloat)
-                            {
-                                argument.Value = numericUpDown.Value?.ToString(CultureInfo.InvariantCulture) ?? "";
-                            }
-                            else
-                            {
-                                argument.Value = numericUpDown.Value?.ToString() ?? "";
-                            }
+                            argument.Value = type == Argument.TypeFloat
+                                ? numericUpDown.Value?.ToString(CultureInfo.InvariantCulture) ?? string.Empty
+                                : numericUpDown.Value?.ToString() ?? string.Empty;
+                            argument.IsValueChanged = true;
                             UpdateClearButtonOpacity(clearButton, argument);
                             autoSaveCallback(argument);
                         };
@@ -383,16 +400,46 @@ namespace darts_hub.UI
                         var textBoxInGrid = gridControl.Children.OfType<TextBox>().FirstOrDefault();
                         if (textBoxInGrid != null)
                         {
-                            textBoxInGrid.TextChanged += (s, e) => 
+                            textBoxInGrid.TextChanged += (s, e) =>
                             {
                                 argument.Value = textBoxInGrid.Text;
+                                argument.IsValueChanged = true;
                                 UpdateClearButtonOpacity(clearButton, argument);
+                                UpdateEmptyArgumentWarningState(inputControl, type, emptyWarningText, argument);
                                 autoSaveCallback(argument);
                             };
                         }
                     }
                     break;
             }
+        }
+
+        private void UpdateEmptyArgumentWarningState(Control inputControl, string type, TextBlock? warningText, Argument argument)
+        {
+            if (warningText == null)
+            {
+                return;
+            }
+
+            if (type == Argument.TypeString || type == Argument.TypePassword || type == Argument.TypeFile || type == Argument.TypePath)
+            {
+                var textBox = GetTextBoxFromControl(inputControl);
+                if (textBox != null)
+                {
+                    UpdateEmptyArgumentWarning(textBox, warningText, argument);
+                }
+            }
+        }
+
+        private void UpdateEmptyArgumentWarning(TextBox textBox, TextBlock warningText, Argument argument)
+        {
+            var isEmpty = string.IsNullOrWhiteSpace(textBox.Text);
+            var showWarning = isEmpty && argument.IsValueChanged;
+            warningText.IsVisible = showWarning;
+            textBox.BorderBrush = showWarning
+                ? new SolidColorBrush(Color.FromRgb(220, 53, 69))
+                : new SolidColorBrush(Color.FromRgb(100, 100, 100));
+            textBox.BorderThickness = showWarning ? new Avalonia.Thickness(2) : new Avalonia.Thickness(1);
         }
 
         private void ResetControlValue(Control inputControl, string type)
@@ -402,16 +449,22 @@ namespace darts_hub.UI
                 case Argument.TypeString:
                 case Argument.TypePassword:
                     if (inputControl is TextBox textBox)
-                        textBox.Text = "";
+                    {
+                        textBox.Text = string.Empty;
+                    }
                     break;
                 case Argument.TypeBool:
                     if (inputControl is CheckBox checkBox)
+                    {
                         checkBox.IsChecked = false;
+                    }
                     break;
                 case Argument.TypeInt:
                 case Argument.TypeFloat:
                     if (inputControl is NumericUpDown numericUpDown)
+                    {
                         numericUpDown.Value = 0;
+                    }
                     break;
                 case Argument.TypeFile:
                 case Argument.TypePath:
@@ -419,7 +472,9 @@ namespace darts_hub.UI
                     {
                         var textBoxInGrid = gridControl.Children.OfType<TextBox>().FirstOrDefault();
                         if (textBoxInGrid != null)
-                            textBoxInGrid.Text = "";
+                        {
+                            textBoxInGrid.Text = string.Empty;
+                        }
                     }
                     break;
             }
@@ -427,12 +482,22 @@ namespace darts_hub.UI
 
         private bool IsValueDefault(Argument arg)
         {
-            return string.IsNullOrEmpty(arg.Value) || arg.Value == null;
+            return string.IsNullOrEmpty(arg.Value);
         }
 
         private void UpdateClearButtonOpacity(Button clearButton, Argument arg)
         {
             clearButton.Opacity = IsValueDefault(arg) ? 0.1 : 1.0;
+        }
+
+        private TextBox? GetTextBoxFromControl(Control inputControl)
+        {
+            return inputControl switch
+            {
+                TextBox textBox => textBox,
+                Grid grid => grid.Children.OfType<TextBox>().FirstOrDefault(),
+                _ => null
+            };
         }
     }
 }

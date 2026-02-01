@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Layout;
@@ -15,6 +16,8 @@ using darts_hub.control; // Add this using directive to enable access to MainWin
 using System.Diagnostics;
 using MsBox.Avalonia.Enums;
 using darts_hub.UI;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 namespace darts_hub.control
 {
@@ -175,6 +178,8 @@ namespace darts_hub.control
             "yellow1", "yellow2", "yellow3", "yellow4"
         };
 
+        private const string EmptyArgumentWarningMessage = "This argument is enabled but empty. It can cause issues when the extension starts. Clear it with the eraser if you do not need it.";
+ 
         /// <summary>
         /// Clears the argument descriptions cache for debugging purposes
         /// </summary>
@@ -220,6 +225,25 @@ namespace darts_hub.control
                 MaxWidth = 700 // Limit width to fit properly in the new settings panel
             };
 
+            var scrollViewer = new ScrollViewer
+            {
+                Content = mainPanel,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+             };
+ 
+             var rootGrid = new Grid
+             {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                ClipToBounds = true
+             };
+             rootGrid.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+             Grid.SetRow(scrollViewer, 0);
+             rootGrid.Children.Add(scrollViewer);
+
             // Store the save callback for later use
             if (saveCallback != null)
             {
@@ -236,10 +260,10 @@ namespace darts_hub.control
             // Header with app info
             var headerPanel = CreateHeaderPanel(app);
             mainPanel.Children.Add(headerPanel);
-
-            // Quick actions section - moved to the top for better visibility
-            var actionsSection = CreateQuickActionsSection(app);
-            mainPanel.Children.Add(actionsSection);
+             
+             // Quick actions section - moved to the top for better visibility
+             var actionsSection = CreateQuickActionsSection(app);
+             mainPanel.Children.Add(actionsSection);
 
             // Custom Name section
             var customNameSection = CreateCustomNameSection(app, saveCallback);
@@ -274,11 +298,11 @@ namespace darts_hub.control
             // Beta notice
             var betaNotice = CreateBetaNotice();
             mainPanel.Children.Add(betaNotice);
-
-            System.Diagnostics.Debug.WriteLine($"=== CREATE NEW SETTINGS CONTENT COMPLETE ===");
-            return mainPanel;
-        }
-
+            
+             System.Diagnostics.Debug.WriteLine($"=== CREATE NEW SETTINGS CONTENT COMPLETE ===");
+             return rootGrid;
+         }
+ 
         /// <summary>
         /// Loads argument descriptions from README for the given app
         /// </summary>
@@ -737,7 +761,7 @@ namespace darts_hub.control
 
             // Get configured and required parameters grouped by section
             var configuredParams = app.Configuration.Arguments
-                .Where(arg => !arg.IsRuntimeArgument && (arg.Required || !string.IsNullOrEmpty(arg.Value)))
+                .Where(arg => !arg.IsRuntimeArgument && (arg.Required || arg.IsValueChanged || !string.IsNullOrEmpty(arg.Value)))
                 .GroupBy(arg => arg.Section ?? "General")
                 .OrderBy(group => group.Key)
                 .ToList();
@@ -992,10 +1016,10 @@ namespace darts_hub.control
                     try
                     {
                         param.Value = null;
-                        // Mark as changed for saving
-                        param.IsValueChanged = true;
-                        // Trigger auto-save
-                        saveCallback?.Invoke();
+                        // Mark as inactive so it drops from configured list
+                        param.IsValueChanged = false;
+                         // Trigger auto-save
+                         saveCallback?.Invoke();
                         
                         System.Diagnostics.Debug.WriteLine($"=== REMOVE PARAMETER CLICK ===");
                         System.Diagnostics.Debug.WriteLine($"Removing parameter: {param.Name}");
@@ -1079,6 +1103,32 @@ namespace darts_hub.control
             return border;
         }
 
+        private static TextBlock CreateEmptyArgumentWarningTextBlock()
+        {
+            return new TextBlock
+            {
+                Text = $"⚠️ {EmptyArgumentWarningMessage}",
+                FontSize = 12,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White,
+                Background = new SolidColorBrush(Color.FromRgb(220, 53, 69)),
+                Padding = new Thickness(10, 6, 10, 6),
+                Margin = new Thickness(0, 4, 0, 0),
+                TextWrapping = TextWrapping.Wrap,
+                IsVisible = false
+            };
+        }
+
+        private static void UpdateEmptyArgumentWarning(TextBox textBox, TextBlock warningText)
+        {
+            var isEmpty = string.IsNullOrWhiteSpace(textBox.Text);
+            warningText.IsVisible = isEmpty;
+            textBox.BorderBrush = isEmpty
+                ? new SolidColorBrush(Color.FromRgb(220, 53, 69))
+                : new SolidColorBrush(Color.FromRgb(100, 100, 100));
+            textBox.BorderThickness = isEmpty ? new Thickness(2) : new Thickness(1);
+        }
+
         private static Control? CreateParameterInputControl(Argument param, Action? saveCallback = null, AppBase? app = null)
         {
             var type = param.GetTypeClear();
@@ -1108,6 +1158,7 @@ namespace darts_hub.control
             {
                 case Argument.TypeString:
                 case Argument.TypePassword:
+                {
                     if (isPixelitEffectParameter)
                     {
                         System.Diagnostics.Debug.WriteLine($"CREATING: Pixelit Effect Parameter Control");
@@ -1128,7 +1179,7 @@ namespace darts_hub.control
                         System.Diagnostics.Debug.WriteLine($"CREATING: Standard TextBox Control");
                         var textBox = new TextBox
                         {
-                            Text = param.Value ?? "",
+                            Text = param.Value ?? string.Empty,
                             PasswordChar = type == Argument.TypePassword ? '*' : '\0',
                             Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
                             Foreground = Brushes.White,
@@ -1138,14 +1189,24 @@ namespace darts_hub.control
                             CornerRadius = new CornerRadius(3),
                             FontSize = 13
                         };
+
+                        var warningText = CreateEmptyArgumentWarningTextBlock();
+                        UpdateEmptyArgumentWarning(textBox, warningText);
+
                         textBox.TextChanged += (s, e) =>
                         {
                             param.Value = textBox.Text;
                             param.IsValueChanged = true;
                             saveCallback?.Invoke();
+                            UpdateEmptyArgumentWarning(textBox, warningText);
                         };
-                        return textBox;
+
+                        var container = new StackPanel { Spacing = 4 };
+                        container.Children.Add(textBox);
+                        container.Children.Add(warningText);
+                        return container;
                     }
+                }
 
                 case Argument.TypeBool:
                     var checkBox = new CheckBox
@@ -1254,13 +1315,14 @@ namespace darts_hub.control
 
                 case Argument.TypeFile:
                 case Argument.TypePath:
+                {
                     var fileGrid = new Grid();
                     fileGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                     fileGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
                     var fileTextBox = new TextBox
                     {
-                        Text = param.Value ?? "",
+                        Text = param.Value ?? string.Empty,
                         Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
                         Foreground = Brushes.White,
                         BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
@@ -1269,6 +1331,9 @@ namespace darts_hub.control
                         CornerRadius = new CornerRadius(3),
                         FontSize = 13
                     };
+
+                    var warningText = CreateEmptyArgumentWarningTextBlock();
+                    UpdateEmptyArgumentWarning(fileTextBox, warningText);
 
                     var browseButton = new Button
                     {
@@ -1287,12 +1352,11 @@ namespace darts_hub.control
                         param.Value = fileTextBox.Text;
                         param.IsValueChanged = true;
                         saveCallback?.Invoke();
+                        UpdateEmptyArgumentWarning(fileTextBox, warningText);
                     };
 
-                    // Add functionality to the browse button
                     browseButton.Click += async (s, e) =>
                     {
-                        // ⭐ Prevent multiple clicks
                         if (browseButton.Tag?.ToString() == "processing") return;
                         browseButton.Tag = "processing";
                         browseButton.IsEnabled = false;
@@ -1301,7 +1365,6 @@ namespace darts_hub.control
                         {
                             System.Diagnostics.Debug.WriteLine($"Browse button clicked for parameter: {param.Name}, type: {type}");
                             
-                            // Get the top level window for the dialog
                             var topLevel = TopLevel.GetTopLevel(browseButton);
                             if (topLevel is not Window window)
                             {
@@ -1313,14 +1376,11 @@ namespace darts_hub.control
 
                             if (type == Argument.TypePath)
                             {
-                                // Open folder dialog for path selection
-                                System.Diagnostics.Debug.WriteLine("Opening folder dialog...");
                                 var folderDialog = new OpenFolderDialog
                                 {
                                     Title = $"Select folder for {param.NameHuman ?? param.Name}"
                                 };
 
-                                // Set initial directory if current value exists and is valid
                                 if (!string.IsNullOrEmpty(param.Value) && System.IO.Directory.Exists(param.Value))
                                 {
                                     folderDialog.Directory = param.Value;
@@ -1329,17 +1389,14 @@ namespace darts_hub.control
                                 result = await folderDialog.ShowAsync(window);
                                 System.Diagnostics.Debug.WriteLine($"Folder dialog result: {result ?? "CANCELLED"}");
                             }
-                            else // Argument.TypeFile
+                            else
                             {
-                                // Open file dialog for file selection
-                                System.Diagnostics.Debug.WriteLine("Opening file dialog...");
                                 var fileDialog = new OpenFileDialog
                                 {
                                     Title = $"Select file for {param.NameHuman ?? param.Name}",
                                     AllowMultiple = false
                                 };
 
-                                // Set initial directory if current value exists
                                 if (!string.IsNullOrEmpty(param.Value))
                                 {
                                     try
@@ -1361,13 +1418,13 @@ namespace darts_hub.control
                                 System.Diagnostics.Debug.WriteLine($"File dialog result: {result ?? "CANCELLED"}");
                             }
 
-                            // Update the textbox and parameter if a selection was made
                             if (!string.IsNullOrEmpty(result))
                             {
                                 fileTextBox.Text = result;
                                 param.Value = result;
                                 param.IsValueChanged = true;
                                 saveCallback?.Invoke();
+                                UpdateEmptyArgumentWarning(fileTextBox, warningText);
                                 System.Diagnostics.Debug.WriteLine($"Updated parameter {param.Name} with value: {result}");
                             }
                         }
@@ -1378,7 +1435,6 @@ namespace darts_hub.control
                         }
                         finally
                         {
-                            // Re-enable button after operation
                             browseButton.Tag = null;
                             browseButton.IsEnabled = true;
                         }
@@ -1389,7 +1445,12 @@ namespace darts_hub.control
                     fileGrid.Children.Add(fileTextBox);
                     fileGrid.Children.Add(browseButton);
 
-                    return fileGrid;
+                    var container = new StackPanel { Spacing = 4 };
+                    container.Children.Add(fileGrid);
+                    container.Children.Add(warningText);
+
+                    return container;
+                }
 
                 default:
                     return new TextBlock
@@ -1430,7 +1491,7 @@ namespace darts_hub.control
 
             // Get available parameters (not configured and not runtime) grouped by section
             var availableParamsBySection = app.Configuration.Arguments
-                .Where(arg => !arg.IsRuntimeArgument && !arg.Required && string.IsNullOrEmpty(arg.Value))
+                .Where(arg => !arg.IsRuntimeArgument && !arg.Required && string.IsNullOrEmpty(arg.Value) && !arg.IsValueChanged)
                 .GroupBy(arg => arg.Section ?? "General")
                 .OrderBy(group => group.Key)
                 .ToList();
@@ -1572,7 +1633,7 @@ namespace darts_hub.control
                                            .Any(tb => tb.Text?.Contains("Settings Mode") == true));
                                 
                                 System.Diagnostics.Debug.WriteLine($"  Has settings header: {hasSettingsHeader}");
-                                
+                        
                                 if (hasSettingsHeader)
                                 {
                                     realMainPanel = stackPanel;
@@ -1797,7 +1858,7 @@ namespace darts_hub.control
                 Argument.TypeBool => "False",
                 Argument.TypeInt => "0",
                 Argument.TypeFloat => "0.0",
-                _ => "change to activate" // String, Password, File, Path get a non-empty default value
+                _ => string.Empty
             };
         }
 
@@ -1806,37 +1867,10 @@ namespace darts_hub.control
         /// </summary>
         private static string GetDefaultValueForParameter(string type, Argument? param = null, AppBase? app = null)
         {
-            // Special handling for WLED color effect parameters
-            if (app?.Name == "darts-wled" && param != null)
+            // For all string-like arguments, start empty to highlight missing values
+            if (type != Argument.TypeBool && type != Argument.TypeInt && type != Argument.TypeFloat)
             {
-                // First check if we have a specific color mapping for this parameter
-                if (ParameterColorDefaults.TryGetValue(param.Name, out var specificColor))
-                {
-                    System.Diagnostics.Debug.WriteLine($"Using specific color '{specificColor}' for parameter '{param.Name}'");
-                    return $"solid|{specificColor}";
-                }
-                
-                // Check if it's a score area effect parameter
-                if (WledScoreAreaHelper.IsScoreAreaEffectParameter(param))
-                {
-                    return $"solid|{DEFAULT_WLED_SCORE_AREA_COLOR}"; // Green for score areas
-                }
-                // Check if it's a regular effect parameter
-                else if (WledSettings.IsEffectParameter(param))
-                {
-                    return $"solid|{DEFAULT_WLED_COLOR}"; // Blue for regular effects
-                }
-            }
-
-            // Special handling for other apps that might use color effects
-            if (param != null && (param.Name.ToLower().Contains("color") || param.Name.ToLower().Contains("effect")))
-            {
-                // Check if we have a specific color mapping for this parameter
-                if (ParameterColorDefaults.TryGetValue(param.Name, out var specificColor))
-                {
-                    System.Diagnostics.Debug.WriteLine($"Using specific color '{specificColor}' for parameter '{param.Name}' in app '{app?.Name}'");
-                    return $"solid|{specificColor}";
-                }
+                return string.Empty;
             }
 
             return type switch
@@ -1844,7 +1878,7 @@ namespace darts_hub.control
                 Argument.TypeBool => "False",
                 Argument.TypeInt => "0",
                 Argument.TypeFloat => "0.0",
-                _ => "change to activate" // String, Password, File, Path get a non-empty default value
+                _ => string.Empty
             };
         }
 
@@ -1912,7 +1946,7 @@ namespace darts_hub.control
                        "Add or remove parameters as needed, and see changes immediately. " +
                        "You can switch back to the classic settings mode in the About section.",
                 FontSize = 12,
-                Foreground = new SolidColorBrush(Color.FromRgb(33, 37, 41)),
+                Foreground = new SolidColorBrush(Color.FromRgb(33, 37, 41)), // Dark text for amber background
                 TextWrapping = TextWrapping.Wrap,
                 LineHeight = 16
             };

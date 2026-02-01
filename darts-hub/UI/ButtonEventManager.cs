@@ -133,6 +133,9 @@ namespace darts_hub.UI
                 case "AboutDonation":
                     await HandleBitcoinDonation();
                     break;
+                case "AboutDiscord":
+                    VisitHelpPage("https://discord.gg/xt5GHJ5Z3j");
+                    break;
                 case "AboutBug":
                     VisitHelpPage("https://github.com/lbormann/darts-hub/issues");
                     break;
@@ -306,8 +309,7 @@ namespace darts_hub.UI
                         "Please use command line tests:\n\n" +
                         "• dotnet run -- --full (Full Test)\n" +
                         "• dotnet run -- --version (Version Check)\n" +
-                        "• dotnet run -- --retry (Retry Test)\n\n" +
-                        $"Error details:\n{quickTestEx.Message}", 
+                        "• dotnet run -- --retry (Retry Test)",
                         MsBox.Avalonia.Enums.Icon.Warning, ButtonEnum.Ok, null, null, 0);
                 }
             }

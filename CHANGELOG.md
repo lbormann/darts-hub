@@ -1,6 +1,12 @@
 ﻿## v1.3.8
     - Robbel3D: updated LED cfg merge/confirmation flow and refreshed apply/cancel buttons
     - UI: Markdown changelog rendering and styled update dialog buttons
+    - UI: add warning message for textfields which are active but empty
+    - Summary: Changelog dialog reliability improved (markdown fallback), Pixelit uses manual input only
+    Community: New Darts-Hub Discord server for support, questions, ideas, and feedback — join us to build a great community: https://discord.gg/xt5GHJ5Z3j
+### Darts-Hub Discord server
+    - Community: New Darts-Hub Discord server for support, questions, ideas, and feedback 
+    — join us to build a great community: https://discord.gg/xt5GHJ5Z3j
 
 ## v1.3.7
     - WLED Version Update darts-wled to v1.10.3
@@ -83,7 +89,7 @@
         - Added `--list-extensions` to show all available extensions
         - Added `--list-params` to show parameters for an extension
         - Added `--list-exports` to show all export files
-        - Added `--export-info` to show detailed export metadata including values
+        - Added `--export_info` to show detailed export metadata including values
         - Interactive commands properly handle input on Windows (new console window)
         - **NEW**: Interactive batch tool `config-manager.bat` for easy GUI-less operation
     
@@ -150,7 +156,7 @@
     - Added `--list-extensions` to show all available extensions
     - Added `--list-params` to show parameters for an extension
     - Added `--list-exports` to show all export files
-    - Added `--export-info` to show detailed export metadata including values
+    - Added `--export_info` to show detailed export metadata including values
     - Interactive commands properly handle input on Windows (new console window)
     - **NEW**: Interactive batch tool `config-manager.bat` for easy GUI-less operation
     
