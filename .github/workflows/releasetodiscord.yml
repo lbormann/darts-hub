@@ -15,20 +15,53 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       
-      - name: Get latest release if no tag specified
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag == ''
-        id: latest_release
+      # Für workflow_dispatch: Release-Daten abrufen und manuell an Discord senden
+      - name: Send manual release to Discord
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/github-script@v7
         with:
           script: |
-            const release = await github.rest.repos.getLatestRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo
+            const tag = '${{ github.event.inputs.release_tag }}';
+            let release;
+            
+            if (tag) {
+              release = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: tag
+              });
+            } else {
+              release = await github.rest.repos.getLatestRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
+            }
+            
+            const webhookUrl = '${{ secrets.WEBHOOK_URL }}';
+            const discordPayload = {
+              username: "Release Changelog",
+              avatar_url: "https://cdn.discordapp.com/avatars/487431320314576937/bd64361e4ba6313d561d54e78c9e7171.png",
+              content: "||@everyone||",
+              embeds: [{
+                title: release.data.name || release.data.tag_name,
+                description: release.data.body || "No description provided",
+                color: 2105893,
+                url: release.data.html_url,
+                footer: {
+                  text: "Changelog"
+                }
+              }]
+            };
+            
+            await fetch(webhookUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(discordPayload)
             });
-            return release.data.tag_name;
-          result-encoding: string
       
+      # Für release events: Die Action normal verwenden
       - name: GitHub Releases to Discord
+        if: github.event_name == 'release'
         uses: SethCohen/github-releases-to-discord@v1
         with:
           webhook_url: ${{ secrets.WEBHOOK_URL }}
@@ -38,4 +71,3 @@ jobs:
           content: "||@everyone||"
           footer_title: "Changelog"
           reduce_headings: true
-          release_tag: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.release_tag != '' && github.event.inputs.release_tag || steps.latest_release.outputs.result) || github.event.release.tag_name }}
