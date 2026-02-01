@@ -38,4 +38,4 @@ jobs:
           content: "||@everyone||"
           footer_title: "Changelog"
           reduce_headings: true
-          release_tag: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.release_tag || steps.latest_release.outputs.result) || '' }}
+          release_tag: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.release_tag != '' && github.event.inputs.release_tag || steps.latest_release.outputs.result) || github.event.release.tag_name }}
