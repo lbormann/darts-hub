@@ -2,6 +2,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to send to Discord (e.g., v1.3.7)'
+        required: false
+        type: string
 
 jobs:
   github-releases-to-discord:
@@ -9,6 +14,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      
+      - name: Get latest release if no tag specified
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag == ''
+        id: latest_release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const release = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            return release.data.tag_name;
+          result-encoding: string
+      
       - name: GitHub Releases to Discord
         uses: SethCohen/github-releases-to-discord@v1
         with:
@@ -19,3 +38,4 @@ jobs:
           content: "||@everyone||"
           footer_title: "Changelog"
           reduce_headings: true
+          release_tag: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.release_tag || steps.latest_release.outputs.result) || '' }}
