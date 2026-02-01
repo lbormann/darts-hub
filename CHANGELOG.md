@@ -4,6 +4,12 @@
     - UI: add warning message for textfields which are active but empty
     - Summary: Changelog dialog reliability improved (markdown fallback), Pixelit uses manual input only
     Community: New Darts-Hub Discord server for support, questions, ideas, and feedback — join us to build a great community: https://discord.gg/xt5GHJ5Z3j
+
+### BUGFIX
+    - Fixed problem where WLED Controllers broke after applying Robbel3D configuration
+    - Fixes problem where WLED Controllers broke after disconnecting them from Powersupply
+    - all who had this problem: please reconfigure your WLED controllers via Robbel3D one click setup.
+
 ### Darts-Hub Discord server
     - Community: New Darts-Hub Discord server for support, questions, ideas, and feedback 
     — join us to build a great community: https://discord.gg/xt5GHJ5Z3j
