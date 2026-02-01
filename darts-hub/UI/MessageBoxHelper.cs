@@ -61,11 +61,13 @@ namespace darts_hub.UI
             }
             catch (NotSupportedException ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[MessageBoxHelper] NotSupportedException: {ex.Message}");
                 UpdaterLogger.LogWarning($"MessageBox not supported, using fallback: {ex.Message}");
                 return await ShowFallbackMessageBox(parentWindow, title, message, buttons, isMarkdown);
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[MessageBoxHelper] Exception: {ex.GetType().Name}: {ex.Message}");
                 // Log the error and show a simple fallback
                 UpdaterLogger.LogError("MessageBox failed completely, using system fallback", ex);
                 return await ShowFallbackMessageBox(parentWindow, title, message, buttons, isMarkdown);
@@ -234,6 +236,7 @@ namespace darts_hub.UI
                 }
                 catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[MessageBoxHelper] Fallback dialog failed: {ex.GetType().Name}: {ex.Message}");
                     // Last resort fallback
                     UpdaterLogger.LogError("Even fallback dialog failed", ex);
                     System.Diagnostics.Debug.WriteLine($"MessageBox Error: {title} - {message}");

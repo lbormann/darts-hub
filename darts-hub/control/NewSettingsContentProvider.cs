@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform;
@@ -11,6 +12,9 @@ using System.Collections.Generic;
 using Avalonia.Interactivity;
 using System;
 using darts_hub.control; // Add this using directive to enable access to MainWindow
+using System.Diagnostics;
+using MsBox.Avalonia.Enums;
+using darts_hub.UI;
 
 namespace darts_hub.control
 {
@@ -233,6 +237,10 @@ namespace darts_hub.control
             var headerPanel = CreateHeaderPanel(app);
             mainPanel.Children.Add(headerPanel);
 
+            // Quick actions section - moved to the top for better visibility
+            var actionsSection = CreateQuickActionsSection(app);
+            mainPanel.Children.Add(actionsSection);
+
             // Custom Name section
             var customNameSection = CreateCustomNameSection(app, saveCallback);
             mainPanel.Children.Add(customNameSection);
@@ -240,14 +248,6 @@ namespace darts_hub.control
             // Enable at startup section - NEW!
             var autostartSection = CreateAutostartSection(app, saveCallback, selectedProfile);
             mainPanel.Children.Add(autostartSection);
-
-            // Status section
-            var statusSection = CreateStatusSection(app);
-            mainPanel.Children.Add(statusSection);
-
-            // Quick actions section
-            var actionsSection = CreateQuickActionsSection(app);
-            mainPanel.Children.Add(actionsSection);
 
             // Configuration sections - replace the preview with actual configuration
             if (app.IsConfigurable() && app.Configuration != null)
@@ -433,63 +433,11 @@ namespace darts_hub.control
             return headerPanel;
         }
 
-        private static Control CreateStatusSection(AppBase app)
-        {
-            var statusPanel = new Border
-            {
-                Background = new SolidColorBrush(Color.FromArgb(50, 0, 122, 204)),
-                CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(15),
-                Margin = new Thickness(0, 0, 0, 15),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                MaxWidth = 650
-            };
-
-            var contentPanel = new StackPanel();
-
-            var statusTitle = new TextBlock
-            {
-                Text = "Application Status",
-                FontSize = 16,
-                FontWeight = FontWeight.Bold,
-                Foreground = Brushes.White,
-                Margin = new Thickness(0, 0, 0, 10),
-                TextWrapping = TextWrapping.Wrap
-            };
-
-            var runningStatus = new TextBlock
-            {
-                Text = app.AppRunningState ? "Running" : "Stopped",
-                FontSize = 14,
-                Foreground = app.AppRunningState ? 
-                    new SolidColorBrush(Color.FromRgb(0, 255, 0)) : 
-                    new SolidColorBrush(Color.FromRgb(255, 153, 153)),
-                Margin = new Thickness(0, 0, 0, 5),
-                TextWrapping = TextWrapping.Wrap
-            };
-
-            var configStatus = new TextBlock
-            {
-                Text = app.IsConfigurable() ? "Configurable" : "Fixed Configuration",
-                FontSize = 14,
-                Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
-                Margin = new Thickness(0, 0, 0, 5),
-                TextWrapping = TextWrapping.Wrap
-            };
-
-            contentPanel.Children.Add(statusTitle);
-            contentPanel.Children.Add(runningStatus);
-            contentPanel.Children.Add(configStatus);
-
-            statusPanel.Child = contentPanel;
-            return statusPanel;
-        }
-
         private static Control CreateQuickActionsSection(AppBase app)
         {
             var actionsPanel = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(50, 40, 167, 69)),
+                Background = new SolidColorBrush(Color.FromArgb(50, 23, 162, 184)),
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
                 Margin = new Thickness(0, 0, 0, 15),
@@ -519,15 +467,15 @@ namespace darts_hub.control
             var startStopButton = new Button
             {
                 Content = app.AppRunningState ? "■ Stop" : "▶️ Start",
-                Background = app.AppRunningState ? 
-                    new SolidColorBrush(Color.FromRgb(220, 53, 69)) : 
+                Background = app.AppRunningState ?
+                    new SolidColorBrush(Color.FromRgb(220, 53, 69)) :
                     new SolidColorBrush(Color.FromRgb(40, 167, 69)),
                 Foreground = Brushes.White,
                 BorderThickness = new Thickness(0),
                 Padding = new Thickness(15, 8),
                 CornerRadius = new CornerRadius(5),
                 FontWeight = FontWeight.Bold,
-                MinWidth = 100
+                MinWidth = 120
             };
 
             var restartButton = new Button
@@ -540,8 +488,153 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(5),
                 FontWeight = FontWeight.Bold,
                 IsEnabled = app.AppRunningState,
-                MinWidth = 100
+                MinWidth = 120
             };
+
+            Button? changelogButton = null;
+            if (!string.IsNullOrWhiteSpace(app.ChangelogUrl))
+            {
+                changelogButton = new Button
+                {
+                    Content = "\ud83d\udcc4 Changelog",
+                    Background = new SolidColorBrush(Color.FromRgb(108, 92, 231)),
+                    Foreground = Brushes.White,
+                    BorderThickness = new Thickness(0),
+                    Padding = new Thickness(15, 8),
+                    CornerRadius = new CornerRadius(5),
+                    FontWeight = FontWeight.Bold,
+                    MinWidth = 120
+                };
+
+                changelogButton.Click += async (s, e) =>
+                {
+                    System.Diagnostics.Debug.WriteLine($"[NewSettings][Changelog] Click for app '{app.Name}' ({app.CustomName}) - URL: {app.ChangelogUrl}");
+
+                    var hostWindow = TopLevel.GetTopLevel(actionsPanel) as Window;
+                    if (hostWindow == null && Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopLifetime)
+                    {
+                        hostWindow = desktopLifetime.MainWindow;
+                    }
+
+                    System.Diagnostics.Debug.WriteLine($"[NewSettings][Changelog] Host window null? {hostWindow == null}");
+
+                    string? changelogText = null;
+                    try
+                    {
+                        changelogText = await Helper.AsyncHttpGet(app.ChangelogUrl!, 4);
+                        System.Diagnostics.Debug.WriteLine($"[NewSettings][Changelog] Fetch success? {!string.IsNullOrWhiteSpace(changelogText)} Length: {changelogText?.Length ?? 0}");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[NewSettings][Changelog] Fetch failed: {ex.Message}");
+                    }
+
+                    var hasContent = !string.IsNullOrWhiteSpace(changelogText);
+
+                    try
+                    {
+                        if (hostWindow != null && hasContent)
+                        {
+                            await MessageBoxHelper.ShowMessageBox(
+                                hostWindow,
+                                $"{app.CustomName ?? app.Name} Changelog",
+                                changelogText!,
+                                Icon.None,
+                                ButtonEnum.Ok,
+                                hostWindow.Width,
+                                hostWindow.Height,
+                                0,
+                                isMarkdown: true);
+                            return;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[NewSettings][Changelog] Dialog markdown failed: {ex.GetType().Name}: {ex.Message}");
+                        try
+                        {
+                            if (hostWindow != null && hasContent)
+                            {
+                                await MessageBoxHelper.ShowMessageBox(
+                                    hostWindow,
+                                    $"{app.CustomName ?? app.Name} Changelog",
+                                    changelogText!,
+                                    Icon.None,
+                                    ButtonEnum.Ok,
+                                    hostWindow.Width,
+                                    hostWindow.Height,
+                                    0,
+                                    isMarkdown: false);
+                                return;
+                            }
+                        }
+                        catch (Exception retryEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[NewSettings][Changelog] Dialog plain failed: {retryEx.GetType().Name}: {retryEx.Message}");
+                        }
+                    }
+
+                    System.Diagnostics.Debug.WriteLine($"[NewSettings][Changelog] Using fallback (hostWindow null? {hostWindow == null}, hasContent? {hasContent})");
+
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo(app.ChangelogUrl!) { UseShellExecute = true });
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[NewSettings][Changelog] Browser fallback failed: {ex.Message}");
+                        if (hostWindow != null)
+                        {
+                            await MessageBoxHelper.ShowMessageBox(
+                                hostWindow,
+                                "Error",
+                                $"Unable to open changelog: {ex.Message}",
+                                Icon.Error,
+                                ButtonEnum.Ok);
+                        }
+                    }
+                };
+            }
+
+            Button? helpButton = null;
+            if (!string.IsNullOrWhiteSpace(app.HelpUrl))
+            {
+                helpButton = new Button
+                {
+                    Content = "❔ Help",
+                    Background = new SolidColorBrush(Color.FromRgb(0, 123, 255)),
+                    Foreground = Brushes.White,
+                    BorderThickness = new Thickness(0),
+                    Padding = new Thickness(15, 8),
+                    CornerRadius = new CornerRadius(5),
+                    FontWeight = FontWeight.Bold,
+                    MinWidth = 120
+                };
+
+                helpButton.Click += (s, e) =>
+                {
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo(app.HelpUrl!)
+                        {
+                            UseShellExecute = true
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        var hostWindow = TopLevel.GetTopLevel(actionsPanel) as Window;
+                        if (hostWindow != null)
+                        {
+                            _ = MessageBoxHelper.ShowMessageBox(
+                                hostWindow,
+                                "Error",
+                                $"Unable to open help link: {ex.Message}",
+                                Icon.Error,
+                                ButtonEnum.Ok);
+                        }
+                    }
+                };
+            }
 
             // Add event handlers for the buttons
             startStopButton.Click += (s, e) =>
@@ -618,6 +711,14 @@ namespace darts_hub.control
 
             buttonsPanel.Children.Add(startStopButton);
             buttonsPanel.Children.Add(restartButton);
+            if (changelogButton != null)
+            {
+                buttonsPanel.Children.Add(changelogButton);
+            }
+            if (helpButton != null)
+            {
+                buttonsPanel.Children.Add(helpButton);
+            }
 
             contentPanel.Children.Add(actionsTitle);
             contentPanel.Children.Add(buttonsPanel);
@@ -916,7 +1017,7 @@ namespace darts_hub.control
                                            .Any(tb => tb.Text?.Contains("Settings Mode") == true));
                                 
                                 System.Diagnostics.Debug.WriteLine($"  Has settings header: {hasSettingsHeader}");
-                                
+                        
                                 if (hasSettingsHeader)
                                 {
                                     rootMainPanel = stackPanel;
@@ -1572,6 +1673,11 @@ namespace darts_hub.control
                 mainPanel.Children.Add(headerPanel);
                 System.Diagnostics.Debug.WriteLine("Added header panel");
                 
+                // Recreate quick actions section
+                var actionsSection = CreateQuickActionsSection(app);
+                mainPanel.Children.Add(actionsSection);
+                System.Diagnostics.Debug.WriteLine("Added quick actions section");
+                
                 // Recreate custom name section
                 var customNameSection = CreateCustomNameSection(app, saveCallback);
                 mainPanel.Children.Add(customNameSection);
@@ -1582,22 +1688,15 @@ namespace darts_hub.control
                 mainPanel.Children.Add(autostartSection);
                 System.Diagnostics.Debug.WriteLine("Added autostart section");
                 
-                // Recreate status section
-                var statusSection = CreateStatusSection(app);
-                mainPanel.Children.Add(statusSection);
-                System.Diagnostics.Debug.WriteLine("Added status section");
+                // Recreate configuration sections
+                System.Diagnostics.Debug.WriteLine($"App is configurable, creating parameter sections...");
                 
-                // Recreate actions section
-                var actionsSection = CreateQuickActionsSection(app);
-                mainPanel.Children.Add(actionsSection);
-                System.Diagnostics.Debug.WriteLine("Added actions section");
-                
-                // Recreate configured parameters section (this will show the new parameter)
+                // Configured parameters section (should contain the newly added parameter)
                 var configuredSection = CreateConfiguredParametersSection(app, saveCallback);
                 mainPanel.Children.Add(configuredSection);
                 System.Diagnostics.Debug.WriteLine("Added configured parameters section");
                 
-                // Recreate add parameter section (this will have updated dropdowns)
+                // Add parameter dropdown section (should reflect the latest available parameters)
                 var addParameterSection = CreateAddParameterSection(app, mainPanel, saveCallback);
                 mainPanel.Children.Add(addParameterSection);
                 System.Diagnostics.Debug.WriteLine("Added add parameter section");
