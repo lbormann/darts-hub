@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Globalization;
 
 namespace darts_hub.control
 {
@@ -15,6 +16,8 @@ namespace darts_hub.control
     /// </summary>
     public static class WledSettings
     {
+        private record EffectOption(int Id, string Name);
+        
         /// <summary>
         /// Checks if a parameter value is in preset format (ps|X)
         /// </summary>
@@ -85,13 +88,25 @@ namespace darts_hub.control
             
             var effectName = parts[0];
             
-            // Check if the effect name is in the fallback categories (known WLED effects)
-            var allFallbackEffects = WledApi.FallbackEffectCategories.SelectMany(kv => kv.Value).ToList();
-            if (allFallbackEffects.Contains(effectName))
+            // Support numeric IDs (with or without fx prefix)
+            var effectToken = effectName;
+            if (effectToken.StartsWith("fx", StringComparison.OrdinalIgnoreCase))
             {
-                System.Diagnostics.Debug.WriteLine($"IsWledEffectParameter: '{effectName}' found in fallback effects");
+                effectToken = effectToken.Substring(2);
+            }
+            if (int.TryParse(effectToken, out _))
+            {
+                // Numeric IDs are valid effect identifiers
                 return true;
             }
+ 
+             // Check if the effect name is in the fallback categories (known WLED effects)
+             var allFallbackEffects = WledApi.FallbackEffectCategories.SelectMany(kv => kv.Value).ToList();
+             if (allFallbackEffects.Contains(effectName))
+             {
+                System.Diagnostics.Debug.WriteLine($"IsWledEffectParameter: '{effectName}' found in fallback effects");
+                return true;
+             }
             
             // Check if it has the new format with prefixed parameters (s{value}, i{value}, p{value}, d{value})
             if (parts.Length > 1)
@@ -457,19 +472,28 @@ namespace darts_hub.control
         /// </summary>
         public static async Task<Control> CreateWledEffectsDropdown(Argument param, Action? saveCallback = null, AppBase? app = null)
         {
-            // Create a main panel to hold all effect controls
-            var mainPanel = new StackPanel
-            {
-                Spacing = 8
-            };
+            var wledData = WledApi.LoadWledDataFile();
+            var effectIdByName = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var effectNameById = new Dictionary<int, string>();
 
-            // Create effect selection panel
-            var effectPanel = new StackPanel
+            if (wledData?.Effects?.Names != null && wledData.Effects.Ids != null)
             {
-                Orientation = Orientation.Horizontal,
-                Spacing = 5
-            };
+                var count = Math.Min(wledData.Effects.Names.Count, wledData.Effects.Ids.Count);
+                for (var i = 0; i < count; i++)
+                {
+                    var name = wledData.Effects.Names[i];
+                    var id = wledData.Effects.Ids[i];
+                    if (!string.IsNullOrWhiteSpace(name))
+                    {
+                        effectIdByName[name] = id;
+                        effectNameById[id] = name;
+                    }
+                }
+            }
 
+            var mainPanel = new StackPanel { Spacing = 8 };
+
+            var effectPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 };
             var effectDropdown = new ComboBox
             {
                 Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
@@ -509,14 +533,7 @@ namespace darts_hub.control
             ToolTip.SetTip(testButton, "Test selected effect on WLED controller");
             ToolTip.SetTip(stopButton, "Stop effects on WLED controller");
 
-            // Create palette selection panel
-            var palettePanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 5,
-                Margin = new Thickness(0, 5, 0, 0)
-            };
-
+            var palettePanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5, Margin = new Thickness(0, 5, 0, 0) };
             var paletteLabel = new TextBlock
             {
                 Text = "Palette:",
@@ -538,14 +555,7 @@ namespace darts_hub.control
                 MinWidth = 150
             };
 
-            // Create speed and intensity controls
-            var speedPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 5,
-                Margin = new Thickness(0, 5, 0, 0)
-            };
-
+            var speedPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5, Margin = new Thickness(0, 5, 0, 0) };
             var speedLabel = new TextBlock
             {
                 Text = "Speed:",
@@ -554,32 +564,10 @@ namespace darts_hub.control
                 VerticalAlignment = VerticalAlignment.Center,
                 MinWidth = 50
             };
+            var speedSlider = new Slider { Minimum = 1, Maximum = 255, Value = 128, Width = 120, VerticalAlignment = VerticalAlignment.Center };
+            var speedValue = new TextBlock { Text = "128", Foreground = Brushes.White, FontSize = 13, VerticalAlignment = VerticalAlignment.Center, MinWidth = 30 };
 
-            var speedSlider = new Slider
-            {
-                Minimum = 1,
-                Maximum = 255,
-                Value = 128,
-                Width = 120,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            var speedValue = new TextBlock
-            {
-                Text = "128",
-                Foreground = Brushes.White,
-                FontSize = 13,
-                VerticalAlignment = VerticalAlignment.Center,
-                MinWidth = 30
-            };
-
-            var intensityPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 5,
-                Margin = new Thickness(0, 5, 0, 0)
-            };
-
+            var intensityPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5, Margin = new Thickness(0, 5, 0, 0) };
             var intensityLabel = new TextBlock
             {
                 Text = "Intensity:",
@@ -588,33 +576,10 @@ namespace darts_hub.control
                 VerticalAlignment = VerticalAlignment.Center,
                 MinWidth = 50
             };
+            var intensitySlider = new Slider { Minimum = 1, Maximum = 255, Value = 128, Width = 120, VerticalAlignment = VerticalAlignment.Center };
+            var intensityValue = new TextBlock { Text = "128", Foreground = Brushes.White, FontSize = 13, VerticalAlignment = VerticalAlignment.Center, MinWidth = 30 };
 
-            var intensitySlider = new Slider
-            {
-                Minimum = 1,
-                Maximum = 255,
-                Value = 128,
-                Width = 120,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            var intensityValue = new TextBlock
-            {
-                Text = "128",
-                Foreground = Brushes.White,
-                FontSize = 13,
-                VerticalAlignment = VerticalAlignment.Center,
-                MinWidth = 30
-            };
-
-            // Create duration control
-            var durationPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 5,
-                Margin = new Thickness(0, 5, 0, 0)
-            };
-
+            var durationPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5, Margin = new Thickness(0, 5, 0, 0) };
             var durationLabel = new TextBlock
             {
                 Text = "Duration:",
@@ -623,12 +588,11 @@ namespace darts_hub.control
                 VerticalAlignment = VerticalAlignment.Center,
                 MinWidth = 50
             };
-
             var durationUpDown = new NumericUpDown
             {
-                Value = 0, // Default 0 seconds (no duration limit)
+                Value = 0,
                 Minimum = 0m,
-                Maximum = 300m, // Max 5 minutes
+                Maximum = 300m,
                 Increment = 1m,
                 FormatString = "F0",
                 Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
@@ -640,7 +604,6 @@ namespace darts_hub.control
                 Width = 120,
                 MinWidth = 120
             };
-
             var secondsLabel = new TextBlock
             {
                 Text = "sec (0 = no limit)",
@@ -652,7 +615,8 @@ namespace darts_hub.control
 
             // Parse current value to extract effect, palette, speed, intensity, duration
             // Expected format: {effect-name/ID}|s{speed}|i{intensity}|p{palette-ID}|d{duration}
-            string? selectedEffect = null;
+            string? selectedEffectName = null;
+            int? selectedEffectId = null;
             string? selectedPalette = null;
             int selectedSpeed = 128;
             int selectedIntensity = 128;
@@ -663,7 +627,28 @@ namespace darts_hub.control
                 var parts = param.Value.Split('|');
                 if (parts.Length > 0) 
                 {
-                    selectedEffect = parts[0];
+                    var effectToken = parts[0];
+                    if (effectToken.StartsWith("fx", StringComparison.OrdinalIgnoreCase))
+                    {
+                        effectToken = effectToken.Substring(2);
+                    }
+
+                    if (int.TryParse(effectToken, out var parsedId))
+                    {
+                        selectedEffectId = parsedId;
+                        if (effectNameById.TryGetValue(parsedId, out var resolvedName))
+                        {
+                            selectedEffectName = resolvedName;
+                        }
+                    }
+                    else
+                    {
+                        selectedEffectName = effectToken;
+                        if (effectIdByName.TryGetValue(effectToken, out var resolvedId))
+                        {
+                            selectedEffectId = resolvedId;
+                        }
+                    }
                 }
                 
                 // Parse each part looking for the format s{value}, i{value}, p{value}, d{value}
@@ -727,42 +712,42 @@ namespace darts_hub.control
             void UpdateParameterValue()
             {
                 if (isUpdating || isInitializing) return;
-
-                var effect = (effectDropdown.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+ 
+                var effectOption = (effectDropdown.SelectedItem as ComboBoxItem)?.Tag as EffectOption;
                 var palette = (paletteDropdown.SelectedItem as ComboBoxItem)?.Tag?.ToString();
                 var speed = (int)Math.Round(speedSlider.Value);
                 var intensity = (int)Math.Round(intensitySlider.Value);
                 var duration = (int)Math.Round(durationUpDown.Value ?? 0);
-
-                if (!string.IsNullOrEmpty(effect))
-                {
+ 
+                if (effectOption != null)
+                 {
                     isUpdating = true;
                     try
                     {
-                        var parts = new List<string> { effect };
-                        
+                        var parts = new List<string> { effectOption.Id.ToString(CultureInfo.InvariantCulture) };
+
                         // Add speed component
                         parts.Add($"s{speed}");
-                        
+
                         // Add intensity component
                         parts.Add($"i{intensity}");
-                        
+
                         // Add palette component if selected and not empty
                         if (!string.IsNullOrEmpty(palette))
                         {
                             parts.Add($"p{palette}");
                         }
-                        
+
                         // Add duration component if > 0
                         if (duration > 0)
                         {
                             parts.Add($"d{duration}");
                         }
-                        
+
                         param.Value = string.Join("|", parts);
                         param.IsValueChanged = true;
                         saveCallback?.Invoke();
-                        
+
                         System.Diagnostics.Debug.WriteLine($"Updated WLED effect parameter: {param.Value}");
                     }
                     finally
@@ -770,124 +755,131 @@ namespace darts_hub.control
                         isUpdating = false;
                     }
                 }
-            }
+             }
 
             // Function to populate effects
             async Task PopulateEffects()
-            {
-                effectDropdown.PlaceholderText = "Loading WLED effects...";
-                effectDropdown.Items.Clear();
-                
-                ComboBoxItem? effectToSelect = null;
-                
-                var (effects, source, isLive) = await WledApi.GetEffectsWithFallbackAsync(app);
-                
-                // Add info header
-                var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
-                var headerText = isLive ? $"--- {source} ---" : "--- Fallback Effects ---";
-                
-                var dynamicHeader = new ComboBoxItem
-                {
-                    Content = headerText,
-                    Foreground = new SolidColorBrush(headerColor),
-                    IsEnabled = false,
-                    FontWeight = FontWeight.Bold
-                };
-                effectDropdown.Items.Add(dynamicHeader);
-
-                // Add effects
-                foreach (var effect in effects)
-                {
-                    var effectItem = new ComboBoxItem
-                    {
-                        Content = effect,
-                        Tag = effect,
-                        Foreground = Brushes.White
-                    };
-                    effectDropdown.Items.Add(effectItem);
-                    
-                    // Pre-select if this matches current value
-                    if (selectedEffect == effect)
-                    {
-                        effectToSelect = effectItem;
-                    }
-                }
-
-                effectDropdown.PlaceholderText = isLive ? 
-                    "Select WLED effect (local data)..." : 
-                    "Select WLED effect (fallback data)...";
-                
-                if (effectToSelect != null)
-                {
-                    effectDropdown.SelectedItem = effectToSelect;
-                }
-            }
+             {
+                 effectDropdown.PlaceholderText = "Loading WLED effects...";
+                 effectDropdown.Items.Clear();
+ 
+                 ComboBoxItem? effectToSelect = null;
+ 
+                 var (effects, source, isLive) = await WledApi.GetEffectsWithFallbackAsync(app);
+ 
+                 // Add info header
+                 var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
+                 var headerText = isLive ? $"--- {source} ---" : "--- Fallback Effects ---";
+ 
+                 var dynamicHeader = new ComboBoxItem
+                 {
+                     Content = headerText,
+                     Foreground = new SolidColorBrush(headerColor),
+                     IsEnabled = false,
+                     FontWeight = FontWeight.Bold
+                 };
+                 effectDropdown.Items.Add(dynamicHeader);
+ 
+                 // Add effects
+                 for (var i = 0; i < effects.Count; i++)
+                 {
+                     var effect = effects[i];
+                     var effectId = effectIdByName.TryGetValue(effect, out var knownId)
+                         ? knownId
+                         : i;
+ 
+                     var option = new EffectOption(effectId, effect);
+                     var effectItem = new ComboBoxItem
+                     {
+                         Content = effect,
+                         Tag = option,
+                         Foreground = Brushes.White
+                     };
+                     effectDropdown.Items.Add(effectItem);
+ 
+                     // Pre-select if this matches current value
+                     if ((selectedEffectId.HasValue && option.Id == selectedEffectId.Value) ||
+                         (!selectedEffectId.HasValue && !string.IsNullOrEmpty(selectedEffectName) && string.Equals(effect, selectedEffectName, StringComparison.OrdinalIgnoreCase)))
+                     {
+                         effectToSelect = effectItem;
+                     }
+                 }
+ 
+                 effectDropdown.PlaceholderText = isLive ? 
+                     "Select WLED effect (local data)..." : 
+                     "Select WLED effect (fallback data)...";
+ 
+                 if (effectToSelect != null)
+                 {
+                     effectDropdown.SelectedItem = effectToSelect;
+                 }
+             }
 
             // Function to populate palettes
             async Task PopulatePalettes()
-            {
-                paletteDropdown.PlaceholderText = "Loading palettes...";
-                paletteDropdown.Items.Clear();
-                
-                ComboBoxItem? paletteToSelect = null;
-                
-                // Add "None" option
-                var noneItem = new ComboBoxItem
-                {
-                    Content = "None",
-                    Tag = "",
-                    Foreground = Brushes.White
-                };
-                paletteDropdown.Items.Add(noneItem);
-                
-                if (string.IsNullOrEmpty(selectedPalette))
-                {
-                    paletteToSelect = noneItem;
-                }
-                
-                var (palettes, source, isLive) = await WledApi.GetPalettesWithFallbackAsync(app);
-                
-                // Add info header
-                var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
-                var headerText = isLive ? $"--- {source} ---" : "--- Fallback Palettes ---";
-                
-                var dynamicHeader = new ComboBoxItem
-                {
-                    Content = headerText,
-                    Foreground = new SolidColorBrush(headerColor),
-                    IsEnabled = false,
-                    FontWeight = FontWeight.Bold
-                };
-                paletteDropdown.Items.Add(dynamicHeader);
-
-                // Add palettes with their index as value (for p{palette-ID} format)
-                for (int i = 0; i < palettes.Count; i++)
-                {
-                    var palette = palettes[i];
-                    var paletteItem = new ComboBoxItem
-                    {
-                        Content = palette,
-                        Tag = i.ToString(), // Use index as the palette ID
-                        Foreground = Brushes.White
-                    };
-                    paletteDropdown.Items.Add(paletteItem);
-                    
-                    // Pre-select if this matches current value (by index or name)
-                    if (selectedPalette == i.ToString() || selectedPalette == palette)
-                    {
-                        paletteToSelect = paletteItem;
-                    }
-                }
-
-                paletteDropdown.PlaceholderText = isLive ? 
-                    "Select palette (local data)..." : 
-                    "Select palette (fallback data)...";
-                
-                if (paletteToSelect != null)
-                {
-                    paletteDropdown.SelectedItem = paletteToSelect;
-                }
-            }
+             {
+                 paletteDropdown.PlaceholderText = "Loading palettes...";
+                 paletteDropdown.Items.Clear();
+ 
+                 ComboBoxItem? paletteToSelect = null;
+ 
+                 // Add "None" option
+                 var noneItem = new ComboBoxItem
+                 {
+                     Content = "None",
+                     Tag = "",
+                     Foreground = Brushes.White
+                 };
+                 paletteDropdown.Items.Add(noneItem);
+ 
+                 if (string.IsNullOrEmpty(selectedPalette))
+                 {
+                     paletteToSelect = noneItem;
+                 }
+ 
+                 var (palettes, source, isLive) = await WledApi.GetPalettesWithFallbackAsync(app);
+ 
+                 // Add info header
+                 var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
+                 var headerText = isLive ? $"--- {source} ---" : "--- Fallback Palettes ---";
+ 
+                 var dynamicHeader = new ComboBoxItem
+                 {
+                     Content = headerText,
+                     Foreground = new SolidColorBrush(headerColor),
+                     IsEnabled = false,
+                     FontWeight = FontWeight.Bold
+                 };
+                 paletteDropdown.Items.Add(dynamicHeader);
+ 
+                 // Add palettes with their index as value (for p{palette-ID} format)
+                 for (int i = 0; i < palettes.Count; i++)
+                 {
+                     var palette = palettes[i];
+                     var paletteItem = new ComboBoxItem
+                     {
+                         Content = palette,
+                         Tag = i.ToString(), // Use index as the palette ID
+                         Foreground = Brushes.White
+                     };
+                     paletteDropdown.Items.Add(paletteItem);
+ 
+                     // Pre-select if this matches current value (by index or name)
+                     if (selectedPalette == i.ToString() || selectedPalette == palette)
+                     {
+                         paletteToSelect = paletteItem;
+                     }
+                 }
+ 
+                 paletteDropdown.PlaceholderText = isLive ? 
+                     "Select palette (local data)..." : 
+                     "Select palette (fallback data)...";
+ 
+                 if (paletteToSelect != null)
+                 {
+                     paletteDropdown.SelectedItem = paletteToSelect;
+                 }
+             }
 
             // Initial population
             await PopulateEffects();
@@ -899,31 +891,20 @@ namespace darts_hub.control
             // Event handlers - FIXED: Properly capture references and handle async operations
             testButton.Click += async (s, e) =>
             {
-                // Ensure we have a valid app reference
-                if (app == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("Test button clicked but app is null");
-                    return;
-                }
+                if (app == null) return;
 
-                if (effectDropdown.SelectedItem is ComboBoxItem selectedItem && 
-                    selectedItem.Tag is string effect && 
-                    !string.IsNullOrEmpty(effect))
+                if (effectDropdown.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is EffectOption option && !string.IsNullOrEmpty(option.Name))
                 {
-                    System.Diagnostics.Debug.WriteLine($"Testing WLED effect: {effect}");
-                    
-                    // Disable button to prevent multiple clicks
                     testButton.IsEnabled = false;
                     var originalContent = testButton.Content;
                     testButton.Content = "⏳";
-                    
+
                     try
                     {
                         var palette = (paletteDropdown.SelectedItem as ComboBoxItem)?.Tag?.ToString();
                         var speed = (int)Math.Round(speedSlider.Value);
                         var intensity = (int)Math.Round(intensitySlider.Value);
-                        
-                        // For testing, convert palette ID back to name if needed
+
                         string? paletteName = null;
                         if (!string.IsNullOrEmpty(palette) && int.TryParse(palette, out var paletteIndex))
                         {
@@ -933,30 +914,18 @@ namespace darts_hub.control
                                 paletteName = palettes[paletteIndex];
                             }
                         }
-                        
-                        System.Diagnostics.Debug.WriteLine($"Sending test effect: {effect}, palette: {paletteName}, speed: {speed}, intensity: {intensity}");
-                        
-                        var success = await WledApi.TestEffectAsync(app, effect, 
-                            paletteName, speed, intensity);
-                            
-                        if (success)
+                        else if (!string.IsNullOrEmpty(palette))
                         {
-                            testButton.Content = "✅";
-                            System.Diagnostics.Debug.WriteLine("Effect test successful");
+                            paletteName = palette;
                         }
-                        else
-                        {
-                            testButton.Content = "❌";
-                            System.Diagnostics.Debug.WriteLine("Effect test failed");
-                        }
-                        
-                        // Reset button after delay
+
+                        await WledApi.TestEffectAsync(app, option.Name, paletteName, speed, intensity);
+                        testButton.Content = "✅";
                         await Task.Delay(1500);
                     }
-                    catch (Exception ex)
+                    catch
                     {
                         testButton.Content = "❌";
-                        System.Diagnostics.Debug.WriteLine($"Error testing effect: {ex.Message}");
                         await Task.Delay(1500);
                     }
                     finally
@@ -964,10 +933,6 @@ namespace darts_hub.control
                         testButton.Content = originalContent;
                         testButton.IsEnabled = true;
                     }
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("Test button clicked but no effect selected");
                 }
             };
 
@@ -1020,19 +985,19 @@ namespace darts_hub.control
 
             effectDropdown.SelectionChanged += (s, e) =>
             {
-                if (!isUpdating && !isInitializing && effectDropdown.SelectedItem is ComboBoxItem { Tag: string })
+                if (!isUpdating && !isInitializing && effectDropdown.SelectedItem is ComboBoxItem { Tag: EffectOption })
                 {
                     UpdateParameterValue();
                 }
             };
 
             paletteDropdown.SelectionChanged += (s, e) =>
-            {
-                if (!isUpdating && !isInitializing)
-                {
-                    UpdateParameterValue();
-                }
-            };
+             {
+                 if (!isUpdating && !isInitializing)
+                 {
+                     UpdateParameterValue();
+                 }
+             };
 
             speedSlider.ValueChanged += (s, e) =>
             {

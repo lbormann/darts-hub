@@ -908,17 +908,16 @@ namespace darts_hub.UI
 
                 // Confirmation prompt before flashing
                 var ledCount = GetPresetLedCount(selectedPreset);
-                var confirmation = await ShowMessageBox(
-                    "Confirm Robbel3D flash",
-                    "Please confirm that you are using the Robbel3D setup with the configured LED count and no secondary LED strip attached.\n\n" +
-                    $"• Configured LED count: {ledCount}\n" +
-                    "• No additional LED strip is connected to the controller (secondary strips will be disabled after flashing and must be re-enabled manually).\n" +
-                    "• Existing presets on the controller will be deleted and cannot be restored automatically.\n\n" +
-                    "Do you want to continue?",
-                    MsBox.Avalonia.Enums.Icon.Warning,
-                    ButtonEnum.YesNo);
+                var confirmDialog = new Robbel3DConfirmDialog(ledCount)
+                    .SetItems(new[]
+                    {
+                        "No additional LED strip is connected to the controller (secondary strips will be disabled after flashing and must be re-enabled manually).",
+                        "Existing presets on the controller will be deleted and cannot be restored automatically.",
+                        $"Target device: {selectedWledIp}"
+                    });
 
-                if (confirmation != ButtonResult.Yes)
+                var confirmation = await confirmDialog.ShowDialog<bool?>(this);
+                if (confirmation != true)
                 {
                     return;
                 }
@@ -1001,7 +1000,7 @@ namespace darts_hub.UI
             }
         }
 
-        private void UpdateProgressText(string text)
+        private void UpdateProgressText(String text)
         {
             Dispatcher.UIThread.Post(() =>
             {

@@ -1,4 +1,17 @@
-﻿## v1.3.8
+﻿## v1.3.9
+    - Robbel3D: improved WLED preset upload reliability and error handling
+    - Robbel3D: add confirm upload dialog with IMPORTANT warning text!
+    - Add duration slider to WLED score area effects
+
+### BUGFIX
+    - Change WLED Effect to IDs instead of Names
+    
+### VERSION UPDATES
+    - WLED Version Update darts-wled to v1.10.4
+    - Fix Bug Where Speed intensity and pallet not working for WLED Effects
+
+
+## v1.3.8
     - Robbel3D: updated LED cfg merge/confirmation flow and refreshed apply/cancel buttons
     - UI: Markdown changelog rendering and styled update dialog buttons
     - UI: add warning message for textfields which are active but empty

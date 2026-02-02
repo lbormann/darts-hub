@@ -1,0 +1,54 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="darts_hub.UI.Robbel3DConfirmDialog"
+        Width="560"
+        Height="480"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Title="Confirm Robbel3D Flash"
+        Background="#FF1E1E1E">
+  <Border Padding="20" Background="#FF252526" CornerRadius="10">
+    <Grid RowDefinitions="* ,Auto">
+      <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="16">
+          <StackPanel Spacing="4">
+            <TextBlock Text="Robbel3D Flash Confirmation" Foreground="White" FontSize="20" FontWeight="Bold" TextWrapping="Wrap" />
+            <TextBlock Text="Please review and confirm before flashing your WLED controller." Foreground="#FFBFBFBF" FontSize="12" TextWrapping="Wrap" />
+          </StackPanel>
+
+          <StackPanel Spacing="8">
+            <TextBlock Text="Checklist" Foreground="#FF9CDCFE" FontWeight="SemiBold" />
+            <ItemsControl ItemsSource="{Binding Items}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Ellipse Width="6" Height="6" Fill="#FF9CDCFE" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding}" Foreground="#FFDFDFDF" TextWrapping="Wrap" MaxWidth="460" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+
+          <Border Background="#33FF4D4D" BorderBrush="#FFFF4D4D" BorderThickness="1" CornerRadius="6" Padding="10">
+            <StackPanel Spacing="6">
+              <TextBlock Text="IMPORTANT" Foreground="#FFFF4D4D" FontWeight="Bold" FontSize="14" />
+              <TextBlock Text="Make sure you selected the correct GPIO pin from the dropdown! Otherwise your controller will crash and not work after a restart." Foreground="#FFFF4D4D" FontWeight="Bold" TextWrapping="Wrap" MaxWidth="460" />
+            </StackPanel>
+          </Border>
+
+          <StackPanel Spacing="6">
+            <TextBlock Text="Summary" Foreground="#FF9CDCFE" FontWeight="SemiBold" />
+            <TextBlock Text="Configured LED count:" Foreground="#FFDFDFDF" />
+            <TextBlock Text="{Binding LedCount}" Foreground="#FFFFFFFF" FontWeight="Bold" FontSize="18" />
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+
+      <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,12,0,0">
+        <Button x:Name="CancelButton" Content="Cancel" Width="110" Height="36" Background="#FF2B2B2B" Foreground="#FFE6E6E6" BorderBrush="#FF464646" BorderThickness="1" CornerRadius="6" Click="CancelButton_Click" />
+        <Button x:Name="ConfirmButton" Content="Apply" Width="140" Height="36" Background="#FF2E8B57" Foreground="White" BorderBrush="#FF3BBF72" BorderThickness="1" CornerRadius="6" Click="ConfirmButton_Click" />
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>
