@@ -15,10 +15,6 @@ Apps managed by darts-hub:
 * [darts-gif](https://github.com/lbormann/darts-gif)
 * [darts-voice](https://github.com/lbormann/darts-voice)
 * [cam-loader](https://github.com/lbormann/cam-loader)
-* [droid-cam](https://www.dev47apps.com)
-* [epoc-cam](https://www.elgato.com/de/epoccam)
-* [virtual-darts-zoom](https://lehmann-bo.de/?p=28)
-* [dartboards-client](https://dartboards.online/client)
 * custom-urls
 * custom-apps
 
