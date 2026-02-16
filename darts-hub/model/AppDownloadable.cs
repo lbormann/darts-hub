@@ -7,6 +7,7 @@ using System.Net;
 using System.Diagnostics;
 using SharpCompress.Common;
 using SharpCompress.Readers;
+using System.Linq;
 
 namespace darts_hub.model
 {
@@ -29,7 +30,6 @@ namespace darts_hub.model
         protected string downloadPath;
         protected string downloadPathFile;
         private bool skipRun;
-
 
 
 
@@ -166,6 +166,9 @@ namespace darts_hub.model
                         }
                     }
                 }
+
+                PreparePixelitTemplates();
+
                 OnDownloadFinished(new AppEventArgs(this, "success"));
                 if(IsReadyToRun()) Run(runtimeArguments);
             }
@@ -173,6 +176,34 @@ namespace darts_hub.model
             {
                 Helper.RemoveDirectory(downloadPath);
                 OnDownloadFailed(new AppEventArgs(this, ex.Message));
+            }
+        }
+
+        private void PreparePixelitTemplates()
+        {
+            if (!string.Equals(Name, "darts-pixelit", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            try
+            {
+                var templatesPath = Path.Combine(Helper.GetAppBasePath(), "Pixelit-templates");
+                PixelitTemplateDownloader.EnsureTemplatesDownloaded(templatesPath);
+
+                var templateArg = Configuration?.Arguments?.FirstOrDefault(a => a.Name.Equals("TP", StringComparison.OrdinalIgnoreCase));
+                if (templateArg != null)
+                {
+                    if (string.IsNullOrWhiteSpace(templateArg.Value) || !Directory.Exists(templateArg.Value))
+                    {
+                        templateArg.Value = templatesPath;
+                        templateArg.IsValueChanged = true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Pixelit] Failed to prepare templates: {ex.Message}");
             }
         }
 
@@ -190,6 +221,11 @@ namespace darts_hub.model
 
         protected override string? SetRunExecutable()
         {
+            if (string.Equals(Name, "darts-pixelit", StringComparison.OrdinalIgnoreCase))
+            {
+                PreparePixelitTemplates();
+            }
+
             return GetDownloadExecutable();
         }
 

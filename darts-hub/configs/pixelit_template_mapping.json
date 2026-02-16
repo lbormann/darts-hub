@@ -1,0 +1,104 @@
+[
+  {
+    "name": "Lets Play Autodarts",
+    "description": "Lets Play Autodarts.",
+    "value": "\"call|t:Let's{}Play{}Autodarts{}-==-<\"",
+    "allowedArguments": [ "AS", "ALL" ]
+  },
+  {
+    "name": "Autodarts",
+    "description": "Lets Play Autodarts.",
+    "value": "\"Autodarts\"",
+    "allowedArguments": [ "AS", "ALL" ]
+  },
+  {
+    "name": "Rest Punkte",
+    "description": "Display rest Points of Player",
+    "value": "\"simple|t:{points-left}\"",
+    "allowedArguments": [ "IDE", "ALL" ]
+  },
+  {
+    "name": "Player-Left",
+    "description": "Board image with Player Name und left behind.",
+    "value": "\"board|t:{playername}{}left\"",
+    "allowedArguments": [ "PL" ]
+  },
+  {
+    "name": "Player-Joined",
+    "description": "Board image with Player Name und joined behind.",
+    "value": "\"board|t:{playername}{}joined\"",
+    "allowedArguments": [ "PJ" ]
+  },
+  {
+    "name": "No Score",
+    "description": "No Score",
+    "value": "\"alarm|t:No{}Score{}{playername}\"",
+    "allowedArguments": [ "S0" ]
+  },
+  {
+    "name": "Fire Score effects",
+    "description": "Fire Score effects",
+    "value": "\"fire|t:{score}{}{playername}\"",
+    "allowedArguments": [ "S*" ]
+  },
+  {
+    "name": "Player name turn",
+    "description": "Plays the player name and after that the actual score at turn begin",
+    "value": "\"idle-name|d:2000\" \"idle-score\"",
+    "allowedArguments": [ "S*", "A*" ]
+  },
+  {
+    "name": "Match won  flying dart",
+    "description": "Fire Score effects",
+    "value": "\"dart0|d:200\" \"dart1|d:200\" \"dart2|d:200\" \"dart3|d:200\" \"dart4|d:200\" \"dart5|d:200\" \"dart6|d:200\" \"dart7|d:200\" \"fire|t:Match{}Winner{}{playername}\"",
+    "allowedArguments": [ "M" ]
+  },
+  {
+    "name": "Game Won",
+    "description": "Game Won Message",
+    "value": "\"call|t:Leg{}Winner{}{playername}\"",
+    "allowedArguments": [ "G" ]
+  },
+  {
+    "name": "Busted",
+    "description": "Busted Message",
+    "value": "\"dart0|d:200|b:20\" \"dart1|d:200|b:30\" \"dart2|d:200|b:40\" \"dart3|d:200|b:50\" \"dart4|d:200|b:60\" \"dart5|d:200|b:70\" \"dart6|d:200|b:80\" \"dart7|d:200|b:90\" \"dart8|d:200|b:100\" \"dart9|d:200|b:110\" \"dart10|d:200|b:120\" \"dart11|d:200|b:130\" \"dart12|d:200|b:140\" \"alarm|t:Busted{}\"",
+    "allowedArguments": [ "B" ]
+  },
+  {
+    "name": "Points",
+    "description": "Points Message",
+    "value": "\"points|t:{score}\"",
+    "allowedArguments": [ "S*", "A*" ]
+  },
+  {
+    "name": "Points middle",
+    "description": "Points Message",
+    "value": "\"pointsm|t:{score}\"",
+    "allowedArguments": [ "S*", "A*" ]
+  },
+  {
+    "name": "Points high",
+    "description": "Points Message",
+    "value": "\"pointsh|t:{score}\"",
+    "allowedArguments": [ "S*", "A*" ]
+  },
+  {
+    "name": "Game start effect",
+    "description": "Game start Message",
+    "value": "\"board|t:Game{}on{}{playername}\"",
+    "allowedArguments": [ "GS" ]
+  },
+  {
+    "name": "Match start effect",
+    "description": "Match start Message",
+    "value": "\"board|t:{game-mode}:{}{game-mode-extra}\"",
+    "allowedArguments": [ "MS" ]
+  },
+  {
+    "name": "High Finish effect",
+    "description": "High Finish Message",
+    "value": "\"call|t:Highfinish!{}{playername}{}-{}{score}\"",
+    "allowedArguments": [ "HF" ]
+  }
+]

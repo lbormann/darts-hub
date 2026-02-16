@@ -1474,6 +1474,18 @@ namespace darts_hub.control
 
         private void AppDownloadable_DownloadFinished(object? sender, AppEventArgs e)
         {
+            if (string.Equals(e.App.Name, "darts-pixelit", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    StoreApps();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[ProfileManager] Failed to persist apps after Pixelit download: {ex.Message}");
+                }
+            }
+
             OnAppDownloadFinished(e);
         }
 
@@ -1508,8 +1520,7 @@ namespace darts_hub.control
         {
             OnAppConfigurationRequired(e);
         }
-
-
+        
 
         protected virtual void OnAppDownloadStarted(AppEventArgs e)
         {

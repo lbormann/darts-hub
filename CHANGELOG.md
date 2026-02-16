@@ -1,4 +1,12 @@
-﻿## v1.3.9
+﻿## v1.4.0
+### New Features
+    - Pixelit: Posibility to use preconfigured Templates
+    - Pixelit: Easy configuration possibilitys 
+    - Pixelit: Thanks to Frankomino for his command templates!
+    - Pixelit: Add possibility to preview configured commands
+    - Pixelit: Add possibility to live test efffects of Pixelit device
+
+## v1.3.9
     - Robbel3D: improved WLED preset upload reliability and error handling
     - Robbel3D: add confirm upload dialog with IMPORTANT warning text!
     - Add duration slider to WLED score area effects
