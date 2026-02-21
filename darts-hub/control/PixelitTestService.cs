@@ -19,6 +19,67 @@ namespace darts_hub.control
     {
         private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(5) };
 
+        /// <summary>
+        /// Tests a template against a specific endpoint URL
+        /// </summary>
+        public static async Task<(bool Success, string Message)> TestTemplateOnEndpointAsync(AppBase? app, Argument param, string endpointIp)
+        {
+            if (app?.Configuration?.Arguments == null)
+            {
+                return (false, "Pixelit App-Konfiguration fehlt.");
+            }
+
+            var templatePathArg = app.Configuration.Arguments
+                .FirstOrDefault(a => a.Name.Equals("TP", StringComparison.OrdinalIgnoreCase));
+            var templateBasePath = templatePathArg?.Value;
+            if (string.IsNullOrWhiteSpace(templateBasePath))
+            {
+                return (false, "Kein Templates-Pfad (TP) konfiguriert.");
+            }
+
+            if (string.IsNullOrWhiteSpace(endpointIp))
+            {
+                return (false, "Kein Endpunkt angegeben.");
+            }
+
+            var endpointUrl = endpointIp.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                ? endpointIp
+                : $"http://{endpointIp}";
+            endpointUrl = endpointUrl.TrimEnd('/');
+
+            return await SendTemplateToEndpointAsync(param.Value, templateBasePath, endpointUrl).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Builds a preview for a specific template value (without e: parameters)
+        /// </summary>
+        public static async Task<(bool Success, List<PreviewFrame> Frames, string Message)> BuildPreviewForTemplateValueAsync(AppBase? app, string templateValue)
+        {
+            if (app?.Configuration?.Arguments == null)
+            {
+                return (false, new List<PreviewFrame>(), "Pixelit App-Konfiguration fehlt.");
+            }
+
+            var templatePathArg = app.Configuration.Arguments
+                .FirstOrDefault(a => a.Name.Equals("TP", StringComparison.OrdinalIgnoreCase));
+            var templateBasePath = templatePathArg?.Value;
+            if (string.IsNullOrWhiteSpace(templateBasePath))
+            {
+                return (false, new List<PreviewFrame>(), "Kein Templates-Pfad (TP) konfiguriert.");
+            }
+
+            var commands = ParseTemplateCommands(templateValue);
+            if (commands.Count == 0)
+            {
+                return (false, new List<PreviewFrame>(), "Keine Template-Befehle definiert.");
+            }
+
+            return await BuildPreviewFramesAsync(commands, templateBasePath).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Sends the configured Pixelit template to the device for testing.
+        /// </summary>
         public static async Task<(bool Success, string Message)> TestTemplateAsync(AppBase? app, Argument param)
         {
             if (app?.Configuration?.Arguments == null)
@@ -54,7 +115,12 @@ namespace darts_hub.control
                 : $"http://{endpoint}";
             endpointUrl = endpointUrl.TrimEnd('/');
 
-            var commands = ParseTemplateCommands(param.Value);
+            return await SendTemplateToEndpointAsync(param.Value, templateBasePath, endpointUrl).ConfigureAwait(false);
+        }
+
+        private static async Task<(bool Success, string Message)> SendTemplateToEndpointAsync(string? paramValue, string templateBasePath, string endpointUrl)
+        {
+            var commands = ParseTemplateCommands(paramValue);
             if (commands.Count == 0)
             {
                 return (false, "Keine Template-Befehle definiert.");
@@ -423,6 +489,11 @@ namespace darts_hub.control
                 return (false, new List<PreviewFrame>(), "Keine Template-Befehle definiert.");
             }
 
+            return await BuildPreviewFramesAsync(commands, templateBasePath).ConfigureAwait(false);
+        }
+
+        private static async Task<(bool Success, List<PreviewFrame> Frames, string Message)> BuildPreviewFramesAsync(List<TemplateCommand> commands, string templateBasePath)
+        {
             var frames = new List<PreviewFrame>();
             foreach (var command in commands)
             {
@@ -467,7 +538,6 @@ namespace darts_hub.control
                 }
                 else
                 {
-                    // Last frame or frame without explicit delay: estimate scroll time
                     delayMs = EstimateDisplayTime(payload, textString);
                 }
 

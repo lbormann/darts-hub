@@ -511,14 +511,14 @@ namespace darts_hub.control
 
             var dartsPixelitDownloadMap = new DownloadMap
             {
-                WindowsX64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit",
-                LinuxArm64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-arm",
-                MacX64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-mac",
-                MacArm64 = "https://github.com/lbormann/darts-pixelit/releases/download/v***VERSION***/darts-pixelit-mac"
+                WindowsX64 = "https://github.com/lbormann/darts-pixelit/releases/download/***VERSION***/darts-pixelit.exe",
+                LinuxX64 = "https://github.com/lbormann/darts-pixelit/releases/download/***VERSION***/darts-pixelit",
+                LinuxArm64 = "https://github.com/lbormann/darts-pixelit/releases/download/***VERSION***/darts-pixelit-arm64",
+                //LinuxArm = "https://github.com/lbormann/darts-pixelit/releases/download/***VERSION***/darts-pixelit-arm",
+                MacX64 = "https://github.com/lbormann/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac",
+                MacArm64 = "https://github.com/lbormann/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac"
             };
-            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("1.2.3");
+            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("b1.3.0");
 
 
             var dartsGifDownloadMap = new DownloadMap
