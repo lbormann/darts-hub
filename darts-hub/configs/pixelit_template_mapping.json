@@ -77,12 +77,12 @@
     "value": "\"fire|t:{score}{}{playername}\"",
     "allowedArguments": [ "S*" ]
   },
-  {
-    "name": "Player name turn",
-    "description": "Plays the player name and after that the actual score at turn begin",
-    "value": "\"idle-name|d:2000\" \"idle-score\"",
-    "allowedArguments": [ "S*", "A*" ]
-  },
+  //{
+  //  "name": "Player name turn",
+  //  "description": "Plays the player name and after that the actual score at turn begin",
+  //  "value": "\"idle-name|d:2000\" \"idle-score\"",
+  //  "allowedArguments": [ "S*", "A*" ]
+  //},
   {
     "name": "Match won  flying dart",
     "description": "Fire Score effects",
