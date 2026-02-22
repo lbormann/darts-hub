@@ -81,21 +81,72 @@ namespace darts_hub.control
         /// Parses the e: parameter from an effect value string.
         /// Returns the value without the e: part and the selected endpoint indices.
         /// Handles surrounding quotes — e.g. "Autodarts|e:1" is parsed correctly.
+        /// For multi-token values like "dart0|d:200" "alarm|t:Busted{}|e:0",
+        /// the e: is extracted from the last quoted token only.
         /// </summary>
         private static (string valueWithoutEndpoints, List<int> selectedEndpoints) ParseEndpointParameter(string? value)
         {
             if (string.IsNullOrEmpty(value))
                 return (string.Empty, new List<int>());
 
-            // Strip surrounding quotes for parsing, re-add afterwards
+            // Check if the value contains multiple quoted tokens (multi-token template value)
+            var quoteCount = value.Count(c => c == '"');
+            if (quoteCount > 2)
+            {
+                // Multi-token value — the |e: can only be in the last quoted token.
+                // Find the last quoted token and extract e: from it.
+                var lastQuoteEnd = value.LastIndexOf('"');
+                var lastQuoteStart = value.LastIndexOf('"', lastQuoteEnd - 1);
+                if (lastQuoteStart >= 0 && lastQuoteEnd > lastQuoteStart)
+                {
+                    var lastToken = value[(lastQuoteStart + 1)..lastQuoteEnd];
+                    var selectedEndpoints = new List<int>();
+                    var parts = lastToken.Split('|');
+                    var cleanParts = new List<string>();
+
+                    foreach (var part in parts)
+                    {
+                        if (part.StartsWith("e:", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var indices = part.Substring(2).Split(',', StringSplitOptions.RemoveEmptyEntries);
+                            foreach (var idx in indices)
+                            {
+                                if (int.TryParse(idx.Trim(), out var index))
+                                {
+                                    selectedEndpoints.Add(index);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            cleanParts.Add(part);
+                        }
+                    }
+
+                    if (selectedEndpoints.Count > 0)
+                    {
+                        // Rebuild the value with the cleaned last token
+                        var cleanLastToken = string.Join("|", cleanParts);
+                        var cleanValue = value[..lastQuoteStart] + "\"" + cleanLastToken + "\"";
+                        return (cleanValue.TrimEnd(), selectedEndpoints);
+                    }
+
+                    // No e: found in last token — return as-is
+                    return (value, new List<int>());
+                }
+
+                return (value, new List<int>());
+            }
+
+            // Single-token value — original logic
             bool hadQuotes = value.StartsWith("\"") && value.EndsWith("\"") && value.Length >= 2;
             var inner = hadQuotes ? value[1..^1] : value;
 
-            var parts = inner.Split('|');
+            var singleParts = inner.Split('|');
             var valueParts = new List<string>();
-            var selectedEndpoints = new List<int>();
+            var singleEndpoints = new List<int>();
 
-            foreach (var part in parts)
+            foreach (var part in singleParts)
             {
                 if (part.StartsWith("e:", StringComparison.OrdinalIgnoreCase))
                 {
@@ -104,7 +155,7 @@ namespace darts_hub.control
                     {
                         if (int.TryParse(idx.Trim(), out var index))
                         {
-                            selectedEndpoints.Add(index);
+                            singleEndpoints.Add(index);
                         }
                     }
                 }
@@ -114,11 +165,11 @@ namespace darts_hub.control
                 }
             }
 
-            var cleanValue = string.Join("|", valueParts);
+            var cleanSingleValue = string.Join("|", valueParts);
             if (hadQuotes)
-                cleanValue = "\"" + cleanValue + "\"";
+                cleanSingleValue = "\"" + cleanSingleValue + "\"";
 
-            return (cleanValue, selectedEndpoints);
+            return (cleanSingleValue, singleEndpoints);
         }
 
         /// <summary>
@@ -138,12 +189,26 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Appends |e:indices to a value, placing it inside the closing quote if the value ends with a quote character.
-        /// E.g. "Autodarts" + |e:1 => "Autodarts|e:1" instead of "Autodarts"|e:1
+        /// Appends |e:indices to a value, placing it inside the closing quote of the last quoted token.
+        /// For single-token: "Autodarts" + |e:1 => "Autodarts|e:1"
+        /// For multi-token: "dart0|d:200" "alarm|t:Busted{}" + |e:1 => "dart0|d:200" "alarm|t:Busted{}|e:1"
         /// </summary>
         private static string AppendEndpointSuffix(string value, List<int> sortedEndpoints)
         {
             var suffix = $"|e:{string.Join(",", sortedEndpoints)}";
+
+            // Check for multi-token value (multiple quoted segments)
+            var quoteCount = value.Count(c => c == '"');
+            if (quoteCount > 2)
+            {
+                // Insert suffix inside the last quoted token's closing quote
+                var lastQuoteEnd = value.LastIndexOf('"');
+                if (lastQuoteEnd > 0)
+                {
+                    return value[..lastQuoteEnd] + suffix + "\"";
+                }
+            }
+
             if (value.EndsWith("\""))
                 return value[..^1] + suffix + "\"";
             return value + suffix;
@@ -167,7 +232,9 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Parses the current param value into a list of template-to-endpoint entries
+        /// Parses the current param value into a list of template-to-endpoint entries.
+        /// Recognizes known multi-token template values (e.g. Busted with 14 quoted commands)
+        /// as a single entry rather than splitting each quoted token into its own entry.
         /// </summary>
         private static List<TemplateEndpointEntry> ParseTemplateEndpointEntries(string? paramValue)
         {
@@ -175,10 +242,78 @@ namespace darts_hub.control
             if (string.IsNullOrWhiteSpace(paramValue))
                 return result;
 
+            // First, try to match the entire value (minus any e: suffix on the last token) against known templates.
+            // This handles multi-token template values like Busted that should not be split.
+            var allTemplates = PixelitTemplateProvider.GetTemplates();
+
+            // Check if the entire value matches a known template (with or without endpoint suffix)
+            var (entireValueClean, entireEndpoints) = ParseEndpointParameter(paramValue);
+            if (!string.IsNullOrWhiteSpace(entireValueClean))
+            {
+                var directMatch = allTemplates.FirstOrDefault(t =>
+                    string.Equals(t.Value, entireValueClean, StringComparison.OrdinalIgnoreCase));
+                if (directMatch != null)
+                {
+                    result.Add(new TemplateEndpointEntry
+                    {
+                        TemplateValue = entireValueClean,
+                        EndpointIndices = entireEndpoints
+                    });
+                    return result;
+                }
+            }
+
+            // For multi-endpoint values with |e: targeting, we need to split by endpoint groups.
+            // The e: suffix only appears on the LAST quoted token of each template assignment.
+            // Strategy: split into tokens, then greedily match known template values to group tokens.
             var entries = SplitMultiValueEntries(paramValue);
+            if (entries.Count == 0)
+                return result;
+
+            // If no entry contains |e:, the entire value is one entry (unknown template or manual input)
+            if (!entries.Any(e => e.Contains("|e:", StringComparison.OrdinalIgnoreCase)))
+            {
+                var (val, eps) = ParseEndpointParameter(paramValue);
+                if (!string.IsNullOrWhiteSpace(val))
+                {
+                    result.Add(new TemplateEndpointEntry
+                    {
+                        TemplateValue = val,
+                        EndpointIndices = eps
+                    });
+                }
+                return result;
+            }
+
+            // There are |e: entries — group consecutive tokens into template values.
+            // An |e: token marks the END of a template assignment group.
+            var currentGroup = new List<string>();
             foreach (var entry in entries)
             {
-                var (templateVal, eps) = ParseEndpointParameter(entry);
+                currentGroup.Add(entry);
+
+                if (entry.Contains("|e:", StringComparison.OrdinalIgnoreCase))
+                {
+                    // This token has endpoint targeting — it's the last token of this group.
+                    var groupValue = string.Join(" ", currentGroup);
+                    var (templateVal, eps) = ParseEndpointParameter(groupValue);
+                    if (!string.IsNullOrWhiteSpace(templateVal))
+                    {
+                        result.Add(new TemplateEndpointEntry
+                        {
+                            TemplateValue = templateVal,
+                            EndpointIndices = eps
+                        });
+                    }
+                    currentGroup.Clear();
+                }
+            }
+
+            // Any remaining tokens without |e: form a final group
+            if (currentGroup.Count > 0)
+            {
+                var groupValue = string.Join(" ", currentGroup);
+                var (templateVal, eps) = ParseEndpointParameter(groupValue);
                 if (!string.IsNullOrWhiteSpace(templateVal))
                 {
                     result.Add(new TemplateEndpointEntry
