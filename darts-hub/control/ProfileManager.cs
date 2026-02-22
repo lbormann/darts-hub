@@ -482,7 +482,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-macx64",
                 MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("v2.20.2");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("v2.20.3");
 
 
             var dartsExternDownloadMap = new DownloadMap
@@ -518,7 +518,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac",
                 MacArm64 = "https://github.com/lbormann/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac"
             };
-            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("b1.3.0");
+            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("v1.3.1");
 
 
             var dartsGifDownloadMap = new DownloadMap

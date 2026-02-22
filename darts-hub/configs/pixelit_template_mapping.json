@@ -18,6 +18,42 @@
     "allowedArguments": [ "IDE", "ALL" ]
   },
   {
+    "name": "P1 Rest Punkte",
+    "description": "Display rest Points of Player",
+    "value": "\"simple|t:{p1-points-left}\"",
+    "allowedArguments": [ "IDE", "ALL" ]
+  },
+  {
+    "name": "P2 Rest Punkte",
+    "description": "Display rest Points of Player",
+    "value": "\"simple|t:{p2-points-left}\"",
+    "allowedArguments": [ "IDE", "ALL" ]
+  },
+  {
+    "name": "P3 Rest Punkte",
+    "description": "Display rest Points of Player",
+    "value": "\"simple|t:{p3-points-left}\"",
+    "allowedArguments": [ "IDE", "ALL" ]
+  },
+  {
+    "name": "P4 Rest Punkte",
+    "description": "Display rest Points of Player",
+    "value": "\"simple|t:{p4-points-left}\"",
+    "allowedArguments": [ "IDE", "ALL" ]
+  },
+  {
+    "name": "P5 Rest Punkte",
+    "description": "Display rest Points of Player",
+    "value": "\"simple|t:{p5-points-left}\"",
+    "allowedArguments": [ "IDE", "ALL" ]
+  },
+  {
+    "name": "P6 Rest Punkte",
+    "description": "Display rest Points of Player",
+    "value": "\"simple|t:{p6-points-left}\"",
+    "allowedArguments": [ "IDE", "ALL" ]
+  },
+  {
     "name": "Player-Left",
     "description": "Board image with Player Name und left behind.",
     "value": "\"board|t:{playername}{}left\"",

@@ -80,13 +80,18 @@ namespace darts_hub.control
         /// <summary>
         /// Parses the e: parameter from an effect value string.
         /// Returns the value without the e: part and the selected endpoint indices.
+        /// Handles surrounding quotes — e.g. "Autodarts|e:1" is parsed correctly.
         /// </summary>
         private static (string valueWithoutEndpoints, List<int> selectedEndpoints) ParseEndpointParameter(string? value)
         {
             if (string.IsNullOrEmpty(value))
                 return (string.Empty, new List<int>());
 
-            var parts = value.Split('|');
+            // Strip surrounding quotes for parsing, re-add afterwards
+            bool hadQuotes = value.StartsWith("\"") && value.EndsWith("\"") && value.Length >= 2;
+            var inner = hadQuotes ? value[1..^1] : value;
+
+            var parts = inner.Split('|');
             var valueParts = new List<string>();
             var selectedEndpoints = new List<int>();
 
@@ -109,7 +114,11 @@ namespace darts_hub.control
                 }
             }
 
-            return (string.Join("|", valueParts), selectedEndpoints);
+            var cleanValue = string.Join("|", valueParts);
+            if (hadQuotes)
+                cleanValue = "\"" + cleanValue + "\"";
+
+            return (cleanValue, selectedEndpoints);
         }
 
         /// <summary>
@@ -125,7 +134,19 @@ namespace darts_hub.control
                 return baseValue;
 
             var sorted = selectedEndpoints.OrderBy(i => i).ToList();
-            return $"{baseValue}|e:{string.Join(",", sorted)}";
+            return AppendEndpointSuffix(baseValue, sorted);
+        }
+
+        /// <summary>
+        /// Appends |e:indices to a value, placing it inside the closing quote if the value ends with a quote character.
+        /// E.g. "Autodarts" + |e:1 => "Autodarts|e:1" instead of "Autodarts"|e:1
+        /// </summary>
+        private static string AppendEndpointSuffix(string value, List<int> sortedEndpoints)
+        {
+            var suffix = $"|e:{string.Join(",", sortedEndpoints)}";
+            if (value.EndsWith("\""))
+                return value[..^1] + suffix + "\"";
+            return value + suffix;
         }
 
         /// <summary>
@@ -531,12 +552,129 @@ namespace darts_hub.control
                 Margin = new Thickness(0, 0, 0, 4)
             });
 
+            // Score range controls (only for score area effects)
+            ComboBox? fromDropdown = null;
+            ComboBox? toDropdown = null;
+            int? existingFrom = null;
+            int? existingTo = null;
+            string paramValueWithoutRange = param.Value ?? string.Empty;
+
+            if (isScoreAreaEffect)
+            {
+                // Parse existing score range prefix from param value
+                if (!string.IsNullOrEmpty(param.Value))
+                {
+                    var firstSpace = param.Value.IndexOf(' ');
+                    if (firstSpace > 0)
+                    {
+                        var rangeCandidate = param.Value[..firstSpace];
+                        var dashIdx = rangeCandidate.IndexOf('-');
+                        if (dashIdx > 0 &&
+                            int.TryParse(rangeCandidate[..dashIdx], out var fromVal) &&
+                            int.TryParse(rangeCandidate[(dashIdx + 1)..], out var toVal) &&
+                            fromVal >= 0 && toVal <= 180 && fromVal < toVal)
+                        {
+                            existingFrom = fromVal;
+                            existingTo = toVal;
+                            paramValueWithoutRange = param.Value[(firstSpace + 1)..];
+                        }
+                    }
+                }
+
+                var rangePanel = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 10,
+                    Margin = new Thickness(0, 0, 0, 5)
+                };
+
+                rangePanel.Children.Add(new TextBlock
+                {
+                    Text = "Score Range:",
+                    Foreground = Brushes.White,
+                    FontSize = 13,
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+
+                fromDropdown = new ComboBox
+                {
+                    Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
+                    Foreground = Brushes.White,
+                    BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(3),
+                    FontSize = 13,
+                    PlaceholderText = "From",
+                    Width = 80
+                };
+
+                rangePanel.Children.Add(fromDropdown);
+
+                rangePanel.Children.Add(new TextBlock
+                {
+                    Text = "to",
+                    Foreground = Brushes.White,
+                    FontSize = 13,
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+
+                toDropdown = new ComboBox
+                {
+                    Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
+                    Foreground = Brushes.White,
+                    BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(3),
+                    FontSize = 13,
+                    PlaceholderText = "To",
+                    Width = 80
+                };
+
+                rangePanel.Children.Add(toDropdown);
+
+                for (int i = 0; i <= 179; i++)
+                {
+                    fromDropdown.Items.Add(new ComboBoxItem { Content = i.ToString(), Tag = i, Foreground = Brushes.White });
+                }
+
+                for (int i = 1; i <= 180; i++)
+                {
+                    toDropdown.Items.Add(new ComboBoxItem { Content = i.ToString(), Tag = i, Foreground = Brushes.White });
+                }
+
+                if (existingFrom.HasValue)
+                {
+                    foreach (ComboBoxItem item in fromDropdown.Items)
+                    {
+                        if (item.Tag is int v && v == existingFrom.Value)
+                        {
+                            fromDropdown.SelectedItem = item;
+                            break;
+                        }
+                    }
+                }
+
+                if (existingTo.HasValue)
+                {
+                    foreach (ComboBoxItem item in toDropdown.Items)
+                    {
+                        if (item.Tag is int v && v == existingTo.Value)
+                        {
+                            toDropdown.SelectedItem = item;
+                            break;
+                        }
+                    }
+                }
+
+                outerPanel.Children.Add(rangePanel);
+            }
+
             // Container that holds all entry rows
             var entriesContainer = new StackPanel { Spacing = 10 };
             outerPanel.Children.Add(entriesContainer);
 
-            // Parse existing multi-value entries
-            var existingEntries = ParseTemplateEndpointEntries(param.Value);
+            // Parse existing multi-value entries (using value without range prefix)
+            var existingEntries = ParseTemplateEndpointEntries(paramValueWithoutRange);
             // If there's a single entry without e: targeting, it applies to all endpoints
             if (existingEntries.Count == 1 && existingEntries[0].EndpointIndices.Count == 0)
             {
@@ -580,8 +718,14 @@ namespace darts_hub.control
                             }
                         }
 
+                        // No endpoints checked = send to all endpoints (no e: needed)
                         if (selectedEps.Count == 0)
+                        {
+                            parts.Add(selectedTemplate.Value);
+                            for (int i = 0; i < endpoints.Count; i++)
+                                allCoveredEndpoints.Add(i);
                             continue;
+                        }
 
                         foreach (var ep in selectedEps)
                             allCoveredEndpoints.Add(ep);
@@ -594,7 +738,7 @@ namespace darts_hub.control
                         else
                         {
                             var sorted = selectedEps.OrderBy(i => i).ToList();
-                            parts.Add($"{selectedTemplate.Value}|e:{string.Join(",", sorted)}");
+                            parts.Add(AppendEndpointSuffix(selectedTemplate.Value, sorted));
                         }
                     }
 
@@ -609,6 +753,18 @@ namespace darts_hub.control
                     else
                     {
                         param.Value = string.Join(" ", parts);
+                    }
+
+                    // Prepend score range prefix for score area effects
+                    if (isScoreAreaEffect && !string.IsNullOrEmpty(param.Value) &&
+                        fromDropdown != null && toDropdown != null)
+                    {
+                        var fromItem = fromDropdown.SelectedItem as ComboBoxItem;
+                        var toItem = toDropdown.SelectedItem as ComboBoxItem;
+                        if (fromItem?.Tag is int fromVal && toItem?.Tag is int toVal && fromVal < toVal)
+                        {
+                            param.Value = $"{fromVal}-{toVal} {param.Value}";
+                        }
                     }
 
                     param.IsValueChanged = true;
@@ -718,6 +874,40 @@ namespace darts_hub.control
 
                 AddEntryRow(entry, availableForRow, templates, entriesContainer, rowStates,
                     endpoints, RebuildParamValue, RebuildEntries, app);
+            }
+
+            // Wire up score range dropdown events
+            if (isScoreAreaEffect && fromDropdown != null && toDropdown != null)
+            {
+                var localFrom = fromDropdown;
+                var localTo = toDropdown;
+
+                localFrom.SelectionChanged += (s, e) =>
+                {
+                    if (localFrom.SelectedItem is ComboBoxItem fromItem && fromItem.Tag is int fromVal)
+                    {
+                        var currentTo = (localTo.SelectedItem as ComboBoxItem)?.Tag as int?;
+                        localTo.Items.Clear();
+                        for (int i = fromVal + 1; i <= 180; i++)
+                        {
+                            localTo.Items.Add(new ComboBoxItem { Content = i.ToString(), Tag = i, Foreground = Brushes.White });
+                        }
+                        if (currentTo.HasValue && currentTo.Value > fromVal)
+                        {
+                            foreach (ComboBoxItem item in localTo.Items)
+                            {
+                                if (item.Tag is int v && v == currentTo.Value)
+                                {
+                                    localTo.SelectedItem = item;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    RebuildParamValue();
+                };
+
+                localTo.SelectionChanged += (s, e) => RebuildParamValue();
             }
 
             // Template hints
@@ -1351,7 +1541,7 @@ namespace darts_hub.control
                             foreach (var kvp in valueToEndpoints)
                             {
                                 var sorted = kvp.Value.OrderBy(i => i).ToList();
-                                parts.Add($"{kvp.Key}|e:{string.Join(",", sorted)}");
+                                parts.Add(AppendEndpointSuffix(kvp.Key, sorted));
                             }
                             param.Value = string.Join(" ", parts);
                         }
@@ -1374,7 +1564,7 @@ namespace darts_hub.control
                 var epIndex = i;
                 var epRow = new Border
                 {
-                    Background = new SolidColorBrush(Color.FromArgb(25, 255, 255, 255)),
+                    Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
                     CornerRadius = new CornerRadius(4),
                     Padding = new Thickness(8, 6),
                     Margin = new Thickness(0, 2, 0, 0)

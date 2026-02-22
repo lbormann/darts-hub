@@ -1,4 +1,16 @@
-﻿## v1.4.1
+﻿## v1.4.2
+### New Features
+    - Pixelit: Posibility to use preconfigured Templates
+    - Pixelit: Easy configuration possibilitys 
+    - Pixelit: Thanks to Frankomino for his command templates!
+    - Pixelit: Add possibility to preview configured commands
+    - Pixelit: Add possibility to live test efffects of Pixelit device
+    - Pixelit: Add Player specific remain score effects
+### Bugfixes
+    - Pixelit: Autorefresh page after adding/removing PEPS entries
+    - Pixelit: Fix Score Area
+
+## v1.4.1
 ### New Features
     - Pixelit: Posibility to use preconfigured Templates
     - Pixelit: Easy configuration possibilitys 
