@@ -12,43 +12,43 @@
     "allowedArguments": [ "AS", "ALL" ]
   },
   {
-    "name": "Rest Punkte",
+    "name": "Rest points actual player",
     "description": "Display rest Points of Player",
     "value": "\"simple|t:{points-left}\"",
     "allowedArguments": [ "IDE", "ALL" ]
   },
   {
-    "name": "P1 Rest Punkte",
+    "name": "P1 rest points",
     "description": "Display rest Points of Player",
     "value": "\"simple|t:{p1-points-left}\"",
     "allowedArguments": [ "IDE", "ALL" ]
   },
   {
-    "name": "P2 Rest Punkte",
+    "name": "P2 rest points",
     "description": "Display rest Points of Player",
     "value": "\"simple|t:{p2-points-left}\"",
     "allowedArguments": [ "IDE", "ALL" ]
   },
   {
-    "name": "P3 Rest Punkte",
+    "name": "P3 rest points",
     "description": "Display rest Points of Player",
     "value": "\"simple|t:{p3-points-left}\"",
     "allowedArguments": [ "IDE", "ALL" ]
   },
   {
-    "name": "P4 Rest Punkte",
+    "name": "P4 rest points",
     "description": "Display rest Points of Player",
     "value": "\"simple|t:{p4-points-left}\"",
     "allowedArguments": [ "IDE", "ALL" ]
   },
   {
-    "name": "P5 Rest Punkte",
+    "name": "P5 rest points",
     "description": "Display rest Points of Player",
     "value": "\"simple|t:{p5-points-left}\"",
     "allowedArguments": [ "IDE", "ALL" ]
   },
   {
-    "name": "P6 Rest Punkte",
+    "name": "P6 rest points",
     "description": "Display rest Points of Player",
     "value": "\"simple|t:{p6-points-left}\"",
     "allowedArguments": [ "IDE", "ALL" ]
