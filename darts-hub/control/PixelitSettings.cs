@@ -676,20 +676,6 @@ namespace darts_hub.control
             mainPanel.Children.Add(modePanel);
             mainPanel.Children.Add(inputContainer);
 
-            // Endpoint targeting section for manual mode only (template mode has it built-in)
-            if (hasMultiEndpoints)
-            {
-                var manualEndpointSection = CreateEndpointCheckboxes(param, saveCallback, endpoints, currentSelectedEndpoints);
-                // Only show when in manual mode
-                manualEndpointSection.IsVisible = initialMode == manualMode;
-                mainPanel.Children.Add(manualEndpointSection);
-
-                modeSelector.SelectionChanged += (s, e) =>
-                {
-                    manualEndpointSection.IsVisible = modeSelector.SelectedItem is string mode && mode == manualMode;
-                };
-            }
-
             // Global Preview/Test buttons — hidden in multi-endpoint template mode (each row has its own)
             previewButton.IsVisible = !(hasMultiEndpoints && initialMode == templateMode);
             testButton.IsVisible = !(hasMultiEndpoints && initialMode == templateMode);
