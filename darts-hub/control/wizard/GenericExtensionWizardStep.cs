@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Layout;
 using Avalonia.Media;
 using darts_hub.model;
@@ -301,6 +302,22 @@ namespace darts_hub.control.wizard
                     
                     if (argument != null)
                     {
+                        // Skip arguments that require a license feature the user doesn't have
+                        if (!string.IsNullOrWhiteSpace(argument.RequiredFeature))
+                        {
+                            LicenseManager? licenseManager = null;
+                            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime dt)
+                            {
+                                if (dt.MainWindow is MainWindow mw)
+                                    licenseManager = mw.GetLicenseManager();
+                            }
+                            if (licenseManager != null && !licenseManager.IsArgumentAccessible(argument))
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[Generic]     Skipping argument '{argument.Name}' (requires feature '{argument.RequiredFeature}')");
+                                continue;
+                            }
+                        }
+
                         System.Diagnostics.Debug.WriteLine($"[Generic]     Creating control for argument: {argument.Name} = '{argument.Value}'");
                         var argumentControl = await CreateEnhancedArgumentControl(argument);
                         if (argumentControl != null)

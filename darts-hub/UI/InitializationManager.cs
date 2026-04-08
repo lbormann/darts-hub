@@ -35,6 +35,9 @@ namespace darts_hub.UI
             
             // Check if wizard should be shown
             await CheckAndShowWizard();
+
+            // Validate license in the background and update status bar
+            _ = mainWindow.UpdateLicenseStatusBarAsync();
         }
 
         public void InitializeViewModel()
@@ -48,8 +51,31 @@ namespace darts_hub.UI
 
         public void InitializeWindowSettings()
         {
-            mainWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            WindowResizeHelper.SetupProportionalResize(mainWindow, 1004.0 / 800.0, true, false);
+            var settings = configurator.Settings;
+
+            if (settings.WindowWidth > 0)
+                mainWindow.Width = settings.WindowWidth;
+            if (settings.WindowHeight > 0)
+                mainWindow.Height = settings.WindowHeight;
+
+            if (!double.IsNaN(settings.WindowX) && !double.IsNaN(settings.WindowY))
+            {
+                mainWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                mainWindow.Position = new Avalonia.PixelPoint((int)settings.WindowX, (int)settings.WindowY);
+            }
+            else
+            {
+                mainWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            }
+
+            var mainGrid = mainWindow.FindControl<Grid>("MainGrid");
+            if (mainGrid != null)
+            {
+                if (settings.NavColumnWidth > 0)
+                    mainGrid.ColumnDefinitions[0].Width = new GridLength(settings.NavColumnWidth, GridUnitType.Pixel);
+                if (settings.TooltipColumnWidth > 0)
+                    mainGrid.ColumnDefinitions[4].Width = new GridLength(settings.TooltipColumnWidth, GridUnitType.Pixel);
+            }
         }
 
         private void InitializeAboutContent()

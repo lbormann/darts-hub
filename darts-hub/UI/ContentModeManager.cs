@@ -35,9 +35,6 @@ namespace darts_hub.UI
         public TextBlock? TooltipTitle { get; set; }
         public TextBlock? TooltipDescription { get; set; }
         public ScrollViewer? NewSettingsScrollViewer { get; set; }
-        public Button? ButtonConsole { get; set; }
-        public Button? ButtonChangelog { get; set; }
-        public Button? ButtonAbout { get; set; }
 
         public ContentMode CurrentContentMode => currentContentMode;
 
@@ -79,9 +76,6 @@ namespace darts_hub.UI
             
             // Reset border properties
             ResetContentBorderProperties();
-
-            // Update button states
-            UpdateButtonStates(false, false, false);
         }
 
         public void ShowConsoleMode()
@@ -107,9 +101,6 @@ namespace darts_hub.UI
             // Reset changelog positioning and border properties
             ResetChangelogPositioning();
             ResetContentBorderProperties();
-
-            // Update button states
-            UpdateButtonStates(true, false, false);
         }
 
         public void ShowChangelogMode()
@@ -141,9 +132,6 @@ namespace darts_hub.UI
 
             // Change border for changelog mode
             SetChangelogBorderProperties();
-
-            // Update button states
-            UpdateButtonStates(false, true, false);
         }
 
         public void ShowAboutMode()
@@ -178,8 +166,6 @@ namespace darts_hub.UI
             if (TooltipDescription != null)
                 TooltipDescription.Text = "This is your central hub for managing darts applications. Use the navigation panel to configure your apps, or explore the settings for detailed configuration options.";
             
-            // Update button states
-            UpdateButtonStates(false, false, true);
         }
 
         public void ShowClassicSettingsMode()
@@ -321,16 +307,5 @@ namespace darts_hub.UI
             }
         }
 
-        private void UpdateButtonStates(bool consoleActive, bool changelogActive, bool aboutActive)
-        {
-            if (ButtonConsole != null)
-                ButtonConsole.Background = consoleActive ? new SolidColorBrush(Color.FromRgb(0, 122, 204)) : Brushes.Transparent;
-            
-            if (ButtonChangelog != null)
-                ButtonChangelog.Background = changelogActive ? new SolidColorBrush(Color.FromRgb(0, 122, 204)) : Brushes.Transparent;
-            
-            if (ButtonAbout != null)
-                ButtonAbout.Background = aboutActive ? new SolidColorBrush(Color.FromRgb(0, 122, 204)) : Brushes.Transparent;
-        }
     }
 }

@@ -1,0 +1,122 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="darts_hub.UI.LicenseSettingsView">
+
+    <StackPanel Spacing="20" MaxWidth="550" HorizontalAlignment="Left" Margin="20">
+
+        <!-- Header -->
+        <TextBlock Text="License Management"
+                   FontSize="22"
+                   FontWeight="Bold"
+                   Foreground="White"/>
+
+        <TextBlock Text="Enter your Darts-Hub expert license key to unlock premium features. If you don't have a license yet, you can request one through the experience check."
+                   TextWrapping="Wrap"
+                   Foreground="#FFCCCCCC"
+                   FontSize="14"/>
+
+        <!-- Current Status -->
+        <Border Background="#33FFFFFF" CornerRadius="8" Padding="15">
+            <StackPanel Spacing="8">
+                <TextBlock Text="License Status"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="White"/>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Border x:Name="StatusIndicator"
+                            Width="12" Height="12"
+                            CornerRadius="6"
+                            Background="#FF666666"
+                            VerticalAlignment="Center"/>
+                    <TextBlock x:Name="StatusText"
+                               Text="No license configured"
+                               FontSize="14"
+                               Foreground="#FFCCCCCC"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBlock x:Name="StatusDetail"
+                           Text=""
+                           FontSize="12"
+                           Foreground="#FF999999"
+                           TextWrapping="Wrap"
+                           IsVisible="False"/>
+            </StackPanel>
+        </Border>
+
+        <!-- License Key Input -->
+        <StackPanel Spacing="8">
+            <TextBlock Text="License Key"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Foreground="White"/>
+            <TextBox x:Name="LicenseKeyInput"
+                     Watermark="DARTS-XXXX-XXXX-XXXX-XXXX"
+                     FontSize="14"
+                     FontFamily="Consolas, Courier New, monospace"
+                     MaxLength="25"
+                     Height="40"/>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button x:Name="ValidateButton"
+                        Content="Validate &amp; Save"
+                        Padding="15,8"
+                        Background="#FF007ACC"
+                        BorderBrush="#FF005A9E"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Foreground="White"
+                        FontWeight="Bold"
+                        Click="ValidateButton_Click"/>
+                <Button x:Name="ClearButton"
+                        Content="Remove License"
+                        Padding="15,8"
+                        Background="#FF444444"
+                        BorderBrush="#FF666666"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Foreground="White"
+                        Click="ClearButton_Click"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Separator -->
+        <Border Height="1" Background="#FF464647" Margin="0,5"/>
+
+        <!-- Request License -->
+        <StackPanel Spacing="8">
+            <TextBlock Text="Don't have a license?"
+                       FontSize="16"
+                       FontWeight="SemiBold"
+                       Foreground="White"/>
+            <TextBlock Text="You can request a free expert license by completing a short darts experience check. The license key will be sent to your email."
+                       TextWrapping="Wrap"
+                       Foreground="#FFCCCCCC"
+                       FontSize="14"/>
+            <Button x:Name="RequestLicenseButton"
+                    Padding="15,8"
+                    Background="#FF28A745"
+                    BorderBrush="#FF1E7E34"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Foreground="White"
+                    FontWeight="Bold"
+                    Click="RequestLicenseButton_Click">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="&#x1F3AF;" FontSize="16" VerticalAlignment="Center"/>
+                    <TextBlock Text="Request License" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <!-- Features Info -->
+        <Border Background="#33FFFFFF" CornerRadius="8" Padding="15" x:Name="FeaturesPanel" IsVisible="False">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Licensed Features"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="White"/>
+                <StackPanel x:Name="FeaturesList" Spacing="4"/>
+            </StackPanel>
+        </Border>
+
+    </StackPanel>
+</UserControl>

@@ -39,6 +39,8 @@ namespace darts_hub
         private Profile? selectedProfile;
         private AppBase? selectedApp;
         private Configurator configurator;
+        private control.LicenseManager? licenseManager;
+        private bool licenseStatusBarSubscribed;
         #endregion
 
         #region Properties
@@ -130,9 +132,6 @@ namespace darts_hub
             contentModeManager.TooltipTitle = TooltipTitle;
             contentModeManager.TooltipDescription = TooltipDescription;
             contentModeManager.NewSettingsScrollViewer = NewSettingsScrollViewer;
-            contentModeManager.ButtonConsole = ButtonConsole;
-            contentModeManager.ButtonChangelog = ButtonChangelog;
-            contentModeManager.ButtonAbout = this.FindControl<Button>("Buttonabout");
         }
 
         private void SetupEventHandlers()
@@ -151,6 +150,7 @@ namespace darts_hub
         public ContentModeManager GetContentModeManager() => contentModeManager;
         public Configurator GetConfigurator() => configurator;
         public ProfileManager GetProfileManager() => profileManager;
+        public control.LicenseManager GetLicenseManager() => licenseManager ??= new control.LicenseManager(configurator);
 
         public void SetWait(bool wait, string waitingText = "")
         {
@@ -284,6 +284,7 @@ namespace darts_hub
         {
             try
             {
+                SaveWindowLayout();
                 initializationManager?.Dispose();
                 consoleManager?.Dispose();
                 navigationManager?.Dispose();
@@ -295,18 +296,33 @@ namespace darts_hub
                 _ = Task.Run(async () => await RenderMessageBox("", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error));
             }
         }
+
+        private void SaveWindowLayout()
+        {
+            try
+            {
+                var settings = configurator.Settings;
+                settings.WindowWidth = Width;
+                settings.WindowHeight = Height;
+                settings.WindowX = Position.X;
+                settings.WindowY = Position.Y;
+                settings.NavColumnWidth = MainGrid.ColumnDefinitions[0].ActualWidth;
+                settings.TooltipColumnWidth = MainGrid.ColumnDefinitions[4].ActualWidth;
+                configurator.SaveSettings();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MainWindow] Failed to save window layout: {ex.Message}");
+            }
+        }
         #endregion
 
         #region Button Event Handlers (delegated to ButtonEventManager)
         private void Buttonstart_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleStartClick(sender, e);
-        private async void Buttonabout_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleAboutClick(sender, e);
-        private void ButtonConsole_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleConsoleClick(sender, e);
-        private async void ButtonChangelog_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleChangelogClick(sender, e);
         private void CheckBoxStartProfileOnProgramStartChanged(object sender, RoutedEventArgs e) => buttonEventManager.HandleStartProfileOnProgramStartChanged(sender, e);
         private async void AboutButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleAboutButtonClick(sender, e);
         private void AboutCheckBoxSkipUpdateConfirmationChanged(object sender, RoutedEventArgs e) => buttonEventManager.HandleSkipUpdateConfirmationChanged(sender, e);
         private void AboutCheckBoxNewSettingsModeChanged(object sender, RoutedEventArgs e) => buttonEventManager.HandleNewSettingsModeChanged(sender, e);
-        private void NewSettingsBackButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleNewSettingsBackButton(sender, e);
         private void ToTopButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleToTopButton(sender, e);
         private async void SetupWizardButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleSetupWizardButton(sender, e);
         private void ConsoleClearButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleConsoleClearButton(sender, e);
@@ -315,6 +331,24 @@ namespace darts_hub
         private async void ConsoleTestUpdaterButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleConsoleTestUpdaterButton(sender, e);
         private void ConsoleAutoScrollCheckBox_Changed(object sender, RoutedEventArgs e) => buttonEventManager.HandleConsoleAutoScrollCheckBox(sender, e);
         private async void Robbel3DConfigButton_Click(object sender, RoutedEventArgs e) => await ShowRobbel3DConfiguration();
+        private void ButtonSidebarMenu_Click(object sender, RoutedEventArgs e) => ToggleSidebarMenu();
+        private void SidebarMenuOverlay_PointerPressed(object? sender, PointerPressedEventArgs e) => CloseSidebarMenu();
+        private void SidebarSettingsButton_Click(object sender, RoutedEventArgs e) => ShowLicenseSettings();
+        private void SidebarAboutButton_Click(object sender, RoutedEventArgs e)
+        {
+            CloseSidebarMenu();
+            buttonEventManager.HandleAboutClick(sender, e);
+        }
+        private void SidebarConsoleButton_Click(object sender, RoutedEventArgs e)
+        {
+            CloseSidebarMenu();
+            buttonEventManager.HandleConsoleClick(sender, e);
+        }
+        private void SidebarChangelogButton_Click(object sender, RoutedEventArgs e)
+        {
+            CloseSidebarMenu();
+            buttonEventManager.HandleChangelogClick(sender, e);
+        }
         #endregion
 
         #region Profile and App Management
@@ -618,6 +652,132 @@ namespace darts_hub
                     MsBox.Avalonia.Enums.Icon.Error);
             }
         }
+
+        #region Sidebar Menu and License
+        private void ToggleSidebarMenu()
+        {
+            var panel = this.FindControl<Border>("SidebarMenuPanel");
+            var overlay = this.FindControl<Border>("SidebarMenuOverlay");
+            if (panel == null || overlay == null) return;
+
+            bool isOpen = panel.IsVisible;
+            panel.IsVisible = !isOpen;
+            overlay.IsVisible = !isOpen;
+        }
+
+        private void CloseSidebarMenu()
+        {
+            var panel = this.FindControl<Border>("SidebarMenuPanel");
+            var overlay = this.FindControl<Border>("SidebarMenuOverlay");
+            if (panel != null) panel.IsVisible = false;
+            if (overlay != null) overlay.IsVisible = false;
+        }
+
+        private void ShowLicenseSettings()
+        {
+            CloseSidebarMenu();
+
+            // Always use classic settings layout without tooltip, regardless of settings mode
+            contentModeManager.ShowSettingsMode();
+            contentModeManager.ShowClassicSettingsMode(hideTooltipForCustomApp: true);
+            consoleManager.Stop();
+
+            var manager = GetLicenseManager();
+            if (!licenseStatusBarSubscribed)
+            {
+                licenseStatusBarSubscribed = true;
+                manager.StatusChanged += (_, _) => Dispatcher.UIThread.Post(() => UpdateLicenseStatusBar());
+            }
+
+            var settingsView = new LicenseSettingsView();
+            settingsView.Initialize(manager);
+
+            SettingsPanel.Children.Clear();
+            SettingsPanel.Children.Add(settingsView);
+            selectedApp = null;
+        }
+
+        /// <summary>
+        /// Updates the license status bar using the last known result (no server call).
+        /// Called from the StatusChanged event to avoid re-triggering validation.
+        /// </summary>
+        private void UpdateLicenseStatusBar()
+        {
+            var licenseIcon = this.FindControl<TextBlock>("StatusBarLicenseIcon");
+            var licenseText = this.FindControl<TextBlock>("StatusBarLicenseText");
+            if (licenseIcon == null || licenseText == null) return;
+
+            var manager = GetLicenseManager();
+
+            if (!manager.HasStoredLicenseKey)
+            {
+                licenseIcon.Text = "\U0001F511";
+                licenseText.Text = "License: Not configured";
+                licenseText.Foreground = new SolidColorBrush(Color.FromRgb(153, 153, 153));
+                return;
+            }
+
+            switch (manager.CurrentStatus)
+            {
+                case control.LicenseStatus.Valid:
+                    var featureCount = manager.LastResult?.Features?.Count ?? 0;
+                    licenseIcon.Text = "\u2705";
+                    licenseText.Text = $"License: Active ({featureCount} features)";
+                    licenseText.Foreground = new SolidColorBrush(Color.FromRgb(40, 167, 69));
+                    break;
+
+                case control.LicenseStatus.ConnectionError:
+                    licenseIcon.Text = "\u26A0";
+                    licenseText.Text = "License: Server unreachable";
+                    licenseText.Foreground = new SolidColorBrush(Color.FromRgb(255, 149, 0));
+                    break;
+
+                case control.LicenseStatus.Unknown:
+                    licenseIcon.Text = "\U0001F511";
+                    licenseText.Text = "License: Not validated";
+                    licenseText.Foreground = new SolidColorBrush(Color.FromRgb(153, 153, 153));
+                    break;
+
+                default:
+                    licenseIcon.Text = "\u26A0";
+                    licenseText.Text = $"License: {manager.CurrentMessage}";
+                    licenseText.Foreground = new SolidColorBrush(Color.FromRgb(220, 160, 50));
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Validates the license against the server and updates the status bar.
+        /// Use this for the initial check on startup; afterwards the StatusChanged event keeps the bar in sync.
+        /// </summary>
+        internal async Task UpdateLicenseStatusBarAsync()
+        {
+            var manager = GetLicenseManager();
+
+            // Ensure the StatusChanged ? status bar subscription is set up
+            if (!licenseStatusBarSubscribed)
+            {
+                licenseStatusBarSubscribed = true;
+                manager.StatusChanged += (_, _) => Dispatcher.UIThread.Post(UpdateLicenseStatusBar);
+            }
+
+            if (!manager.HasStoredLicenseKey)
+            {
+                Dispatcher.UIThread.Post(UpdateLicenseStatusBar);
+                return;
+            }
+
+            try
+            {
+                await manager.ValidateAsync();
+                // StatusChanged will fire and UpdateLicenseStatusBar runs automatically
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[License] Status bar validation failed: {ex.Message}");
+            }
+        }
+        #endregion
 
         private void RestartApplication()
         {

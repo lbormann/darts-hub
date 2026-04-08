@@ -1,12 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Media;
 using System;
 
 namespace darts_hub
 {
     /// <summary>
-    /// Helper class for managing window resize behavior with aspect ratio constraints and viewport scaling
+    /// Helper class for managing window resize behavior with aspect ratio constraints
     /// </summary>
     public static class WindowResizeHelper
     {
@@ -36,13 +35,6 @@ namespace darts_hub
                     var newWidth = e.NewSize.Width;
                     var newHeight = e.NewSize.Height;
                     
-                    // Apply viewport scaling if enabled
-                    if (enableViewportScaling)
-                    {
-                        ApplyViewportScaling(window, newWidth, newHeight);
-                    }
-                    
-                    // Berechne neue Größe basierend auf Seitenverhältnis
                     var widthBasedHeight = newWidth / aspectRatio;
                     var heightBasedWidth = newHeight * aspectRatio;
                     
@@ -97,69 +89,11 @@ namespace darts_hub
                 };
             }
             
-            // Initialisiere letzte Position und Größe
             window.Opened += (sender, e) =>
             {
                 lastPosition = window.Position;
                 lastSize = new Size(window.Width, window.Height);
-                
-                // Apply initial viewport scaling if enabled
-                if (enableViewportScaling)
-                {
-                    ApplyViewportScaling(window, window.Width, window.Height);
-                }
             };
-        }
-        
-        /// <summary>
-        /// Applies viewport scaling to window content when it gets too small
-        /// </summary>
-        private static void ApplyViewportScaling(Window window, double windowWidth, double windowHeight)
-        {
-            try
-            {
-                // Only apply scaling if window content is not a Viewbox (which handles scaling automatically)
-                if (window.Content is Viewbox)
-                    return;
-                    
-                // Base dimensions for scaling calculation
-                const double baseWidth = 1004.0;
-                const double baseHeight = 800.0;
-                
-                // Calculate scale factors
-                var scaleX = windowWidth / baseWidth;
-                var scaleY = windowHeight / baseHeight;
-                var scaleFactor = Math.Min(scaleX, scaleY);
-                
-                // Only scale down, never up (for better quality)
-                if (scaleFactor < 1.0)
-                {
-                    // Apply transform scaling to content
-                    if (window.Content is Control content)
-                    {
-                        var transform = new ScaleTransform(scaleFactor, scaleFactor);
-                        content.RenderTransform = transform;
-                        
-                        // Adjust content positioning to center it
-                        content.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center;
-                        content.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center;
-                    }
-                }
-                else
-                {
-                    // Reset transform when window is large enough
-                    if (window.Content is Control content)
-                    {
-                        content.RenderTransform = null;
-                        content.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
-                        content.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error applying viewport scaling: {ex.Message}");
-            }
         }
     }
 }

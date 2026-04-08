@@ -34,6 +34,12 @@ namespace darts_hub.model
 
         public bool IsMulti { get; set; }
 
+        /// <summary>
+        /// If set, this argument is only visible and usable when the user's license
+        /// includes the specified feature key (e.g. "expert_statistics").
+        /// </summary>
+        public string? RequiredFeature { get; set; }
+
         private string? _value;
         public string? Value
         {
@@ -92,7 +98,8 @@ namespace darts_hub.model
                         bool isRuntimeArgument = false,
                         bool isMulti = false,
                         string? value = null,
-                        Dictionary<string, string>? valueMapping = null 
+                        Dictionary<string, string>? valueMapping = null,
+                        string? requiredFeature = null
                 )
         {
             Name = name;
@@ -107,6 +114,7 @@ namespace darts_hub.model
             IsMulti = isMulti;
             Value = value;
             ValueMapping = valueMapping;
+            RequiredFeature = requiredFeature;
             ValidateType();
             IsValueChanged = false;
         }

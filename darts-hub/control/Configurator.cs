@@ -10,10 +10,19 @@ namespace darts_hub.control
     {
         public bool StartProfileOnStart { get; set; }
         public bool SkipUpdateConfirmation { get; set; }
-        public bool IsBetaTester { get; set; } // Neue Eigenschaft für den Betatester-Status
-        public bool NewSettingsMode { get; set; } // Neue Eigenschaft für den neuen Settings-Modus
-        public bool WizardCompleted { get; set; } // Neue Eigenschaft für den Wizard-Status
-        public bool ShowRobbel3DSetup { get; set; } // Neue Eigenschaft für die Robbel3D Setup Sichtbarkeit
+        public bool IsBetaTester { get; set; }
+        public bool NewSettingsMode { get; set; }
+        public bool WizardCompleted { get; set; }
+        public bool ShowRobbel3DSetup { get; set; }
+        public string LicenseKey { get; set; } = string.Empty;
+
+        // Window layout persistence
+        public double WindowWidth { get; set; }
+        public double WindowHeight { get; set; }
+        public double WindowX { get; set; } = double.NaN;
+        public double WindowY { get; set; } = double.NaN;
+        public double NavColumnWidth { get; set; }
+        public double TooltipColumnWidth { get; set; }
     }
 
 
@@ -105,9 +114,15 @@ namespace darts_hub.control
                 StartProfileOnStart = false,
                 SkipUpdateConfirmation = false,
                 IsBetaTester = false,
-                NewSettingsMode = true, // Changed from false to true - new installations get enhanced settings mode by default
+                NewSettingsMode = true,
                 WizardCompleted = false,
-                ShowRobbel3DSetup = true // Always enable Robbel3D setup by default
+                ShowRobbel3DSetup = true,
+                WindowWidth = 1000,
+                WindowHeight = 800,
+                WindowX = double.NaN,
+                WindowY = double.NaN,
+                NavColumnWidth = 250,
+                TooltipColumnWidth = 250
             };
         }
     }

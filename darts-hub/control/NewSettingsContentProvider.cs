@@ -759,9 +759,18 @@ namespace darts_hub.control
                 MaxWidth = 650
             };
 
+            // Get the license manager for feature gating
+            LicenseManager? licenseManager = null;
+            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime dt)
+            {
+                if (dt.MainWindow is MainWindow mw)
+                    licenseManager = mw.GetLicenseManager();
+            }
+
             // Get configured and required parameters grouped by section
             var configuredParams = app.Configuration.Arguments
                 .Where(arg => !arg.IsRuntimeArgument && (arg.Required || arg.IsValueChanged || !string.IsNullOrEmpty(arg.Value)))
+                .Where(arg => licenseManager == null || licenseManager.IsArgumentAccessible(arg))
                 .GroupBy(arg => arg.Section ?? "General")
                 .OrderBy(group => group.Key)
                 .ToList();
@@ -1550,9 +1559,18 @@ namespace darts_hub.control
 
             contentPanel.Children.Add(addTitle);
 
+            // Get the license manager for feature gating
+            LicenseManager? licenseManager = null;
+            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime dt)
+            {
+                if (dt.MainWindow is MainWindow mw)
+                    licenseManager = mw.GetLicenseManager();
+            }
+
             // Get available parameters (not configured and not runtime) grouped by section
             var availableParamsBySection = app.Configuration.Arguments
                 .Where(arg => !arg.IsRuntimeArgument && !arg.Required && string.IsNullOrEmpty(arg.Value) && !arg.IsValueChanged)
+                .Where(arg => licenseManager == null || licenseManager.IsArgumentAccessible(arg))
                 .GroupBy(arg => arg.Section ?? "General")
                 .OrderBy(group => group.Key)
                 .ToList();

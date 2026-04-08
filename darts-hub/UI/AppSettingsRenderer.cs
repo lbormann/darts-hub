@@ -525,7 +525,8 @@ namespace darts_hub.UI
             var settingsPanel = mainWindow.FindControl<StackPanel>("SettingsPanel");
             var appConfiguration = app.Configuration;
             if (appConfiguration == null) return;
-            
+
+            var licenseManager = mainWindow.GetLicenseManager();
             var argumentsBySection = appConfiguration.Arguments.GroupBy(a => a.Section);
 
             foreach (var section in argumentsBySection)
@@ -553,6 +554,7 @@ namespace darts_hub.UI
                 foreach (var argument in section)
                 {
                     if (argument.IsRuntimeArgument) continue;
+                    if (!licenseManager.IsArgumentAccessible(argument)) continue;
 
                     var argumentControl = await CreateArgumentControl(argument);
                     if (argumentControl != null)
