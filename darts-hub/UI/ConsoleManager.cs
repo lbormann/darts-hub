@@ -66,6 +66,33 @@ namespace darts_hub.UI
             }
         }
 
+        /// <summary>
+        /// Selects the console tab that belongs to the given app.
+        /// </summary>
+        public void SelectAppTab(AppBase app)
+        {
+            if (ConsoleTabControl == null) return;
+
+            foreach (var kvp in consoleTabs)
+            {
+                if (kvp.Value.Tag is AppBase tabApp && tabApp == app)
+                {
+                    ConsoleTabControl.SelectedItem = kvp.Value;
+                    currentConsoleTab = kvp.Key;
+                    return;
+                }
+            }
+
+            // Fallback: match by CustomName
+            var matchByName = consoleTabs.FirstOrDefault(kvp =>
+                kvp.Key.Equals(app.CustomName, StringComparison.OrdinalIgnoreCase));
+            if (matchByName.Value != null)
+            {
+                ConsoleTabControl.SelectedItem = matchByName.Value;
+                currentConsoleTab = matchByName.Key;
+            }
+        }
+
         public void InitializeConsoleTabs()
         {
             if (ConsoleTabControl == null) return;
@@ -497,7 +524,8 @@ namespace darts_hub.UI
             var tab = new TabItem
             {
                 Header = uniqueKey, // Use unique key as header
-                FontSize = 11
+                FontSize = 11,
+                Tag = app
             };
 
             // Add running indicator to tab header if app is running

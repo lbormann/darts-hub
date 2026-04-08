@@ -203,6 +203,17 @@ namespace darts_hub
             }
         }
 
+        /// <summary>
+        /// Switches to console mode and selects the tab for the given app.
+        /// </summary>
+        public void ShowConsoleForApp(AppBase app)
+        {
+            contentModeManager.ShowConsoleMode();
+            consoleManager.Start();
+            consoleManager.SetSelectedProfile(selectedProfile);
+            consoleManager.SelectAppTab(app);
+        }
+
         public async Task ShowSetupWizard()
         {
             try
@@ -321,8 +332,6 @@ namespace darts_hub
         private void Buttonstart_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleStartClick(sender, e);
         private void CheckBoxStartProfileOnProgramStartChanged(object sender, RoutedEventArgs e) => buttonEventManager.HandleStartProfileOnProgramStartChanged(sender, e);
         private async void AboutButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleAboutButtonClick(sender, e);
-        private void AboutCheckBoxSkipUpdateConfirmationChanged(object sender, RoutedEventArgs e) => buttonEventManager.HandleSkipUpdateConfirmationChanged(sender, e);
-        private void AboutCheckBoxNewSettingsModeChanged(object sender, RoutedEventArgs e) => buttonEventManager.HandleNewSettingsModeChanged(sender, e);
         private void ToTopButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleToTopButton(sender, e);
         private void ConsoleClearButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleConsoleClearButton(sender, e);
         private void ConsoleClearCurrentButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleConsoleClearCurrentButton(sender, e);
@@ -337,6 +346,7 @@ namespace darts_hub
             CloseSidebarMenu();
             await ShowSetupWizard();
         }
+        private void SidebarAppSettingsButton_Click(object sender, RoutedEventArgs e) => ShowAppSettings();
         private void SidebarSettingsButton_Click(object sender, RoutedEventArgs e) => ShowLicenseSettings();
         private void SidebarAboutButton_Click(object sender, RoutedEventArgs e)
         {
@@ -676,6 +686,28 @@ namespace darts_hub
             if (panel != null) panel.IsVisible = false;
             if (overlay != null) overlay.IsVisible = false;
         }
+
+        private void ShowAppSettings()
+        {
+            CloseSidebarMenu();
+
+            contentModeManager.ShowSettingsMode();
+            contentModeManager.ShowClassicSettingsMode(hideTooltipForCustomApp: true);
+            consoleManager.Stop();
+
+            var settingsView = new AppSettingsView();
+            settingsView.Initialize(configurator);
+
+            SettingsPanel.Children.Clear();
+            SettingsPanel.Children.Add(settingsView);
+            selectedApp = null;
+        }
+
+        /// <summary>
+        /// Public entry point for navigating to the license settings page.
+        /// Used by UI helpers that need to link to license configuration.
+        /// </summary>
+        public void ShowLicenseSettingsPublic() => ShowLicenseSettings();
 
         private void ShowLicenseSettings()
         {

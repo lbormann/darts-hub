@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Layout;
 using Avalonia.Media;
 using darts_hub.model;
+using darts_hub.UI;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -302,7 +303,7 @@ namespace darts_hub.control.wizard
                     
                     if (argument != null)
                     {
-                        // Skip arguments that require a license feature the user doesn't have
+                        // Show locked panel for arguments that require a license feature the user doesn't have
                         if (!string.IsNullOrWhiteSpace(argument.RequiredFeature))
                         {
                             LicenseManager? licenseManager = null;
@@ -313,7 +314,8 @@ namespace darts_hub.control.wizard
                             }
                             if (licenseManager != null && !licenseManager.IsArgumentAccessible(argument))
                             {
-                                System.Diagnostics.Debug.WriteLine($"[Generic]     Skipping argument '{argument.Name}' (requires feature '{argument.RequiredFeature}')");
+                                System.Diagnostics.Debug.WriteLine($"[Generic]     Locked argument '{argument.Name}' (requires feature '{argument.RequiredFeature}')");
+                                argumentsPanel.Children.Add(UI.LockedArgumentHelper.CreateLockedArgumentPanel(argument));
                                 continue;
                             }
                         }

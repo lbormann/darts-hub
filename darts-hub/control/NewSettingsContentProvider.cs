@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using Avalonia.Interactivity;
 using System;
 using darts_hub.control; // Add this using directive to enable access to MainWindow
+using darts_hub.UI;
 using System.Diagnostics;
 using MsBox.Avalonia.Enums;
 using darts_hub.UI;
@@ -220,29 +221,10 @@ namespace darts_hub.control
             
             var mainPanel = new StackPanel
             {
-                Margin = new Thickness(20),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                MaxWidth = 700 // Limit width to fit properly in the new settings panel
+                Margin = new Thickness(20, 20, 20, 20),
+                MinWidth = 400,
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
-
-            var scrollViewer = new ScrollViewer
-            {
-                Content = mainPanel,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch,
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
-             };
- 
-             var rootGrid = new Grid
-             {
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch,
-                ClipToBounds = true
-             };
-             rootGrid.RowDefinitions.Add(new RowDefinition(GridLength.Star));
-             Grid.SetRow(scrollViewer, 0);
-             rootGrid.Children.Add(scrollViewer);
 
             // Store the save callback for later use
             if (saveCallback != null)
@@ -300,7 +282,7 @@ namespace darts_hub.control
             mainPanel.Children.Add(betaNotice);
             
              System.Diagnostics.Debug.WriteLine($"=== CREATE NEW SETTINGS CONTENT COMPLETE ===");
-             return rootGrid;
+             return mainPanel;
          }
  
         /// <summary>
@@ -425,8 +407,7 @@ namespace darts_hub.control
             {
                 Orientation = Orientation.Vertical,
                 Margin = new Thickness(0, 0, 0, 20),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                MaxWidth = 650 // Ensure header fits within main panel width
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
             var titleBlock = new TextBlock
@@ -436,8 +417,7 @@ namespace darts_hub.control
                 FontWeight = FontWeight.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
                 Margin = new Thickness(0, 0, 0, 10),
-                TextWrapping = TextWrapping.Wrap,
-                MaxWidth = 650
+                TextWrapping = TextWrapping.Wrap
             };
 
             var subtitleBlock = new TextBlock
@@ -447,8 +427,7 @@ namespace darts_hub.control
                 FontStyle = FontStyle.Italic,
                 Foreground = new SolidColorBrush(Color.FromRgb(153, 153, 153)),
                 Margin = new Thickness(0, 0, 0, 10),
-                TextWrapping = TextWrapping.Wrap,
-                MaxWidth = 650
+                TextWrapping = TextWrapping.Wrap
             };
 
             headerPanel.Children.Add(titleBlock);
@@ -465,8 +444,7 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
                 Margin = new Thickness(0, 0, 0, 15),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                MaxWidth = 650
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
             var contentPanel = new StackPanel();
@@ -481,10 +459,9 @@ namespace darts_hub.control
                 TextWrapping = TextWrapping.Wrap
             };
 
-            var buttonsPanel = new StackPanel
+            var buttonsPanel = new WrapPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 10,
                 HorizontalAlignment = HorizontalAlignment.Left
             };
 
@@ -497,9 +474,9 @@ namespace darts_hub.control
                 Foreground = Brushes.White,
                 BorderThickness = new Thickness(0),
                 Padding = new Thickness(15, 8),
+                Margin = new Thickness(0, 0, 8, 8),
                 CornerRadius = new CornerRadius(5),
-                FontWeight = FontWeight.Bold,
-                MinWidth = 120
+                FontWeight = FontWeight.Bold
             };
 
             var restartButton = new Button
@@ -509,10 +486,10 @@ namespace darts_hub.control
                 Foreground = new SolidColorBrush(Color.FromRgb(33, 37, 41)),
                 BorderThickness = new Thickness(0),
                 Padding = new Thickness(15, 8),
+                Margin = new Thickness(0, 0, 8, 8),
                 CornerRadius = new CornerRadius(5),
                 FontWeight = FontWeight.Bold,
-                IsEnabled = app.AppRunningState,
-                MinWidth = 120
+                IsEnabled = app.AppRunningState
             };
 
             Button? changelogButton = null;
@@ -525,9 +502,9 @@ namespace darts_hub.control
                     Foreground = Brushes.White,
                     BorderThickness = new Thickness(0),
                     Padding = new Thickness(15, 8),
+                    Margin = new Thickness(0, 0, 8, 8),
                     CornerRadius = new CornerRadius(5),
-                    FontWeight = FontWeight.Bold,
-                    MinWidth = 120
+                    FontWeight = FontWeight.Bold
                 };
 
                 changelogButton.Click += async (s, e) =>
@@ -630,9 +607,9 @@ namespace darts_hub.control
                     Foreground = Brushes.White,
                     BorderThickness = new Thickness(0),
                     Padding = new Thickness(15, 8),
+                    Margin = new Thickness(0, 0, 8, 8),
                     CornerRadius = new CornerRadius(5),
-                    FontWeight = FontWeight.Bold,
-                    MinWidth = 120
+                    FontWeight = FontWeight.Bold
                 };
 
                 helpButton.Click += (s, e) =>
@@ -663,7 +640,7 @@ namespace darts_hub.control
             // Add event handlers for the buttons
             startStopButton.Click += (s, e) =>
             {
-                // ⭐ Prevent multiple clicks
+                // ? Prevent multiple clicks
                 if (startStopButton.Tag?.ToString() == "processing") return;
                 startStopButton.Tag = "processing";
                 var originalIsEnabled = startStopButton.IsEnabled;
@@ -700,7 +677,7 @@ namespace darts_hub.control
 
             restartButton.Click += (s, e) =>
             {
-                // ⭐ Prevent multiple clicks
+                // ? Prevent multiple clicks
                 if (restartButton.Tag?.ToString() == "processing") return;
                 restartButton.Tag = "processing";
                 var originalIsEnabled = restartButton.IsEnabled;
@@ -733,8 +710,30 @@ namespace darts_hub.control
                 }
             };
 
+            var consoleButton = new Button
+            {
+                Content = "\uD83D\uDCBB Console",
+                Background = new SolidColorBrush(Color.FromRgb(85, 85, 88)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(15, 8),
+                Margin = new Thickness(0, 0, 8, 8),
+                CornerRadius = new CornerRadius(5),
+                FontWeight = FontWeight.Bold
+            };
+
+            consoleButton.Click += (s, e) =>
+            {
+                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                    && desktop.MainWindow is MainWindow mw)
+                {
+                    mw.ShowConsoleForApp(app);
+                }
+            };
+
             buttonsPanel.Children.Add(startStopButton);
             buttonsPanel.Children.Add(restartButton);
+            buttonsPanel.Children.Add(consoleButton);
             if (changelogButton != null)
             {
                 buttonsPanel.Children.Add(changelogButton);
@@ -755,8 +754,7 @@ namespace darts_hub.control
         {
             var mainPanel = new StackPanel
             {
-                HorizontalAlignment = HorizontalAlignment.Left,
-                MaxWidth = 650
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
             // Get the license manager for feature gating
@@ -770,7 +768,6 @@ namespace darts_hub.control
             // Get configured and required parameters grouped by section
             var configuredParams = app.Configuration.Arguments
                 .Where(arg => !arg.IsRuntimeArgument && (arg.Required || arg.IsValueChanged || !string.IsNullOrEmpty(arg.Value)))
-                .Where(arg => licenseManager == null || licenseManager.IsArgumentAccessible(arg))
                 .GroupBy(arg => arg.Section ?? "General")
                 .OrderBy(group => group.Key)
                 .ToList();
@@ -780,7 +777,7 @@ namespace darts_hub.control
                 // Create a section for each group
                 foreach (var sectionGroup in configuredParams)
                 {
-                    var sectionPanel = CreateSectionPanel(sectionGroup.Key, sectionGroup.ToList(), app, saveCallback);
+                    var sectionPanel = CreateSectionPanel(sectionGroup.Key, sectionGroup.ToList(), app, saveCallback, licenseManager);
                     mainPanel.Children.Add(sectionPanel);
                 }
             }
@@ -788,12 +785,11 @@ namespace darts_hub.control
             {
                 var configPanel = new Border
                 {
-                    Background = new SolidColorBrush(Color.FromArgb(50, 123, 39, 174)),
+                    Background = new SolidColorBrush(Color.FromArgb(50, 30, 90, 180)),
                     CornerRadius = new CornerRadius(8),
                     Padding = new Thickness(15),
                     Margin = new Thickness(0, 0, 0, 15),
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    MaxWidth = 650
+                    HorizontalAlignment = HorizontalAlignment.Stretch
                 };
 
                 var contentPanel = new StackPanel();
@@ -826,16 +822,15 @@ namespace darts_hub.control
             return mainPanel;
         }
 
-        private static Control CreateSectionPanel(string sectionName, List<Argument> parameters, AppBase app, Action? saveCallback = null)
+        private static Control CreateSectionPanel(string sectionName, List<Argument> parameters, AppBase app, Action? saveCallback = null, LicenseManager? licenseManager = null)
         {
             var sectionPanel = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(50, 123, 39, 174)),
+                Background = new SolidColorBrush(Color.FromArgb(50, 30, 90, 180)),
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
                 Margin = new Thickness(0, 0, 0, 15),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                MaxWidth = 650
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
             var contentPanel = new StackPanel();
@@ -862,6 +857,12 @@ namespace darts_hub.control
             // Add each parameter in this section
             foreach (var param in sortedParams)
             {
+                if (licenseManager != null && !licenseManager.IsArgumentAccessible(param))
+                {
+                    contentPanel.Children.Add(UI.LockedArgumentHelper.CreateLockedArgumentPanel(param));
+                    continue;
+                }
+
                 var paramPanel = CreateParameterDisplayPanel(param, app, contentPanel, saveCallback);
                 contentPanel.Children.Add(paramPanel);
             }
@@ -874,11 +875,11 @@ namespace darts_hub.control
         {
             var paramPanel = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(30, 255, 255, 255)),
+                Background = new SolidColorBrush(Color.FromArgb(30, 80, 140, 220)),
                 CornerRadius = new CornerRadius(5),
                 Padding = new Thickness(10),
                 Margin = new Thickness(0, 5, 0, 0),
-                Width = 550 // Fixed width for consistency
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
             var grid = new Grid();
@@ -1017,7 +1018,7 @@ namespace darts_hub.control
 
                 removeButton.Click += (sender, e) =>
                 {
-                    // ⭐ Prevent multiple clicks
+                    // ? Prevent multiple clicks
                     if (removeButton.Tag?.ToString() == "processing") return;
                     removeButton.Tag = "processing";
                     removeButton.IsEnabled = false;
@@ -1541,8 +1542,7 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
                 Margin = new Thickness(0, 0, 0, 15),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                MaxWidth = 650
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
             var contentPanel = new StackPanel();
@@ -1570,7 +1570,6 @@ namespace darts_hub.control
             // Get available parameters (not configured and not runtime) grouped by section
             var availableParamsBySection = app.Configuration.Arguments
                 .Where(arg => !arg.IsRuntimeArgument && !arg.Required && string.IsNullOrEmpty(arg.Value) && !arg.IsValueChanged)
-                .Where(arg => licenseManager == null || licenseManager.IsArgumentAccessible(arg))
                 .GroupBy(arg => arg.Section ?? "General")
                 .OrderBy(group => group.Key)
                 .ToList();
@@ -1583,7 +1582,7 @@ namespace darts_hub.control
                     var sectionParams = sectionGroup.OrderBy(arg => arg.NameHuman ?? arg.Name).ToList();
                     if (sectionParams.Any())
                     {
-                        var sectionDropdownPanel = CreateSectionDropdownPanel(sectionGroup.Key, sectionParams, app, mainPanel, saveCallback);
+                        var sectionDropdownPanel = CreateSectionDropdownPanel(sectionGroup.Key, sectionParams, app, mainPanel, saveCallback, licenseManager);
                         contentPanel.Children.Add(sectionDropdownPanel);
                     }
                 }
@@ -1604,7 +1603,7 @@ namespace darts_hub.control
             return addPanel;
         }
 
-        private static Control CreateSectionDropdownPanel(string sectionName, List<Argument> availableParams, AppBase app, StackPanel mainPanel, Action? saveCallback = null)
+        private static Control CreateSectionDropdownPanel(string sectionName, List<Argument> availableParams, AppBase app, StackPanel mainPanel, Action? saveCallback = null, LicenseManager? licenseManager = null)
         {
             var sectionPanel = new StackPanel
             {
@@ -1643,11 +1642,16 @@ namespace darts_hub.control
 
             foreach (var param in availableParams)
             {
+                bool isLocked = licenseManager != null && !licenseManager.IsArgumentAccessible(param);
                 var item = new ComboBoxItem
                 {
-                    Content = param.NameHuman ?? param.Name,
+                    Content = isLocked
+                        ? "\U0001F512 " + (param.NameHuman ?? param.Name) + " (license required)"
+                        : param.NameHuman ?? param.Name,
                     Tag = param,
-                    Foreground = Brushes.White
+                    Foreground = isLocked
+                        ? new SolidColorBrush(Color.FromRgb(150, 150, 150))
+                        : Brushes.White
                 };
                 paramDropdown.Items.Add(item);
             }
@@ -1671,7 +1675,7 @@ namespace darts_hub.control
 
             addButton.Click += (s, e) =>
             {
-                // ⭐ Prevent multiple clicks
+                // ? Prevent multiple clicks
                 if (addButton.Tag?.ToString() == "processing") return;
                 addButton.Tag = "processing";
                 addButton.IsEnabled = false;
@@ -1965,12 +1969,11 @@ namespace darts_hub.control
         {
             var configPanel = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(50, 123, 39, 174)),
+                Background = new SolidColorBrush(Color.FromArgb(50, 30, 90, 180)),
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
                 Margin = new Thickness(0, 0, 0, 15),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                MaxWidth = 650
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
             var contentPanel = new StackPanel();
@@ -2014,8 +2017,7 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
                 Margin = new Thickness(0, 15, 0, 0),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                MaxWidth = 650
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
             var noticeText = new TextBlock
@@ -2052,8 +2054,7 @@ namespace darts_hub.control
                     CornerRadius = new CornerRadius(8),
                     Padding = new Thickness(15),
                     Margin = new Thickness(0, 0, 0, 15),
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    MaxWidth = 650
+                    HorizontalAlignment = HorizontalAlignment.Stretch
                 };
 
                 var readOnlyContent = new StackPanel();
@@ -2102,8 +2103,7 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
                 Margin = new Thickness(0, 0, 0, 15),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                MaxWidth = 650
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
             var contentPanel = new StackPanel();
@@ -2229,7 +2229,7 @@ namespace darts_hub.control
 
             resetButton.Click += (s, e) =>
             {
-                // ⭐ Prevent multiple clicks
+                // ? Prevent multiple clicks
                 if (resetButton.Tag?.ToString() == "processing") return;
                 resetButton.Tag = "processing";
                 resetButton.IsEnabled = false;
@@ -2285,8 +2285,7 @@ namespace darts_hub.control
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
                 Margin = new Thickness(0, 0, 0, 15),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                MaxWidth = 650
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
             var contentPanel = new StackPanel();

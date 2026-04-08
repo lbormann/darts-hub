@@ -161,61 +161,38 @@
 										Margin="0,0,0,0">
 										<Image Width="48" Height="48" Source="/Assets/discord.png"/>
 									</Button>
+									</StackPanel>
 								</StackPanel>
-							</StackPanel>
-							<StackPanel Margin="10,10,50,10" Spacing="5" MaxWidth="450">
-								<TextBlock Text="Settings"
-										   FontSize="16"
-										   FontWeight="Bold"
-										   HorizontalAlignment="Left"
-										   TextWrapping="Wrap"/>
-								
-								<CheckBox x:Name="AboutCheckBoxSkipUpdateConfirmation"
-										  Content="Skip update confirmation"
-										  HorizontalAlignment="Left"
-										  Margin="0,0,0,10"
-										  Foreground="White"
-										  Checked="AboutCheckBoxSkipUpdateConfirmationChanged"
-										  Unchecked="AboutCheckBoxSkipUpdateConfirmationChanged"/>
-								
-								<CheckBox x:Name="AboutCheckBoxNewSettingsMode"
-										  Content="Enable new settings content mode (Beta)"
-										  HorizontalAlignment="Left"
-										  Margin="0,0,0,20"
-										  Foreground="White"
-										  Checked="AboutCheckBoxNewSettingsModeChanged"
-										  Unchecked="AboutCheckBoxNewSettingsModeChanged"/>
-
-								
-								<Button x:Name="Robbel3DConfigButton"
-										Content="&#x1F680; Robbel3D One-Click Setup"
-										Padding="15,10"
-										Background="#FF28A745"
-										BorderBrush="#FF1E7E34"
-										BorderThickness="1"
-										CornerRadius="5"
-										Foreground="White"
-										FontWeight="Bold"
-										HorizontalAlignment="Left"
-										Margin="0,0,0,10"
-										Click="Robbel3DConfigButton_Click"
-										ToolTip.Tip="Configure WLED and Caller with optimized Robbel3D presets"
-										IsVisible="False"/>
-							</StackPanel>
-							<StackPanel Margin="10,10,50,10" Spacing="5" MaxWidth="450">
-								<TextBlock Text="Information"
-										   FontSize="16"
-										   FontWeight="Bold"
-										   HorizontalAlignment="Left"
-										   TextWrapping="Wrap"/>
-								<StackPanel Orientation="Horizontal">
-									<Label Content="Version: " Margin="0,0,5,0" Foreground="White" FontWeight="Bold" FontSize="12"/>
-									<Label x:Name="AboutAppVersion" Content="v0.0.0" FontSize="12" Foreground="White"/>
+									<StackPanel Margin="10,10,50,10" Spacing="5" MaxWidth="450">
+										<Button x:Name="Robbel3DConfigButton"
+												Content="&#x1F680; Robbel3D One-Click Setup"
+												Padding="15,10"
+												Background="#FF28A745"
+												BorderBrush="#FF1E7E34"
+												BorderThickness="1"
+												CornerRadius="5"
+												Foreground="White"
+												FontWeight="Bold"
+												HorizontalAlignment="Left"
+												Margin="0,0,0,10"
+												Click="Robbel3DConfigButton_Click"
+												ToolTip.Tip="Configure WLED and Caller with optimized Robbel3D presets"
+												IsVisible="False"/>
+									</StackPanel>
+									<StackPanel Margin="10,10,50,10" Spacing="5" MaxWidth="450">
+										<TextBlock Text="Information"
+											   FontSize="16"
+											   FontWeight="Bold"
+											   HorizontalAlignment="Left"
+											   TextWrapping="Wrap"/>
+									<StackPanel Orientation="Horizontal">
+										<Label Content="Version: " Margin="0,0,5,0" Foreground="White" FontWeight="Bold" FontSize="12"/>
+										<Label x:Name="AboutAppVersion" Content="v0.0.0" FontSize="12" Foreground="White"/>
+									</StackPanel>
 								</StackPanel>
-							</StackPanel>
 
-							<StackPanel Margin="10,50,10,0" Spacing="10">
-								<TextBlock Text="Developers" FontSize="18" FontWeight="Bold" />
+								<StackPanel Margin="10,50,10,0" Spacing="10">
+									<TextBlock Text="Developers" FontSize="18" FontWeight="Bold" />
 
 								<Border Background="#3302b0fa" CornerRadius="10" Padding="10">
 									<DockPanel>
@@ -455,18 +432,17 @@
 					<ScrollViewer Grid.Row="1" 
 								  x:Name="NewSettingsScrollViewer"
 								  VerticalScrollBarVisibility="Auto" 
-								  HorizontalScrollBarVisibility="Auto"
-								  Background="Transparent"
-								  Padding="20,0,0,0">
-						<StackPanel x:Name="NewSettingsContent">
-							<TextBlock Text="Enhanced settings will appear here..." 
-									   Foreground="#FF999999" 
-									   FontSize="16" 
-									   HorizontalAlignment="Center" 
-									   VerticalAlignment="Center" 
-									   Margin="20"/>
-						</StackPanel>
-					</ScrollViewer>
+								  HorizontalScrollBarVisibility="Disabled"
+								  Background="Transparent">
+							<StackPanel x:Name="NewSettingsContent">
+								<TextBlock Text="Enhanced settings will appear here..." 
+										   Foreground="#FF999999" 
+										   FontSize="16" 
+										   HorizontalAlignment="Center" 
+										   VerticalAlignment="Center" 
+										   Margin="20"/>
+							</StackPanel>
+						</ScrollViewer>
 				</Grid>
 			</Border>
 		</Grid>
@@ -571,6 +547,24 @@
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<Image Width="18" Height="18" Source="/Assets/changelog.png" VerticalAlignment="Center"/>
 							<TextBlock Text="Changelog" FontSize="14" VerticalAlignment="Center"/>
+						</StackPanel>
+					</Button>
+					<Border Height="1" Background="#FF3A3A3C" Margin="12,6"/>
+					<Button x:Name="SidebarAppSettingsButton"
+							HorizontalAlignment="Stretch"
+							HorizontalContentAlignment="Left"
+							Background="Transparent"
+							Foreground="White"
+							BorderThickness="0"
+							CornerRadius="4"
+							Padding="16,10"
+							Margin="6,2"
+							FontSize="14"
+							Click="SidebarAppSettingsButton_Click"
+							ToolTip.Tip="Configure application-wide settings">
+						<StackPanel Orientation="Horizontal" Spacing="12">
+							<Image Width="18" Height="18" Source="/Assets/configuration.png" VerticalAlignment="Center"/>
+							<TextBlock Text="Settings" FontSize="14" VerticalAlignment="Center"/>
 						</StackPanel>
 					</Button>
 					<Button x:Name="SidebarSetupWizardButton"

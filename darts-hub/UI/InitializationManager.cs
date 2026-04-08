@@ -88,28 +88,14 @@ namespace darts_hub.UI
                 {
                     aboutAppVersion.Content = Updater.version;
                 }
-                
-                // Set the skip update confirmation checkbox
-                var aboutCheckBoxSkipUpdateConfirmation = mainWindow.FindControl<CheckBox>("AboutCheckBoxSkipUpdateConfirmation");
-                if (aboutCheckBoxSkipUpdateConfirmation != null)
-                {
-                    aboutCheckBoxSkipUpdateConfirmation.IsChecked = configurator.Settings.SkipUpdateConfirmation;
-                }
-                
-                // Set the new settings mode checkbox
-                var aboutCheckBoxNewSettingsMode = mainWindow.FindControl<CheckBox>("AboutCheckBoxNewSettingsMode");
-                if (aboutCheckBoxNewSettingsMode != null)
-                {
-                    aboutCheckBoxNewSettingsMode.IsChecked = configurator.Settings.NewSettingsMode;
-                }
-                
+
                 // Set Robbel3D Configuration Button visibility
                 var robbel3DConfigButton = mainWindow.FindControl<Button>("Robbel3DConfigButton");
                 if (robbel3DConfigButton != null)
                 {
                     robbel3DConfigButton.IsVisible = configurator.Settings.ShowRobbel3DSetup;
                 }
-                
+
                 // Show the About content by default
                 var contentModeManager = mainWindow.GetContentModeManager();
                 contentModeManager.ShowAboutMode();

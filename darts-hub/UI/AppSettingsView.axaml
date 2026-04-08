@@ -1,0 +1,94 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="darts_hub.UI.AppSettingsView">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="20" MaxWidth="550" HorizontalAlignment="Left" Margin="20">
+
+            <!-- Header -->
+            <TextBlock Text="Application Settings"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+
+            <TextBlock Text="Configure general application behavior, update preferences, and UI options."
+                       TextWrapping="Wrap"
+                       Foreground="#FFCCCCCC"
+                       FontSize="14"/>
+
+            <!-- Update Settings -->
+            <Border Background="#33FFFFFF" CornerRadius="8" Padding="15">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Updates"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="White"/>
+
+                    <CheckBox x:Name="SkipUpdateConfirmationCheckBox"
+                              Content="Skip update confirmation"
+                              Foreground="White"
+                              FontSize="13"/>
+
+                    <TextBlock Text="When enabled, updates will be installed automatically without asking for confirmation."
+                               TextWrapping="Wrap"
+                               Foreground="#FF999999"
+                               FontSize="12"
+                               Margin="28,0,0,0"/>
+
+                    <CheckBox x:Name="BetaTesterCheckBox"
+                              Content="Enable beta updates"
+                              Foreground="White"
+                              FontSize="13"/>
+
+                    <TextBlock Text="Receive pre-release versions that may contain new features but could be less stable."
+                               TextWrapping="Wrap"
+                               Foreground="#FF999999"
+                               FontSize="12"
+                               Margin="28,0,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- UI Settings -->
+            <Border Background="#33FFFFFF" CornerRadius="8" Padding="15">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="User Interface"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="White"/>
+
+                    <CheckBox x:Name="NewSettingsModeCheckBox"
+                              Content="Enable enhanced settings mode (Beta)"
+                              Foreground="White"
+                              FontSize="13"/>
+
+                    <TextBlock Text="Uses an improved layout for app configuration pages with better organization and more details."
+                               TextWrapping="Wrap"
+                               Foreground="#FF999999"
+                               FontSize="12"
+                               Margin="28,0,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- App Information -->
+            <Border Background="#33FFFFFF" CornerRadius="8" Padding="15">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Information"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="White"/>
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <TextBlock Text="Version:"
+                                   Foreground="White"
+                                   FontWeight="Bold"
+                                   FontSize="13"/>
+                        <TextBlock x:Name="AppVersionText"
+                                   Text="v0.0.0"
+                                   Foreground="#FFCCCCCC"
+                                   FontSize="13"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

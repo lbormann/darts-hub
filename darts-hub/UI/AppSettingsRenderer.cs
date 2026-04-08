@@ -36,14 +36,17 @@ namespace darts_hub.UI
         public async Task RenderAppSettings(AppBase app)
         {
             var settingsPanel = mainWindow.FindControl<StackPanel>("SettingsPanel");
-            var newSettingsContent = mainWindow.FindControl<StackPanel>("NewSettingsContent");
-            
+            var newSettingsScrollViewer = mainWindow.FindControl<ScrollViewer>("NewSettingsScrollViewer");
+
             settingsPanel?.Children.Clear();
-            newSettingsContent?.Children.Clear();
-            
+            if (newSettingsScrollViewer != null)
+            {
+                newSettingsScrollViewer.Content = null;
+            }
+
             // Check if this is a custom app
             bool isCustomApp = app.Name.StartsWith("custom-") || app.Name.StartsWith("custom-url-");
-            
+
             if (!app.IsConfigurable())
             {
                 var message = new TextBlock
@@ -59,7 +62,8 @@ namespace darts_hub.UI
                 {
                     var contentModeManager = mainWindow.GetContentModeManager();
                     contentModeManager.ShowNewSettingsMode();
-                    newSettingsContent?.Children.Add(message);
+                    if (newSettingsScrollViewer != null)
+                        newSettingsScrollViewer.Content = message;
                 }
                 else
                 {
@@ -85,28 +89,16 @@ namespace darts_hub.UI
         {
             var contentModeManager = mainWindow.GetContentModeManager();
             contentModeManager.ShowNewSettingsMode();
-            
+
             // Load new settings content with save callback and selected profile
             var selectedProfile = mainWindow.SelectedProfile;
             var newSettingsContent = await NewSettingsContentProvider.CreateNewSettingsContent(app, () => mainWindow.Save(), selectedProfile);
-            
-            // Clear existing content and add new content
-            var newSettingsPanel = mainWindow.FindControl<StackPanel>("NewSettingsContent");
-            newSettingsPanel?.Children.Clear();
-            
-            if (newSettingsContent is StackPanel newPanel)
+
+            // Set content directly on the ScrollViewer so it gets proper width constraints
+            var scrollViewer = mainWindow.FindControl<ScrollViewer>("NewSettingsScrollViewer");
+            if (scrollViewer != null)
             {
-                // Copy children from the created content to our NewSettingsContent panel
-                while (newPanel.Children.Count > 0)
-                {
-                    var child = newPanel.Children[0];
-                    newPanel.Children.RemoveAt(0);
-                    newSettingsPanel?.Children.Add(child);
-                }
-            }
-            else
-            {
-                newSettingsPanel?.Children.Add(newSettingsContent);
+                scrollViewer.Content = newSettingsContent;
             }
         }
 
@@ -406,6 +398,10 @@ namespace darts_hub.UI
             var restartButton = CreateRestartButton(app);
             controlButtonPanel.Children.Add(restartButton);
 
+            // Console Button
+            var consoleButton = CreateConsoleButton(app);
+            controlButtonPanel.Children.Add(consoleButton);
+
             return controlButtonPanel;
         }
 
@@ -460,6 +456,28 @@ namespace darts_hub.UI
             };
 
             return restartButton;
+        }
+
+        private Button CreateConsoleButton(AppBase app)
+        {
+            var consoleButton = new Button
+            {
+                Content = "\uD83D\uDCBB Console",
+                Background = new SolidColorBrush(Color.FromRgb(85, 85, 88)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(12, 6),
+                Margin = new Thickness(5, 0),
+                CornerRadius = new CornerRadius(3),
+                FontWeight = FontWeight.Bold
+            };
+
+            consoleButton.Click += (s, e) =>
+            {
+                mainWindow.ShowConsoleForApp(app);
+            };
+
+            return consoleButton;
         }
 
         private StackPanel CreateHelpButtons(AppBase app)
@@ -554,7 +572,14 @@ namespace darts_hub.UI
                 foreach (var argument in section)
                 {
                     if (argument.IsRuntimeArgument) continue;
-                    if (!licenseManager.IsArgumentAccessible(argument)) continue;
+
+                    if (!licenseManager.IsArgumentAccessible(argument))
+                    {
+                        var lockedPanel = LockedArgumentHelper.CreateLockedArgumentPanel(argument);
+                        lockedPanel.Margin = new Thickness(0, 15);
+                        sectionPanel.Children.Add(lockedPanel);
+                        continue;
+                    }
 
                     var argumentControl = await CreateArgumentControl(argument);
                     if (argumentControl != null)
