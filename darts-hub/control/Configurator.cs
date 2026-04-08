@@ -15,6 +15,7 @@ namespace darts_hub.control
         public bool WizardCompleted { get; set; }
         public bool ShowRobbel3DSetup { get; set; }
         public string LicenseKey { get; set; } = string.Empty;
+        public int SplashCountdownSeconds { get; set; } = 1;
 
         // Window layout persistence
         public double WindowWidth { get; set; }
@@ -88,6 +89,13 @@ namespace darts_hub.control
                 Settings.WizardCompleted = false;
                 settingsUpdated = true;
             }
+
+            // Ensure SplashCountdownSeconds property exists (for backward compatibility)
+            if (parsedSettings.Property(nameof(AppConfiguration.SplashCountdownSeconds), StringComparison.OrdinalIgnoreCase) == null)
+            {
+                Settings.SplashCountdownSeconds = 1;
+                settingsUpdated = true;
+            }
             
             // Force Robbel3D setup flag to true and request restart if it was explicitly false
             if (!Settings.ShowRobbel3DSetup)
@@ -117,6 +125,7 @@ namespace darts_hub.control
                 NewSettingsMode = true,
                 WizardCompleted = false,
                 ShowRobbel3DSetup = true,
+                SplashCountdownSeconds = 1,
                 WindowWidth = 1000,
                 WindowHeight = 800,
                 WindowX = double.NaN,

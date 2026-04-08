@@ -1,5 +1,5 @@
 ﻿## v1.4.3
-### New Features
+### UI Improvements
     - UI: Add dedicated application settings page (accessible via sidebar menu)
     - UI: Move Setup Wizard button from About page to sidebar menu
     - UI: Add Console quick action button to jump directly to an extension's console output
@@ -7,6 +7,12 @@
     - UI: New settings panels are now fully responsive to window width
     - UI: Quick action buttons wrap to next line on narrow windows
     - UI: Argument box backgrounds changed from purple to blue tones
+### New Features
+    - Startup splashscreen to give the pc more time to initilize Internet. 
+        - time is configurable in settings 1sec is default. 0 means no splashscreen
+
+
+
 
 ## v1.4.2
 ### New Features

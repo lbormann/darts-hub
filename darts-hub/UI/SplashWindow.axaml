@@ -1,0 +1,125 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="darts_hub.UI.SplashWindow"
+        Title="Darts-Hub"
+        Icon="/Assets/favicon.ico"
+        Width="480"
+        Height="320"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        SystemDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        ExtendClientAreaToDecorationsHint="True">
+
+    <!-- Outer border: sharp clip, strong rounding -->
+    <Border CornerRadius="22"
+            ClipToBounds="True">
+
+        <Grid>
+            <!-- Background image inside the clip -->
+            <Border CornerRadius="22">
+                <Border.Background>
+                    <ImageBrush Source="/Assets/darthub_bg.png"
+                                Stretch="UniformToFill"
+                                AlignmentX="Center"
+                                AlignmentY="Center"/>
+                </Border.Background>
+            </Border>
+
+            <!-- Dark overlay for readability -->
+            <Border Background="#DD1A1A1E" CornerRadius="22"/>
+
+            <!-- Subtle border ring on top -->
+            <Border CornerRadius="22"
+                    BorderBrush="#55007ACC"
+                    BorderThickness="1.5"/>
+
+            <StackPanel VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        Spacing="24">
+
+                <!-- App Title with glow effect -->
+                <Panel HorizontalAlignment="Center">
+                    <!-- Glow layer -->
+                    <TextBlock Text="Darts-Hub"
+                               FontSize="40"
+                               FontWeight="ExtraBold"
+                               Foreground="#33007ACC"
+                               HorizontalAlignment="Center">
+                        <TextBlock.Effect>
+                            <BlurEffect Radius="16"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
+                    <!-- Crisp layer -->
+                    <TextBlock Text="Darts-Hub"
+                               FontSize="40"
+                               FontWeight="ExtraBold"
+                               Foreground="White"
+                               HorizontalAlignment="Center"/>
+                </Panel>
+
+                <!-- Countdown Ring -->
+                <Grid Width="110" Height="110" HorizontalAlignment="Center">
+                    <!-- Outer glow ring -->
+                    <Border Width="110" Height="110"
+                            CornerRadius="55"
+                            Background="Transparent"
+                            BorderBrush="#22007ACC"
+                            BorderThickness="8"
+                            Opacity="0.5"/>
+                    <!-- Background ring track -->
+                    <Border Width="110" Height="110"
+                            CornerRadius="55"
+                            BorderBrush="#22FFFFFF"
+                            BorderThickness="5"
+                            Background="Transparent"/>
+
+                    <!-- Progress arc (animated via code-behind) -->
+                    <Canvas x:Name="ArcCanvas"
+                            Width="110" Height="110"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"/>
+
+                    <!-- Countdown number container (scaled for heartbeat) -->
+                    <Panel x:Name="CountdownPanel"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center">
+                        <!-- Number glow -->
+                        <TextBlock x:Name="CountdownGlow"
+                                   Text="3"
+                                   FontSize="42"
+                                   FontWeight="ExtraBold"
+                                   Foreground="#55007ACC"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center">
+                            <TextBlock.Effect>
+                                <BlurEffect Radius="12"/>
+                            </TextBlock.Effect>
+                        </TextBlock>
+                        <!-- Number crisp -->
+                        <TextBlock x:Name="CountdownText"
+                                   Text="3"
+                                   FontSize="42"
+                                   FontWeight="ExtraBold"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Panel>
+                </Grid>
+
+                <!-- Status text -->
+                <TextBlock x:Name="StatusText"
+                           Text="Starting in..."
+                           FontSize="15"
+                           FontWeight="SemiBold"
+                           Foreground="#BBFFFFFF"
+                           HorizontalAlignment="Center"/>
+
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

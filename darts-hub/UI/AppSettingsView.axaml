@@ -69,6 +69,35 @@
                 </StackPanel>
             </Border>
 
+            <!-- Startup Settings -->
+            <Border Background="#33FFFFFF" CornerRadius="8" Padding="15">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Startup"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="White"/>
+
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Splash screen countdown (seconds)"
+                                   Foreground="White"
+                                   FontSize="13"/>
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <NumericUpDown x:Name="SplashCountdownNumeric"
+                                           Minimum="0"
+                                           Maximum="300"
+                                           Increment="1"
+                                           Width="120"
+                                           FontSize="13"
+                                           FormatString="0"/>
+                        </StackPanel>
+                        <TextBlock Text="Duration of the countdown splash screen shown before the application starts (0-300s / max 5 min). Set to 0 to disable."
+                                   TextWrapping="Wrap"
+                                   Foreground="#FF999999"
+                                   FontSize="12"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- App Information -->
             <Border Background="#33FFFFFF" CornerRadius="8" Padding="15">
                 <StackPanel Spacing="8">

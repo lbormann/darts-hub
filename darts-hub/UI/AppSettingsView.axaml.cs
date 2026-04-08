@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using darts_hub.control;
+using System;
 
 namespace darts_hub.UI
 {
@@ -34,6 +35,7 @@ namespace darts_hub.UI
             var betaTester = this.FindControl<CheckBox>("BetaTesterCheckBox");
             var newSettings = this.FindControl<CheckBox>("NewSettingsModeCheckBox");
             var version = this.FindControl<TextBlock>("AppVersionText");
+            var splashCountdown = this.FindControl<NumericUpDown>("SplashCountdownNumeric");
 
             if (skipUpdate != null)
             {
@@ -54,6 +56,12 @@ namespace darts_hub.UI
                 newSettings.IsChecked = configurator.Settings.NewSettingsMode;
                 newSettings.Checked += OnNewSettingsModeChanged;
                 newSettings.Unchecked += OnNewSettingsModeChanged;
+            }
+
+            if (splashCountdown != null)
+            {
+                splashCountdown.Value = configurator.Settings.SplashCountdownSeconds;
+                splashCountdown.ValueChanged += OnSplashCountdownChanged;
             }
 
             if (version != null)
@@ -84,5 +92,11 @@ namespace darts_hub.UI
             configurator.SaveSettings();
         }
 
-            }
+        private void OnSplashCountdownChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+        {
+            if (configurator == null || sender is not NumericUpDown nud) return;
+            configurator.Settings.SplashCountdownSeconds = (int)(nud.Value ?? 1);
+            configurator.SaveSettings();
         }
+    }
+}
