@@ -1,4 +1,14 @@
-﻿## v1.4.2
+﻿## v1.4.3
+### New Features
+    - UI: Add dedicated application settings page (accessible via sidebar menu)
+    - UI: Move Setup Wizard button from About page to sidebar menu
+    - UI: Add Console quick action button to jump directly to an extension's console output
+    - UI: License-gated arguments now shown as locked with hint instead of hidden
+    - UI: New settings panels are now fully responsive to window width
+    - UI: Quick action buttons wrap to next line on narrow windows
+    - UI: Argument box backgrounds changed from purple to blue tones
+
+## v1.4.2
 ### New Features
     - Pixelit: Posibility to use preconfigured Templates
     - Pixelit: Easy configuration possibilitys 
