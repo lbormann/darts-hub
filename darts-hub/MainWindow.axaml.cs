@@ -324,7 +324,6 @@ namespace darts_hub
         private void AboutCheckBoxSkipUpdateConfirmationChanged(object sender, RoutedEventArgs e) => buttonEventManager.HandleSkipUpdateConfirmationChanged(sender, e);
         private void AboutCheckBoxNewSettingsModeChanged(object sender, RoutedEventArgs e) => buttonEventManager.HandleNewSettingsModeChanged(sender, e);
         private void ToTopButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleToTopButton(sender, e);
-        private async void SetupWizardButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleSetupWizardButton(sender, e);
         private void ConsoleClearButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleConsoleClearButton(sender, e);
         private void ConsoleClearCurrentButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleConsoleClearCurrentButton(sender, e);
         private async void ConsoleExportButton_Click(object sender, RoutedEventArgs e) => buttonEventManager.HandleConsoleExportButton(sender, e);
@@ -333,6 +332,11 @@ namespace darts_hub
         private async void Robbel3DConfigButton_Click(object sender, RoutedEventArgs e) => await ShowRobbel3DConfiguration();
         private void ButtonSidebarMenu_Click(object sender, RoutedEventArgs e) => ToggleSidebarMenu();
         private void SidebarMenuOverlay_PointerPressed(object? sender, PointerPressedEventArgs e) => CloseSidebarMenu();
+        private async void SidebarSetupWizardButton_Click(object sender, RoutedEventArgs e)
+        {
+            CloseSidebarMenu();
+            await ShowSetupWizard();
+        }
         private void SidebarSettingsButton_Click(object sender, RoutedEventArgs e) => ShowLicenseSettings();
         private void SidebarAboutButton_Click(object sender, RoutedEventArgs e)
         {

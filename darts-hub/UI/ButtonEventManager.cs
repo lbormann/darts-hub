@@ -134,7 +134,7 @@ namespace darts_hub.UI
                     await HandleBitcoinDonation();
                     break;
                 case "AboutDiscord":
-                    VisitHelpPage("https://discord.gg/xt5GHJ5Z3j");
+                    VisitHelpPage("https://discord.gg/aRhqH5WauV");
                     break;
                 case "AboutBug":
                     VisitHelpPage("https://github.com/lbormann/darts-hub/issues");

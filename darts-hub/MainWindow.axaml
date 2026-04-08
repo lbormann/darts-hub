@@ -120,7 +120,7 @@
 
 								<TextBlock TextWrapping="Wrap"
 										   Text="If you like the project, consider leaving a small donation to support development. &#x1F3AF;"
-										   Foreground="Gray"
+										   Foreground="Red"
 										   FontStyle="Italic" />
 
 								<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
@@ -185,20 +185,7 @@
 										  Foreground="White"
 										  Checked="AboutCheckBoxNewSettingsModeChanged"
 										  Unchecked="AboutCheckBoxNewSettingsModeChanged"/>
-								
-								<Button x:Name="SetupWizardButton"
-										Content="&#x1F3AF; Run Setup Wizard"
-										Padding="15,10"
-										Background="#FF007ACC"
-										BorderBrush="#FF005A9E"
-										BorderThickness="1"
-										CornerRadius="5"
-										Foreground="White"
-										FontWeight="Bold"
-										HorizontalAlignment="Left"
-										Margin="0,0,0,10"
-										Click="SetupWizardButton_Click"
-										ToolTip.Tip="Re-run the initial setup wizard to configure your applications"/>
+
 								
 								<Button x:Name="Robbel3DConfigButton"
 										Content="&#x1F680; Robbel3D One-Click Setup"
@@ -237,46 +224,13 @@
 												Margin="0,0,10,0"
 												DockPanel.Dock="Left"
 												ClipToBounds="True">
-											<Image Source="/Assets/wusaaa.jpeg"
-												   Width="48" Height="48"
-												   Stretch="UniformToFill"/>
-										</Border>
-										<StackPanel>
-											<TextBlock Text="Wusaaa" FontWeight="Bold" FontSize="14"/>
-											<TextBlock Text="Lead Developer" FontStyle="Italic" Foreground="Gray"/>
-											<TextBlock Text="Inactive, stopped 2024" FontStyle="Italic" Foreground="Orange"/>
-											<TextBlock Text="GitHub: Ibormann"
-													   Foreground="White"
-													   TextDecorations="Underline"
-													   Cursor="Hand"/>
-										</StackPanel>
-										<StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-											<Button ToolTip.Tip="Contact the Dev"
-													x:Name="AboutContact2"
-													Background="Transparent"
-													BorderThickness="0"
-													Click="AboutButton_Click"
-													Margin="10,0,50,0">
-												<Image Width="24" Height="24" Source="/Assets/contact.png"/>
-											</Button>
-										</StackPanel>
-									</DockPanel>
-								</Border>
-
-								<Border Background="#3302b0fa" CornerRadius="10" Padding="10">
-									<DockPanel>
-										<Border Width="48" Height="48"
-												CornerRadius="24"
-												Margin="0,0,10,0"
-												DockPanel.Dock="Left"
-												ClipToBounds="True">
 											<Image Source="/Assets/I3uLL3t.png"
 												   Width="48" Height="48"
 												   Stretch="UniformToFill"/>
 										</Border>
 										<StackPanel>
 											<TextBlock Text="I3uLL3t" FontWeight="Bold" FontSize="14"/>
-											<TextBlock Text="Co Developer" FontStyle="Italic" Foreground="Gray"/>
+											<TextBlock Text="Developer" FontStyle="Italic" Foreground="Gray"/>
 											<TextBlock Text="Active" FontStyle="Italic" Foreground="#13fa02"/>
 											<TextBlock Text="GitHub: Peschi90"
 													   Foreground="White"
@@ -286,6 +240,38 @@
 										<StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
 											<Button ToolTip.Tip="Contact the Dev"
 													x:Name="AboutContact3"
+													Background="Transparent"
+													BorderThickness="0"
+													Click="AboutButton_Click"
+													Margin="10,0,50,0">
+												<Image Width="24" Height="24" Source="/Assets/contact.png"/>
+											</Button>
+										</StackPanel>
+									</DockPanel>
+								</Border>
+								<Border Background="#3302b0fa" CornerRadius="10" Padding="10">
+									<DockPanel>
+										<Border Width="48" Height="48"
+												CornerRadius="24"
+												Margin="0,0,10,0"
+												DockPanel.Dock="Left"
+												ClipToBounds="True">
+											<Image Source="/Assets/wusaaa.jpeg"
+												   Width="48" Height="48"
+												   Stretch="UniformToFill"/>
+										</Border>
+										<StackPanel>
+											<TextBlock Text="Wusaaa" FontWeight="Bold" FontSize="14"/>
+											<TextBlock Text="Developer" FontStyle="Italic" Foreground="Gray"/>
+											<TextBlock Text="Inactive, stopped 2024" FontStyle="Italic" Foreground="Orange"/>
+											<TextBlock Text="GitHub: Ibormann"
+													   Foreground="White"
+													   TextDecorations="Underline"
+													   Cursor="Hand"/>
+										</StackPanel>
+										<StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+											<Button ToolTip.Tip="Contact the Dev"
+													x:Name="AboutContact2"
 													Background="Transparent"
 													BorderThickness="0"
 													Click="AboutButton_Click"
@@ -585,6 +571,23 @@
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<Image Width="18" Height="18" Source="/Assets/changelog.png" VerticalAlignment="Center"/>
 							<TextBlock Text="Changelog" FontSize="14" VerticalAlignment="Center"/>
+						</StackPanel>
+					</Button>
+					<Button x:Name="SidebarSetupWizardButton"
+							HorizontalAlignment="Stretch"
+							HorizontalContentAlignment="Left"
+							Background="Transparent"
+							Foreground="White"
+							BorderThickness="0"
+							CornerRadius="4"
+							Padding="16,10"
+							Margin="6,2"
+							FontSize="14"
+							Click="SidebarSetupWizardButton_Click"
+							ToolTip.Tip="Re-run the initial setup wizard to configure your applications">
+						<StackPanel Orientation="Horizontal" Spacing="12">
+							<Image Width="18" Height="18" Source="/Assets/darts.png" VerticalAlignment="Center"/>
+							<TextBlock Text="Setup Wizard" FontSize="14" VerticalAlignment="Center"/>
 						</StackPanel>
 					</Button>
 					<Border Height="1" Background="#FF3A3A3C" Margin="12,6"/>
