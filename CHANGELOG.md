@@ -15,6 +15,8 @@
     - Set a specific WLED device to off or set a specific preset when Darts-Hub closes (e.g. when you want to turn off the lights when you are done playing)
         - You can configure it in Darts-Hub settings menu
         - just working if you close DH, not if you power off the pc or if it crashes.
+    - Set a specific WLED device to on or set a specific preset when Darts-Hub starts (e.g. when you want to turn on the lights when you start playing)
+        - You can configure it in Darts-Hub settings menu
 
 
 

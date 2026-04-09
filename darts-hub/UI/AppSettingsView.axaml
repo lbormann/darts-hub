@@ -139,6 +139,35 @@
                 </StackPanel>
             </Border>
 
+            <!-- WLED Start Actions -->
+            <Border Background="#33FFFFFF" CornerRadius="8" Padding="15">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="WLED Start Actions"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="White"/>
+
+                    <TextBlock Text="Control external WLED devices when Darts-Hub starts. You can turn devices on or activate a specific preset."
+                               TextWrapping="Wrap"
+                               Foreground="#FF999999"
+                               FontSize="12"/>
+
+                    <StackPanel x:Name="WledStartDeviceListPanel" Spacing="10"/>
+
+                    <Button x:Name="WledStartAddDeviceButton"
+                            Content="+ Add WLED device"
+                            Padding="12,6"
+                            Background="#FF28A745"
+                            BorderBrush="#FF1E7E34"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Foreground="White"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            HorizontalAlignment="Left"/>
+                </StackPanel>
+            </Border>
+
             <!-- WLED Close Actions -->
             <Border Background="#33FFFFFF" CornerRadius="8" Padding="15">
                 <StackPanel Spacing="12">

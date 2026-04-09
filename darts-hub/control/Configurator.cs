@@ -33,6 +33,9 @@ namespace darts_hub.control
 
         // WLED close actions
         public List<WledDeviceConfig> WledOnCloseDevices { get; set; } = new();
+
+        // WLED start actions
+        public List<WledStartDeviceConfig> WledOnStartDevices { get; set; } = new();
     }
 
 
@@ -121,6 +124,13 @@ namespace darts_hub.control
                 settingsUpdated = true;
             }
 
+            // Ensure WledOnStartDevices property exists (for backward compatibility)
+            if (parsedSettings.Property(nameof(AppConfiguration.WledOnStartDevices), StringComparison.OrdinalIgnoreCase) == null)
+            {
+                Settings.WledOnStartDevices = new List<WledStartDeviceConfig>();
+                settingsUpdated = true;
+            }
+
             // Force Robbel3D setup flag to true and request restart if it was explicitly false
             if (!Settings.ShowRobbel3DSetup)
             {
@@ -158,7 +168,8 @@ namespace darts_hub.control
                 TooltipColumnWidth = 250,
                 UseSpecificMonitor = false,
                 PreferredMonitorIndex = 0,
-                WledOnCloseDevices = new List<WledDeviceConfig>()
+                WledOnCloseDevices = new List<WledDeviceConfig>(),
+                WledOnStartDevices = new List<WledStartDeviceConfig>()
             };
         }
     }

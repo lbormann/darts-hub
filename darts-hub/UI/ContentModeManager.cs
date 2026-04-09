@@ -35,6 +35,7 @@ namespace darts_hub.UI
         public TextBlock? TooltipTitle { get; set; }
         public TextBlock? TooltipDescription { get; set; }
         public ScrollViewer? NewSettingsScrollViewer { get; set; }
+        public Button? ToTopButton { get; set; }
 
         public ContentMode CurrentContentMode => currentContentMode;
 
@@ -81,7 +82,8 @@ namespace darts_hub.UI
         public void ShowConsoleMode()
         {
             currentContentMode = ContentMode.Console;
-            
+
+            HideToTopButton();
             HideTooltipPanel();
             
             // Hide settings, changelog and about
@@ -106,7 +108,8 @@ namespace darts_hub.UI
         public void ShowChangelogMode()
         {
             currentContentMode = ContentMode.Changelog;
-            
+
+            HideToTopButton();
             HideTooltipPanel();
             
             // Hide console panel
@@ -137,7 +140,8 @@ namespace darts_hub.UI
         public void ShowAboutMode()
         {
             currentContentMode = ContentMode.About;
-            
+
+            HideToTopButton();
             ShowTooltipPanel();
             
             // Hide console panel
@@ -304,6 +308,15 @@ namespace darts_hub.UI
                 contentBorder.Background = new SolidColorBrush(Color.FromArgb(242, 30, 30, 35));
                 contentBorder.Width = 750;
                 contentBorder.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+            }
+        }
+
+        private void HideToTopButton()
+        {
+            if (ToTopButton != null)
+            {
+                ToTopButton.IsVisible = false;
+                ToTopButton.Opacity = 0;
             }
         }
 

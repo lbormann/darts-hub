@@ -132,6 +132,7 @@ namespace darts_hub
             contentModeManager.TooltipTitle = TooltipTitle;
             contentModeManager.TooltipDescription = TooltipDescription;
             contentModeManager.NewSettingsScrollViewer = NewSettingsScrollViewer;
+            contentModeManager.ToTopButton = ToTopButton;
         }
 
         private void SetupEventHandlers()
@@ -277,6 +278,7 @@ namespace darts_hub
         {
             try
             {
+                ExecuteWledStartActions();
                 await initializationManager.InitializeApplication();
             }
             catch (ConfigurationException ex)
@@ -306,6 +308,23 @@ namespace darts_hub
             {
                 // Use fire-and-forget for closing events to prevent hanging
                 _ = Task.Run(async () => await RenderMessageBox("", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error));
+            }
+        }
+
+        private void ExecuteWledStartActions()
+        {
+            try
+            {
+                var devices = configurator.Settings.WledOnStartDevices;
+                if (devices == null || devices.Count == 0)
+                    return;
+
+                // Fire-and-forget – don't block startup
+                _ = Task.Run(async () => await control.WledShutdownService.ExecuteStartAllAsync(devices));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MainWindow] WLED start actions failed: {ex.Message}");
             }
         }
 

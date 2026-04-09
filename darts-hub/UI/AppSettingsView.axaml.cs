@@ -78,6 +78,7 @@ namespace darts_hub.UI
             }
 
             InitializeMonitorSettings();
+            InitializeWledStartSettings();
             InitializeWledCloseSettings();
         }
 
@@ -190,6 +191,57 @@ namespace darts_hub.UI
 
         #endregion
 
+        #region WLED Start Settings
+
+        private void InitializeWledStartSettings()
+        {
+            var listPanel = this.FindControl<StackPanel>("WledStartDeviceListPanel");
+            var addButton = this.FindControl<Button>("WledStartAddDeviceButton");
+            if (listPanel == null || addButton == null || configurator == null)
+                return;
+
+            foreach (var device in configurator.Settings.WledOnStartDevices)
+            {
+                listPanel.Children.Add(BuildStartDeviceRow(device, listPanel));
+            }
+
+            addButton.Click += (_, _) =>
+            {
+                var device = new WledStartDeviceConfig();
+                configurator.Settings.WledOnStartDevices.Add(device);
+                listPanel.Children.Add(BuildStartDeviceRow(device, listPanel));
+                SaveWledDevices();
+            };
+        }
+
+        private Border BuildStartDeviceRow(WledStartDeviceConfig device, StackPanel listPanel)
+        {
+            return BuildWledDeviceRow(
+                endpoint: device.Endpoint,
+                hasCachedPresets: device.CachedPresets is { Count: > 0 },
+                cachedPresets: device.CachedPresets,
+                isPresetAction: device.Action == WledStartAction.ActivatePreset,
+                presetId: device.PresetId,
+                actionLabels: new[] { ("Turn on", false), ("Activate preset", true) },
+                onEndpointChanged: ep => { device.Endpoint = ep; SaveWledDevices(); },
+                onActionChanged: isPreset =>
+                {
+                    device.Action = isPreset ? WledStartAction.ActivatePreset : WledStartAction.TurnOn;
+                    SaveWledDevices();
+                },
+                onPresetIdChanged: id => { device.PresetId = id; SaveWledDevices(); },
+                onPresetsLoaded: presets => { device.CachedPresets = new Dictionary<int, string>(presets); SaveWledDevices(); },
+                onRemove: () =>
+                {
+                    configurator!.Settings.WledOnStartDevices.Remove(device);
+                    SaveWledDevices();
+                },
+                listPanelRef: listPanel
+            );
+        }
+
+        #endregion
+
         #region WLED Close Settings
 
         private void InitializeWledCloseSettings()
@@ -199,25 +251,66 @@ namespace darts_hub.UI
             if (listPanel == null || addButton == null || configurator == null)
                 return;
 
-            // Render existing devices
             foreach (var device in configurator.Settings.WledOnCloseDevices)
             {
-                listPanel.Children.Add(BuildDeviceRow(device));
+                listPanel.Children.Add(BuildCloseDeviceRow(device, listPanel));
             }
 
             addButton.Click += (_, _) =>
             {
                 var device = new WledDeviceConfig();
                 configurator.Settings.WledOnCloseDevices.Add(device);
-                listPanel.Children.Add(BuildDeviceRow(device));
+                listPanel.Children.Add(BuildCloseDeviceRow(device, listPanel));
                 SaveWledDevices();
             };
         }
 
+        private Border BuildCloseDeviceRow(WledDeviceConfig device, StackPanel listPanel)
+        {
+            return BuildWledDeviceRow(
+                endpoint: device.Endpoint,
+                hasCachedPresets: device.CachedPresets is { Count: > 0 },
+                cachedPresets: device.CachedPresets,
+                isPresetAction: device.Action == WledCloseAction.ActivatePreset,
+                presetId: device.PresetId,
+                actionLabels: new[] { ("Turn off", false), ("Activate preset", true) },
+                onEndpointChanged: ep => { device.Endpoint = ep; SaveWledDevices(); },
+                onActionChanged: isPreset =>
+                {
+                    device.Action = isPreset ? WledCloseAction.ActivatePreset : WledCloseAction.TurnOff;
+                    SaveWledDevices();
+                },
+                onPresetIdChanged: id => { device.PresetId = id; SaveWledDevices(); },
+                onPresetsLoaded: presets => { device.CachedPresets = new Dictionary<int, string>(presets); SaveWledDevices(); },
+                onRemove: () =>
+                {
+                    configurator!.Settings.WledOnCloseDevices.Remove(device);
+                    SaveWledDevices();
+                },
+                listPanelRef: listPanel
+            );
+        }
+
+        #endregion
+
+        #region Shared WLED Device Row Builder
+
         /// <summary>
-        /// Builds a single device row with endpoint input, action dropdown, preset input, and remove button.
+        /// Builds a reusable WLED device row used by both start and close settings.
         /// </summary>
-        private Border BuildDeviceRow(WledDeviceConfig device)
+        private Border BuildWledDeviceRow(
+            string endpoint,
+            bool hasCachedPresets,
+            Dictionary<int, string> cachedPresets,
+            bool isPresetAction,
+            int presetId,
+            (string Label, bool IsPreset)[] actionLabels,
+            Action<string> onEndpointChanged,
+            Action<bool> onActionChanged,
+            Action<int> onPresetIdChanged,
+            Action<Dictionary<int, string>> onPresetsLoaded,
+            Action onRemove,
+            StackPanel listPanelRef)
         {
             var rowBorder = new Border
             {
@@ -234,14 +327,13 @@ namespace darts_hub.UI
             var endpointInput = new TextBox
             {
                 Watermark = "IP address (e.g. 192.168.1.100)",
-                Text = device.Endpoint,
+                Text = endpoint,
                 Width = 260,
                 FontSize = 13,
             };
             endpointInput.LostFocus += (_, _) =>
             {
-                device.Endpoint = endpointInput.Text?.Trim() ?? string.Empty;
-                SaveWledDevices();
+                onEndpointChanged(endpointInput.Text?.Trim() ?? string.Empty);
             };
 
             var removeButton = new Button
@@ -257,10 +349,8 @@ namespace darts_hub.UI
             };
             removeButton.Click += (_, _) =>
             {
-                configurator!.Settings.WledOnCloseDevices.Remove(device);
-                var listPanel = this.FindControl<StackPanel>("WledDeviceListPanel");
-                listPanel?.Children.Remove(rowBorder);
-                SaveWledDevices();
+                onRemove();
+                listPanelRef.Children.Remove(rowBorder);
             };
 
             topRow.Children.Add(endpointInput);
@@ -270,21 +360,24 @@ namespace darts_hub.UI
             var bottomRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
 
             var actionCombo = new ComboBox { Width = 180, FontSize = 13 };
-            actionCombo.Items.Add(new ComboBoxItem { Content = "Turn off", Tag = WledCloseAction.TurnOff });
-            actionCombo.Items.Add(new ComboBoxItem { Content = "Activate preset", Tag = WledCloseAction.ActivatePreset });
-            actionCombo.SelectedIndex = device.Action == WledCloseAction.ActivatePreset ? 1 : 0;
-
-            bool hasCachedPresets = device.CachedPresets != null && device.CachedPresets.Count > 0;
+            int selectedActionIdx = 0;
+            for (int i = 0; i < actionLabels.Length; i++)
+            {
+                actionCombo.Items.Add(new ComboBoxItem { Content = actionLabels[i].Label, Tag = actionLabels[i].IsPreset });
+                if (actionLabels[i].IsPreset == isPresetAction)
+                    selectedActionIdx = i;
+            }
+            actionCombo.SelectedIndex = selectedActionIdx;
 
             var presetInput = new NumericUpDown
             {
                 Minimum = 1,
                 Maximum = 250,
-                Value = device.PresetId,
+                Value = presetId,
                 Width = 90,
                 FontSize = 13,
                 FormatString = "0",
-                IsVisible = device.Action == WledCloseAction.ActivatePreset && !hasCachedPresets,
+                IsVisible = isPresetAction && !hasCachedPresets,
             };
 
             var fetchPresetsButton = new Button
@@ -296,40 +389,36 @@ namespace darts_hub.UI
                 BorderThickness = new Thickness(0),
                 CornerRadius = new CornerRadius(4),
                 FontSize = 12,
-                IsVisible = device.Action == WledCloseAction.ActivatePreset,
+                IsVisible = isPresetAction,
             };
 
             ComboBox? presetCombo = null;
 
-            // If cached presets exist, build the dropdown immediately
             if (hasCachedPresets)
             {
-                presetCombo = BuildPresetComboBox(device, device.CachedPresets);
-                presetCombo.IsVisible = device.Action == WledCloseAction.ActivatePreset;
+                presetCombo = BuildPresetComboBox(presetId, cachedPresets, onPresetIdChanged);
+                presetCombo.IsVisible = isPresetAction;
             }
 
             actionCombo.SelectionChanged += (_, _) =>
             {
-                if (actionCombo.SelectedItem is ComboBoxItem sel && sel.Tag is WledCloseAction action)
+                if (actionCombo.SelectedItem is ComboBoxItem sel && sel.Tag is bool isPreset)
                 {
-                    device.Action = action;
-                    bool showPreset = action == WledCloseAction.ActivatePreset;
-                    presetInput.IsVisible = showPreset && presetCombo == null;
-                    fetchPresetsButton.IsVisible = showPreset;
-                    if (presetCombo != null) presetCombo.IsVisible = showPreset;
-                    SaveWledDevices();
+                    onActionChanged(isPreset);
+                    presetInput.IsVisible = isPreset && presetCombo == null;
+                    fetchPresetsButton.IsVisible = isPreset;
+                    if (presetCombo != null) presetCombo.IsVisible = isPreset;
                 }
             };
 
             presetInput.ValueChanged += (_, _) =>
             {
-                device.PresetId = (int)(presetInput.Value ?? 1);
-                SaveWledDevices();
+                onPresetIdChanged((int)(presetInput.Value ?? 1));
             };
 
             fetchPresetsButton.Click += async (_, _) =>
             {
-                var ep = device.Endpoint;
+                var ep = endpointInput.Text?.Trim();
                 if (string.IsNullOrWhiteSpace(ep)) return;
 
                 fetchPresetsButton.IsEnabled = false;
@@ -342,21 +431,15 @@ namespace darts_hub.UI
 
                 if (presets == null || presets.Count == 0) return;
 
-                // Persist fetched presets
-                device.CachedPresets = new Dictionary<int, string>(presets);
-                SaveWledDevices();
+                onPresetsLoaded(presets);
 
-                // Replace numeric input with a ComboBox of real preset names
                 presetInput.IsVisible = false;
 
                 if (presetCombo != null)
-                {
                     bottomRow.Children.Remove(presetCombo);
-                }
 
-                presetCombo = BuildPresetComboBox(device, presets);
+                presetCombo = BuildPresetComboBox(presetId, presets, onPresetIdChanged);
 
-                // Insert before the fetch button
                 var fetchIdx = bottomRow.Children.IndexOf(fetchPresetsButton);
                 bottomRow.Children.Insert(fetchIdx, presetCombo);
             };
@@ -364,9 +447,7 @@ namespace darts_hub.UI
             bottomRow.Children.Add(actionCombo);
             bottomRow.Children.Add(presetInput);
             if (presetCombo != null)
-            {
                 bottomRow.Children.Add(presetCombo);
-            }
             bottomRow.Children.Add(fetchPresetsButton);
 
             outerStack.Children.Add(topRow);
@@ -379,7 +460,7 @@ namespace darts_hub.UI
         /// <summary>
         /// Builds a preset selection ComboBox from a preset-id-to-name dictionary.
         /// </summary>
-        private ComboBox BuildPresetComboBox(WledDeviceConfig device, Dictionary<int, string> presets)
+        private ComboBox BuildPresetComboBox(int currentPresetId, Dictionary<int, string> presets, Action<int> onPresetIdChanged)
         {
             var combo = new ComboBox { Width = 200, FontSize = 13 };
             int selectedIdx = 0;
@@ -391,7 +472,7 @@ namespace darts_hub.UI
                     Content = $"{kvp.Key}: {kvp.Value}",
                     Tag = kvp.Key
                 });
-                if (kvp.Key == device.PresetId)
+                if (kvp.Key == currentPresetId)
                     selectedIdx = idx;
                 idx++;
             }
@@ -400,8 +481,7 @@ namespace darts_hub.UI
             {
                 if (combo.SelectedItem is ComboBoxItem pItem && pItem.Tag is int pid)
                 {
-                    device.PresetId = pid;
-                    SaveWledDevices();
+                    onPresetIdChanged(pid);
                 }
             };
             return combo;
