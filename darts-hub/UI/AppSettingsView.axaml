@@ -98,6 +98,47 @@
                 </StackPanel>
             </Border>
 
+            <!-- Monitor Settings -->
+            <Border Background="#33FFFFFF" CornerRadius="8" Padding="15">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Display"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="White"/>
+
+                    <CheckBox x:Name="UseSpecificMonitorCheckBox"
+                              Content="Always start on a specific monitor"
+                              Foreground="White"
+                              FontSize="13"/>
+
+                    <TextBlock Text="When enabled, the application window will always open on the selected monitor."
+                               TextWrapping="Wrap"
+                               Foreground="#FF999999"
+                               FontSize="12"
+                               Margin="28,0,0,0"/>
+
+                    <StackPanel x:Name="MonitorSelectionPanel" Spacing="8" IsVisible="False" Margin="28,0,0,0">
+                        <TextBlock Text="Select monitor"
+                                   Foreground="White"
+                                   FontSize="13"/>
+                        <ComboBox x:Name="MonitorComboBox"
+                                  HorizontalAlignment="Stretch"
+                                  MaxWidth="400"
+                                  FontSize="13"/>
+                        <Button x:Name="MoveToMonitorButton"
+                                Content="Move window to selected monitor"
+                                Padding="12,6"
+                                Background="#FF007ACC"
+                                BorderBrush="#FF005A9E"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Foreground="White"
+                                FontSize="13"
+                                HorizontalAlignment="Left"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- App Information -->
             <Border Background="#33FFFFFF" CornerRadius="8" Padding="15">
                 <StackPanel Spacing="8">

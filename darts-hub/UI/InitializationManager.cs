@@ -58,7 +58,13 @@ namespace darts_hub.UI
             if (settings.WindowHeight > 0)
                 mainWindow.Height = settings.WindowHeight;
 
-            if (!double.IsNaN(settings.WindowX) && !double.IsNaN(settings.WindowY))
+            if (settings.UseSpecificMonitor)
+            {
+                // Defer monitor placement until the window is opened so Screens are available
+                mainWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                mainWindow.Opened += ApplyPreferredMonitorPosition;
+            }
+            else if (!double.IsNaN(settings.WindowX) && !double.IsNaN(settings.WindowY))
             {
                 mainWindow.WindowStartupLocation = WindowStartupLocation.Manual;
                 mainWindow.Position = new Avalonia.PixelPoint((int)settings.WindowX, (int)settings.WindowY);
@@ -76,6 +82,21 @@ namespace darts_hub.UI
                 if (settings.TooltipColumnWidth > 0)
                     mainGrid.ColumnDefinitions[4].Width = new GridLength(settings.TooltipColumnWidth, GridUnitType.Pixel);
             }
+        }
+
+        /// <summary>
+        /// Moves the window to the preferred monitor once screens are available.
+        /// </summary>
+        private void ApplyPreferredMonitorPosition(object? sender, System.EventArgs e)
+        {
+            mainWindow.Opened -= ApplyPreferredMonitorPosition;
+
+            var screens = mainWindow.Screens.All;
+            var index = configurator.Settings.PreferredMonitorIndex;
+            if (index < 0 || index >= screens.Count)
+                return;
+
+            AppSettingsView.MoveWindowToScreen(mainWindow, screens[index]);
         }
 
         private void InitializeAboutContent()

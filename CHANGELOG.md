@@ -10,7 +10,8 @@
 ### New Features
     - Startup splashscreen to give the pc more time to initilize Internet. 
         - time is configurable in settings 1sec is default. 0 means no splashscreen
-
+    - Start Darts-Hub always at specific monitor (if multiple monitors are connected)
+        - Monitor can be defined in settings, default is primary monitor
 
 
 

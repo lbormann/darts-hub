@@ -24,6 +24,10 @@ namespace darts_hub.control
         public double WindowY { get; set; } = double.NaN;
         public double NavColumnWidth { get; set; }
         public double TooltipColumnWidth { get; set; }
+
+        // Monitor preference
+        public bool UseSpecificMonitor { get; set; }
+        public int PreferredMonitorIndex { get; set; }
     }
 
 
@@ -96,7 +100,15 @@ namespace darts_hub.control
                 Settings.SplashCountdownSeconds = 1;
                 settingsUpdated = true;
             }
-            
+
+            // Ensure UseSpecificMonitor property exists (for backward compatibility)
+            if (parsedSettings.Property(nameof(AppConfiguration.UseSpecificMonitor), StringComparison.OrdinalIgnoreCase) == null)
+            {
+                Settings.UseSpecificMonitor = false;
+                Settings.PreferredMonitorIndex = 0;
+                settingsUpdated = true;
+            }
+
             // Force Robbel3D setup flag to true and request restart if it was explicitly false
             if (!Settings.ShowRobbel3DSetup)
             {
@@ -131,7 +143,9 @@ namespace darts_hub.control
                 WindowX = double.NaN,
                 WindowY = double.NaN,
                 NavColumnWidth = 250,
-                TooltipColumnWidth = 250
+                TooltipColumnWidth = 250,
+                UseSpecificMonitor = false,
+                PreferredMonitorIndex = 0
             };
         }
     }
