@@ -3,10 +3,14 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
 using Avalonia.Platform;
 using darts_hub.control;
+using darts_hub.model;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace darts_hub.UI
@@ -74,7 +78,10 @@ namespace darts_hub.UI
             }
 
             InitializeMonitorSettings();
+            InitializeWledCloseSettings();
         }
+
+        #region Monitor Settings
 
         private void InitializeMonitorSettings()
         {
@@ -181,6 +188,234 @@ namespace darts_hub.UI
             window.Position = new PixelPoint(x, y);
         }
 
+        #endregion
+
+        #region WLED Close Settings
+
+        private void InitializeWledCloseSettings()
+        {
+            var listPanel = this.FindControl<StackPanel>("WledDeviceListPanel");
+            var addButton = this.FindControl<Button>("WledAddDeviceButton");
+            if (listPanel == null || addButton == null || configurator == null)
+                return;
+
+            // Render existing devices
+            foreach (var device in configurator.Settings.WledOnCloseDevices)
+            {
+                listPanel.Children.Add(BuildDeviceRow(device));
+            }
+
+            addButton.Click += (_, _) =>
+            {
+                var device = new WledDeviceConfig();
+                configurator.Settings.WledOnCloseDevices.Add(device);
+                listPanel.Children.Add(BuildDeviceRow(device));
+                SaveWledDevices();
+            };
+        }
+
+        /// <summary>
+        /// Builds a single device row with endpoint input, action dropdown, preset input, and remove button.
+        /// </summary>
+        private Border BuildDeviceRow(WledDeviceConfig device)
+        {
+            var rowBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF)),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(12, 10),
+            };
+
+            var outerStack = new StackPanel { Spacing = 8 };
+
+            // Row 1: Endpoint + Remove
+            var topRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+
+            var endpointInput = new TextBox
+            {
+                Watermark = "IP address (e.g. 192.168.1.100)",
+                Text = device.Endpoint,
+                Width = 260,
+                FontSize = 13,
+            };
+            endpointInput.LostFocus += (_, _) =>
+            {
+                device.Endpoint = endpointInput.Text?.Trim() ?? string.Empty;
+                SaveWledDevices();
+            };
+
+            var removeButton = new Button
+            {
+                Content = "\u2716",
+                Padding = new Thickness(6, 4),
+                Background = new SolidColorBrush(Color.FromRgb(0xCC, 0x33, 0x33)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(4),
+                FontSize = 12,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            removeButton.Click += (_, _) =>
+            {
+                configurator!.Settings.WledOnCloseDevices.Remove(device);
+                var listPanel = this.FindControl<StackPanel>("WledDeviceListPanel");
+                listPanel?.Children.Remove(rowBorder);
+                SaveWledDevices();
+            };
+
+            topRow.Children.Add(endpointInput);
+            topRow.Children.Add(removeButton);
+
+            // Row 2: Action dropdown + Preset
+            var bottomRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+
+            var actionCombo = new ComboBox { Width = 180, FontSize = 13 };
+            actionCombo.Items.Add(new ComboBoxItem { Content = "Turn off", Tag = WledCloseAction.TurnOff });
+            actionCombo.Items.Add(new ComboBoxItem { Content = "Activate preset", Tag = WledCloseAction.ActivatePreset });
+            actionCombo.SelectedIndex = device.Action == WledCloseAction.ActivatePreset ? 1 : 0;
+
+            bool hasCachedPresets = device.CachedPresets != null && device.CachedPresets.Count > 0;
+
+            var presetInput = new NumericUpDown
+            {
+                Minimum = 1,
+                Maximum = 250,
+                Value = device.PresetId,
+                Width = 90,
+                FontSize = 13,
+                FormatString = "0",
+                IsVisible = device.Action == WledCloseAction.ActivatePreset && !hasCachedPresets,
+            };
+
+            var fetchPresetsButton = new Button
+            {
+                Content = "Fetch presets",
+                Padding = new Thickness(8, 4),
+                Background = new SolidColorBrush(Color.FromRgb(0x00, 0x7A, 0xCC)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(4),
+                FontSize = 12,
+                IsVisible = device.Action == WledCloseAction.ActivatePreset,
+            };
+
+            ComboBox? presetCombo = null;
+
+            // If cached presets exist, build the dropdown immediately
+            if (hasCachedPresets)
+            {
+                presetCombo = BuildPresetComboBox(device, device.CachedPresets);
+                presetCombo.IsVisible = device.Action == WledCloseAction.ActivatePreset;
+            }
+
+            actionCombo.SelectionChanged += (_, _) =>
+            {
+                if (actionCombo.SelectedItem is ComboBoxItem sel && sel.Tag is WledCloseAction action)
+                {
+                    device.Action = action;
+                    bool showPreset = action == WledCloseAction.ActivatePreset;
+                    presetInput.IsVisible = showPreset && presetCombo == null;
+                    fetchPresetsButton.IsVisible = showPreset;
+                    if (presetCombo != null) presetCombo.IsVisible = showPreset;
+                    SaveWledDevices();
+                }
+            };
+
+            presetInput.ValueChanged += (_, _) =>
+            {
+                device.PresetId = (int)(presetInput.Value ?? 1);
+                SaveWledDevices();
+            };
+
+            fetchPresetsButton.Click += async (_, _) =>
+            {
+                var ep = device.Endpoint;
+                if (string.IsNullOrWhiteSpace(ep)) return;
+
+                fetchPresetsButton.IsEnabled = false;
+                fetchPresetsButton.Content = "Loading...";
+
+                var presets = await WledShutdownService.QueryPresetsAsync(ep);
+
+                fetchPresetsButton.IsEnabled = true;
+                fetchPresetsButton.Content = "Fetch presets";
+
+                if (presets == null || presets.Count == 0) return;
+
+                // Persist fetched presets
+                device.CachedPresets = new Dictionary<int, string>(presets);
+                SaveWledDevices();
+
+                // Replace numeric input with a ComboBox of real preset names
+                presetInput.IsVisible = false;
+
+                if (presetCombo != null)
+                {
+                    bottomRow.Children.Remove(presetCombo);
+                }
+
+                presetCombo = BuildPresetComboBox(device, presets);
+
+                // Insert before the fetch button
+                var fetchIdx = bottomRow.Children.IndexOf(fetchPresetsButton);
+                bottomRow.Children.Insert(fetchIdx, presetCombo);
+            };
+
+            bottomRow.Children.Add(actionCombo);
+            bottomRow.Children.Add(presetInput);
+            if (presetCombo != null)
+            {
+                bottomRow.Children.Add(presetCombo);
+            }
+            bottomRow.Children.Add(fetchPresetsButton);
+
+            outerStack.Children.Add(topRow);
+            outerStack.Children.Add(bottomRow);
+            rowBorder.Child = outerStack;
+
+            return rowBorder;
+        }
+
+        /// <summary>
+        /// Builds a preset selection ComboBox from a preset-id-to-name dictionary.
+        /// </summary>
+        private ComboBox BuildPresetComboBox(WledDeviceConfig device, Dictionary<int, string> presets)
+        {
+            var combo = new ComboBox { Width = 200, FontSize = 13 };
+            int selectedIdx = 0;
+            int idx = 0;
+            foreach (var kvp in presets.OrderBy(p => p.Key))
+            {
+                combo.Items.Add(new ComboBoxItem
+                {
+                    Content = $"{kvp.Key}: {kvp.Value}",
+                    Tag = kvp.Key
+                });
+                if (kvp.Key == device.PresetId)
+                    selectedIdx = idx;
+                idx++;
+            }
+            combo.SelectedIndex = selectedIdx;
+            combo.SelectionChanged += (_, _) =>
+            {
+                if (combo.SelectedItem is ComboBoxItem pItem && pItem.Tag is int pid)
+                {
+                    device.PresetId = pid;
+                    SaveWledDevices();
+                }
+            };
+            return combo;
+        }
+
+        private void SaveWledDevices()
+        {
+            configurator?.SaveSettings();
+        }
+
+        #endregion
+
+        #region Helpers
+
         private Window? GetMainWindow()
         {
             if (this.VisualRoot is Window w)
@@ -191,6 +426,10 @@ namespace darts_hub.UI
 
             return null;
         }
+
+        #endregion
+
+        #region General Settings Handlers
 
         private void OnSkipUpdateChanged(object? sender, RoutedEventArgs e)
         {
@@ -220,5 +459,7 @@ namespace darts_hub.UI
             configurator.Settings.SplashCountdownSeconds = (int)(nud.Value ?? 1);
             configurator.SaveSettings();
         }
+
+        #endregion
     }
 }

@@ -1,7 +1,9 @@
 ﻿using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using System.IO;
+using darts_hub.model;
 
 
 namespace darts_hub.control
@@ -28,6 +30,9 @@ namespace darts_hub.control
         // Monitor preference
         public bool UseSpecificMonitor { get; set; }
         public int PreferredMonitorIndex { get; set; }
+
+        // WLED close actions
+        public List<WledDeviceConfig> WledOnCloseDevices { get; set; } = new();
     }
 
 
@@ -109,6 +114,13 @@ namespace darts_hub.control
                 settingsUpdated = true;
             }
 
+            // Ensure WledOnCloseDevices property exists (for backward compatibility)
+            if (parsedSettings.Property(nameof(AppConfiguration.WledOnCloseDevices), StringComparison.OrdinalIgnoreCase) == null)
+            {
+                Settings.WledOnCloseDevices = new List<WledDeviceConfig>();
+                settingsUpdated = true;
+            }
+
             // Force Robbel3D setup flag to true and request restart if it was explicitly false
             if (!Settings.ShowRobbel3DSetup)
             {
@@ -145,7 +157,8 @@ namespace darts_hub.control
                 NavColumnWidth = 250,
                 TooltipColumnWidth = 250,
                 UseSpecificMonitor = false,
-                PreferredMonitorIndex = 0
+                PreferredMonitorIndex = 0,
+                WledOnCloseDevices = new List<WledDeviceConfig>()
             };
         }
     }

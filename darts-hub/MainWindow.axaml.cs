@@ -296,6 +296,7 @@ namespace darts_hub
             try
             {
                 SaveWindowLayout();
+                ExecuteWledCloseActions();
                 initializationManager?.Dispose();
                 consoleManager?.Dispose();
                 navigationManager?.Dispose();
@@ -305,6 +306,24 @@ namespace darts_hub
             {
                 // Use fire-and-forget for closing events to prevent hanging
                 _ = Task.Run(async () => await RenderMessageBox("", "Error occurred: " + ex.Message, MsBox.Avalonia.Enums.Icon.Error));
+            }
+        }
+
+        private void ExecuteWledCloseActions()
+        {
+            try
+            {
+                var devices = configurator.Settings.WledOnCloseDevices;
+                if (devices == null || devices.Count == 0)
+                    return;
+
+                // Fire-and-forget with a short wait so HTTP requests can complete
+                Task.Run(async () => await control.WledShutdownService.ExecuteAllAsync(devices))
+                    .Wait(TimeSpan.FromSeconds(4));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MainWindow] WLED close actions failed: {ex.Message}");
             }
         }
 

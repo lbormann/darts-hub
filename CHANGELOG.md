@@ -12,6 +12,9 @@
         - time is configurable in settings 1sec is default. 0 means no splashscreen
     - Start Darts-Hub always at specific monitor (if multiple monitors are connected)
         - Monitor can be defined in settings, default is primary monitor
+    - Set a specific WLED device to off or set a specific preset when Darts-Hub closes (e.g. when you want to turn off the lights when you are done playing)
+        - You can configure it in Darts-Hub settings menu
+        - just working if you close DH, not if you power off the pc or if it crashes.
 
 
 
