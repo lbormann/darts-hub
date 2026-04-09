@@ -1,4 +1,4 @@
-﻿## v1.4.3
+﻿## b1.5.0.0
 ### UI Improvements
     - UI: Add dedicated application settings page (accessible via sidebar menu)
     - UI: Move Setup Wizard button from About page to sidebar menu
@@ -17,6 +17,9 @@
         - just working if you close DH, not if you power off the pc or if it crashes.
     - Set a specific WLED device to on or set a specific preset when Darts-Hub starts (e.g. when you want to turn on the lights when you start playing)
         - You can configure it in Darts-Hub settings menu
+    - FINALLY MULTIDEVICE SUPPORT FOR WLED! 
+        - configuration comfortable over new enhanced settings mode just click and select
+        - Darts-Wled min V1.11.0 required! 
 
 
 

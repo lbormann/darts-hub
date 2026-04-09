@@ -1209,7 +1209,6 @@ namespace darts_hub.control
                         int lastEndpointCount = isEndpointParameter
                             ? (param.Value ?? string.Empty).Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length
                             : 0;
-                        DispatcherTimer? endpointRefreshTimer = null;
 
                         textBox.TextChanged += (s, e) =>
                         {
@@ -1217,8 +1216,16 @@ namespace darts_hub.control
                             param.IsValueChanged = true;
                             saveCallback?.Invoke();
                             UpdateEmptyArgumentWarning(textBox, warningText);
+                        };
 
-                            if (isEndpointParameter && app != null)
+                        // Refresh settings only when the text field loses focus and the endpoint count changed
+                        if (isEndpointParameter && app != null)
+                        {
+                            var capturedApp = app;
+                            var capturedParam = param;
+                            var capturedSaveCallback = saveCallback;
+
+                            textBox.LostFocus += (s, e) =>
                             {
                                 int newEndpointCount = (textBox.Text ?? string.Empty)
                                     .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length;
@@ -1226,51 +1233,37 @@ namespace darts_hub.control
                                 {
                                     lastEndpointCount = newEndpointCount;
 
-                                    // Debounce: restart timer on every change, fire after 800ms idle
-                                    endpointRefreshTimer?.Stop();
-                                    endpointRefreshTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(800) };
-                                    var capturedApp = app;
-                                    var capturedParam = param;
-                                    var capturedSaveCallback = saveCallback;
-                                    endpointRefreshTimer.Tick += (_, __) =>
+                                    // Walk up from the textBox to find the main panel with settings header
+                                    StackPanel? mainPanel = null;
+                                    var current = textBox.Parent;
+                                    while (current != null)
                                     {
-                                        endpointRefreshTimer.Stop();
-                                        endpointRefreshTimer = null;
-
-                                        // Walk up from the textBox to find the main panel with settings header
-                                        // (same approach as the remove-button handler)
-                                        StackPanel? mainPanel = null;
-                                        var current = textBox.Parent;
-                                        while (current != null)
+                                        if (current is StackPanel sp)
                                         {
-                                            if (current is StackPanel sp)
+                                            bool hasSettingsHeader = sp.Children.OfType<StackPanel>()
+                                                .Any(child => child.Children.OfType<TextBlock>()
+                                                    .Any(tb => tb.Text?.Contains("Settings Mode") == true));
+                                            if (hasSettingsHeader)
                                             {
-                                                bool hasSettingsHeader = sp.Children.OfType<StackPanel>()
-                                                    .Any(child => child.Children.OfType<TextBlock>()
-                                                        .Any(tb => tb.Text?.Contains("Settings Mode") == true));
-                                                if (hasSettingsHeader)
-                                                {
-                                                    mainPanel = sp;
-                                                    break;
-                                                }
+                                                mainPanel = sp;
+                                                break;
                                             }
-                                            current = current.Parent;
                                         }
+                                        current = current.Parent;
+                                    }
 
-                                        if (mainPanel != null)
-                                        {
-                                          System.Diagnostics.Debug.WriteLine($"[Endpoint Refresh] {capturedParam.Name} endpoint count changed, refreshing settings");
-                                          ForceCompleteSettingsRefresh(capturedParam, capturedApp, mainPanel, capturedSaveCallback);
-                                        }
-                                        else
-                                        {
-                                          System.Diagnostics.Debug.WriteLine($"[Endpoint Refresh] Could not find main panel for refresh");
-                                        }
-                                    };
-                                    endpointRefreshTimer.Start();
+                                    if (mainPanel != null)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine($"[Endpoint Refresh] {capturedParam.Name} endpoint count changed, refreshing settings");
+                                        ForceCompleteSettingsRefresh(capturedParam, capturedApp, mainPanel, capturedSaveCallback);
+                                    }
+                                    else
+                                    {
+                                        System.Diagnostics.Debug.WriteLine($"[Endpoint Refresh] Could not find main panel for refresh");
+                                    }
                                 }
-                            }
-                        };
+                            };
+                        }
 
                         var container = new StackPanel { Spacing = 4 };
                         container.Children.Add(textBox);

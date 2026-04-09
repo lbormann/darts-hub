@@ -146,10 +146,20 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Creates an advanced effect parameter control with mode selection for WLED effects
+        /// Creates an advanced effect parameter control with mode selection for WLED effects.
+        /// When multiple WLED endpoints are configured (WEPS), shows a multi-entry control
+        /// allowing different effects per endpoint.
         /// </summary>
         public static Control CreateAdvancedEffectParameterControl(Argument param, Action? saveCallback = null, AppBase? app = null)
         {
+            // Check for multi-endpoint setup
+            var endpoints = ExtractWledEndpoints(app);
+            if (endpoints.Count > 1)
+            {
+                System.Diagnostics.Debug.WriteLine($"[WLED] Multi-endpoint detected ({endpoints.Count} endpoints), using multi-entry control for {param.Name}");
+                return CreateMultiEntryEffectControl(param, saveCallback, endpoints, app);
+            }
+
             var mainPanel = new StackPanel
             {
                 Spacing = 8
@@ -468,11 +478,12 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Creates a comprehensive WLED effects dropdown with speed, intensity, palette and duration controls
+        /// Creates a comprehensive WLED effects dropdown with speed, intensity, palette and duration controls.
+        /// When endpoint is specified, loads effects/palettes for that specific WLED device.
         /// </summary>
-        public static async Task<Control> CreateWledEffectsDropdown(Argument param, Action? saveCallback = null, AppBase? app = null)
+        public static async Task<Control> CreateWledEffectsDropdown(Argument param, Action? saveCallback = null, AppBase? app = null, string? endpoint = null)
         {
-            var wledData = WledApi.LoadWledDataFile();
+            var wledData = WledApi.LoadWledDataForEndpoint(endpoint);
             var effectIdByName = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             var effectNameById = new Dictionary<int, string>();
 
@@ -765,7 +776,7 @@ namespace darts_hub.control
  
                  ComboBoxItem? effectToSelect = null;
  
-                 var (effects, source, isLive) = await WledApi.GetEffectsWithFallbackAsync(app);
+                 var (effects, source, isLive) = await WledApi.GetEffectsWithFallbackAsync(app, endpoint);
  
                  // Add info header
                  var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
@@ -837,7 +848,7 @@ namespace darts_hub.control
                      paletteToSelect = noneItem;
                  }
  
-                 var (palettes, source, isLive) = await WledApi.GetPalettesWithFallbackAsync(app);
+                 var (palettes, source, isLive) = await WledApi.GetPalettesWithFallbackAsync(app, endpoint);
  
                  // Add info header
                  var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
@@ -908,7 +919,7 @@ namespace darts_hub.control
                         string? paletteName = null;
                         if (!string.IsNullOrEmpty(palette) && int.TryParse(palette, out var paletteIndex))
                         {
-                            var (palettes, _, _) = await WledApi.GetPalettesWithFallbackAsync(app);
+                            var (palettes, _, _) = await WledApi.GetPalettesWithFallbackAsync(app, endpoint);
                             if (paletteIndex < palettes.Count)
                             {
                                 paletteName = palettes[paletteIndex];
@@ -919,7 +930,17 @@ namespace darts_hub.control
                             paletteName = palette;
                         }
 
-                        await WledApi.TestEffectAsync(app, option.Name, paletteName, speed, intensity);
+                        if (!string.IsNullOrEmpty(endpoint))
+                        {
+                            // Multi-device: build the effect value string and send to specific endpoint
+                            var effectVal = param.Value ?? string.Empty;
+                            var (cleanVal, _) = ParseEndpointParameter(effectVal);
+                            await WledApi.TestEffectValueOnEndpointAsync(endpoint, cleanVal);
+                        }
+                        else
+                        {
+                            await WledApi.TestEffectAsync(app, option.Name, paletteName, speed, intensity);
+                        }
                         testButton.Content = "✅";
                         await Task.Delay(1500);
                     }
@@ -938,42 +959,30 @@ namespace darts_hub.control
 
             stopButton.Click += async (s, e) =>
             {
-                // Ensure we have a valid app reference
-                if (app == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("Stop button clicked but app is null");
-                    return;
-                }
+                if (app == null) return;
 
-                System.Diagnostics.Debug.WriteLine("Stopping WLED effects");
-                
-                // Disable button to prevent multiple clicks
                 stopButton.IsEnabled = false;
                 var originalContent = stopButton.Content;
                 stopButton.Content = "⏳";
-                
+
                 try
                 {
-                    var success = await WledApi.StopEffectsAsync(app);
-                    
-                    if (success)
+                    bool success;
+                    if (!string.IsNullOrEmpty(endpoint))
                     {
-                        stopButton.Content = "✅";
-                        System.Diagnostics.Debug.WriteLine("Effects stopped successfully");
+                        success = await WledApi.StopEffectsOnEndpointAsync(endpoint);
                     }
                     else
                     {
-                        stopButton.Content = "❌";
-                        System.Diagnostics.Debug.WriteLine("Failed to stop effects");
+                        success = await WledApi.StopEffectsAsync(app);
                     }
-                    
-                    // Reset button after delay
+
+                    stopButton.Content = success ? "✅" : "❌";
                     await Task.Delay(1500);
                 }
-                catch (Exception ex)
+                catch
                 {
                     stopButton.Content = "❌";
-                    System.Diagnostics.Debug.WriteLine($"Error stopping effects: {ex.Message}");
                     await Task.Delay(1500);
                 }
                 finally
@@ -1057,9 +1066,10 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Creates a WLED presets dropdown with duration control
+        /// Creates a WLED presets dropdown with duration control.
+        /// When endpoint is specified, loads presets for that specific WLED device.
         /// </summary>
-        public static async Task<Control> CreateWledPresetsDropdown(Argument param, Action? saveCallback = null, AppBase? app = null)
+        public static async Task<Control> CreateWledPresetsDropdown(Argument param, Action? saveCallback = null, AppBase? app = null, string? endpoint = null)
         {
             // Create a main panel to hold preset selection and duration
             var mainPanel = new StackPanel
@@ -1249,7 +1259,7 @@ namespace darts_hub.control
                 
                 ComboBoxItem? itemToSelect = null;
                 
-                var (presets, source, isLive) = await WledApi.GetPresetsWithFallbackAsync(app);
+                var (presets, source, isLive) = await WledApi.GetPresetsWithFallbackAsync(app, endpoint);
                 
                 // Add info header
                 var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
@@ -1310,7 +1320,6 @@ namespace darts_hub.control
                     selectedItem.Tag is string presetTag && 
                     app != null)
                 {
-                    // Extract preset ID from "ps|X" format
                     var parts = presetTag.Split('|');
                     if (parts.Length >= 2 && int.TryParse(parts[1], out var presetId))
                     {
@@ -1318,17 +1327,17 @@ namespace darts_hub.control
                         testButton.Content = "⏳";
                         try
                         {
-                            var success = await WledApi.TestPresetAsync(app, presetId);
-                            if (success)
+                            bool success;
+                            if (!string.IsNullOrEmpty(endpoint))
                             {
-                                testButton.Content = "▶️";
-                                await Task.Delay(1000);
+                                success = await WledApi.TestPresetOnEndpointAsync(endpoint, presetId);
                             }
                             else
                             {
-                                testButton.Content = "▶️";
-                                await Task.Delay(1000);
+                                success = await WledApi.TestPresetAsync(app, presetId);
                             }
+                            testButton.Content = success ? "✅" : "❌";
+                            await Task.Delay(1000);
                         }
                         finally
                         {
@@ -1341,29 +1350,28 @@ namespace darts_hub.control
 
             stopButton.Click += async (s, e) =>
             {
-                if (app != null)
+                if (app == null) return;
+
+                stopButton.IsEnabled = false;
+                stopButton.Content = "⏳";
+                try
                 {
-                    stopButton.IsEnabled = false;
-                    stopButton.Content = "⏳";
-                    try
+                    bool success;
+                    if (!string.IsNullOrEmpty(endpoint))
                     {
-                        var success = await WledApi.StopEffectsAsync(app);
-                        if (success)
-                        {
-                            stopButton.Content = "■";
-                            await Task.Delay(1000);
-                        }
-                        else
-                        {
-                            stopButton.Content = "■";
-                            await Task.Delay(1000);
-                        }
+                        success = await WledApi.StopEffectsOnEndpointAsync(endpoint);
                     }
-                    finally
+                    else
                     {
-                        stopButton.Content = "■";
-                        stopButton.IsEnabled = true;
+                        success = await WledApi.StopEffectsAsync(app);
                     }
+                    stopButton.Content = success ? "✅" : "❌";
+                    await Task.Delay(1000);
+                }
+                finally
+                {
+                    stopButton.Content = "■";
+                    stopButton.IsEnabled = true;
                 }
             };
 
@@ -1399,9 +1407,10 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Creates a color effects dropdown for simple color selection
+        /// Creates a color effects dropdown for simple color selection.
+        /// When endpoint is specified, test/stop buttons target that specific WLED device.
         /// </summary>
-        public static Control CreateColorEffectsDropdown(Argument param, Action? saveCallback = null, AppBase? app = null)
+        public static Control CreateColorEffectsDropdown(Argument param, Action? saveCallback = null, AppBase? app = null, string? endpoint = null)
         {
             var panel = new StackPanel
             {
@@ -1635,46 +1644,34 @@ namespace darts_hub.control
             // Event handlers - FIXED: Properly capture references and handle async operations
             testButton.Click += async (s, e) =>
             {
-                // Ensure we have a valid app reference
-                if (app == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("Test button clicked but app is null");
-                    return;
-                }
+                if (app == null) return;
 
                 if (colorDropdown.SelectedItem is ComboBoxItem selectedItem && 
                     selectedItem.Tag is string colorEffect && 
                     !string.IsNullOrEmpty(colorEffect))
                 {
-                    System.Diagnostics.Debug.WriteLine($"Testing WLED color: {colorEffect}");
-                    
-                    // Disable button to prevent multiple clicks
                     testButton.IsEnabled = false;
                     var originalContent = testButton.Content;
                     testButton.Content = "⏳";
-                    
+
                     try
                     {
-                        var success = await WledApi.TestColorAsync(app, colorEffect);
-                        
-                        if (success)
+                        bool success;
+                        if (!string.IsNullOrEmpty(endpoint))
                         {
-                            testButton.Content = "✅";
-                            System.Diagnostics.Debug.WriteLine("Color test successful");
+                            success = await WledApi.TestColorOnEndpointAsync(endpoint, colorEffect);
                         }
                         else
                         {
-                            testButton.Content = "❌";
-                            System.Diagnostics.Debug.WriteLine("Color test failed");
+                            success = await WledApi.TestColorAsync(app, colorEffect);
                         }
-                        
-                        // Reset button after delay
+
+                        testButton.Content = success ? "✅" : "❌";
                         await Task.Delay(1500);
                     }
-                    catch (Exception ex)
+                    catch
                     {
                         testButton.Content = "❌";
-                        System.Diagnostics.Debug.WriteLine($"Error testing color: {ex.Message}");
                         await Task.Delay(1500);
                     }
                     finally
@@ -1683,50 +1680,34 @@ namespace darts_hub.control
                         testButton.IsEnabled = true;
                     }
                 }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("Test button clicked but no color selected");
-                }
             };
 
             stopButton.Click += async (s, e) =>
             {
-                // Ensure we have a valid app reference
-                if (app == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("Stop button clicked but app is null");
-                    return;
-                }
+                if (app == null) return;
 
-                System.Diagnostics.Debug.WriteLine("Stopping WLED effects");
-                
-                // Disable button to prevent multiple clicks
                 stopButton.IsEnabled = false;
                 var originalContent = stopButton.Content;
                 stopButton.Content = "⏳";
-                
+
                 try
                 {
-                    var success = await WledApi.StopEffectsAsync(app);
-                    
-                    if (success)
+                    bool success;
+                    if (!string.IsNullOrEmpty(endpoint))
                     {
-                        stopButton.Content = "✅";
-                        System.Diagnostics.Debug.WriteLine("Effects stopped successfully");
+                        success = await WledApi.StopEffectsOnEndpointAsync(endpoint);
                     }
                     else
                     {
-                        stopButton.Content = "❌";
-                        System.Diagnostics.Debug.WriteLine("Failed to stop effects");
+                        success = await WledApi.StopEffectsAsync(app);
                     }
-                    
-                    // Reset button after delay
+
+                    stopButton.Content = success ? "✅" : "❌";
                     await Task.Delay(1500);
                 }
-                catch (Exception ex)
+                catch
                 {
                     stopButton.Content = "❌";
-                    System.Diagnostics.Debug.WriteLine($"Error stopping effects: {ex.Message}");
                     await Task.Delay(1500);
                 }
                 finally
@@ -1763,6 +1744,725 @@ namespace darts_hub.control
                    (param.NameHuman != null && 
                     (param.NameHuman.Contains("effect", StringComparison.OrdinalIgnoreCase) || 
                      param.NameHuman.Contains("effects", StringComparison.OrdinalIgnoreCase)));
+        }
+
+        // ===== Multi-Device (Endpoint Targeting) Support =====
+
+        /// <summary>
+        /// Extracts configured WLED endpoint IPs from the WEPS argument
+        /// </summary>
+        public static List<string> ExtractWledEndpoints(AppBase? app)
+        {
+            if (app == null) return new List<string>();
+            return WledApi.ExtractWledEndpoints(app);
+        }
+
+        /// <summary>
+        /// Checks whether the app has multiple WLED endpoints configured
+        /// </summary>
+        private static bool HasMultipleEndpoints(AppBase? app)
+        {
+            return ExtractWledEndpoints(app).Count > 1;
+        }
+
+        /// <summary>
+        /// Parses the |e: parameter from a WLED effect value string.
+        /// Returns the value without the e: part and the selected endpoint indices.
+        /// </summary>
+        internal static (string valueWithoutEndpoints, List<int> selectedEndpoints) ParseEndpointParameter(string? value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return (string.Empty, new List<int>());
+
+            var parts = value.Split('|');
+            var valueParts = new List<string>();
+            var selectedEndpoints = new List<int>();
+
+            foreach (var part in parts)
+            {
+                if (part.StartsWith("e:", StringComparison.OrdinalIgnoreCase))
+                {
+                    var indices = part.Substring(2).Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var idx in indices)
+                    {
+                        if (int.TryParse(idx.Trim(), out var index))
+                        {
+                            selectedEndpoints.Add(index);
+                        }
+                    }
+                }
+                else
+                {
+                    valueParts.Add(part);
+                }
+            }
+
+            return (string.Join("|", valueParts), selectedEndpoints);
+        }
+
+        /// <summary>
+        /// Builds a value string with the |e: parameter appended.
+        /// Always appends endpoint indices when called.
+        /// </summary>
+        internal static string BuildValueWithEndpoints(string baseValue, List<int> selectedEndpoints, int totalEndpoints)
+        {
+            if (string.IsNullOrEmpty(baseValue))
+                return baseValue;
+
+            if (selectedEndpoints.Count == 0)
+                return baseValue;
+
+            var sorted = selectedEndpoints.OrderBy(i => i).ToList();
+            return $"{baseValue}|e:{string.Join(",", sorted)}";
+        }
+
+        /// <summary>
+        /// Represents one effect-to-endpoints assignment in a multi-entry configuration
+        /// </summary>
+        private sealed class EffectEndpointEntry
+        {
+            public string EffectValue { get; set; } = string.Empty;
+            public List<int> EndpointIndices { get; set; } = new();
+        }
+
+        /// <summary>
+        /// Parses a multi-device WLED param value into individual effect-endpoint entries.
+        /// Entries are separated by spaces but only at the top level (not inside a single effect value).
+        /// WLED values use | as internal separator, so spaces separate distinct entries.
+        /// </summary>
+        private static List<EffectEndpointEntry> ParseEffectEndpointEntries(string? paramValue)
+        {
+            var result = new List<EffectEndpointEntry>();
+            if (string.IsNullOrWhiteSpace(paramValue))
+                return result;
+
+            // WLED effect values don't contain spaces internally (they use | as separator),
+            // so we can split on spaces to get individual entries.
+            // However, score area values may have "1-20 effect|e:0" format — not relevant for regular effects.
+            var tokens = paramValue.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var token in tokens)
+            {
+                var (cleanValue, endpoints) = ParseEndpointParameter(token);
+                if (!string.IsNullOrWhiteSpace(cleanValue))
+                {
+                    result.Add(new EffectEndpointEntry
+                    {
+                        EffectValue = cleanValue,
+                        EndpointIndices = endpoints
+                    });
+                }
+            }
+
+            // If there's exactly one entry without explicit endpoints, it applies to all
+            if (result.Count == 1 && result[0].EndpointIndices.Count == 0)
+            {
+                // Leave it — caller will treat "no endpoints" as "all endpoints"
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Detects the WLED input mode from a raw effect value (without endpoint suffix).
+        /// Returns "manual", "effects", "presets", or "colors".
+        /// </summary>
+        private static string DetectModeFromValue(string? value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return "manual";
+
+            if (IsPresetParameter(value))
+                return "presets";
+
+            if (IsColorEffect(value))
+                return "colors";
+
+            if (value.StartsWith("solid|", StringComparison.OrdinalIgnoreCase))
+                return "colors";
+
+            if (IsWledEffectParameter(value))
+                return "effects";
+
+            return "manual";
+        }
+
+        /// <summary>
+        /// Creates the multi-entry effect control for multi-device WLED setups.
+        /// Each row allows choosing a mode (Manual/Effects/Presets/Colors), configuring an effect,
+        /// and selecting which endpoints receive it.
+        /// </summary>
+        private static Control CreateMultiEntryEffectControl(
+            Argument param,
+            Action? saveCallback,
+            List<string> endpoints,
+            AppBase? app)
+        {
+            var outerPanel = new StackPanel { Spacing = 8 };
+
+            outerPanel.Children.Add(new TextBlock
+            {
+                Text = "Select an effect and choose which endpoints should receive it. If not all endpoints are selected, you can configure a different effect for the remaining ones.",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(180, 200, 220)),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 4)
+            });
+
+            var entriesContainer = new StackPanel { Spacing = 10 };
+            outerPanel.Children.Add(entriesContainer);
+
+            // Parse existing multi-value entries
+            var existingEntries = ParseEffectEndpointEntries(param.Value);
+            if (existingEntries.Count == 1 && existingEntries[0].EndpointIndices.Count == 0)
+            {
+                existingEntries[0].EndpointIndices = Enumerable.Range(0, endpoints.Count).ToList();
+            }
+            if (existingEntries.Count == 0)
+            {
+                existingEntries.Add(new EffectEndpointEntry
+                {
+                    EffectValue = string.Empty,
+                    EndpointIndices = Enumerable.Range(0, endpoints.Count).ToList()
+                });
+            }
+
+            var rowStates = new List<(Func<string> getEffectValue, List<CheckBox> checkBoxes)>();
+            bool isUpdatingGlobal = false;
+
+            void RebuildParamValue()
+            {
+                if (isUpdatingGlobal) return;
+                isUpdatingGlobal = true;
+                try
+                {
+                    var parts = new List<string>();
+
+                    // Collect all rows that have an actual effect value
+                    var activeRows = new List<(string effectVal, List<int> selectedEps)>();
+                    foreach (var (getVal, cbs) in rowStates)
+                    {
+                        var effectVal = getVal();
+                        if (string.IsNullOrWhiteSpace(effectVal))
+                            continue;
+
+                        var selectedEps = new List<int>();
+                        for (int i = 0; i < cbs.Count; i++)
+                        {
+                            if (cbs[i].IsChecked == true)
+                                selectedEps.Add((int)cbs[i].Tag);
+                        }
+                        activeRows.Add((effectVal, selectedEps));
+                    }
+
+                    foreach (var (effectVal, selectedEps) in activeRows)
+                    {
+                        if (activeRows.Count <= 1 && (selectedEps.Count == 0 || selectedEps.Count >= endpoints.Count))
+                        {
+                            // Single row covering all endpoints — no |e: suffix needed
+                            parts.Add(effectVal);
+                        }
+                        else
+                        {
+                            // Multiple rows or partial selection — always include |e: suffix
+                            parts.Add(BuildValueWithEndpoints(effectVal, selectedEps, endpoints.Count));
+                        }
+                    }
+
+                    param.Value = parts.Count == 0
+                        ? string.Empty
+                        : string.Join(" ", parts);
+
+                    param.IsValueChanged = true;
+                    saveCallback?.Invoke();
+
+                    System.Diagnostics.Debug.WriteLine($"[WLED MultiEntry] Updated param {param.Name} to: {param.Value}");
+                }
+                finally
+                {
+                    isUpdatingGlobal = false;
+                }
+            }
+
+            void RebuildEntries()
+            {
+                if (isUpdatingGlobal) return;
+                isUpdatingGlobal = true;
+                try
+                {
+                    var coveredEndpoints = new HashSet<int>();
+                    for (int rowIdx = 0; rowIdx < rowStates.Count; rowIdx++)
+                    {
+                        var (_, cbs) = rowStates[rowIdx];
+                        foreach (var cb in cbs)
+                        {
+                            if (cb.IsChecked == true)
+                                coveredEndpoints.Add((int)cb.Tag);
+                        }
+                    }
+
+                    var uncoveredEndpoints = Enumerable.Range(0, endpoints.Count)
+                        .Where(i => !coveredEndpoints.Contains(i))
+                        .ToList();
+
+                    // Remove trailing empty rows (rows where nothing is checked), keeping minimum 1 row
+                    while (rowStates.Count > 1)
+                    {
+                        var (_, lastCbs) = rowStates[rowStates.Count - 1];
+                        bool lastHasChecked = lastCbs.Any(cb => cb.IsChecked == true);
+                        if (!lastHasChecked)
+                        {
+                            entriesContainer.Children.RemoveAt(entriesContainer.Children.Count - 1);
+                            rowStates.RemoveAt(rowStates.Count - 1);
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                    bool lastRowHasSelection = false;
+                    if (rowStates.Count > 0)
+                    {
+                        var (_, lastCbs) = rowStates[rowStates.Count - 1];
+                        lastRowHasSelection = lastCbs.Any(cb => cb.IsChecked == true);
+                    }
+
+                    bool needNewRow = uncoveredEndpoints.Count > 0 && lastRowHasSelection;
+
+                    if (needNewRow && entriesContainer.Children.Count == rowStates.Count)
+                    {
+                        var newEntry = new EffectEndpointEntry
+                        {
+                            EffectValue = string.Empty,
+                            EndpointIndices = new List<int>(uncoveredEndpoints)
+                        };
+
+                        isUpdatingGlobal = false;
+                        AddEffectEntryRow(newEntry, uncoveredEndpoints, entriesContainer, rowStates,
+                            endpoints, RebuildParamValue, RebuildEntries, app);
+                        isUpdatingGlobal = true;
+                    }
+
+                    UpdateCheckboxAvailability(rowStates, endpoints.Count);
+                }
+                finally
+                {
+                    isUpdatingGlobal = false;
+                }
+
+                RebuildParamValue();
+            }
+
+            // Build initial rows
+            for (int entryIdx = 0; entryIdx < existingEntries.Count; entryIdx++)
+            {
+                var entry = existingEntries[entryIdx];
+                var coveredSoFar = new HashSet<int>();
+                for (int prev = 0; prev < entryIdx; prev++)
+                {
+                    foreach (var ep in existingEntries[prev].EndpointIndices)
+                        coveredSoFar.Add(ep);
+                }
+                var availableForRow = Enumerable.Range(0, endpoints.Count)
+                    .Where(i => !coveredSoFar.Contains(i))
+                    .ToList();
+
+                AddEffectEntryRow(entry, availableForRow, entriesContainer, rowStates,
+                    endpoints, RebuildParamValue, RebuildEntries, app);
+            }
+
+            return outerPanel;
+        }
+
+        /// <summary>
+        /// Adds a single effect+endpoint row to the entries container for multi-device configuration
+        /// </summary>
+        private static void AddEffectEntryRow(
+            EffectEndpointEntry entry,
+            List<int> availableEndpoints,
+            StackPanel entriesContainer,
+            List<(Func<string> getEffectValue, List<CheckBox> checkBoxes)> rowStates,
+            List<string> endpoints,
+            Action rebuildParamValue,
+            Action rebuildEntries,
+            AppBase? app)
+        {
+            int rowIndex = entriesContainer.Children.Count;
+
+            var rowBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(30, 0, 200, 255)),
+                CornerRadius = new CornerRadius(5),
+                Padding = new Thickness(10),
+                Margin = new Thickness(0, 2, 0, 0)
+            };
+
+            var rowPanel = new StackPanel { Spacing = 6 };
+
+            // Row header
+            var headerText = rowIndex == 0 ? "🎬 Effect Configuration" : "🎬 Additional Effect (for remaining endpoints)";
+            rowPanel.Children.Add(new TextBlock
+            {
+                Text = headerText,
+                FontSize = 13,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White
+            });
+
+            // Mode selector for this row
+            var rowModeSelector = new ComboBox
+            {
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
+                Foreground = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(3),
+                FontSize = 13,
+                PlaceholderText = "Select input mode..."
+            };
+
+            var rowManualItem = new ComboBoxItem { Content = "🖊️ Manual Input", Tag = "manual", Foreground = Brushes.White };
+            var rowEffectsItem = new ComboBoxItem { Content = "✨ WLED Effects", Tag = "effects", Foreground = Brushes.White };
+            var rowPresetsItem = new ComboBoxItem { Content = "🎨 Presets", Tag = "presets", Foreground = Brushes.White };
+            var rowColorsItem = new ComboBoxItem { Content = "🌈 Color Effects", Tag = "colors", Foreground = Brushes.White };
+
+            rowModeSelector.Items.Add(rowManualItem);
+            rowModeSelector.Items.Add(rowEffectsItem);
+            rowModeSelector.Items.Add(rowPresetsItem);
+            rowModeSelector.Items.Add(rowColorsItem);
+
+            // Detect initial mode from existing value
+            var detectedMode = DetectModeFromValue(entry.EffectValue);
+            rowModeSelector.SelectedItem = detectedMode switch
+            {
+                "effects" => rowEffectsItem,
+                "presets" => rowPresetsItem,
+                "colors" => rowColorsItem,
+                _ => rowManualItem
+            };
+
+            rowPanel.Children.Add(rowModeSelector);
+
+            // Container for the mode-specific effect input
+            var rowInputContainer = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(20, 255, 255, 255)),
+                CornerRadius = new CornerRadius(3),
+                Padding = new Thickness(8),
+                Margin = new Thickness(0, 5, 0, 0)
+            };
+
+            // Current effect value for this row (managed by the mode-specific control)
+            string currentRowEffectValue = entry.EffectValue ?? string.Empty;
+
+            // Create a getter that returns the current row's effect value
+            Func<string> getEffectValue = () => currentRowEffectValue;
+
+            // Action to update the row's effect value and trigger rebuild
+            Action<string> setEffectValue = (newVal) =>
+            {
+                currentRowEffectValue = newVal;
+                rebuildParamValue();
+            };
+
+            // Create a temporary Argument for the row's mode-specific controls to work with
+            var rowParam = new Argument(
+                name: "row_effect",
+                type: "string",
+                required: false,
+                value: entry.EffectValue
+            );
+
+            bool isRowInitializing = true;
+
+            void RowSaveCallback()
+            {
+                if (isRowInitializing) return;
+                currentRowEffectValue = rowParam.Value ?? string.Empty;
+                rebuildParamValue();
+            }
+
+            // Create checkboxes early so SetModeControl (local function) can read them
+            var checkBoxes = new List<CheckBox>();
+            for (int i = 0; i < endpoints.Count; i++)
+            {
+                var cb = new CheckBox
+                {
+                    Content = $"[{i}] {endpoints[i]}",
+                    IsChecked = entry.EndpointIndices.Contains(i),
+                    IsEnabled = availableEndpoints.Contains(i),
+                    Foreground = availableEndpoints.Contains(i) ? Brushes.White : new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                    FontSize = 12,
+                    Margin = new Thickness(0, 0, 16, 4),
+                    Tag = i
+                };
+                checkBoxes.Add(cb);
+            }
+
+            bool isInitialSetup = true;
+
+            // Build mode-specific control
+            void SetModeControl(string mode)
+            {
+                isRowInitializing = true;
+                rowParam.Value = currentRowEffectValue;
+
+                // Determine the endpoint for this row's data (first checked endpoint, or first available)
+                string? rowEndpoint = null;
+                for (int idx = 0; idx < checkBoxes.Count; idx++)
+                {
+                    if (checkBoxes[idx].IsChecked == true && idx < endpoints.Count)
+                    {
+                        rowEndpoint = endpoints[idx];
+                        break;
+                    }
+                }
+                if (rowEndpoint == null && entry.EndpointIndices.Count > 0 && entry.EndpointIndices[0] < endpoints.Count)
+                {
+                    rowEndpoint = endpoints[entry.EndpointIndices[0]];
+                }
+                // Fall back to first available (uncovered) endpoint for new rows
+                if (rowEndpoint == null && availableEndpoints.Count > 0 && availableEndpoints[0] < endpoints.Count)
+                {
+                    rowEndpoint = endpoints[availableEndpoints[0]];
+                }
+
+                switch (mode)
+                {
+                    case "effects":
+                        rowInputContainer.Child = new TextBlock
+                        {
+                            Text = "Loading effects...",
+                            Foreground = Brushes.White,
+                            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                        };
+                        Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+                        {
+                            try
+                            {
+                                var control = await CreateWledEffectsDropdown(rowParam, RowSaveCallback, app, rowEndpoint);
+                                rowInputContainer.Child = control;
+                            }
+                            catch
+                            {
+                                rowInputContainer.Child = CreateManualEffectInput(rowParam, RowSaveCallback);
+                            }
+                            // Sync back any initial value the control set on rowParam
+                            if (!string.IsNullOrEmpty(rowParam.Value) && string.IsNullOrEmpty(currentRowEffectValue))
+                            {
+                                currentRowEffectValue = rowParam.Value;
+                            }
+                            isRowInitializing = false;
+                            if (!isInitialSetup)
+                                rebuildParamValue();
+                        });
+                        return;
+
+                    case "presets":
+                        rowInputContainer.Child = new TextBlock
+                        {
+                            Text = "Loading presets...",
+                            Foreground = Brushes.White,
+                            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                        };
+                        Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+                        {
+                            try
+                            {
+                                var control = await CreateWledPresetsDropdown(rowParam, RowSaveCallback, app, rowEndpoint);
+                                rowInputContainer.Child = control;
+                            }
+                            catch
+                            {
+                                rowInputContainer.Child = CreateManualEffectInput(rowParam, RowSaveCallback);
+                            }
+                            // Sync back any initial value the control set on rowParam
+                            if (!string.IsNullOrEmpty(rowParam.Value) && string.IsNullOrEmpty(currentRowEffectValue))
+                            {
+                                currentRowEffectValue = rowParam.Value;
+                            }
+                            isRowInitializing = false;
+                            if (!isInitialSetup)
+                                rebuildParamValue();
+                        });
+                        return;
+
+                    case "colors":
+                        rowInputContainer.Child = CreateColorEffectsDropdown(rowParam, RowSaveCallback, app, rowEndpoint);
+                        break;
+
+                    default: // manual
+                        rowInputContainer.Child = CreateManualEffectInput(rowParam, RowSaveCallback);
+                        break;
+                }
+
+                // Sync back any initial value the control may have set on rowParam
+                // (e.g. CreateColorEffectsDropdown sets a default color during construction)
+                if (!string.IsNullOrEmpty(rowParam.Value) && string.IsNullOrEmpty(currentRowEffectValue))
+                {
+                    currentRowEffectValue = rowParam.Value;
+                }
+
+                isRowInitializing = false;
+                if (!isInitialSetup)
+                    rebuildParamValue();
+            }
+
+            // Set initial mode control
+            SetModeControl(detectedMode);
+            isInitialSetup = false;
+
+            rowModeSelector.SelectionChanged += (s, e) =>
+            {
+                if (rowModeSelector.SelectedItem is ComboBoxItem selectedItem)
+                {
+                    var mode = selectedItem.Tag?.ToString() ?? "manual";
+                    SetModeControl(mode);
+                }
+            };
+
+            rowPanel.Children.Add(rowInputContainer);
+
+            // Endpoint checkboxes (UI placement — checkBoxes list was created earlier)
+            var epHeaderPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Margin = new Thickness(0, 4, 0, 0) };
+            epHeaderPanel.Children.Add(new TextBlock
+            {
+                Text = "📡",
+                FontSize = 13,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            epHeaderPanel.Children.Add(new TextBlock
+            {
+                Text = "Target Endpoints",
+                FontSize = 12,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            rowPanel.Children.Add(epHeaderPanel);
+
+            rowPanel.Children.Add(new TextBlock
+            {
+                Text = rowIndex == 0
+                    ? "Select which devices receive this effect. Unselected endpoints can get a different effect below."
+                    : "Select which remaining devices receive this effect.",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(180, 200, 220)),
+                TextWrapping = TextWrapping.Wrap
+            });
+
+            var checkBoxPanel = new WrapPanel { Orientation = Orientation.Horizontal };
+            foreach (var cb in checkBoxes)
+            {
+                checkBoxPanel.Children.Add(cb);
+            }
+
+            rowPanel.Children.Add(checkBoxPanel);
+            rowBorder.Child = rowPanel;
+            entriesContainer.Children.Add(rowBorder);
+
+            // Register this row's state
+            rowStates.Add((getEffectValue, checkBoxes));
+
+            // Wire up checkbox events
+            foreach (var cb in checkBoxes)
+            {
+                cb.Checked += (s, e) => rebuildEntries();
+                cb.Unchecked += (s, e) => rebuildEntries();
+            }
+        }
+
+        /// <summary>
+        /// Updates checkbox availability across all rows — each endpoint should only be selectable in one row
+        /// </summary>
+        private static void UpdateCheckboxAvailability(
+            List<(Func<string> getEffectValue, List<CheckBox> checkBoxes)> rowStates,
+            int totalEndpoints)
+        {
+            UpdateCheckboxAvailabilityExternal(rowStates, totalEndpoints);
+        }
+
+        /// <summary>
+        /// Updates checkbox availability across all rows — reusable from other helpers
+        /// </summary>
+        internal static void UpdateCheckboxAvailabilityExternal(
+            List<(Func<string> getValue, List<CheckBox> checkBoxes)> rowStates,
+            int totalEndpoints)
+        {
+            var endpointToRow = new Dictionary<int, int>();
+
+            for (int rowIdx = 0; rowIdx < rowStates.Count; rowIdx++)
+            {
+                var (_, cbs) = rowStates[rowIdx];
+                foreach (var cb in cbs)
+                {
+                    var epIdx = (int)cb.Tag;
+                    if (cb.IsChecked == true)
+                    {
+                        endpointToRow[epIdx] = rowIdx;
+                    }
+                }
+            }
+
+            for (int rowIdx = 0; rowIdx < rowStates.Count; rowIdx++)
+            {
+                var (_, cbs) = rowStates[rowIdx];
+                foreach (var cb in cbs)
+                {
+                    var epIdx = (int)cb.Tag;
+                    if (endpointToRow.TryGetValue(epIdx, out var ownerRow))
+                    {
+                        cb.IsEnabled = ownerRow == rowIdx;
+                        cb.Foreground = ownerRow == rowIdx
+                            ? Brushes.White
+                            : new SolidColorBrush(Color.FromRgb(100, 100, 100));
+                    }
+                    else
+                    {
+                        cb.IsEnabled = true;
+                        cb.Foreground = Brushes.White;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Tests a WLED effect value on a specific endpoint. Detects the effect type and calls the appropriate API method.
+        /// </summary>
+        private static async Task<(bool success, string message)> TestEffectOnEndpointAsync(AppBase app, string effectValue, string endpoint)
+        {
+            try
+            {
+                if (IsPresetParameter(effectValue))
+                {
+                    var parts = effectValue.Split('|');
+                    if (parts.Length >= 2 && int.TryParse(parts[1], out var presetId))
+                    {
+                        var success = await WledApi.TestPresetOnEndpointAsync(endpoint, presetId);
+                        return (success, success ? "OK" : "Failed to send preset");
+                    }
+                    return (false, "Invalid preset format");
+                }
+
+                if (IsColorEffect(effectValue) || effectValue.StartsWith("solid|", StringComparison.OrdinalIgnoreCase))
+                {
+                    var success = await WledApi.TestColorOnEndpointAsync(endpoint, effectValue);
+                    return (success, success ? "OK" : "Failed to send color");
+                }
+
+                if (IsWledEffectParameter(effectValue))
+                {
+                    var success = await WledApi.TestEffectValueOnEndpointAsync(endpoint, effectValue);
+                    return (success, success ? "OK" : "Failed to send effect");
+                }
+
+                return (false, "Unknown effect type");
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
         }
     }
 }
