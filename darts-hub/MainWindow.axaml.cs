@@ -278,7 +278,6 @@ namespace darts_hub
         {
             try
             {
-                ExecuteWledStartActions();
                 await initializationManager.InitializeApplication();
             }
             catch (ConfigurationException ex)
@@ -311,10 +310,16 @@ namespace darts_hub
             }
         }
 
-        private void ExecuteWledStartActions()
+        internal void ExecuteWledStartActions()
         {
             try
             {
+                if (!GetLicenseManager().HasFeature("i_m_able_to_read"))
+                {
+                    Debug.WriteLine("[MainWindow] WLED start actions skipped: license feature 'i_m_able_to_read' not available.");
+                    return;
+                }
+
                 var devices = configurator.Settings.WledOnStartDevices;
                 if (devices == null || devices.Count == 0)
                     return;
@@ -332,6 +337,12 @@ namespace darts_hub
         {
             try
             {
+                if (!GetLicenseManager().HasFeature("i_m_able_to_read"))
+                {
+                    Debug.WriteLine("[MainWindow] WLED close actions skipped: license feature 'i_m_able_to_read' not available.");
+                    return;
+                }
+
                 var devices = configurator.Settings.WledOnCloseDevices;
                 if (devices == null || devices.Count == 0)
                     return;
@@ -734,7 +745,7 @@ namespace darts_hub
             consoleManager.Stop();
 
             var settingsView = new AppSettingsView();
-            settingsView.Initialize(configurator);
+            settingsView.Initialize(configurator, GetLicenseManager());
 
             SettingsPanel.Children.Clear();
             SettingsPanel.Children.Add(settingsView);

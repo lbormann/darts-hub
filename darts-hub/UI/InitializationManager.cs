@@ -36,8 +36,9 @@ namespace darts_hub.UI
             // Check if wizard should be shown
             await CheckAndShowWizard();
 
-            // Validate license in the background and update status bar
-            _ = mainWindow.UpdateLicenseStatusBarAsync();
+            // Validate license and update status bar, then execute WLED start actions
+            await mainWindow.UpdateLicenseStatusBarAsync();
+            mainWindow.ExecuteWledStartActions();
         }
 
         public void InitializeViewModel()

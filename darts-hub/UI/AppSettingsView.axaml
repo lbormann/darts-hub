@@ -152,19 +152,25 @@
                                Foreground="#FF999999"
                                FontSize="12"/>
 
-                    <StackPanel x:Name="WledStartDeviceListPanel" Spacing="10"/>
+                    <!-- Lock overlay (shown when license feature is missing) -->
+                    <Border x:Name="WledStartLockedPanel" IsVisible="False"/>
 
-                    <Button x:Name="WledStartAddDeviceButton"
-                            Content="+ Add WLED device"
-                            Padding="12,6"
-                            Background="#FF28A745"
-                            BorderBrush="#FF1E7E34"
-                            BorderThickness="1"
-                            CornerRadius="4"
-                            Foreground="White"
-                            FontSize="13"
-                            FontWeight="SemiBold"
-                            HorizontalAlignment="Left"/>
+                    <!-- Content (shown when licensed) -->
+                    <StackPanel x:Name="WledStartContentPanel" Spacing="10">
+                        <StackPanel x:Name="WledStartDeviceListPanel" Spacing="10"/>
+
+                        <Button x:Name="WledStartAddDeviceButton"
+                                Content="+ Add WLED device"
+                                Padding="12,6"
+                                Background="#FF28A745"
+                                BorderBrush="#FF1E7E34"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Foreground="White"
+                                FontSize="13"
+                                FontWeight="SemiBold"
+                                HorizontalAlignment="Left"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -181,19 +187,25 @@
                                Foreground="#FF999999"
                                FontSize="12"/>
 
-                    <StackPanel x:Name="WledDeviceListPanel" Spacing="10"/>
+                    <!-- Lock overlay (shown when license feature is missing) -->
+                    <Border x:Name="WledCloseLockedPanel" IsVisible="False"/>
 
-                    <Button x:Name="WledAddDeviceButton"
-                            Content="+ Add WLED device"
-                            Padding="12,6"
-                            Background="#FF28A745"
-                            BorderBrush="#FF1E7E34"
-                            BorderThickness="1"
-                            CornerRadius="4"
-                            Foreground="White"
-                            FontSize="13"
-                            FontWeight="SemiBold"
-                            HorizontalAlignment="Left"/>
+                    <!-- Content (shown when licensed) -->
+                    <StackPanel x:Name="WledCloseContentPanel" Spacing="10">
+                        <StackPanel x:Name="WledDeviceListPanel" Spacing="10"/>
+
+                        <Button x:Name="WledAddDeviceButton"
+                                Content="+ Add WLED device"
+                                Padding="12,6"
+                                Background="#FF28A745"
+                                BorderBrush="#FF1E7E34"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Foreground="White"
+                                FontSize="13"
+                                FontWeight="SemiBold"
+                                HorizontalAlignment="Left"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

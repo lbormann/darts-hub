@@ -20,7 +20,10 @@ namespace darts_hub.UI
     /// </summary>
     public partial class AppSettingsView : UserControl
     {
+        private const string WledFeatureKey = "i_m_able_to_read";
+
         private Configurator? configurator;
+        private control.LicenseManager? licenseManager;
 
         public AppSettingsView()
         {
@@ -35,9 +38,10 @@ namespace darts_hub.UI
         /// <summary>
         /// Binds this view to the configurator and sets up initial state.
         /// </summary>
-        public void Initialize(Configurator configurator)
+        public void Initialize(Configurator configurator, control.LicenseManager licenseManager)
         {
             this.configurator = configurator;
+            this.licenseManager = licenseManager;
 
             var skipUpdate = this.FindControl<CheckBox>("SkipUpdateConfirmationCheckBox");
             var betaTester = this.FindControl<CheckBox>("BetaTesterCheckBox");
@@ -78,8 +82,99 @@ namespace darts_hub.UI
             }
 
             InitializeMonitorSettings();
-            InitializeWledStartSettings();
-            InitializeWledCloseSettings();
+            InitializeWledSections();
+        }
+
+        private void InitializeWledSections()
+        {
+            bool isLicensed = licenseManager?.HasFeature(WledFeatureKey) == true;
+
+            var startLocked = this.FindControl<Border>("WledStartLockedPanel");
+            var startContent = this.FindControl<StackPanel>("WledStartContentPanel");
+            var closeLocked = this.FindControl<Border>("WledCloseLockedPanel");
+            var closeContent = this.FindControl<StackPanel>("WledCloseContentPanel");
+
+            if (isLicensed)
+            {
+                if (startLocked != null) startLocked.IsVisible = false;
+                if (startContent != null) startContent.IsVisible = true;
+                if (closeLocked != null) closeLocked.IsVisible = false;
+                if (closeContent != null) closeContent.IsVisible = true;
+
+                InitializeWledStartSettings();
+                InitializeWledCloseSettings();
+            }
+            else
+            {
+                if (startLocked != null)
+                {
+                    startLocked.Child = BuildLicenseLockedPanel();
+                    startLocked.IsVisible = true;
+                }
+                if (startContent != null) startContent.IsVisible = false;
+
+                if (closeLocked != null)
+                {
+                    closeLocked.Child = BuildLicenseLockedPanel();
+                    closeLocked.IsVisible = true;
+                }
+                if (closeContent != null) closeContent.IsVisible = false;
+            }
+        }
+
+        /// <summary>
+        /// Builds a lock overlay panel consistent with the LockedArgumentHelper style.
+        /// </summary>
+        private static StackPanel BuildLicenseLockedPanel()
+        {
+            var panel = new StackPanel { Spacing = 6 };
+
+            var label = new TextBlock
+            {
+                Text = "\U0001F512 WLED Device Control",
+                FontSize = 14,
+                Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180))
+            };
+            panel.Children.Add(label);
+
+            var hintRow = new WrapPanel { Orientation = Orientation.Horizontal };
+
+            var hintText = new TextBlock
+            {
+                Text = "This feature requires an experience license.",
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.FromRgb(255, 149, 0)),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 8, 0)
+            };
+            hintRow.Children.Add(hintText);
+
+            var licenseButton = new Button
+            {
+                Content = "Open License Settings",
+                FontSize = 11,
+                Padding = new Thickness(8, 3),
+                Background = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(3),
+                VerticalAlignment = VerticalAlignment.Center,
+                Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand)
+            };
+            licenseButton.Click += (_, _) =>
+            {
+                if (Avalonia.Application.Current?.ApplicationLifetime
+                    is IClassicDesktopStyleApplicationLifetime desktop
+                    && desktop.MainWindow is MainWindow mw)
+                {
+                    mw.ShowLicenseSettingsPublic();
+                }
+            };
+
+            hintRow.Children.Add(licenseButton);
+            panel.Children.Add(hintRow);
+
+            return panel;
         }
 
         #region Monitor Settings
