@@ -21,8 +21,9 @@ namespace darts_hub.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "b1.5.0.0";
-        
+        public static readonly string version = "b1.5.0.1";
+        //public static readonly string version = "b1.4.1.20";
+
 
         public static event EventHandler<ReleaseEventArgs>? NoNewReleaseFound;
         public static event EventHandler<ReleaseEventArgs>? NewReleaseFound;
@@ -116,16 +117,16 @@ namespace darts_hub.control
 
                 UpdaterLogger.LogInfo($"Latest GitHub version: {latestGithubVersion}");
 
-                if (version != latestGithubVersion)
+                if (CompareVersions(version, latestGithubVersion) < 0)
                 {
                     UpdaterLogger.LogInfo("New version found - fetching changelog");
                     latestRepoVersion = latestGithubVersion;
-                    
+
                     var changelog = await RetryHelper.ExecuteWithRetryAsync(async () =>
                     {
                         return await Helper.AsyncHttpGet(appSourceUrlChangelog, requestTimeout);
                     }, 3, 1000, "Changelog Download");
-                    
+
                     UpdaterLogger.LogInfo($"Successfully retrieved changelog ({changelog.Length} characters)");
                     OnNewReleaseFound(new ReleaseEventArgs(latestRepoVersion, changelog));
                 }
@@ -147,66 +148,71 @@ namespace darts_hub.control
             try
             {
                 UpdaterLogger.LogInfo($"Current version: {version}");
-                UpdaterLogger.LogInfo("Checking for beta releases from GitHub API");
-                
-                var latestBetaVersion = await RetryHelper.ExecuteWithRetryAsync(async () =>
+                UpdaterLogger.LogInfo("Checking for newest release (beta or stable) from GitHub API");
+
+                var newestVersion = await RetryHelper.ExecuteWithRetryAsync(async () =>
                 {
                     using var client = new HttpClient();
                     client.DefaultRequestHeaders.Add("User-Agent", requestUserAgent);
                     client.Timeout = TimeSpan.FromSeconds(requestTimeout);
-                    
+
                     UpdaterLogger.LogDebug("Sending HTTP request to GitHub API for all releases");
                     var result = await client.GetStringAsync("https://api.github.com/repos/lbormann/darts-hub/releases");
-                    
-                    UpdaterLogger.LogDebug("Parsing releases to find latest beta");
+
+                    UpdaterLogger.LogDebug("Parsing releases to find newest version (beta or stable)");
                     var releases = JsonDocument.Parse(result).RootElement.EnumerateArray();
-                    JsonElement? latestBetaRelease = null;
+                    string? bestTag = null;
 
                     foreach (var release in releases)
                     {
-                        if (release.GetProperty("prerelease").GetBoolean())
+                        if (release.GetProperty("draft").GetBoolean())
+                            continue;
+
+                        var tag = release.GetProperty("tag_name").GetString();
+                        if (string.IsNullOrEmpty(tag))
+                            continue;
+
+                        if (bestTag == null || CompareVersions(tag, bestTag) > 0)
                         {
-                            latestBetaRelease = release;
-                            break;
+                            bestTag = tag;
                         }
                     }
 
-                    if (!latestBetaRelease.HasValue)
+                    if (bestTag == null)
                     {
-                        UpdaterLogger.LogWarning("No beta releases found");
-                        return null;
+                        UpdaterLogger.LogWarning("No releases found");
                     }
 
-                    return latestBetaRelease.Value.GetProperty("tag_name").GetString();
+                    return bestTag;
                 }, 3, 2000, "GitHub API Beta Version Check");
 
-                if (latestBetaVersion != null)
+                if (newestVersion != null)
                 {
-                    UpdaterLogger.LogInfo($"Latest beta version: {latestBetaVersion}");
-                    
-                    if (version != latestBetaVersion)
+                    UpdaterLogger.LogInfo($"Newest available version: {newestVersion}");
+
+                    if (CompareVersions(version, newestVersion) < 0)
                     {
-                        UpdaterLogger.LogInfo("New beta version found - fetching changelog");
-                        latestRepoVersion = latestBetaVersion;
-                        
+                        UpdaterLogger.LogInfo("Newer version found - fetching changelog");
+                        latestRepoVersion = newestVersion;
+
                         var changelog = await RetryHelper.ExecuteWithRetryAsync(async () =>
                         {
                             return await Helper.AsyncHttpGet(appSourceUrlChangelog, requestTimeout);
                         }, 3, 1000, "Changelog Download");
-                        
+
                         UpdaterLogger.LogInfo($"Successfully retrieved changelog ({changelog.Length} characters)");
                         OnNewReleaseFound(new ReleaseEventArgs(latestRepoVersion, changelog));
                     }
                     else
                     {
-                        UpdaterLogger.LogInfo("Current beta version is up to date");
-                        OnNoNewReleaseFound(new ReleaseEventArgs(latestBetaVersion, string.Empty));
+                        UpdaterLogger.LogInfo("Current version is up to date");
+                        OnNoNewReleaseFound(new ReleaseEventArgs(newestVersion, string.Empty));
                     }
                 }
                 else
                 {
-                    UpdaterLogger.LogWarning("No beta releases available");
-                    OnNoNewReleaseFound(new ReleaseEventArgs("vx.x.x", "No beta releases found."));
+                    UpdaterLogger.LogWarning("No releases available");
+                    OnNoNewReleaseFound(new ReleaseEventArgs("vx.x.x", "No releases found."));
                 }
             }
             catch (Exception ex)
@@ -570,6 +576,25 @@ namespace darts_hub.control
                 UpdaterLogger.LogError("Update installation failed", ex);
                 OnReleaseDownloadFailed(new ReleaseEventArgs(latestRepoVersion, ex.Message));
             }
+        }
+
+        /// <summary>
+        /// Compares two version strings (supports formats like "v1.2.3", "b1.0.8", "v1.2.3.0", "b1.2.3.1")
+        /// Strips the v/b prefix and compares numerically.
+        /// </summary>
+        /// <returns>Negative if version1 &lt; version2, 0 if equal, positive if version1 &gt; version2</returns>
+        internal static int CompareVersions(string version1, string version2)
+        {
+            var cleanVersion1 = version1.TrimStart('v', 'b', 'V', 'B');
+            var cleanVersion2 = version2.TrimStart('v', 'b', 'V', 'B');
+
+            if (Version.TryParse(cleanVersion1, out var v1) && Version.TryParse(cleanVersion2, out var v2))
+            {
+                return v1.CompareTo(v2);
+            }
+
+            UpdaterLogger.LogWarning($"Version parsing failed, using string comparison: {version1} vs {version2}");
+            return string.Compare(cleanVersion1, cleanVersion2, StringComparison.OrdinalIgnoreCase);
         }
 
         private static void OnNoNewReleaseFound(ReleaseEventArgs e)

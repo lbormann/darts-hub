@@ -506,7 +506,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-mac64",
                 MacArm64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-mac"
             };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b1.11.0.1");
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b1.11.0.2");
 
 
             var dartsPixelitDownloadMap = new DownloadMap
@@ -723,8 +723,10 @@ namespace darts_hub.control
                         new(name: "BSE", type: "string", required: false, isMulti: true, nameHuman: "-BSE / --board_stop_effect", section: "Board Status Effects"),
                         new(name: "TOE", type: "string", required: false, isMulti: true, nameHuman: "-TOE / --takeout_effect", section: "Board Status Effects"),
                         new(name: "CE", type: "string", required: false, isMulti: true, nameHuman: "-CE / --calibration_effect", section: "Board Status Effects"),
-                        new(name: "DSBULL", type: "string", required: false, isMulti: true, nameHuman: "-DSBULL / --dart_score_BULL_effects", section: "Single Dart Effects !! still in Progress !!"),
-                      //  new(name: "TEST", type: "string", required: false, isMulti: true, nameHuman: "test", section: "WLED")
+                        new(name: "DSBULL", type: "string", required: false, isMulti: true, nameHuman: "-DSBULL / --dart_score_BULL_effects", section: "Single Dart Effects !! still in Progress !!",requiredFeature: "i_m_able_to_read"),
+                        new(name: "SLE", type: "string", required: false, isMulti: true, nameHuman: "-SLE / --sleep_effect", section: "Sleepmode", requiredFeature: "i_m_able_to_read"),
+                        new(name: "SLET", type: "int[0..1000]", required: false, nameHuman: "-SLET / --sleep_timeout", section: "Sleepmode", requiredFeature: "i_m_able_to_read"),
+                        //  new(name: "TEST", type: "string", required: false, isMulti: true, nameHuman: "test", section: "WLED")
 
 
 
@@ -1194,6 +1196,18 @@ namespace darts_hub.control
                     {
                         dartsWled.Configuration.Arguments.Add(new(name: "IDE6", type: "string", required: false, nameHuman: "-IDE6 / --idle_effect_player6", section: "Service"));
                     }
+                    var wledSLE = dartsWled.Configuration.Arguments.Find(a => a.Name == "SLE");
+                    if (wledSLE == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "SLE", type: "string", required: false, isMulti: true, nameHuman: "-SLE / --sleep_effect", section: "Sleepmode", requiredFeature: "i_m_able_to_read"));
+                    }
+                    var wledSLET = dartsWled.Configuration.Arguments.Find(a => a.Name == "SLET");
+                    if (wledSLET == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "SLET", type: "int[0..1000]", required: false, nameHuman: "-SLET / --sleep_timeout", section: "Sleepmode", requiredFeature: "i_m_able_to_read"));
+                    }
+                    
+                       
 
 
 

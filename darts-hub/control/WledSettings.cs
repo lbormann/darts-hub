@@ -544,6 +544,19 @@ namespace darts_hub.control
             ToolTip.SetTip(testButton, "Test selected effect on WLED controller");
             ToolTip.SetTip(stopButton, "Stop effects on WLED controller");
 
+            var effectRefreshButton = new Button
+            {
+                Content = "🔄",
+                Background = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(3),
+                Width = 30,
+                Height = 30,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+            ToolTip.SetTip(effectRefreshButton, "Refresh effects and palettes from WLED controller");
+
             var palettePanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5, Margin = new Thickness(0, 5, 0, 0) };
             var paletteLabel = new TextBlock
             {
@@ -780,7 +793,7 @@ namespace darts_hub.control
  
                  // Add info header
                  var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
-                 var headerText = isLive ? $"--- {source} ---" : "--- Fallback Effects ---";
+                 var headerText = isLive ? $"─── Live from {source} ───" : "─── Fallback Effects ───";
  
                  var dynamicHeader = new ComboBoxItem
                  {
@@ -817,7 +830,7 @@ namespace darts_hub.control
                  }
  
                  effectDropdown.PlaceholderText = isLive ? 
-                     "Select WLED effect (local data)..." : 
+                     "Select WLED effect (live data)..." : 
                      "Select WLED effect (fallback data)...";
  
                  if (effectToSelect != null)
@@ -852,7 +865,7 @@ namespace darts_hub.control
  
                  // Add info header
                  var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
-                 var headerText = isLive ? $"--- {source} ---" : "--- Fallback Palettes ---";
+                 var headerText = isLive ? $"─── Live from {source} ───" : "─── Fallback Palettes ───";
  
                  var dynamicHeader = new ComboBoxItem
                  {
@@ -882,8 +895,8 @@ namespace darts_hub.control
                      }
                  }
  
-                 paletteDropdown.PlaceholderText = isLive ? 
-                     "Select palette (local data)..." : 
+                 paletteDropdown.PlaceholderText = isLive ?
+                     "Select palette (live data)..." :
                      "Select palette (fallback data)...";
  
                  if (paletteToSelect != null)
@@ -1036,10 +1049,29 @@ namespace darts_hub.control
                 }
             };
 
+            effectRefreshButton.Click += async (s, e) =>
+            {
+                effectRefreshButton.IsEnabled = false;
+                effectRefreshButton.Content = "⏳";
+                try
+                {
+                    isInitializing = true;
+                    await PopulateEffects();
+                    await PopulatePalettes();
+                    isInitializing = false;
+                }
+                finally
+                {
+                    effectRefreshButton.Content = "🔄";
+                    effectRefreshButton.IsEnabled = true;
+                }
+            };
+
             // Build the UI
             effectPanel.Children.Add(effectDropdown);
             effectPanel.Children.Add(testButton);
             effectPanel.Children.Add(stopButton);
+            effectPanel.Children.Add(effectRefreshButton);
 
             palettePanel.Children.Add(paletteLabel);
             palettePanel.Children.Add(paletteDropdown);
@@ -1122,6 +1154,19 @@ namespace darts_hub.control
 
             ToolTip.SetTip(testButton, "Test selected preset on WLED controller");
             ToolTip.SetTip(stopButton, "Stop effects on WLED controller");
+
+            var presetRefreshButton = new Button
+            {
+                Content = "🔄",
+                Background = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(3),
+                Width = 30,
+                Height = 30,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+            ToolTip.SetTip(presetRefreshButton, "Refresh presets from WLED controller");
 
             // Duration selection panel
             var durationPanel = new StackPanel
@@ -1263,7 +1308,7 @@ namespace darts_hub.control
                 
                 // Add info header
                 var headerColor = isLive ? Color.FromRgb(100, 255, 100) : Color.FromRgb(120, 120, 120);
-                var headerText = isLive ? $"--- {source} ---" : "--- Fallback Presets ---";
+                var headerText = isLive ? $"─── Live from {source} ───" : "─── Fallback Presets ───";
                 
                 var dynamicHeader = new ComboBoxItem
                 {
@@ -1297,7 +1342,7 @@ namespace darts_hub.control
                     }
                 }
                 presetDropdown.PlaceholderText = isLive ? 
-                    "Select preset (local data)..." : 
+                    "Select preset (live data)..." : 
                     "Select preset (fallback data)...";
                 
                 // Set selection AFTER all items have been added
@@ -1391,10 +1436,28 @@ namespace darts_hub.control
                 }
             };
 
+            presetRefreshButton.Click += async (s, e) =>
+            {
+                presetRefreshButton.IsEnabled = false;
+                presetRefreshButton.Content = "⏳";
+                try
+                {
+                    isInitializing = true;
+                    await PopulatePresets();
+                    isInitializing = false;
+                }
+                finally
+                {
+                    presetRefreshButton.Content = "🔄";
+                    presetRefreshButton.IsEnabled = true;
+                }
+            };
+
             // Build the UI
             presetPanel.Children.Add(presetDropdown);
             presetPanel.Children.Add(testButton);
             presetPanel.Children.Add(stopButton);
+            presetPanel.Children.Add(presetRefreshButton);
 
             durationPanel.Children.Add(durationLabel);
             durationPanel.Children.Add(durationUpDown);
@@ -1990,10 +2053,51 @@ namespace darts_hub.control
                 isUpdatingGlobal = true;
                 try
                 {
-                    var coveredEndpoints = new HashSet<int>();
+                    // Resolve conflicts: if an endpoint is checked in multiple rows, keep only the first occurrence
+                    var claimedByRow = new Dictionary<int, int>(); // epIdx -> first rowIdx that claims it
                     for (int rowIdx = 0; rowIdx < rowStates.Count; rowIdx++)
                     {
                         var (_, cbs) = rowStates[rowIdx];
+                        foreach (var cb in cbs)
+                        {
+                            var epIdx = (int)cb.Tag;
+                            if (cb.IsChecked == true)
+                            {
+                                if (claimedByRow.ContainsKey(epIdx))
+                                {
+                                    // Conflict — uncheck in this later row
+                                    cb.IsChecked = false;
+                                }
+                                else
+                                {
+                                    claimedByRow[epIdx] = rowIdx;
+                                }
+                            }
+                        }
+                    }
+
+                    // Remove trailing empty rows (rows where nothing is checked), keeping minimum 1 row
+                    bool rowsWereRemoved = false;
+                    while (rowStates.Count > 1)
+                    {
+                        var (_, lastCbs) = rowStates[rowStates.Count - 1];
+                        bool lastHasChecked = lastCbs.Any(cb => cb.IsChecked == true);
+                        if (!lastHasChecked)
+                        {
+                            entriesContainer.Children.RemoveAt(entriesContainer.Children.Count - 1);
+                            rowStates.RemoveAt(rowStates.Count - 1);
+                            rowsWereRemoved = true;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                    // Recalculate uncovered endpoints after conflict resolution
+                    var coveredEndpoints = new HashSet<int>();
+                    foreach (var (_, cbs) in rowStates)
+                    {
                         foreach (var cb in cbs)
                         {
                             if (cb.IsChecked == true)
@@ -2005,20 +2109,18 @@ namespace darts_hub.control
                         .Where(i => !coveredEndpoints.Contains(i))
                         .ToList();
 
-                    // Remove trailing empty rows (rows where nothing is checked), keeping minimum 1 row
-                    while (rowStates.Count > 1)
+                    // Only auto-check uncovered endpoints back into the remaining row
+                    // when rows were actually removed (not when user manually unchecks)
+                    if (rowsWereRemoved && rowStates.Count == 1 && uncoveredEndpoints.Count > 0)
                     {
-                        var (_, lastCbs) = rowStates[rowStates.Count - 1];
-                        bool lastHasChecked = lastCbs.Any(cb => cb.IsChecked == true);
-                        if (!lastHasChecked)
+                        var (_, firstRowCbs) = rowStates[0];
+                        foreach (var cb in firstRowCbs)
                         {
-                            entriesContainer.Children.RemoveAt(entriesContainer.Children.Count - 1);
-                            rowStates.RemoveAt(rowStates.Count - 1);
+                            var epIdx = (int)cb.Tag;
+                            if (uncoveredEndpoints.Contains(epIdx))
+                                cb.IsChecked = true;
                         }
-                        else
-                        {
-                            break;
-                        }
+                        uncoveredEndpoints.Clear();
                     }
 
                     bool lastRowHasSelection = false;
@@ -2208,7 +2310,7 @@ namespace darts_hub.control
                 isRowInitializing = true;
                 rowParam.Value = currentRowEffectValue;
 
-                // Determine the endpoint for this row's data (first checked endpoint, or first available)
+                // Determine the endpoint for this row's data (first checked, then first enabled)
                 string? rowEndpoint = null;
                 for (int idx = 0; idx < checkBoxes.Count; idx++)
                 {
@@ -2222,10 +2324,17 @@ namespace darts_hub.control
                 {
                     rowEndpoint = endpoints[entry.EndpointIndices[0]];
                 }
-                // Fall back to first available (uncovered) endpoint for new rows
-                if (rowEndpoint == null && availableEndpoints.Count > 0 && availableEndpoints[0] < endpoints.Count)
+                // Fall back to first enabled checkbox (dynamically reflects current availability)
+                if (rowEndpoint == null)
                 {
-                    rowEndpoint = endpoints[availableEndpoints[0]];
+                    for (int idx = 0; idx < checkBoxes.Count; idx++)
+                    {
+                        if (checkBoxes[idx].IsEnabled && idx < endpoints.Count)
+                        {
+                            rowEndpoint = endpoints[idx];
+                            break;
+                        }
+                    }
                 }
 
                 switch (mode)
@@ -2384,7 +2493,9 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Updates checkbox availability across all rows — reusable from other helpers
+        /// Updates checkbox availability across all rows — reusable from other helpers.
+        /// Checkboxes are always enabled so users can move endpoints between rows.
+        /// Checkboxes checked in another row are shown dimmed to indicate they belong elsewhere.
         /// </summary>
         internal static void UpdateCheckboxAvailabilityExternal(
             List<(Func<string> getValue, List<CheckBox> checkBoxes)> rowStates,
@@ -2411,18 +2522,12 @@ namespace darts_hub.control
                 foreach (var cb in cbs)
                 {
                     var epIdx = (int)cb.Tag;
-                    if (endpointToRow.TryGetValue(epIdx, out var ownerRow))
-                    {
-                        cb.IsEnabled = ownerRow == rowIdx;
-                        cb.Foreground = ownerRow == rowIdx
-                            ? Brushes.White
-                            : new SolidColorBrush(Color.FromRgb(100, 100, 100));
-                    }
-                    else
-                    {
-                        cb.IsEnabled = true;
-                        cb.Foreground = Brushes.White;
-                    }
+                    bool ownedByOtherRow = endpointToRow.TryGetValue(epIdx, out var ownerRow) && ownerRow != rowIdx;
+                    // Always keep checkboxes enabled so users can re-claim endpoints
+                    cb.IsEnabled = true;
+                    cb.Foreground = ownedByOtherRow
+                        ? new SolidColorBrush(Color.FromRgb(140, 140, 140))
+                        : Brushes.White;
                 }
             }
         }

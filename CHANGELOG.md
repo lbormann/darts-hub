@@ -1,4 +1,4 @@
-﻿## b1.5.0.0
+﻿## b1.5.0.1
 ### UI Improvements
     - UI: Add dedicated application settings page (accessible via sidebar menu)
     - UI: Move Setup Wizard button from About page to sidebar menu
@@ -8,6 +8,7 @@
     - UI: Quick action buttons wrap to next line on narrow windows
     - UI: Argument box backgrounds changed from purple to blue tones
 ### New Features
+    - avtivate Beta mode directly in DH Settings.
     - Startup splashscreen to give the pc more time to initilize Internet. 
         - time is configurable in settings 1sec is default. 0 means no splashscreen
     - Start Darts-Hub always at specific monitor (if multiple monitors are connected)
@@ -20,6 +21,13 @@
     - FINALLY MULTIDEVICE SUPPORT FOR WLED! 
         - configuration comfortable over new enhanced settings mode just click and select
         - Darts-Wled min V1.11.0 required! 
+### Improvements
+    - Beta Update Channel changes. it will now automatically update to a release if its higher then the beta. 
+### Darts-WLED
+    - add Multidevicesupport for more then one endpoint. Documented in Readme.md
+    - improved WLED Data Manager with endpoint-specific caching and automatic LED count detection
+    - add SLEEP effect which can be activated after a configurable idle time. Activated with -SLE and -SLET arguments
+    - removed mirror messages out of log. 
 
 
 

@@ -2724,6 +2724,43 @@ namespace darts_hub.control
                 isUpdatingGlobal = true;
                 try
                 {
+                    // Resolve conflicts: if an endpoint is checked in multiple rows, keep only the first occurrence
+                    var claimedByRow = new Dictionary<int, int>();
+                    for (int rowIdx = 0; rowIdx < rowStates.Count; rowIdx++)
+                    {
+                        var (_, cbs) = rowStates[rowIdx];
+                        foreach (var cb in cbs)
+                        {
+                            var epIdx = (int)cb.Tag;
+                            if (cb.IsChecked == true)
+                            {
+                                if (claimedByRow.ContainsKey(epIdx))
+                                {
+                                    cb.IsChecked = false;
+                                }
+                                else
+                                {
+                                    claimedByRow[epIdx] = rowIdx;
+                                }
+                            }
+                        }
+                    }
+
+                    // Remove trailing empty rows, keeping minimum 1 row
+                    bool rowsWereRemoved = false;
+                    while (rowStates.Count > 1)
+                    {
+                        var (_, lastCbs) = rowStates[rowStates.Count - 1];
+                        if (!lastCbs.Any(cb => cb.IsChecked == true))
+                        {
+                            entriesContainer.Children.RemoveAt(entriesContainer.Children.Count - 1);
+                            rowStates.RemoveAt(rowStates.Count - 1);
+                            rowsWereRemoved = true;
+                        }
+                        else break;
+                    }
+
+                    // Recalculate uncovered endpoints after conflict resolution
                     var coveredEndpoints = new HashSet<int>();
                     foreach (var (_, cbs) in rowStates)
                     {
@@ -2738,15 +2775,18 @@ namespace darts_hub.control
                         .Where(idx => !coveredEndpoints.Contains(idx))
                         .ToList();
 
-                    while (rowStates.Count > 1)
+                    // Only auto-check uncovered endpoints back into the remaining row
+                    // when rows were actually removed (not when user manually unchecks)
+                    if (rowsWereRemoved && rowStates.Count == 1 && uncoveredEndpoints.Count > 0)
                     {
-                        var (_, lastCbs) = rowStates[rowStates.Count - 1];
-                        if (!lastCbs.Any(cb => cb.IsChecked == true))
+                        var (_, firstRowCbs) = rowStates[0];
+                        foreach (var cb in firstRowCbs)
                         {
-                            entriesContainer.Children.RemoveAt(entriesContainer.Children.Count - 1);
-                            rowStates.RemoveAt(rowStates.Count - 1);
+                            var epIdx = (int)cb.Tag;
+                            if (uncoveredEndpoints.Contains(epIdx))
+                                cb.IsChecked = true;
                         }
-                        else break;
+                        uncoveredEndpoints.Clear();
                     }
 
                     bool lastRowHasSelection = rowStates.Count > 0 &&
@@ -2917,26 +2957,31 @@ namespace darts_hub.control
                 checkBoxes.Add(cb);
             }
 
-            // Resolve endpoint for data loading and test buttons
-            string? rowEndpoint = null;
-            for (int idx = 0; idx < checkBoxes.Count; idx++)
+            // Resolve endpoint dynamically from current checkbox state
+            string? ResolveRowEndpoint()
             {
-                if (checkBoxes[idx].IsChecked == true && idx < endpoints.Count)
+                for (int idx = 0; idx < checkBoxes.Count; idx++)
                 {
-                    rowEndpoint = endpoints[idx];
-                    break;
+                    if (checkBoxes[idx].IsChecked == true && idx < endpoints.Count)
+                        return endpoints[idx];
                 }
+                if (entry.EndpointIndices.Count > 0 && entry.EndpointIndices[0] < endpoints.Count)
+                    return endpoints[entry.EndpointIndices[0]];
+                // Fall back to first enabled (available) checkbox
+                for (int idx = 0; idx < checkBoxes.Count; idx++)
+                {
+                    if (checkBoxes[idx].IsEnabled && idx < endpoints.Count)
+                        return endpoints[idx];
+                }
+                return null;
             }
-            if (rowEndpoint == null && entry.EndpointIndices.Count > 0 && entry.EndpointIndices[0] < endpoints.Count)
-                rowEndpoint = endpoints[entry.EndpointIndices[0]];
-            if (rowEndpoint == null && availableEndpoints.Count > 0 && availableEndpoints[0] < endpoints.Count)
-                rowEndpoint = endpoints[availableEndpoints[0]];
 
             // Build mode-specific control
             void SetModeControl(string mode)
             {
                 isRowInitializing = true;
                 rowParam.Value = currentRowEffectValue;
+                var rowEndpoint = ResolveRowEndpoint();
 
                 switch (mode)
                 {
