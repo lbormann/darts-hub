@@ -2983,6 +2983,10 @@ namespace darts_hub.control
                 rowParam.Value = currentRowEffectValue;
                 var rowEndpoint = ResolveRowEndpoint();
 
+                // Capture the flag now so async continuations use the value at call-time,
+                // not the value after the initial setup loop has flipped it to false.
+                bool wasInitialSetup = isInitialSetup;
+
                 switch (mode)
                 {
                     case "effects":
@@ -3006,7 +3010,7 @@ namespace darts_hub.control
                             if (!string.IsNullOrEmpty(rowParam.Value) && string.IsNullOrEmpty(currentRowEffectValue))
                                 currentRowEffectValue = rowParam.Value;
                             isRowInitializing = false;
-                            if (!isInitialSetup) rebuildParamValue();
+                            if (!wasInitialSetup) rebuildParamValue();
                         });
                         return;
 
@@ -3031,7 +3035,7 @@ namespace darts_hub.control
                             if (!string.IsNullOrEmpty(rowParam.Value) && string.IsNullOrEmpty(currentRowEffectValue))
                                 currentRowEffectValue = rowParam.Value;
                             isRowInitializing = false;
-                            if (!isInitialSetup) rebuildParamValue();
+                            if (!wasInitialSetup) rebuildParamValue();
                         });
                         return;
 
@@ -3048,7 +3052,7 @@ namespace darts_hub.control
                     currentRowEffectValue = rowParam.Value;
 
                 isRowInitializing = false;
-                if (!isInitialSetup) rebuildParamValue();
+                if (!wasInitialSetup) rebuildParamValue();
             }
 
             SetModeControl(detectedMode);

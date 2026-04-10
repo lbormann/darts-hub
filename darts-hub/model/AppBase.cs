@@ -92,6 +92,9 @@ namespace darts_hub.model
         }
 
         [JsonIgnore]
+        public bool HasUnappliedChanges { get; set; }
+
+        [JsonIgnore]
         public int AppMonitorEntries { get; private set; }
 
 
@@ -574,6 +577,7 @@ namespace darts_hub.model
             executable = SetRunExecutable();
             if (IsRunning()) return true;
             if (Install()) return false;
+            HasUnappliedChanges = false;
             RunProcess(runtimeArguments);
             return true;
         }
@@ -600,6 +604,85 @@ namespace darts_hub.model
         public bool IsConfigurationChanged()
         {
             return Configuration != null ? Configuration.IsChanged() : false;
+        }
+
+        /// <summary>
+        /// Checks the current configuration for issues such as empty required arguments
+        /// or values that don't match their declared type. Returns an empty list when
+        /// the configuration is valid. Only considers arguments the user has actively
+        /// configured (i.e. the argument has a value or was explicitly changed).
+        /// </summary>
+        public List<string> GetConfigurationIssues()
+        {
+            var issues = new List<string>();
+            if (!IsConfigurable() || Configuration == null) return issues;
+
+            // Resolve conditional requirements (RequiredOnArgument) first
+            foreach (var arg in Configuration.Arguments)
+            {
+                if (!string.IsNullOrEmpty(arg.RequiredOnArgument))
+                {
+                    var parts = arg.RequiredOnArgument.Split('=');
+                    if (parts.Length == 2)
+                    {
+                        var dependency = Configuration.Arguments.Find(a => a.Name == parts[0]);
+                        if (dependency != null)
+                        {
+                            arg.Required = dependency.Value == parts[1];
+                        }
+                    }
+                }
+            }
+
+            // Determine whether the user has actively configured this app at all.
+            // An argument counts as "actively configured" when it has a value or
+            // was explicitly changed by the user (IsValueChanged).
+            bool hasAnyConfiguredArgument = Configuration.Arguments
+                .Any(a => !a.IsRuntimeArgument && (a.IsValueChanged || !string.IsNullOrEmpty(a.Value)));
+
+            // If the user has never touched this app's configuration, skip validation
+            // entirely so unconfigured extensions don't show spurious warnings.
+            if (!hasAnyConfiguredArgument) return issues;
+
+            foreach (var arg in Configuration.Arguments)
+            {
+                if (arg.IsRuntimeArgument) continue;
+
+                var displayName = arg.NameHuman ?? arg.Name;
+
+                // Only consider arguments the user has actively configured
+                bool isActivelyConfigured = arg.Required || arg.IsValueChanged || !string.IsNullOrEmpty(arg.Value);
+                if (!isActivelyConfigured) continue;
+
+                // Actively configured but empty — potential problem at startup
+                if (string.IsNullOrEmpty(arg.Value))
+                {
+                    if (arg.Required && !arg.EmptyAllowedOnRequired)
+                    {
+                        issues.Add($"\"{displayName}\" is required but has no value.");
+                    }
+                    else if (!arg.Required)
+                    {
+                        issues.Add($"\"{displayName}\" is enabled but empty — this can cause issues when the extension starts.");
+                    }
+                    continue;
+                }
+
+                // Has a value — try lightweight type check
+                try
+                {
+                    arg.Validate();
+                }
+                catch (Exception ex)
+                {
+                    var msg = ex.Message;
+                    if (msg.StartsWith(Configuration.ArgumentErrorKey))
+                        msg = msg.Substring(Configuration.ArgumentErrorKey.Length);
+                    issues.Add(msg.Trim());
+                }
+            }
+
+            return issues;
         }
 
         public void Close()
@@ -630,7 +713,8 @@ namespace darts_hub.model
                         Helper.KillProcess(executable);
                     }
                     AppRunningState = false;
-                    
+                    HasUnappliedChanges = false;
+
                     // Final log entry
                     WriteToLogFile($"=== {CustomName} stopped ===", false, "SYSTEM");
                 }

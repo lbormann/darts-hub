@@ -109,7 +109,7 @@ namespace darts_hub.UI
                             FontWeight = FontWeight.Bold
                         }
                     };
-                    
+
                     // Add subtle glow effect with RGBA
                     runningIndicator.Effect = new Avalonia.Media.DropShadowEffect
                     {
@@ -119,8 +119,54 @@ namespace darts_hub.UI
                         OffsetY = 0,
                         Opacity = 1.0
                     };
-                    
+
                     buttonContent.Children.Add(runningIndicator);
+
+                    // Show amber dot when settings changed while running
+                    if (appState.App.HasUnappliedChanges)
+                    {
+                        var changesIndicator = new Ellipse
+                        {
+                            Width = 8,
+                            Height = 8,
+                            Fill = new SolidColorBrush(Color.FromRgb(255, 193, 7)),
+                            Margin = new Avalonia.Thickness(6, 0, 0, 0),
+                            VerticalAlignment = VerticalAlignment.Center
+                        };
+                        changesIndicator.Effect = new Avalonia.Media.DropShadowEffect
+                        {
+                            Color = Color.FromRgb(255, 193, 7),
+                            BlurRadius = 8,
+                            OffsetX = 0,
+                            OffsetY = 0,
+                            Opacity = 0.8
+                        };
+                        ToolTip.SetTip(changesIndicator, "Settings changed — restart to apply");
+                        buttonContent.Children.Add(changesIndicator);
+                    }
+                }
+
+                // Show red dot when configuration has issues (independent of running state)
+                if (appState.App.IsConfigurable() && appState.App.GetConfigurationIssues().Count > 0)
+                {
+                    var issuesIndicator = new Ellipse
+                    {
+                        Width = 8,
+                        Height = 8,
+                        Fill = new SolidColorBrush(Color.FromRgb(220, 53, 69)),
+                        Margin = new Avalonia.Thickness(6, 0, 0, 0),
+                        VerticalAlignment = VerticalAlignment.Center
+                    };
+                    issuesIndicator.Effect = new Avalonia.Media.DropShadowEffect
+                    {
+                        Color = Color.FromRgb(220, 53, 69),
+                        BlurRadius = 8,
+                        OffsetX = 0,
+                        OffsetY = 0,
+                        Opacity = 0.8
+                    };
+                    ToolTip.SetTip(issuesIndicator, "Configuration has issues — click to fix");
+                    buttonContent.Children.Add(issuesIndicator);
                 }
 
                 // Linie oben

@@ -1,4 +1,4 @@
-﻿## b1.5.0.1
+﻿## b1.5.0.2
 ### UI Improvements
     - UI: Add dedicated application settings page (accessible via sidebar menu)
     - UI: Move Setup Wizard button from About page to sidebar menu
@@ -7,6 +7,7 @@
     - UI: New settings panels are now fully responsive to window width
     - UI: Quick action buttons wrap to next line on narrow windows
     - UI: Argument box backgrounds changed from purple to blue tones
+    - UI: Section scrolling possibility with buttons in settings header
 ### New Features
     - avtivate Beta mode directly in DH Settings.
     - Startup splashscreen to give the pc more time to initilize Internet. 
@@ -21,8 +22,11 @@
     - FINALLY MULTIDEVICE SUPPORT FOR WLED! 
         - configuration comfortable over new enhanced settings mode just click and select
         - Darts-Wled min V1.11.0 required! 
+    - add indicator and warning dialog for unsaved and incorrect changes in settings.
+        - next to the extension are indicators visible, yellow for unsaved changes, red for incorrect configuration.
 ### Improvements
     - Beta Update Channel changes. it will now automatically update to a release if its higher then the beta. 
+    - autoscrolling changes if you add or remove a argument
 ### Darts-WLED
     - add Multidevicesupport for more then one endpoint. Documented in Readme.md
     - improved WLED Data Manager with endpoint-specific caching and automatic LED count detection

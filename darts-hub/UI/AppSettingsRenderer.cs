@@ -25,6 +25,10 @@ namespace darts_hub.UI
         private readonly Configurator configurator;
         private readonly ReadmeParser readmeParser;
         private Dictionary<string, string>? currentTooltips;
+        private AppBase? currentApp;
+        private Border? unappliedChangesBanner;
+        private Border? configIssuesBanner;
+        private bool isClassicModeInitialized;
 
         public AppSettingsRenderer(MainWindow mainWindow, Configurator configurator)
         {
@@ -74,14 +78,24 @@ namespace darts_hub.UI
                 return;
             }
 
-            // Check if new settings mode is enabled
-            if (configurator.Settings.NewSettingsMode)
+            // Show loading indicator while settings are being loaded
+            mainWindow.SetWait(true, $"Loading {app.CustomName} settings...");
+
+            try
             {
-                await RenderNewSettingsMode(app);
+                // Check if new settings mode is enabled
+                if (configurator.Settings.NewSettingsMode)
+                {
+                    await RenderNewSettingsMode(app);
+                }
+                else
+                {
+                    await RenderClassicSettingsMode(app);
+                }
             }
-            else
+            finally
             {
-                await RenderClassicSettingsMode(app);
+                mainWindow.SetWait(false);
             }
         }
 
@@ -100,16 +114,28 @@ namespace darts_hub.UI
             {
                 scrollViewer.Content = newSettingsContent;
             }
+
+            // Populate the section navigation bar after content is in the visual tree
+            if (newSettingsContent is StackPanel contentPanel)
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    NewSettingsContentProvider.UpdateSectionNavigationBar(app, contentPanel);
+                }, DispatcherPriority.Loaded);
+            }
         }
 
         private async Task RenderClassicSettingsMode(AppBase app)
         {
+            currentApp = app;
+            isClassicModeInitialized = false;
+
             // Check if this is a custom app (custom-1 to custom-5, or custom-url-1 to custom-url-5)
             bool isCustomApp = app.Name.StartsWith("custom-") || app.Name.StartsWith("custom-url-");
-            
+
             var contentModeManager = mainWindow.GetContentModeManager();
             contentModeManager.ShowClassicSettingsMode(hideTooltipForCustomApp: isCustomApp);
-            
+
             // Load tooltips for this app (only for non-custom apps since custom apps won't show tooltips)
             if (!isCustomApp)
             {
@@ -117,10 +143,18 @@ namespace darts_hub.UI
             }
 
             var settingsPanel = mainWindow.FindControl<StackPanel>("SettingsPanel");
-            
+
             // Create header with app controls
             var headerPanel = CreateAppSettingsHeader(app);
             settingsPanel?.Children.Add(headerPanel);
+
+            // Unapplied changes banner
+            unappliedChangesBanner = CreateUnappliedChangesBanner(app);
+            settingsPanel?.Children.Add(unappliedChangesBanner);
+
+            // Configuration issues banner
+            configIssuesBanner = CreateConfigurationIssuesBanner(app);
+            settingsPanel?.Children.Add(configIssuesBanner);
 
             // Add Custom Name section
             var customNameSection = CreateCustomNameSection(app);
@@ -132,6 +166,10 @@ namespace darts_hub.UI
 
             // Render configuration sections
             await RenderConfigurationSections(app);
+
+            // Enable unapplied-changes tracking after all controls are rendered,
+            // so that events fired during control construction are ignored.
+            Dispatcher.UIThread.Post(() => { isClassicModeInitialized = true; }, DispatcherPriority.Loaded);
         }
 
         private StackPanel CreateAppSettingsHeader(AppBase app)
@@ -156,6 +194,158 @@ namespace darts_hub.UI
             headerPanel.Children.Add(buttonPanel);
 
             return headerPanel;
+        }
+
+        /// <summary>
+        /// Creates a banner that informs the user about unapplied setting changes.
+        /// Visible only when the app is running and settings have been modified.
+        /// </summary>
+        private Border CreateUnappliedChangesBanner(AppBase app)
+        {
+            var banner = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(60, 255, 193, 7)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(255, 193, 7)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(15),
+                Margin = new Thickness(20, 0, 20, 10),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                IsVisible = false
+            };
+
+            // Show the banner after the UI is fully loaded if there are persisted unapplied changes
+            if (app.AppRunningState && app.HasUnappliedChanges)
+            {
+                Dispatcher.UIThread.Post(() => { banner.IsVisible = true; }, DispatcherPriority.Loaded);
+            }
+
+            var contentPanel = new StackPanel { Spacing = 8 };
+
+            var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+
+            headerRow.Children.Add(new TextBlock
+            {
+                Text = "\u26A0\uFE0F",
+                FontSize = 16,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+
+            headerRow.Children.Add(new TextBlock
+            {
+                Text = "Unapplied Changes",
+                FontSize = 14,
+                FontWeight = FontWeight.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(255, 193, 7)),
+                VerticalAlignment = VerticalAlignment.Center
+            });
+
+            contentPanel.Children.Add(headerRow);
+
+            contentPanel.Children.Add(new TextBlock
+            {
+                Text = "Settings have been changed while the app is running. Restart the app to apply the new configuration.",
+                FontSize = 13,
+                Foreground = new SolidColorBrush(Color.FromRgb(230, 230, 230)),
+                TextWrapping = TextWrapping.Wrap
+            });
+
+            var restartButton = new Button
+            {
+                Content = "\U0001F504 Restart to Apply",
+                Background = new SolidColorBrush(Color.FromRgb(255, 193, 7)),
+                Foreground = new SolidColorBrush(Color.FromRgb(33, 37, 41)),
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(5),
+                Padding = new Thickness(15, 8),
+                FontWeight = FontWeight.Bold,
+                Margin = new Thickness(0, 4, 0, 0)
+            };
+
+            restartButton.Click += async (s, e) =>
+            {
+                var appControlManager = new AppControlManager(mainWindow);
+                await appControlManager.HandleRestartApp(app);
+            };
+
+            contentPanel.Children.Add(restartButton);
+
+            banner.Child = contentPanel;
+            return banner;
+        }
+
+        /// <summary>
+        /// Creates a banner that shows configuration issues (empty required args, invalid values).
+        /// </summary>
+        private Border CreateConfigurationIssuesBanner(AppBase app)
+        {
+            var banner = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(60, 220, 53, 69)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(220, 53, 69)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(15),
+                Margin = new Thickness(20, 0, 20, 10),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                IsVisible = false
+            };
+
+            var contentPanel = new StackPanel { Spacing = 6 };
+
+            var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+            headerRow.Children.Add(new TextBlock
+            {
+                Text = "??",
+                FontSize = 16,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            headerRow.Children.Add(new TextBlock
+            {
+                Text = "Configuration Issues",
+                FontSize = 14,
+                FontWeight = FontWeight.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(220, 53, 69)),
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            contentPanel.Children.Add(headerRow);
+
+            var issuesList = new StackPanel { Name = "IssuesList", Spacing = 3 };
+            contentPanel.Children.Add(issuesList);
+
+            banner.Child = contentPanel;
+
+            RefreshConfigurationIssuesBanner(app, banner);
+            return banner;
+        }
+
+        /// <summary>
+        /// Re-evaluates configuration issues and updates the banner content and visibility.
+        /// </summary>
+        private static void RefreshConfigurationIssuesBanner(AppBase app, Border banner)
+        {
+            var issues = app.GetConfigurationIssues();
+            banner.IsVisible = issues.Count > 0;
+
+            if (banner.Child is StackPanel contentPanel)
+            {
+                var issuesList = contentPanel.Children.OfType<StackPanel>()
+                    .FirstOrDefault(sp => sp.Name == "IssuesList");
+                if (issuesList != null)
+                {
+                    issuesList.Children.Clear();
+                    foreach (var issue in issues)
+                    {
+                        issuesList.Children.Add(new TextBlock
+                        {
+                            Text = $"• {issue}",
+                            FontSize = 12,
+                            Foreground = new SolidColorBrush(Color.FromRgb(255, 180, 180)),
+                            TextWrapping = Avalonia.Media.TextWrapping.Wrap
+                        });
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -685,6 +875,23 @@ namespace darts_hub.UI
             {
                 argument.IsValueChanged = true;
                 mainWindow.Save();
+
+                if (isClassicModeInitialized && currentApp != null)
+                {
+                    if (currentApp.AppRunningState)
+                    {
+                        currentApp.HasUnappliedChanges = true;
+                        if (unappliedChangesBanner != null)
+                        {
+                            unappliedChangesBanner.IsVisible = true;
+                        }
+                    }
+
+                    if (configIssuesBanner != null)
+                    {
+                        RefreshConfigurationIssuesBanner(currentApp, configIssuesBanner);
+                    }
+                }
             }
             catch (Exception ex)
             {

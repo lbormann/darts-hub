@@ -2310,6 +2310,10 @@ namespace darts_hub.control
                 isRowInitializing = true;
                 rowParam.Value = currentRowEffectValue;
 
+                // Capture the flag now so async continuations use the value at call-time,
+                // not the value after the initial setup loop has flipped it to false.
+                bool wasInitialSetup = isInitialSetup;
+
                 // Determine the endpoint for this row's data (first checked, then first enabled)
                 string? rowEndpoint = null;
                 for (int idx = 0; idx < checkBoxes.Count; idx++)
@@ -2363,7 +2367,7 @@ namespace darts_hub.control
                                 currentRowEffectValue = rowParam.Value;
                             }
                             isRowInitializing = false;
-                            if (!isInitialSetup)
+                            if (!wasInitialSetup)
                                 rebuildParamValue();
                         });
                         return;
@@ -2392,7 +2396,7 @@ namespace darts_hub.control
                                 currentRowEffectValue = rowParam.Value;
                             }
                             isRowInitializing = false;
-                            if (!isInitialSetup)
+                            if (!wasInitialSetup)
                                 rebuildParamValue();
                         });
                         return;
@@ -2414,7 +2418,7 @@ namespace darts_hub.control
                 }
 
                 isRowInitializing = false;
-                if (!isInitialSetup)
+                if (!wasInitialSetup)
                     rebuildParamValue();
             }
 

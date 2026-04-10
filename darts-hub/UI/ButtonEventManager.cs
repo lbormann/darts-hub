@@ -130,6 +130,9 @@ namespace darts_hub.UI
                 case "AboutPaypal":
                     VisitHelpPage("https://paypal.me/I3ull3t");
                     break;
+                case "AboutKofi":
+                    VisitHelpPage("https://ko-fi.com/dartshub");
+                    break;
                 case "AboutDonation":
                     await HandleBitcoinDonation();
                     break;

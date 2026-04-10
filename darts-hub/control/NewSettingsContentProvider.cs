@@ -247,25 +247,36 @@ namespace darts_hub.control
              var actionsSection = CreateQuickActionsSection(app);
              mainPanel.Children.Add(actionsSection);
 
+            // Unapplied changes banner (hidden until a setting changes while app runs)
+            var unappliedBanner = CreateUnappliedChangesBanner(app);
+            mainPanel.Children.Add(unappliedBanner);
+
+            // Configuration issues banner (visible when required args are empty or values are invalid)
+            var issuesBanner = CreateConfigurationIssuesBanner(app);
+            mainPanel.Children.Add(issuesBanner);
+
+            // Wrap the save callback to track unapplied changes and refresh the issues banner
+            var wrappedSaveCallback = WrapSaveCallbackWithChangeTracking(app, unappliedBanner, issuesBanner, saveCallback);
+
             // Custom Name section
-            var customNameSection = CreateCustomNameSection(app, saveCallback);
+            var customNameSection = CreateCustomNameSection(app, wrappedSaveCallback);
             mainPanel.Children.Add(customNameSection);
 
             // Enable at startup section - NEW!
-            var autostartSection = CreateAutostartSection(app, saveCallback, selectedProfile);
+            var autostartSection = CreateAutostartSection(app, wrappedSaveCallback, selectedProfile);
             mainPanel.Children.Add(autostartSection);
 
             // Configuration sections - replace the preview with actual configuration
             if (app.IsConfigurable() && app.Configuration != null)
             {
                 System.Diagnostics.Debug.WriteLine($"App is configurable, creating parameter sections...");
-                
+
                 // Configured parameters section
-                var configuredSection = CreateConfiguredParametersSection(app, saveCallback);
+                var configuredSection = CreateConfiguredParametersSection(app, wrappedSaveCallback);
                 mainPanel.Children.Add(configuredSection);
 
                 // Add parameter dropdown section
-                var addParameterSection = CreateAddParameterSection(app, mainPanel, saveCallback);
+                var addParameterSection = CreateAddParameterSection(app, mainPanel, wrappedSaveCallback);
                 mainPanel.Children.Add(addParameterSection);
             }
             else
@@ -675,38 +686,82 @@ namespace darts_hub.control
                 }
             };
 
-            restartButton.Click += (s, e) =>
+            restartButton.Click += async (s, e) =>
             {
-                // ? Prevent multiple clicks
+                // Prevent multiple clicks
                 if (restartButton.Tag?.ToString() == "processing") return;
                 restartButton.Tag = "processing";
-                var originalIsEnabled = restartButton.IsEnabled;
+                var originalContent = restartButton.Content;
+                var originalBackground = restartButton.Background;
                 restartButton.IsEnabled = false;
-                
+
+                // Show visual feedback on the button itself
+                restartButton.Content = "⏳ Restarting...";
+                restartButton.Background = new SolidColorBrush(Color.FromRgb(200, 150, 0));
+
+                // Also show the global loading overlay if MainWindow is available
+                MainWindow? mainWindow = null;
+                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                    && desktop.MainWindow is MainWindow mw)
+                {
+                    mainWindow = mw;
+                    mainWindow.SetWait(true, $"Restarting {app.CustomName}...");
+                }
+
                 try
                 {
                     if (app.AppRunningState)
                     {
+                        restartButton.Content = "⏳ Stopping...";
                         app.Close();
-                        // Small delay to allow app to close
-                        System.Threading.Tasks.Task.Delay(1000).ContinueWith(_ => app.Run());
+                        await Task.Delay(2000);
+
+                        restartButton.Content = "⏳ Starting...";
+                        app.Run();
+
+                        // Wait for the app to come back up
+                        int attempts = 0;
+                        bool startedSuccessfully = false;
+                        while (attempts < 10)
+                        {
+                            await Task.Delay(500);
+                            attempts++;
+                            if (app.AppRunningState)
+                            {
+                                startedSuccessfully = true;
+                                break;
+                            }
+                        }
+
+                        mainWindow?.SetWait(false, "");
+
+                        if (!startedSuccessfully && mainWindow != null)
+                        {
+                            await mainWindow.RenderMessageBox("Warning",
+                                $"Restart initiated for {app.CustomName}, but the app may not have started properly. Please check the console for details.",
+                                Icon.Warning, ButtonEnum.Ok, null, null, 0);
+                        }
+
+                        // Re-render the settings page to reflect the new running state
+                        if (mainWindow != null)
+                        {
+                            var appSettingsRenderer = new AppSettingsRenderer(mainWindow, mainWindow.GetConfigurator());
+                            await appSettingsRenderer.RenderAppSettings(app);
+                            mainWindow.Save();
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error in restart button: {ex.Message}");
+                    mainWindow?.SetWait(false, "");
                 }
                 finally
                 {
-                    // Restore button state after a delay to prevent rapid clicking
-                    Task.Delay(2000).ContinueWith(_ =>
-                    {
-                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                        {
-                            restartButton.Tag = null;
-                            restartButton.IsEnabled = originalIsEnabled;
-                        });
-                    });
+                    restartButton.Content = originalContent;
+                    restartButton.Background = originalBackground;
+                    restartButton.Tag = null;
+                    restartButton.IsEnabled = true;
                 }
             };
 
@@ -748,6 +803,422 @@ namespace darts_hub.control
 
             actionsPanel.Child = contentPanel;
             return actionsPanel;
+        }
+
+        /// <summary>
+        /// Creates a banner that informs the user about unapplied setting changes.
+        /// Visible only when the app is running and settings have been modified.
+        /// </summary>
+        private static Border CreateUnappliedChangesBanner(AppBase app)
+        {
+            var banner = new Border
+            {
+                Name = "UnappliedChangesBanner",
+                Background = new SolidColorBrush(Color.FromArgb(60, 255, 193, 7)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(255, 193, 7)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(15),
+                Margin = new Thickness(0, 0, 0, 15),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                IsVisible = false
+            };
+
+            // Show the banner after the UI is fully loaded if there are persisted unapplied changes
+            if (app.AppRunningState && app.HasUnappliedChanges)
+            {
+                Dispatcher.UIThread.Post(() => { banner.IsVisible = true; }, DispatcherPriority.Loaded);
+            }
+
+            var contentPanel = new StackPanel { Spacing = 8 };
+
+            var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+
+            var icon = new TextBlock
+            {
+                Text = "\u26A0\uFE0F",
+                FontSize = 16,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            headerRow.Children.Add(icon);
+
+            var title = new TextBlock
+            {
+                Text = "Unapplied Changes",
+                FontSize = 14,
+                FontWeight = FontWeight.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(255, 193, 7)),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            headerRow.Children.Add(title);
+
+            contentPanel.Children.Add(headerRow);
+
+            var message = new TextBlock
+            {
+                Text = "Settings have been changed while the app is running. Restart the app to apply the new configuration.",
+                FontSize = 13,
+                Foreground = new SolidColorBrush(Color.FromRgb(230, 230, 230)),
+                TextWrapping = TextWrapping.Wrap
+            };
+            contentPanel.Children.Add(message);
+
+            var restartButton = new Button
+            {
+                Content = "\U0001F504 Restart to Apply",
+                Background = new SolidColorBrush(Color.FromRgb(255, 193, 7)),
+                Foreground = new SolidColorBrush(Color.FromRgb(33, 37, 41)),
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(5),
+                Padding = new Thickness(15, 8),
+                FontWeight = FontWeight.Bold,
+                Margin = new Thickness(0, 4, 0, 0)
+            };
+
+            restartButton.Click += async (s, e) =>
+            {
+                if (restartButton.Tag?.ToString() == "processing") return;
+                restartButton.Tag = "processing";
+                var originalContent = restartButton.Content;
+                var originalBackground = restartButton.Background;
+                restartButton.IsEnabled = false;
+
+                // Show visual feedback on the button
+                restartButton.Content = "⏳ Restarting...";
+                restartButton.Background = new SolidColorBrush(Color.FromRgb(200, 150, 0));
+
+                MainWindow? mainWindow = null;
+                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                    && desktop.MainWindow is MainWindow mw)
+                {
+                    mainWindow = mw;
+                    mainWindow.SetWait(true, $"Restarting {app.CustomName}...");
+                }
+
+                try
+                {
+                    if (app.AppRunningState)
+                    {
+                        restartButton.Content = "⏳ Stopping...";
+                        app.Close();
+                        await Task.Delay(2000);
+
+                        restartButton.Content = "⏳ Starting...";
+                        app.Run();
+
+                        int attempts = 0;
+                        bool startedSuccessfully = false;
+                        while (attempts < 10)
+                        {
+                            await Task.Delay(500);
+                            attempts++;
+                            if (app.AppRunningState)
+                            {
+                                startedSuccessfully = true;
+                                break;
+                            }
+                        }
+
+                        mainWindow?.SetWait(false, "");
+
+                        if (!startedSuccessfully && mainWindow != null)
+                        {
+                            await mainWindow.RenderMessageBox("Warning",
+                                $"Restart initiated for {app.CustomName}, but the app may not have started properly. Please check the console for details.",
+                                Icon.Warning, ButtonEnum.Ok, null, null, 0);
+                        }
+                    }
+
+                    banner.IsVisible = false;
+                    app.HasUnappliedChanges = false;
+
+                    // Re-render the settings page to reflect the new state
+                    if (mainWindow != null)
+                    {
+                        var appSettingsRenderer = new AppSettingsRenderer(mainWindow, mainWindow.GetConfigurator());
+                        await appSettingsRenderer.RenderAppSettings(app);
+                        mainWindow.Save();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error restarting app from unapplied changes banner: {ex.Message}");
+                    mainWindow?.SetWait(false, "");
+                }
+                finally
+                {
+                    restartButton.Content = originalContent;
+                    restartButton.Background = originalBackground;
+                    restartButton.Tag = null;
+                    restartButton.IsEnabled = true;
+                }
+            };
+            contentPanel.Children.Add(restartButton);
+
+            banner.Child = contentPanel;
+            return banner;
+        }
+
+        /// <summary>
+        /// Wraps a save callback so that it also marks unapplied changes when the app is running,
+        /// updates the banner visibility, and refreshes the configuration issues banner.
+        /// Uses a guard flag to ignore callbacks fired during UI initialization.
+        /// </summary>
+        private static Action WrapSaveCallbackWithChangeTracking(AppBase app, Border unappliedBanner, Border issuesBanner, Action? originalSaveCallback)
+        {
+            bool isInitialized = false;
+
+            // Enable tracking after the current UI dispatch cycle completes,
+            // so that any events fired during control construction are ignored.
+            Dispatcher.UIThread.Post(() => { isInitialized = true; }, DispatcherPriority.Loaded);
+
+            return () =>
+            {
+                originalSaveCallback?.Invoke();
+
+                if (isInitialized)
+                {
+                    if (app.AppRunningState)
+                    {
+                        app.HasUnappliedChanges = true;
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            unappliedBanner.IsVisible = true;
+                        });
+                    }
+
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        RefreshConfigurationIssuesBanner(app, issuesBanner);
+                    });
+                }
+            };
+        }
+
+        /// <summary>
+        /// Creates a banner that shows configuration issues (empty required args, invalid values).
+        /// </summary>
+        private static Border CreateConfigurationIssuesBanner(AppBase app)
+        {
+            var banner = new Border
+            {
+                Name = "ConfigIssuesBanner",
+                Background = new SolidColorBrush(Color.FromArgb(60, 220, 53, 69)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(220, 53, 69)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(15),
+                Margin = new Thickness(0, 0, 0, 15),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                IsVisible = false
+            };
+
+            var contentPanel = new StackPanel { Spacing = 6 };
+
+            var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+            headerRow.Children.Add(new TextBlock
+            {
+                Text = "⚠️",
+                FontSize = 16,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            headerRow.Children.Add(new TextBlock
+            {
+                Text = "Configuration Issues",
+                FontSize = 14,
+                FontWeight = FontWeight.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(220, 53, 69)),
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            contentPanel.Children.Add(headerRow);
+
+            var issuesList = new StackPanel { Name = "IssuesList", Spacing = 3 };
+            contentPanel.Children.Add(issuesList);
+
+            banner.Child = contentPanel;
+
+            RefreshConfigurationIssuesBanner(app, banner);
+            return banner;
+        }
+
+        /// <summary>
+        /// Re-evaluates configuration issues and updates the banner content and visibility.
+        /// </summary>
+        private static void RefreshConfigurationIssuesBanner(AppBase app, Border banner)
+        {
+            var issues = app.GetConfigurationIssues();
+            banner.IsVisible = issues.Count > 0;
+
+            if (banner.Child is StackPanel contentPanel)
+            {
+                var issuesList = contentPanel.Children.OfType<StackPanel>()
+                    .FirstOrDefault(sp => sp.Name == "IssuesList");
+                if (issuesList != null)
+                {
+                    issuesList.Children.Clear();
+                    foreach (var issue in issues)
+                    {
+                        issuesList.Children.Add(new TextBlock
+                        {
+                            Text = $"• {issue}",
+                            FontSize = 12,
+                            Foreground = new SolidColorBrush(Color.FromRgb(255, 180, 180)),
+                            TextWrapping = TextWrapping.Wrap
+                        });
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sanitizes a section name for use as a control Name property
+        /// </summary>
+        private static string SanitizeName(string name)
+        {
+            var sb = new System.Text.StringBuilder(name.Length);
+            foreach (var c in name)
+            {
+                sb.Append(char.IsLetterOrDigit(c) ? c : '_');
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Populates the section navigation bar with buttons for each configured section
+        /// </summary>
+        public static void UpdateSectionNavigationBar(AppBase app, StackPanel mainPanel)
+        {
+            // Find the SectionNavBar and SectionNavBarContent in the visual tree
+            Border? navBar = null;
+            StackPanel? navContent = null;
+            var scrollViewer = mainPanel.GetVisualAncestors().OfType<ScrollViewer>().FirstOrDefault();
+
+            if (scrollViewer != null)
+            {
+                var parentGrid = scrollViewer.Parent as Grid;
+                if (parentGrid != null)
+                {
+                    navBar = parentGrid.Children.OfType<Border>()
+                        .FirstOrDefault(b => b.Name == "SectionNavBar");
+                    if (navBar?.Child is ScrollViewer navScrollViewer)
+                    {
+                        navContent = navScrollViewer.Content as StackPanel;
+                    }
+                }
+            }
+
+            if (navBar == null || navContent == null || scrollViewer == null)
+            {
+                System.Diagnostics.Debug.WriteLine("Could not find section navigation bar controls");
+                return;
+            }
+
+            navContent.Children.Clear();
+
+            // "Top" button to scroll to the very top
+            var topBtn = new Button
+            {
+                Content = "↑ Top",
+                FontSize = 11,
+                Padding = new Thickness(8, 3),
+                Background = new SolidColorBrush(Color.FromRgb(0, 122, 204)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(3),
+                Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand)
+            };
+            topBtn.Click += (s, e) =>
+            {
+                scrollViewer.Offset = new Avalonia.Vector(0, 0);
+            };
+            navContent.Children.Add(topBtn);
+
+            // Separator after Top button
+            navContent.Children.Add(new Border
+            {
+                Width = 1,
+                Background = new SolidColorBrush(Color.FromRgb(80, 80, 80)),
+                Margin = new Thickness(4, 2)
+            });
+
+            // Collect section names from configured parameters
+            var sectionNames = new List<string>();
+            if (app.IsConfigurable() && app.Configuration != null)
+            {
+                var configuredSections = app.Configuration.Arguments
+                    .Where(arg => !arg.IsRuntimeArgument && (arg.Required || arg.IsValueChanged || !string.IsNullOrEmpty(arg.Value)))
+                    .Select(arg => arg.Section ?? "General")
+                    .Distinct()
+                    .OrderBy(s => s)
+                    .ToList();
+
+                sectionNames.AddRange(configuredSections);
+            }
+
+            if (!sectionNames.Any())
+            {
+                navBar.IsVisible = false;
+                return;
+            }
+
+            // Create a button for each section
+            foreach (var sectionName in sectionNames)
+            {
+                var btn = CreateNavButton(sectionName, "section_" + SanitizeName(sectionName), mainPanel, scrollViewer);
+                navContent.Children.Add(btn);
+            }
+
+            // Add separator
+            navContent.Children.Add(new Border
+            {
+                Width = 1,
+                Background = new SolidColorBrush(Color.FromRgb(80, 80, 80)),
+                Margin = new Thickness(4, 2)
+            });
+
+            // Add "⊕ Add" button
+            var addBtn = CreateNavButton("+ Add", "section_AddParameter", mainPanel, scrollViewer);
+            addBtn.Background = new SolidColorBrush(Color.FromArgb(60, 76, 175, 80));
+            navContent.Children.Add(addBtn);
+
+            navBar.IsVisible = true;
+            System.Diagnostics.Debug.WriteLine($"Section navigation bar populated with {sectionNames.Count} sections");
+        }
+
+        /// <summary>
+        /// Creates a single navigation button that scrolls to the target section
+        /// </summary>
+        private static Button CreateNavButton(string label, string targetName, StackPanel mainPanel, ScrollViewer scrollViewer)
+        {
+            var btn = new Button
+            {
+                Content = label,
+                FontSize = 11,
+                Padding = new Thickness(8, 3),
+                Background = new SolidColorBrush(Color.FromRgb(55, 55, 60)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(3),
+                Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand)
+            };
+
+            btn.Click += (s, e) =>
+            {
+                var target = mainPanel.GetVisualDescendants()
+                    .OfType<Border>()
+                    .FirstOrDefault(b => b.Name == targetName);
+
+                if (target != null)
+                {
+                    var point = target.TranslatePoint(new Avalonia.Point(0, 0), mainPanel);
+                    if (point.HasValue)
+                    {
+                        scrollViewer.Offset = new Avalonia.Vector(0, point.Value.Y);
+                    }
+                }
+            };
+
+            return btn;
         }
 
         private static Control CreateConfiguredParametersSection(AppBase app, Action? saveCallback = null)
@@ -826,6 +1297,7 @@ namespace darts_hub.control
         {
             var sectionPanel = new Border
             {
+                Name = "section_" + SanitizeName(sectionName),
                 Background = new SolidColorBrush(Color.FromArgb(50, 30, 90, 180)),
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
@@ -875,6 +1347,7 @@ namespace darts_hub.control
         {
             var paramPanel = new Border
             {
+                Name = "param_" + param.Name,
                 Background = new SolidColorBrush(Color.FromArgb(30, 80, 140, 220)),
                 CornerRadius = new CornerRadius(5),
                 Padding = new Thickness(10),
@@ -1531,6 +2004,7 @@ namespace darts_hub.control
         {
             var addPanel = new Border
             {
+                Name = "section_AddParameter",
                 Background = new SolidColorBrush(Color.FromArgb(50, 76, 175, 80)),
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(15),
@@ -1724,7 +2198,7 @@ namespace darts_hub.control
                         {
                             System.Diagnostics.Debug.WriteLine($"Triggering section refresh for parameter addition");
                             // Use the same force refresh method for consistency
-                            ForceCompleteSettingsRefresh(selectedParam, app, realMainPanel, saveCallback);
+                            ForceCompleteSettingsRefresh(selectedParam, app, realMainPanel, saveCallback, scrollToParamName: selectedParam.Name);
                         }
                         else
                         {
@@ -1749,7 +2223,8 @@ namespace darts_hub.control
         /// <summary>
         /// Forces a complete settings refresh by rebuilding the entire UI
         /// </summary>
-        private static void ForceCompleteSettingsRefresh(Argument changedParam, AppBase app, StackPanel mainPanel, Action? saveCallback)
+        /// <param name="scrollToParamName">When set, scrolls to the parameter with this name after rebuild</param>
+        private static void ForceCompleteSettingsRefresh(Argument changedParam, AppBase app, StackPanel mainPanel, Action? saveCallback, string? scrollToParamName = null)
         {
             System.Diagnostics.Debug.WriteLine($"=== FORCE COMPLETE SETTINGS REFRESH ===");
             System.Diagnostics.Debug.WriteLine($"Changed parameter: {changedParam.Name} (Section: {changedParam.Section ?? "General"})");
@@ -1774,7 +2249,7 @@ namespace darts_hub.control
                     if (realMainPanel != null && realMainPanel != mainPanel)
                     {
                         System.Diagnostics.Debug.WriteLine("Found different real main panel, using that instead");
-                        ForceCompleteSettingsRefresh(changedParam, app, realMainPanel, saveCallback);
+                        ForceCompleteSettingsRefresh(changedParam, app, realMainPanel, saveCallback, scrollToParamName);
                         return;
                     }
                     else
@@ -1801,6 +2276,11 @@ namespace darts_hub.control
                     System.Diagnostics.Debug.WriteLine($"Could not get selected profile: {ex.Message}");
                 }
                 
+                // Find the parent ScrollViewer to manage scroll position
+                var scrollViewer = mainPanel.GetVisualAncestors().OfType<ScrollViewer>().FirstOrDefault();
+                var savedScrollOffset = scrollViewer?.Offset ?? default;
+                System.Diagnostics.Debug.WriteLine($"Saved scroll offset: {savedScrollOffset}");
+
                 // Clear the entire main panel
                 mainPanel.Children.Clear();
                 System.Diagnostics.Debug.WriteLine("Cleared entire main panel");
@@ -1814,27 +2294,38 @@ namespace darts_hub.control
                 var actionsSection = CreateQuickActionsSection(app);
                 mainPanel.Children.Add(actionsSection);
                 System.Diagnostics.Debug.WriteLine("Added quick actions section");
-                
+
+                // Recreate unapplied changes banner
+                var unappliedBanner = CreateUnappliedChangesBanner(app);
+                mainPanel.Children.Add(unappliedBanner);
+
+                // Recreate configuration issues banner
+                var issuesBanner = CreateConfigurationIssuesBanner(app);
+                mainPanel.Children.Add(issuesBanner);
+
+                // Wrap the save callback to track unapplied changes
+                var wrappedSaveCallback = WrapSaveCallbackWithChangeTracking(app, unappliedBanner, issuesBanner, saveCallback);
+
                 // Recreate custom name section
-                var customNameSection = CreateCustomNameSection(app, saveCallback);
+                var customNameSection = CreateCustomNameSection(app, wrappedSaveCallback);
                 mainPanel.Children.Add(customNameSection);
                 System.Diagnostics.Debug.WriteLine("Added custom name section");
-                
+
                 // Recreate autostart section
-                var autostartSection = CreateAutostartSection(app, saveCallback, selectedProfile);
+                var autostartSection = CreateAutostartSection(app, wrappedSaveCallback, selectedProfile);
                 mainPanel.Children.Add(autostartSection);
                 System.Diagnostics.Debug.WriteLine("Added autostart section");
-                
+
                 // Recreate configuration sections
                 System.Diagnostics.Debug.WriteLine($"App is configurable, creating parameter sections...");
-                
+
                 // Configured parameters section (should contain the newly added parameter)
-                var configuredSection = CreateConfiguredParametersSection(app, saveCallback);
+                var configuredSection = CreateConfiguredParametersSection(app, wrappedSaveCallback);
                 mainPanel.Children.Add(configuredSection);
                 System.Diagnostics.Debug.WriteLine("Added configured parameters section");
-                
+
                 // Add parameter dropdown section (should reflect the latest available parameters)
-                var addParameterSection = CreateAddParameterSection(app, mainPanel, saveCallback);
+                var addParameterSection = CreateAddParameterSection(app, mainPanel, wrappedSaveCallback);
                 mainPanel.Children.Add(addParameterSection);
                 System.Diagnostics.Debug.WriteLine("Added add parameter section");
                 
@@ -1844,6 +2335,49 @@ namespace darts_hub.control
                 System.Diagnostics.Debug.WriteLine("Added beta notice");
                 
                 System.Diagnostics.Debug.WriteLine($"✓ Force complete settings refresh successful, final children count: {mainPanel.Children.Count}");
+
+                // Update the section navigation bar
+                Dispatcher.UIThread.Post(() =>
+                {
+                    UpdateSectionNavigationBar(app, mainPanel);
+                }, DispatcherPriority.Loaded);
+
+                if (!string.IsNullOrEmpty(scrollToParamName))
+                {
+                    // Scroll to the newly added parameter after layout is complete
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        try
+                        {
+                            var targetControl = mainPanel.GetVisualDescendants()
+                                .OfType<Border>()
+                                .FirstOrDefault(b => b.Name == "param_" + scrollToParamName);
+
+                            if (targetControl != null && scrollViewer != null)
+                            {
+                                var point = targetControl.TranslatePoint(new Avalonia.Point(0, 0), mainPanel);
+                                if (point.HasValue)
+                                {
+                                    scrollViewer.Offset = new Avalonia.Vector(0, point.Value.Y);
+                                    System.Diagnostics.Debug.WriteLine($"Scrolled to parameter: {scrollToParamName} at Y={point.Value.Y}");
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Could not scroll to parameter {scrollToParamName}: {ex.Message}");
+                        }
+                    }, DispatcherPriority.Render);
+                }
+                else if (scrollViewer != null)
+                {
+                    // Restore previous scroll position (e.g., after removing a parameter)
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        scrollViewer.Offset = savedScrollOffset;
+                        System.Diagnostics.Debug.WriteLine($"Restored scroll offset: {savedScrollOffset}");
+                    }, DispatcherPriority.Render);
+                }
             }
             catch (Exception ex)
             {
