@@ -423,7 +423,7 @@ namespace darts_hub.control
         /// <summary>
         /// Creates a manual text input for effect parameters
         /// </summary>
-        private static Control CreateManualEffectInput(Argument param, Action? saveCallback = null)
+        internal static Control CreateManualEffectInput(Argument param, Action? saveCallback = null)
         {
             var textBox = new TextBox
             {
@@ -1930,7 +1930,7 @@ namespace darts_hub.control
         /// Detects the WLED input mode from a raw effect value (without endpoint suffix).
         /// Returns "manual", "effects", "presets", or "colors".
         /// </summary>
-        private static string DetectModeFromValue(string? value)
+        internal static string DetectModeFromValue(string? value)
         {
             if (string.IsNullOrEmpty(value))
                 return "manual";

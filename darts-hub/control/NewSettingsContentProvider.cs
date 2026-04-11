@@ -1630,11 +1630,23 @@ namespace darts_hub.control
             bool isWledScoreAreaEffectParameter = app?.Name == "darts-wled" && 
                                                  WledScoreAreaHelper.IsScoreAreaEffectParameter(param);
             System.Diagnostics.Debug.WriteLine($"Is WLED Score Area Effect Parameter: {isWledScoreAreaEffectParameter}");
-            
+
+            // Check if this is a WLED combo effect parameter (only for darts-wled)
+            bool isWledComboEffectParameter = app?.Name == "darts-wled" && 
+                                              WledComboEffectHelper.IsComboEffectParameter(param);
+            System.Diagnostics.Debug.WriteLine($"Is WLED Combo Effect Parameter: {isWledComboEffectParameter}");
+
+            // Check if this is a WLED player idle effect parameter (only for darts-wled)
+            bool isWledPlayerIdleEffectParameter = app?.Name == "darts-wled" && 
+                                                   WledPlayerIdleEffectHelper.IsPlayerIdleEffectParameter(param);
+            System.Diagnostics.Debug.WriteLine($"Is WLED Player Idle Effect Parameter: {isWledPlayerIdleEffectParameter}");
+
             // Check if this is a WLED regular effect parameter (only for darts-wled, not darts-pixelit, and not score area)
             bool isWledEffectParameter = app?.Name == "darts-wled" && 
                                        WledSettings.IsEffectParameter(param) && 
-                                       !isWledScoreAreaEffectParameter;
+                                       !isWledScoreAreaEffectParameter &&
+                                       !isWledComboEffectParameter &&
+                                       !isWledPlayerIdleEffectParameter;
             System.Diagnostics.Debug.WriteLine($"Is WLED Effect Parameter: {isWledEffectParameter}");
 
             switch (type)
@@ -1646,6 +1658,16 @@ namespace darts_hub.control
                     {
                         System.Diagnostics.Debug.WriteLine($"CREATING: Pixelit Effect Parameter Control");
                         return PixelitSettings.CreateAdvancedPixelitParameterControl(param, saveCallback, app);
+                    }
+                    else if (isWledComboEffectParameter)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"CREATING: WLED Combo Effect Parameter Control");
+                        return WledComboEffectHelper.CreateComboEffectParameterControl(param, saveCallback, app);
+                    }
+                    else if (isWledPlayerIdleEffectParameter)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"CREATING: WLED Player Idle Effect Parameter Control");
+                        return WledPlayerIdleEffectHelper.CreatePlayerIdleEffectParameterControl(param, saveCallback, app);
                     }
                     else if (isWledScoreAreaEffectParameter)
                     {

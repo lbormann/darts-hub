@@ -506,7 +506,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-mac64",
                 MacArm64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-mac"
             };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b1.11.0.2");
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b1.11.0.5");
 
 
             var dartsPixelitDownloadMap = new DownloadMap
@@ -726,6 +726,9 @@ namespace darts_hub.control
                         new(name: "DSBULL", type: "string", required: false, isMulti: true, nameHuman: "-DSBULL / --dart_score_BULL_effects", section: "Single Dart Effects !! still in Progress !!",requiredFeature: "i_m_able_to_read"),
                         new(name: "SLE", type: "string", required: false, isMulti: true, nameHuman: "-SLE / --sleep_effect", section: "Sleepmode", requiredFeature: "i_m_able_to_read"),
                         new(name: "SLET", type: "int[0..1000]", required: false, nameHuman: "-SLET / --sleep_timeout", section: "Sleepmode", requiredFeature: "i_m_able_to_read"),
+                        new(name: "SLEOFF", type: "int[0..1000]", required: false, nameHuman: "-SLEOFF / ----sleep_off_timeout", section: "Sleepmode", requiredFeature: "i_m_able_to_read"),
+                        new(name: "CMB", type: "string", required: false, isMulti: true, nameHuman: "-CMB / --combo_effects", section: "Combo Effects", requiredFeature: "i_m_able_to_read"),
+                        new(name: "PIDE", type: "string", required: false, isMulti: true, nameHuman: "-PIDE / --player_idle_effects", section: "Player Idle Effects", requiredFeature: "i_m_able_to_read"),
                         //  new(name: "TEST", type: "string", required: false, isMulti: true, nameHuman: "test", section: "WLED")
 
 
@@ -1206,11 +1209,21 @@ namespace darts_hub.control
                     {
                         dartsWled.Configuration.Arguments.Add(new(name: "SLET", type: "int[0..1000]", required: false, nameHuman: "-SLET / --sleep_timeout", section: "Sleepmode", requiredFeature: "i_m_able_to_read"));
                     }
-                    
-                       
-
-
-
+                    var wledSLEOFF = dartsWled.Configuration.Arguments.Find(a => a.Name == "SLEOFF");
+                    if (wledSLEOFF == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "SLEOFF", type: "int[0..1000]", required: false, nameHuman: "-SLEOFF / ----sleep_off_timeout", section: "Sleepmode", requiredFeature: "i_m_able_to_read"));
+                    }
+                    var wledCMB = dartsWled.Configuration.Arguments.Find(a => a.Name == "CMB");
+                    if (wledCMB == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "CMB", type: "string", required: false, isMulti: true, nameHuman: "-CMB / --combo_effects", section: "Combo Effects", requiredFeature: "i_m_able_to_read"));
+                    }
+                    var wledPIDE = dartsWled.Configuration.Arguments.Find(a => a.Name == "PIDE");
+                    if (wledPIDE == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "PIDE", type: "string", required: false, isMulti: true, nameHuman: "-PIDE / --player_idle_effects", section: "Player Idle Effects", requiredFeature: "i_m_able_to_read"));
+                    }
 
                     for (int i = 0; i <= 180; i++)
                     {

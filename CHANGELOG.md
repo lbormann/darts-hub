@@ -1,4 +1,4 @@
-﻿## b1.5.0.2
+﻿## b1.5.0.3
 ### UI Improvements
     - UI: Add dedicated application settings page (accessible via sidebar menu)
     - UI: Move Setup Wizard button from About page to sidebar menu
@@ -31,8 +31,10 @@
     - add Multidevicesupport for more then one endpoint. Documented in Readme.md
     - improved WLED Data Manager with endpoint-specific caching and automatic LED count detection
     - add SLEEP effect which can be activated after a configurable idle time. Activated with -SLE and -SLET arguments
+    - add SLEPOFF to turn WLED off after a configurable Sleep time in minutes.
     - removed mirror messages out of log. 
-
+    - add the possibility to play effects for special dart throw combinations like 26 for thrown 1 20 5 or 121 for thrown triple 20, triple 20, single 1.
+    - add playername specific IDLE effects with PIDE Argument 
 
 
 ## v1.4.2

@@ -680,6 +680,20 @@ namespace darts_hub.model
                         msg = msg.Substring(Configuration.ArgumentErrorKey.Length);
                     issues.Add(msg.Trim());
                 }
+
+                // Combo effects: additional semantic validation
+                if (string.Equals(arg.Name, "CMB", StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrEmpty(arg.Value))
+                {
+                    issues.AddRange(WledComboEffectHelper.GetComboConfigurationIssues(arg.Value));
+                }
+
+                // Player idle effects: additional semantic validation
+                if (string.Equals(arg.Name, "PIDE", StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrEmpty(arg.Value))
+                {
+                    issues.AddRange(WledPlayerIdleEffectHelper.GetPlayerIdleConfigurationIssues(arg.Value));
+                }
             }
 
             return issues;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace darts_hub.model
 {
@@ -145,9 +146,9 @@ namespace darts_hub.model
                                 }
                                 else
                                 {
-                                    var splitted = mappedValue.Split(" ");
+                                    var multiTokens = SplitMultiValuePreservingKeys(mappedValue);
                                     var multiSplitted = String.Empty;
-                                    foreach (var b in splitted) multiSplitted += $" \"{b}\"";
+                                    foreach (var b in multiTokens) multiSplitted += $" \"{b}\"";
                                     composedArguments += " " + Prefix + a.Name + Delimitter + multiSplitted;
                                 }
                             }
@@ -191,6 +192,85 @@ namespace darts_hub.model
             }
         }
 
+        /// <summary>
+        /// Splits a multi-value string into logical tokens, preserving spaces in keys.
+        /// Tokens with '=' are key=value pairs where the key may contain spaces (e.g. "bot level 5=solid|azure4").
+        /// Tokens without '=' are standalone values (e.g. "solid|blue").
+        /// The value part (after '=') and standalone tokens never contain spaces.
+        /// </summary>
+        private static List<string> SplitMultiValuePreservingKeys(string value)
+        {
+            var tokens = new List<string>();
+            if (string.IsNullOrEmpty(value))
+                return tokens;
+
+            // Find all '=' positions
+            var equalsPositions = new List<int>();
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (value[i] == '=')
+                    equalsPositions.Add(i);
+            }
+
+            // No '=' at all — fall back to simple space split
+            if (equalsPositions.Count == 0)
+            {
+                tokens.AddRange(value.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+                return tokens;
+            }
+
+            // Build token ranges for each key=value pair
+            var ranges = new List<(int start, int end)>();
+            foreach (var eqPos in equalsPositions)
+            {
+                // Value extends right from '=' to next space or end
+                int valEnd = eqPos + 1;
+                while (valEnd < value.Length && value[valEnd] != ' ')
+                    valEnd++;
+
+                int previousRangeEnd = ranges.Count > 0 ? ranges[ranges.Count - 1].end : 0;
+
+                // Segment between previous token and this '=' contains potential standalone tokens + the key
+                var segment = value.Substring(previousRangeEnd, eqPos - previousRangeEnd).TrimStart();
+                var segmentWords = segment.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                // Key words don't contain '|'; scan from end to find where key starts
+                int keyWordStart = segmentWords.Length;
+                for (int w = segmentWords.Length - 1; w >= 0; w--)
+                {
+                    if (segmentWords[w].Contains('|'))
+                        break;
+                    keyWordStart = w;
+                }
+
+                // Words before keyWordStart are standalone tokens
+                for (int w = 0; w < keyWordStart; w++)
+                    tokens.Add(segmentWords[w]);
+
+                // Key + value
+                var keyPart = string.Join(" ", segmentWords.Skip(keyWordStart));
+                var valPart = (eqPos + 1 < value.Length) ? value.Substring(eqPos + 1, valEnd - eqPos - 1) : string.Empty;
+
+                if (!string.IsNullOrEmpty(keyPart) || !string.IsNullOrEmpty(valPart))
+                    tokens.Add(keyPart + "=" + valPart);
+
+                ranges.Add((previousRangeEnd, valEnd));
+            }
+
+            // Anything remaining after the last range
+            if (ranges.Count > 0)
+            {
+                var lastEnd = ranges[ranges.Count - 1].end;
+                if (lastEnd < value.Length)
+                {
+                    var remainder = value.Substring(lastEnd).Trim();
+                    if (!string.IsNullOrEmpty(remainder))
+                        tokens.AddRange(remainder.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+                }
+            }
+
+            return tokens;
+        }
 
     }
 }
