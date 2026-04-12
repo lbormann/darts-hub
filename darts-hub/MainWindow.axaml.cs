@@ -412,6 +412,10 @@ namespace darts_hub
             CloseSidebarMenu();
             buttonEventManager.HandleChangelogClick(sender, e);
         }
+        private void SidebarRollbackButton_Click(object sender, RoutedEventArgs e)
+        {
+            ShowVersionRollback();
+        }
         #endregion
 
         #region Profile and App Management
@@ -861,6 +865,47 @@ namespace darts_hub
             {
                 Debug.WriteLine($"[License] Status bar validation failed: {ex.Message}");
             }
+        }
+        #endregion
+
+        #region Version Rollback
+        private void ShowVersionRollback()
+        {
+            CloseSidebarMenu();
+
+            contentModeManager.ShowSettingsMode();
+            contentModeManager.ShowClassicSettingsMode(hideTooltipForCustomApp: true);
+            consoleManager.Stop();
+
+            var rollbackView = new UI.VersionRollbackView();
+            rollbackView.Initialize(configurator);
+            rollbackView.RollbackRequested += async (_, selectedVersion) =>
+            {
+                var confirm = await RenderMessageBox(
+                    "Version Rollback",
+                    $"Are you sure you want to roll back to version {selectedVersion}?\n\nThe application will restart after the rollback.",
+                    MsBox.Avalonia.Enums.Icon.Warning,
+                    ButtonEnum.YesNo);
+
+                if (confirm == ButtonResult.Yes)
+                {
+                    try
+                    {
+                        Updater.RollbackToVersion(selectedVersion);
+                    }
+                    catch (Exception ex)
+                    {
+                        await RenderMessageBox(
+                            "Rollback Error",
+                            $"An error occurred during version rollback:\n{ex.Message}",
+                            MsBox.Avalonia.Enums.Icon.Error);
+                    }
+                }
+            };
+
+            SettingsPanel.Children.Clear();
+            SettingsPanel.Children.Add(rollbackView);
+            selectedApp = null;
         }
         #endregion
 

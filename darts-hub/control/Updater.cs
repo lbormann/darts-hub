@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
@@ -21,7 +23,7 @@ namespace darts_hub.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "b1.5.0.3";
+        public static readonly string version = "b1.5.0.4";
         //public static readonly string version = "b1.4.1.20";
 
 
@@ -49,6 +51,8 @@ namespace darts_hub.control
 
         // METHODS
         public static bool IsBetaTester { get; set; } = false;
+        public static string SkippedVersion { get; set; } = string.Empty;
+        public static string LatestFoundVersion { get; private set; } = string.Empty;
 
         public static async void CheckNewVersion()
         {
@@ -116,11 +120,21 @@ namespace darts_hub.control
                 }, 3, 2000, "GitHub API Version Check");
 
                 UpdaterLogger.LogInfo($"Latest GitHub version: {latestGithubVersion}");
+                LatestFoundVersion = latestGithubVersion;
 
                 if (CompareVersions(version, latestGithubVersion) < 0)
                 {
-                    UpdaterLogger.LogInfo("New version found - fetching changelog");
-                    latestRepoVersion = latestGithubVersion;
+                    // Skip when the found version is not newer than the skipped version
+                    if (!string.IsNullOrEmpty(SkippedVersion) 
+                        && CompareVersions(latestGithubVersion, SkippedVersion) <= 0)
+                    {
+                        UpdaterLogger.LogInfo($"Version {latestGithubVersion} is <= skipped version {SkippedVersion} - treating as no update");
+                        OnNoNewReleaseFound(new ReleaseEventArgs(latestGithubVersion, string.Empty));
+                    }
+                    else
+                    {
+                        UpdaterLogger.LogInfo("New version found - fetching changelog");
+                        latestRepoVersion = latestGithubVersion;
 
                     var changelog = await RetryHelper.ExecuteWithRetryAsync(async () =>
                     {
@@ -128,7 +142,8 @@ namespace darts_hub.control
                     }, 3, 1000, "Changelog Download");
 
                     UpdaterLogger.LogInfo($"Successfully retrieved changelog ({changelog.Length} characters)");
-                    OnNewReleaseFound(new ReleaseEventArgs(latestRepoVersion, changelog));
+                        OnNewReleaseFound(new ReleaseEventArgs(latestRepoVersion, changelog));
+                    }
                 }
                 else
                 {
@@ -189,11 +204,21 @@ namespace darts_hub.control
                 if (newestVersion != null)
                 {
                     UpdaterLogger.LogInfo($"Newest available version: {newestVersion}");
+                    LatestFoundVersion = newestVersion;
 
                     if (CompareVersions(version, newestVersion) < 0)
                     {
-                        UpdaterLogger.LogInfo("Newer version found - fetching changelog");
-                        latestRepoVersion = newestVersion;
+                        // Skip when the found version is not newer than the skipped version
+                        if (!string.IsNullOrEmpty(SkippedVersion) 
+                            && CompareVersions(newestVersion, SkippedVersion) <= 0)
+                        {
+                            UpdaterLogger.LogInfo($"Version {newestVersion} is <= skipped version {SkippedVersion} - treating as no update");
+                            OnNoNewReleaseFound(new ReleaseEventArgs(newestVersion, string.Empty));
+                        }
+                        else
+                        {
+                            UpdaterLogger.LogInfo("Newer version found - fetching changelog");
+                            latestRepoVersion = newestVersion;
 
                         var changelog = await RetryHelper.ExecuteWithRetryAsync(async () =>
                         {
@@ -201,7 +226,8 @@ namespace darts_hub.control
                         }, 3, 1000, "Changelog Download");
 
                         UpdaterLogger.LogInfo($"Successfully retrieved changelog ({changelog.Length} characters)");
-                        OnNewReleaseFound(new ReleaseEventArgs(latestRepoVersion, changelog));
+                            OnNewReleaseFound(new ReleaseEventArgs(latestRepoVersion, changelog));
+                        }
                     }
                     else
                     {
@@ -534,6 +560,20 @@ namespace darts_hub.control
 
                 // start update-batch, that waits until files are accessible; then copy new release to assembly location and delete temp files
                 UpdaterLogger.LogInfo("Starting update script execution");
+
+                // Clear skipped version after successful update download
+                SkippedVersion = string.Empty;
+                try
+                {
+                    var cfg = new Configurator("config.json");
+                    cfg.Settings.SkippedVersion = string.Empty;
+                    cfg.SaveSettings();
+                }
+                catch (Exception cfgEx)
+                {
+                    UpdaterLogger.LogWarning($"Could not persist SkippedVersion reset: {cfgEx.Message}");
+                }
+
                 using (var process = new Process())
                 {
                     try
@@ -575,6 +615,108 @@ namespace darts_hub.control
             {
                 UpdaterLogger.LogError("Update installation failed", ex);
                 OnReleaseDownloadFailed(new ReleaseEventArgs(latestRepoVersion, ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Fetches the last available release versions from GitHub (up to 4), excluding the current version.
+        /// If beta mode is active, beta versions are included; otherwise only stable (v-prefixed) versions.
+        /// Does not use RetryHelper to avoid triggering the global loading overlay.
+        /// </summary>
+        public static async Task<List<string>> FetchAvailableVersionsAsync(int maxCount = 4)
+        {
+            UpdaterLogger.LogInfo($"Fetching available versions (beta={IsBetaTester}, max={maxCount})");
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", requestUserAgent);
+            client.Timeout = TimeSpan.FromSeconds(requestTimeout);
+
+            var result = await client.GetStringAsync("https://api.github.com/repos/lbormann/darts-hub/releases");
+            var releases = JsonDocument.Parse(result).RootElement.EnumerateArray();
+            var tags = new List<string>();
+
+            foreach (var release in releases)
+            {
+                if (release.GetProperty("draft").GetBoolean())
+                    continue;
+
+                var tag = release.GetProperty("tag_name").GetString();
+                if (string.IsNullOrEmpty(tag))
+                    continue;
+
+                // Skip current version
+                if (string.Equals(tag, version, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                bool isBeta = tag.StartsWith("b", StringComparison.OrdinalIgnoreCase);
+
+                if (!IsBetaTester && isBeta)
+                    continue;
+
+                tags.Add(tag);
+            }
+
+            // Sort descending (newest first)
+            tags.Sort((a, b) => CompareVersions(b, a));
+
+            var versions = tags.Take(maxCount).ToList();
+            UpdaterLogger.LogInfo($"Found {versions.Count} available version(s)");
+            return versions;
+        }
+
+        /// <summary>
+        /// Downloads and installs a specific version (used for version rollback).
+        /// </summary>
+        public static void RollbackToVersion(string targetVersion)
+        {
+            if (string.IsNullOrWhiteSpace(targetVersion))
+            {
+                UpdaterLogger.LogWarning("Rollback requested but no target version specified");
+                return;
+            }
+
+            UpdaterLogger.LogInfo($"Starting rollback to version {targetVersion}");
+
+            try
+            {
+                var appSourceFile = GetAppFileByOS();
+                if (string.IsNullOrEmpty(appSourceFile))
+                {
+                    var error = "There are no releases for your specific OS.";
+                    UpdaterLogger.LogError($"Rollback failed: {error}");
+                    throw new InvalidOperationException(error);
+                }
+
+                UpdaterLogger.LogInfo($"Target file for current OS: {appSourceFile}");
+
+                destinationPath = Helper.GetAppBasePath();
+                downloadPath = Path.Join(destinationPath, appDestination, appSourceFile);
+                downloadDirectory = Path.GetDirectoryName(downloadPath);
+
+                string downloadUrl = appSourceUrl + "/" + targetVersion + "/" + appSourceFile;
+
+                UpdaterLogger.LogInfo($"Download URL: {downloadUrl}");
+                UpdaterLogger.LogInfo($"Download path: {downloadPath}");
+
+                UpdaterLogger.LogInfo("Cleaning up existing download directory");
+                Helper.RemoveDirectory(downloadDirectory, true);
+
+                // Store target version so download-completed handler can reference it
+                latestRepoVersion = targetVersion;
+
+                UpdaterLogger.LogInfo("Starting rollback download");
+                OnReleaseDownloadStarted(new ReleaseEventArgs(targetVersion, targetVersion));
+
+                var webClient = new WebClient();
+                webClient.DownloadProgressChanged += WebClient_DownloadProgressChanged;
+                webClient.DownloadFileCompleted += WebClient_DownloadCompleted;
+                webClient.DownloadFileAsync(new Uri(downloadUrl), downloadPath);
+            }
+            catch (Exception ex)
+            {
+                UpdaterLogger.LogError("Failed to initialize rollback", ex);
+                Helper.RemoveDirectory(downloadDirectory);
+                OnReleaseDownloadFailed(new ReleaseEventArgs(targetVersion, ex.Message));
             }
         }
 

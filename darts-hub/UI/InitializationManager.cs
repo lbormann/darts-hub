@@ -48,6 +48,9 @@ namespace darts_hub.UI
                 IsBetaTester = configurator.Settings.IsBetaTester
             };
             mainWindow.DataContext = viewModel;
+
+            // Initialize the skip-version setting so the update check can respect it
+            Updater.SkippedVersion = configurator.Settings.SkippedVersion ?? string.Empty;
         }
 
         public void InitializeWindowSettings()

@@ -31,6 +31,9 @@ namespace darts_hub.control
         public bool UseSpecificMonitor { get; set; }
         public int PreferredMonitorIndex { get; set; }
 
+        // Version rollback: skip update notification for this specific version
+        public string SkippedVersion { get; set; } = string.Empty;
+
         // WLED close actions
         public List<WledDeviceConfig> WledOnCloseDevices { get; set; } = new();
 
@@ -131,6 +134,13 @@ namespace darts_hub.control
                 settingsUpdated = true;
             }
 
+            // Ensure SkippedVersion property exists (for backward compatibility)
+            if (parsedSettings.Property(nameof(AppConfiguration.SkippedVersion), StringComparison.OrdinalIgnoreCase) == null)
+            {
+                Settings.SkippedVersion = string.Empty;
+                settingsUpdated = true;
+            }
+
             // Force Robbel3D setup flag to true and request restart if it was explicitly false
             if (!Settings.ShowRobbel3DSetup)
             {
@@ -168,6 +178,7 @@ namespace darts_hub.control
                 TooltipColumnWidth = 250,
                 UseSpecificMonitor = false,
                 PreferredMonitorIndex = 0,
+                SkippedVersion = string.Empty,
                 WledOnCloseDevices = new List<WledDeviceConfig>(),
                 WledOnStartDevices = new List<WledStartDeviceConfig>()
             };

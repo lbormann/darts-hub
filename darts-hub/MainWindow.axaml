@@ -710,8 +710,26 @@
 							FontSize="14"
 							Click="SidebarSettingsButton_Click">
 						<StackPanel Orientation="Horizontal" Spacing="12">
-							<Image Width="18" Height="18" Source="/Assets/configuration.png" VerticalAlignment="Center"/>
-							<TextBlock Text="License Settings" FontSize="14" VerticalAlignment="Center"/>
+								<Image Width="18" Height="18" Source="/Assets/configuration.png" VerticalAlignment="Center"/>
+								<TextBlock Text="License Settings" FontSize="14" VerticalAlignment="Center"/>
+							</StackPanel>
+					</Button>
+					<Border Height="1" Background="#FF3A3A3C" Margin="12,6"/>
+					<Button x:Name="SidebarRollbackButton"
+							HorizontalAlignment="Stretch"
+							HorizontalContentAlignment="Left"
+							Background="Transparent"
+							Foreground="White"
+							BorderThickness="0"
+							CornerRadius="4"
+							Padding="16,10"
+							Margin="6,2"
+							FontSize="14"
+							Click="SidebarRollbackButton_Click"
+							ToolTip.Tip="Roll back to a previous version of Darts-Hub">
+						<StackPanel Orientation="Horizontal" Spacing="12">
+							<TextBlock Text="&#x21A9;" FontSize="18" VerticalAlignment="Center"/>
+							<TextBlock Text="Version Rollback" FontSize="14" VerticalAlignment="Center"/>
 						</StackPanel>
 					</Button>
 				</StackPanel>

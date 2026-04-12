@@ -1,0 +1,85 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="darts_hub.UI.VersionRollbackView">
+
+    <StackPanel Spacing="20" MaxWidth="550" HorizontalAlignment="Left" Margin="20">
+
+        <!-- Header -->
+        <TextBlock Text="Version Rollback"
+                   FontSize="22"
+                   FontWeight="Bold"
+                   Foreground="White"/>
+
+        <TextBlock x:Name="CurrentVersionText"
+                   Text="Current version: ..."
+                   FontSize="14"
+                   Foreground="#FFCCCCCC"
+                   TextWrapping="Wrap"/>
+
+        <!-- Version Selection Card -->
+        <Border Background="#33FFFFFF" CornerRadius="8" Padding="15">
+            <StackPanel Spacing="12">
+                <TextBlock Text="Select version"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="White"/>
+                <TextBlock Text="Choose a previous version to roll back to. The last 4 available versions are shown."
+                           FontSize="12"
+                           Foreground="#FF999999"
+                           TextWrapping="Wrap"/>
+                <ComboBox x:Name="VersionComboBox"
+                          HorizontalAlignment="Stretch"
+                          FontSize="14"
+                          Height="36"/>
+                <TextBlock x:Name="StatusText"
+                           Text="Loading available versions..."
+                           FontSize="12"
+                           Foreground="#FF999999"
+                           TextWrapping="Wrap"/>
+                <Button x:Name="RollbackButton"
+                        Content="Rollback to selected version"
+                        IsEnabled="False"
+                        Padding="15,8"
+                        Background="#FFD45500"
+                        BorderBrush="#FFB34700"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Foreground="White"
+                        FontWeight="Bold"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Skip Version Card -->
+        <Border Background="#33FFFFFF" CornerRadius="8" Padding="15">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Skip version"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="White"/>
+                <TextBlock Text="If you rolled back due to a defective version, you can suppress the update notification for that version. The notification will reappear automatically when a newer version is released. This setting is also cleared after any successful update."
+                           FontSize="12"
+                           Foreground="#FF999999"
+                           TextWrapping="Wrap"/>
+                <CheckBox x:Name="SkipVersionCheckBox"
+                          Foreground="White"
+                          FontSize="14"
+                          Margin="0,4,0,0"/>
+                <TextBlock x:Name="SkipVersionInfo"
+                           Text=""
+                           FontSize="12"
+                           Foreground="#FF999999"
+                           TextWrapping="Wrap"
+                           IsVisible="False"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Warning -->
+        <Border Background="#20FF6B00" CornerRadius="8" Padding="15">
+            <TextBlock Text="&#x26A0; Rolling back will restart the application and replace all program files with the selected version. Your settings and profiles will be preserved."
+                       FontSize="12"
+                       Foreground="#FFCC8800"
+                       TextWrapping="Wrap"/>
+        </Border>
+
+    </StackPanel>
+</UserControl>

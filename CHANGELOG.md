@@ -1,4 +1,4 @@
-﻿## b1.5.0.3
+﻿## b1.5.0.4
 ### UI Improvements
     - UI: Add dedicated application settings page (accessible via sidebar menu)
     - UI: Move Setup Wizard button from About page to sidebar menu
@@ -24,6 +24,7 @@
         - Darts-Wled min V1.11.0 required! 
     - add indicator and warning dialog for unsaved and incorrect changes in settings.
         - next to the extension are indicators visible, yellow for unsaved changes, red for incorrect configuration.
+    - Possibility to rollback from possible defect version. 
 ### Improvements
     - Beta Update Channel changes. it will now automatically update to a release if its higher then the beta. 
     - autoscrolling changes if you add or remove a argument

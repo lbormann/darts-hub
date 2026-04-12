@@ -138,6 +138,69 @@ Disclaimer: If you're using a specific version of an app with configuration, lik
 
 If you're running darts-hub on windows the affected app is probably classified as a virus. The easiest way to verify this is to close darts-hub. After that, add the main folder (darts-hub) as an exception for screening. Restart darts-hub and try to start the app.
 
+
+## VERSION ROLLBACK 🆕
+
+Darts-hub includes a version rollback feature that lets you revert to a previous release if a new update causes problems. You can access it through the **sidebar menu** in the application settings area.
+
+### How it works
+
+1. Open the **Version Rollback** page from the sidebar menu.
+2. The view displays your **current version** and a dropdown with up to **4 previous versions** available for rollback.
+3. Select the desired version from the dropdown and click **"Rollback to selected version"**.
+4. A confirmation dialog will appear — once confirmed, darts-hub downloads the selected version, replaces all program files, and restarts automatically.
+
+> ⚠️ **Note:** Rolling back replaces the program files only. Your **settings, profiles, and configurations are preserved**.
+
+### Skip version notification
+
+If you rolled back because a specific version was defective, you can **suppress the update notification** for that version:
+
+1. On the Version Rollback page, check the **"Skip update notification"** checkbox.
+2. Updates up to the skipped version will be suppressed. The notification reappears automatically when a **newer version** is released.
+3. This setting is also **cleared automatically** after any successful update.
+
+This is useful to avoid being prompted repeatedly to update to a version you know has issues.
+
+### Beta versions
+
+If you have **Beta Tester mode** enabled (in the application settings), beta versions will also appear in the rollback dropdown.
+
+
+## LICENSE MANAGEMENT 🆕
+
+Darts-hub supports an optional **expert license** system that unlocks premium features for certain extensions. You can manage your license through the **License** page in the sidebar menu.
+
+### Getting a license
+
+1. Open the **License** page from the sidebar menu.
+2. Click **"Request License"** — this opens the **experience check** in your browser.
+3. Complete the short darts experience check and a license key will be sent to your email.
+
+### Activating a license
+
+1. Enter your license key (format: `DARTS-XXXX-XXXX-XXXX-XXXX`) into the input field.
+2. Click **"Validate & Save"** to activate the license.
+3. The status indicator shows the current state:
+   - 🟢 **Valid** — License is active and features are unlocked
+   - 🟡 **Expired** — License has expired
+   - 🟡 **Pending** — License is pending activation
+   - 🔴 **Invalid / Blocked / Revoked** — License cannot be used
+   - 🟠 **Connection Error** — Could not reach the license server (will retry automatically)
+
+### Licensed features
+
+When a valid license is active, the **Licensed Features** section shows which features are unlocked. License-gated settings in extension configurations are displayed as **locked with a hint** when no valid license is present — clicking the hint lets you jump directly to the License page.
+
+### Removing a license
+
+Click **"Remove License"** on the License page to clear the stored license key and reset the status.
+
+### Hardware binding
+
+Each license is bound to a **hardware ID** derived from your machine. If you move to a new computer, you may need to request a new license or contact support.
+
+
 ## Using CLI Features
 
 ### Available Commands
