@@ -530,17 +530,19 @@
 						</Border>
 
 						<!-- Section Navigation Bar -->
-						<Border Grid.Row="1" x:Name="SectionNavBar" Background="#FF1E1E1E" 
-								BorderBrush="#FF3F3F46" BorderThickness="0,0,0,1"
-								IsVisible="False">
-							<ScrollViewer HorizontalScrollBarVisibility="Auto" 
-										  VerticalScrollBarVisibility="Disabled">
-								<StackPanel x:Name="SectionNavBarContent" 
-											Orientation="Horizontal" 
-											Margin="10,4" 
-											Spacing="4"/>
-							</ScrollViewer>
-						</Border>
+							<Border Grid.Row="1" x:Name="SectionNavBar" Background="#FF1E1E1E" 
+									BorderBrush="#FF3F3F46" BorderThickness="0,0,0,1"
+									MinHeight="49"
+									IsVisible="False">
+								<ScrollViewer HorizontalScrollBarVisibility="Auto" 
+											  VerticalScrollBarVisibility="Disabled"
+											  Padding="0,0,0,14">
+									<StackPanel x:Name="SectionNavBarContent" 
+												Orientation="Horizontal" 
+												Margin="10,6,10,0" 
+												Spacing="4"/>
+								</ScrollViewer>
+							</Border>
 
 						<ScrollViewer Grid.Row="2" 
 									  x:Name="NewSettingsScrollViewer"

@@ -705,12 +705,12 @@ namespace darts_hub.control
                         new(name: "BRI", type: "int[1..255]", required: false, nameHuman: "-BRI / --effect_brightness", section: "Service"),
                         new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "-HFO / --high_finish_on", section: "Effects"),
                         new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "-HF / --high_finish_effects", section: "Effects"),
-                        new(name: "IDE", type: "string", required: false, nameHuman: "-IDE / --idle_effect", section: "Service"),
-                        new(name: "IDE2", type: "string", required: false, nameHuman: "-IDE2 / --idle_effect_player2", section: "Idle Effects"),
-                        new(name: "IDE3", type: "string", required: false, nameHuman: "-IDE3 / --idle_effect_player3", section: "Idle Effects"),
-                        new(name: "IDE4", type: "string", required: false, nameHuman: "-IDE4 / --idle_effect_player4", section: "Idle Effects"),
-                        new(name: "IDE5", type: "string", required: false, nameHuman: "-IDE5 / --idle_effect_player5", section: "Idle Effects"),
-                        new(name: "IDE6", type: "string", required: false, nameHuman: "-IDE6 / --idle_effect_player6", section: "Idle Effects"),
+                        new(name: "IDE", type: "string", required: false, isMulti: true, nameHuman: "-IDE / --idle_effect", section: "Idle Effects"),
+                        new(name: "IDE2", type: "string", required: false, isMulti: true, nameHuman: "-IDE2 / --idle_effect_player2", section: "Idle Effects"),
+                        new(name: "IDE3", type: "string", required: false, isMulti: true, nameHuman: "-IDE3 / --idle_effect_player3", section: "Idle Effects"),
+                        new(name: "IDE4", type: "string", required: false, isMulti: true, nameHuman: "-IDE4 / --idle_effect_player4", section: "Idle Effects"),
+                        new(name: "IDE5", type: "string", required: false, isMulti: true, nameHuman: "-IDE5 / --idle_effect_player5", section: "Idle Effects"),
+                        new(name: "IDE6", type: "string", required: false, isMulti: true, nameHuman: "-IDE6 / --idle_effect_player6", section: "Idle Effects"),
                         new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "-G / --game_won_effects", section: "Effects"),
                         new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "-M / --match_won_effects", section: "Effects"),
                         new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "-B / --busted_effects", section: "Effects"),
@@ -1300,19 +1300,19 @@ namespace darts_hub.control
                     var OFFWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "OFF");
                     if (OFFWLEDMig != null) { OFFWLEDMig.Section = "Service"; }
                     var IDEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE");
-                    if (IDEWLEDMig != null) { IDEWLEDMig.Section = "Idle Effects"; }
+                    if (IDEWLEDMig != null) { IDEWLEDMig.Section = "Idle Effects"; IDEWLEDMig.IsMulti = true; }
                     var IDE2WLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE2");
-                    if (IDE2WLEDMig != null) { IDE2WLEDMig.Section = "Idle Effects"; }
+                    if (IDE2WLEDMig != null) { IDE2WLEDMig.Section = "Idle Effects"; IDE2WLEDMig.IsMulti = true; }
                     var IDE3WLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE3");
-                    if (IDE3WLEDMig != null) { IDE3WLEDMig.Section = "Idle Effects"; }
+                    if (IDE3WLEDMig != null) { IDE3WLEDMig.Section = "Idle Effects"; IDE3WLEDMig.IsMulti = true; }
                     var IDE4WLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE4");
-                    if (IDE4WLEDMig != null) { IDE4WLEDMig.Section = "Idle Effects"; }
+                    if (IDE4WLEDMig != null) { IDE4WLEDMig.Section = "Idle Effects"; IDE4WLEDMig.IsMulti = true; }
                     var IDE5WLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE5");
-                    if (IDE5WLEDMig != null) { IDE5WLEDMig.Section = "Idle Effects"; }
+                    if (IDE5WLEDMig != null) { IDE5WLEDMig.Section = "Idle Effects"; IDE5WLEDMig.IsMulti = true; }
                     var IDE6WLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE6");
-                    if (IDE6WLEDMig != null) { IDE6WLEDMig.Section = "Idle Effects"; }
+                    if (IDE6WLEDMig != null) { IDE6WLEDMig.Section = "Idle Effects"; IDE6WLEDMig.IsMulti = true; }
                     var PIDEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "PIDE");
-                    if (PIDEWLEDMig != null) { PIDEWLEDMig.Section = "Idle Effects"; }
+                    if (PIDEWLEDMig != null) { PIDEWLEDMig.Section = "Idle Effects"; PIDEWLEDMig.IsMulti = true; PIDEWLEDMig.IsMultiKeyed = true; }
 
 
 

@@ -1,4 +1,4 @@
-﻿## b1.5.0.4
+﻿## b1.5.0.5
 ### UI Improvements
     - UI: Add dedicated application settings page (accessible via sidebar menu)
     - UI: Move Setup Wizard button from About page to sidebar menu
