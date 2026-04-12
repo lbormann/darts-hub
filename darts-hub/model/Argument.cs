@@ -35,6 +35,13 @@ namespace darts_hub.model
         public bool IsMulti { get; set; }
 
         /// <summary>
+        /// When true, the multi-value tokenizer preserves spaces inside keys
+        /// (e.g. player names like "bot level 5" in key=value tokens).
+        /// Only needed for arguments like PIDE where keys may contain spaces.
+        /// </summary>
+        public bool IsMultiKeyed { get; set; }
+
+        /// <summary>
         /// If set, this argument is only visible and usable when the user's license
         /// includes the specified feature key (e.g. "expert_statistics").
         /// </summary>
@@ -97,6 +104,7 @@ namespace darts_hub.model
                         bool emptyAllowedOnRequired = false,
                         bool isRuntimeArgument = false,
                         bool isMulti = false,
+                        bool isMultiKeyed = false,
                         string? value = null,
                         Dictionary<string, string>? valueMapping = null,
                         string? requiredFeature = null
@@ -112,6 +120,7 @@ namespace darts_hub.model
             EmptyAllowedOnRequired = emptyAllowedOnRequired;
             IsRuntimeArgument = isRuntimeArgument;
             IsMulti = isMulti;
+            IsMultiKeyed = isMultiKeyed;
             Value = value;
             ValueMapping = valueMapping;
             RequiredFeature = requiredFeature;

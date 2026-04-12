@@ -146,9 +146,18 @@ namespace darts_hub.model
                                 }
                                 else
                                 {
-                                    var multiTokens = SplitMultiValuePreservingKeys(mappedValue);
+                                    string[] splitted;
+                                    if (a.IsMultiKeyed)
+                                    {
+                                        // Preserve spaces inside keys (e.g. "bot level 5=effect")
+                                        splitted = SplitMultiValuePreservingKeys(mappedValue).ToArray();
+                                    }
+                                    else
+                                    {
+                                        splitted = mappedValue.Split(" ");
+                                    }
                                     var multiSplitted = String.Empty;
-                                    foreach (var b in multiTokens) multiSplitted += $" \"{b}\"";
+                                    foreach (var b in splitted) multiSplitted += $" \"{b}\"";
                                     composedArguments += " " + Prefix + a.Name + Delimitter + multiSplitted;
                                 }
                             }

@@ -706,11 +706,11 @@ namespace darts_hub.control
                         new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "-HFO / --high_finish_on", section: "Effects"),
                         new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "-HF / --high_finish_effects", section: "Effects"),
                         new(name: "IDE", type: "string", required: false, nameHuman: "-IDE / --idle_effect", section: "Service"),
-                        new(name: "IDE2", type: "string", required: false, nameHuman: "-IDE2 / --idle_effect_player2", section: "Service"),
-                        new(name: "IDE3", type: "string", required: false, nameHuman: "-IDE3 / --idle_effect_player3", section: "Service"),
-                        new(name: "IDE4", type: "string", required: false, nameHuman: "-IDE4 / --idle_effect_player4", section: "Service"),
-                        new(name: "IDE5", type: "string", required: false, nameHuman: "-IDE5 / --idle_effect_player5", section: "Service"),
-                        new(name: "IDE6", type: "string", required: false, nameHuman: "-IDE6 / --idle_effect_player6", section: "Service"),
+                        new(name: "IDE2", type: "string", required: false, nameHuman: "-IDE2 / --idle_effect_player2", section: "Idle Effects"),
+                        new(name: "IDE3", type: "string", required: false, nameHuman: "-IDE3 / --idle_effect_player3", section: "Idle Effects"),
+                        new(name: "IDE4", type: "string", required: false, nameHuman: "-IDE4 / --idle_effect_player4", section: "Idle Effects"),
+                        new(name: "IDE5", type: "string", required: false, nameHuman: "-IDE5 / --idle_effect_player5", section: "Idle Effects"),
+                        new(name: "IDE6", type: "string", required: false, nameHuman: "-IDE6 / --idle_effect_player6", section: "Idle Effects"),
                         new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "-G / --game_won_effects", section: "Effects"),
                         new(name: "M", type: "string", required: false, isMulti : true, nameHuman: "-M / --match_won_effects", section: "Effects"),
                         new(name: "B", type: "string", required: false, isMulti : true, nameHuman: "-B / --busted_effects", section: "Effects"),
@@ -728,7 +728,7 @@ namespace darts_hub.control
                         new(name: "SLET", type: "int[0..1000]", required: false, nameHuman: "-SLET / --sleep_timeout", section: "Sleepmode", requiredFeature: "i_m_able_to_read"),
                         new(name: "SLEOFF", type: "int[0..1000]", required: false, nameHuman: "-SLEOFF / ----sleep_off_timeout", section: "Sleepmode", requiredFeature: "i_m_able_to_read"),
                         new(name: "CMB", type: "string", required: false, isMulti: true, nameHuman: "-CMB / --combo_effects", section: "Combo Effects", requiredFeature: "i_m_able_to_read"),
-                        new(name: "PIDE", type: "string", required: false, isMulti: true, nameHuman: "-PIDE / --player_idle_effects", section: "Player Idle Effects", requiredFeature: "i_m_able_to_read"),
+                        new(name: "PIDE", type: "string", required: false, isMulti: true, isMultiKeyed: true, nameHuman: "-PIDE / --player_idle_effects", section: "Idle Effects", requiredFeature: "i_m_able_to_read"),
                         //  new(name: "TEST", type: "string", required: false, isMulti: true, nameHuman: "test", section: "WLED")
 
 
@@ -1177,27 +1177,28 @@ namespace darts_hub.control
                     var wledIDE2 = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE2");
                     if (wledIDE2 == null)
                     {
-                        dartsWled.Configuration.Arguments.Add(new(name: "IDE2", type: "string", required: false, nameHuman: "-IDE2 / --idle_effect_player2", section: "Service"));
+                        dartsWled.Configuration.Arguments.Add(new(name: "IDE2", type: "string", required: false, nameHuman: "-IDE2 / --idle_effect_player2", section: "Idle Effects"));
                     }
+
                     var wledIDE3 = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE3");
                     if (wledIDE3 == null)
                     {
-                        dartsWled.Configuration.Arguments.Add(new(name: "IDE3", type: "string", required: false, nameHuman: "-IDE3 / --idle_effect_player3", section: "Service"));
+                        dartsWled.Configuration.Arguments.Add(new(name: "IDE3", type: "string", required: false, nameHuman: "-IDE3 / --idle_effect_player3", section: "Idle Effects"));
                     }
                     var wledIDE4 = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE4");
                     if (wledIDE4 == null)
                     {
-                        dartsWled.Configuration.Arguments.Add(new(name: "IDE4", type: "string", required: false, nameHuman: "-IDE4 / --idle_effect_player4", section: "Service"));
+                        dartsWled.Configuration.Arguments.Add(new(name: "IDE4", type: "string", required: false, nameHuman: "-IDE4 / --idle_effect_player4", section: "Idle Effects"));
                     }
                     var wledIDE5 = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE5");
                     if (wledIDE5 == null)
                     {
-                        dartsWled.Configuration.Arguments.Add(new(name: "IDE5", type: "string", required: false, nameHuman: "-IDE5 / --idle_effect_player5", section: "Service"));
+                        dartsWled.Configuration.Arguments.Add(new(name: "IDE5", type: "string", required: false, nameHuman: "-IDE5 / --idle_effect_player5", section: "Idle Effects"));
                     }
                     var wledIDE6 = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE6");
                     if (wledIDE6 == null)
                     {
-                        dartsWled.Configuration.Arguments.Add(new(name: "IDE6", type: "string", required: false, nameHuman: "-IDE6 / --idle_effect_player6", section: "Service"));
+                        dartsWled.Configuration.Arguments.Add(new(name: "IDE6", type: "string", required: false, nameHuman: "-IDE6 / --idle_effect_player6", section: "Idle Effects"));
                     }
                     var wledSLE = dartsWled.Configuration.Arguments.Find(a => a.Name == "SLE");
                     if (wledSLE == null)
@@ -1222,7 +1223,7 @@ namespace darts_hub.control
                     var wledPIDE = dartsWled.Configuration.Arguments.Find(a => a.Name == "PIDE");
                     if (wledPIDE == null)
                     {
-                        dartsWled.Configuration.Arguments.Add(new(name: "PIDE", type: "string", required: false, isMulti: true, nameHuman: "-PIDE / --player_idle_effects", section: "Player Idle Effects", requiredFeature: "i_m_able_to_read"));
+                        dartsWled.Configuration.Arguments.Add(new(name: "PIDE", type: "string", required: false, isMulti: true, isMultiKeyed: true, nameHuman: "-PIDE / --player_idle_effects", section: "Idle Effects", requiredFeature: "i_m_able_to_read"));
                     }
 
                     for (int i = 0; i <= 180; i++)
@@ -1251,7 +1252,7 @@ namespace darts_hub.control
                         DSBULLWLEDMig.Section = "Single Dart Effects !! still in Progress !!";
                         DSBULLWLEDMig.RequiredFeature = "i_m_able_to_read";
                     }
-
+                    
                     var DEBWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "DEB");
                     if (DEBWLEDMig != null) { DEBWLEDMig.Section = "Service"; }
                     var CONWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "CON");
@@ -1278,8 +1279,6 @@ namespace darts_hub.control
                     if (HFOWLEDMig != null) { HFOWLEDMig.Section = "Effects"; }
                     var HFWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "HF");
                     if (HFWLEDMig != null) { HFWLEDMig.Section = "Effects"; }
-                    var IDEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE");
-                    if (IDEWLEDMig != null) { IDEWLEDMig.Section = "Service"; }
                     var GWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "G");
                     if (GWLEDMig != null) { GWLEDMig.Section = "Effects"; }
                     var MWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "M");
@@ -1300,6 +1299,21 @@ namespace darts_hub.control
                     if (CEWLEDMig != null) { CEWLEDMig.Section = "Board Status Effects"; }
                     var OFFWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "OFF");
                     if (OFFWLEDMig != null) { OFFWLEDMig.Section = "Service"; }
+                    var IDEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE");
+                    if (IDEWLEDMig != null) { IDEWLEDMig.Section = "Idle Effects"; }
+                    var IDE2WLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE2");
+                    if (IDE2WLEDMig != null) { IDE2WLEDMig.Section = "Idle Effects"; }
+                    var IDE3WLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE3");
+                    if (IDE3WLEDMig != null) { IDE3WLEDMig.Section = "Idle Effects"; }
+                    var IDE4WLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE4");
+                    if (IDE4WLEDMig != null) { IDE4WLEDMig.Section = "Idle Effects"; }
+                    var IDE5WLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE5");
+                    if (IDE5WLEDMig != null) { IDE5WLEDMig.Section = "Idle Effects"; }
+                    var IDE6WLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "IDE6");
+                    if (IDE6WLEDMig != null) { IDE6WLEDMig.Section = "Idle Effects"; }
+                    var PIDEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "PIDE");
+                    if (PIDEWLEDMig != null) { PIDEWLEDMig.Section = "Idle Effects"; }
+
 
 
 
