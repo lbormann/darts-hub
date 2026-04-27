@@ -416,6 +416,11 @@ namespace darts_hub
         {
             ShowVersionRollback();
         }
+        private async void SidebarDebugCollectionButton_Click(object sender, RoutedEventArgs e)
+        {
+            CloseSidebarMenu();
+            await ShowDebugCollectionDialog();
+        }
         #endregion
 
         #region Profile and App Management
@@ -906,6 +911,25 @@ namespace darts_hub
             SettingsPanel.Children.Clear();
             SettingsPanel.Children.Add(rollbackView);
             selectedApp = null;
+        }
+        #endregion
+
+        #region Debug Collection
+        private async Task ShowDebugCollectionDialog()
+        {
+            try
+            {
+                var dialog = new UI.DebugCollectionDialog(selectedProfile, GetLicenseManager());
+                await dialog.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MainWindow] Failed to open debug collection dialog: {ex.Message}");
+                await RenderMessageBox(
+                    "Debug Collection",
+                    $"Failed to open the debug collection dialog:\n{ex.Message}",
+                    MsBox.Avalonia.Enums.Icon.Error);
+            }
         }
         #endregion
 

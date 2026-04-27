@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using darts_hub.control;
+using darts_hub.model;
 using darts_hub.testing;
 
 namespace darts_hub.UI
@@ -191,6 +192,13 @@ namespace darts_hub.UI
                     ShowSystemInfo();
                     return true;
 
+                // Debug collection (offline support bundle)
+                case "--debug-collect":
+                case "--debug-collection":
+                case "--collect-debug":
+                    await RunDebugCollection(args.Skip(1).ToArray());
+                    return true;
+
                 // Verbose/Debug mode
                 case "--verbose":
                 case "-vv":
@@ -250,6 +258,10 @@ namespace darts_hub.UI
             WriteLine("    --backup-list           List all available backups");
             WriteLine("    --backup-restore <file> Restore backup from file");
             WriteLine("    --backup-cleanup [keep] Clean up old backups (default: keep 10)");
+            WriteLine();
+            WriteLine("  Debug Collection (offline support bundle):");
+            WriteLine("    --debug-collect [opts]  Build a debug ZIP without launching the GUI");
+            WriteLine("                            (use --debug-collect --help for options)");
             WriteLine();
             WriteLine("  Testing:");
             WriteLine("    --test-updater          Run interactive updater test menu");
@@ -1246,6 +1258,288 @@ namespace darts_hub.UI
                 WriteLine($"Error listing profiles: {ex.Message}");
                 WriteLine("Make sure the application has been run at least once to initialize profiles.");
             }
+        }
+
+        #endregion
+
+        #region Debug Collection (offline support bundle)
+
+        private static async Task RunDebugCollection(string[] args)
+        {
+            WriteLine("=== DEBUG COLLECTION ===");
+            WriteLine("Bundles log files, configuration and a sanitized snapshot of the");
+            WriteLine("environment into a ZIP archive that can be sent to support.");
+            WriteLine();
+
+            try
+            {
+                var options = ParseDebugCollectArgs(args);
+                if (options == null) return; // help / parse error already printed
+
+                var profileManager = new ProfileManager();
+                profileManager.LoadAppsAndProfiles();
+
+                var profiles = profileManager.GetProfiles();
+                if (profiles == null || profiles.Count == 0)
+                {
+                    WriteLine("No profiles available - cannot resolve extensions automatically.");
+                    WriteLine("Run the application once to set up at least one profile, or pass --apps explicitly.");
+                    return;
+                }
+
+                Profile profile;
+                if (!string.IsNullOrWhiteSpace(options.ProfileName))
+                {
+                    var match = profiles.FirstOrDefault(p =>
+                        string.Equals(p.Name, options.ProfileName, StringComparison.OrdinalIgnoreCase));
+                    if (match == null)
+                    {
+                        WriteLine($"Profile '{options.ProfileName}' not found. Available profiles:");
+                        foreach (var p in profiles) WriteLine($"  - {p.Name}");
+                        return;
+                    }
+                    profile = match;
+                }
+                else
+                {
+                    profile = profiles.FirstOrDefault(p => p.IsTaggedForStart) ?? profiles[0];
+                }
+                WriteLine($"Profile:          {profile.Name}");
+
+                // Resolve extensions
+                List<AppBase> selectedApps;
+                if (options.AppNames.Count == 0)
+                {
+                    // Default: include every app from the resolved profile.
+                    selectedApps = profile.Apps.Values
+                        .Select(s => s.App)
+                        .Where(a => a != null)
+                        .ToList()!;
+                }
+                else
+                {
+                    selectedApps = profile.Apps.Values
+                        .Select(s => s.App)
+                        .Where(a => a != null && options.AppNames.Any(n =>
+                            string.Equals(n, a.Name, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(n, a.CustomName, StringComparison.OrdinalIgnoreCase)))
+                        .ToList()!;
+
+                    var unknown = options.AppNames
+                        .Where(n => !selectedApps.Any(a =>
+                            string.Equals(n, a.Name, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(n, a.CustomName, StringComparison.OrdinalIgnoreCase)))
+                        .ToList();
+                    foreach (var u in unknown)
+                    {
+                        WriteLine($"  warning: extension '{u}' is not part of profile '{profile.Name}' - ignored.");
+                    }
+                }
+
+                WriteLine($"Extensions:       {(selectedApps.Count == 0 ? "(none)" : string.Join(", ", selectedApps.Select(a => a.CustomName)))}");
+                WriteLine($"Incident date:    {options.IncidentDate:yyyy-MM-dd}");
+                WriteLine($"Description:      {options.Description}");
+                WriteLine();
+
+                // Caller board id (best-effort)
+                string? boardId = null;
+                try
+                {
+                    var caller = profile.Apps.Values.Select(s => s.App)
+                        .FirstOrDefault(a => string.Equals(a?.Name, "darts-caller", StringComparison.OrdinalIgnoreCase));
+                    boardId = caller?.Configuration?.Arguments?
+                        .FirstOrDefault(a => string.Equals(a.Name, "B", StringComparison.OrdinalIgnoreCase))?.Value;
+                }
+                catch
+                {
+                    // best-effort
+                }
+
+                // License snapshot (offline-only: use stored data, do not call server)
+                DebugCollectionService.LicenseSnapshot? license = null;
+                if (!options.SkipLicense)
+                {
+                    try
+                    {
+                        var configurator = new Configurator("config.json");
+                        var hasKey = !string.IsNullOrWhiteSpace(configurator.Settings.LicenseKey);
+                        license = new DebugCollectionService.LicenseSnapshot
+                        {
+                            HasStoredKey = hasKey,
+                            Status = hasKey ? "Unknown (offline / not validated in CLI mode)" : "No license key stored",
+                            Message = "License validation skipped in CLI mode."
+                        };
+                        try
+                        {
+                            var hwid = LicenseManager.GetHardwareId();
+                            if (!string.IsNullOrWhiteSpace(hwid) && hwid.Length >= 8)
+                            {
+                                license.HardwareIdHashShort = hwid.Substring(0, 8);
+                            }
+                        }
+                        catch { /* optional */ }
+                    }
+                    catch (Exception ex)
+                    {
+                        WriteLine($"  warning: could not read license info: {ex.Message}");
+                    }
+                }
+
+                WriteLine("Collecting...");
+                var result = await DebugCollectionService.CreateAsync(
+                    selectedApps,
+                    options.Description,
+                    options.IncidentDate,
+                    boardId,
+                    license);
+
+                WriteLine();
+                WriteLine("=== DONE ===");
+                WriteLine($"File:    {result.ZipFilePath}");
+                WriteLine($"Folder:  {result.ZipFolderPath}");
+                WriteLine($"Items:   {result.CollectedItems.Count}");
+                if (result.Warnings.Count > 0)
+                {
+                    WriteLine();
+                    WriteLine($"Notes ({result.Warnings.Count}):");
+                    foreach (var w in result.Warnings) WriteLine($"  - {w}");
+                }
+
+                WriteLine();
+                WriteLine("Send the ZIP to I3uLL3t on Discord (DM)");
+                WriteLine("or post it in the Darts-Hub Discord under #bug-report:");
+                WriteLine("  https://discord.gg/aRhqH5WauV");
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"Debug collection failed: {ex.Message}");
+                WriteLine($"  {ex.StackTrace}");
+            }
+        }
+
+        private sealed class DebugCollectOptions
+        {
+            public string Description { get; set; } = string.Empty;
+            public DateTime IncidentDate { get; set; } = DateTime.Today;
+            public List<string> AppNames { get; } = new();
+            public string? ProfileName { get; set; }
+            public bool SkipLicense { get; set; }
+        }
+
+        private static DebugCollectOptions? ParseDebugCollectArgs(string[] args)
+        {
+            var options = new DebugCollectOptions();
+
+            for (int i = 0; i < args.Length; i++)
+            {
+                var arg = args[i].ToLowerInvariant();
+                switch (arg)
+                {
+                    case "-h":
+                    case "--help":
+                        ShowDebugCollectHelp();
+                        return null;
+
+                    case "--description":
+                    case "--desc":
+                    case "-d":
+                        if (i + 1 >= args.Length)
+                        {
+                            WriteLine("--description requires a value.");
+                            return null;
+                        }
+                        options.Description = args[++i];
+                        break;
+
+                    case "--date":
+                        if (i + 1 >= args.Length)
+                        {
+                            WriteLine("--date requires a value (YYYY-MM-DD).");
+                            return null;
+                        }
+                        var raw = args[++i];
+                        if (!DateTime.TryParseExact(raw, new[] { "yyyy-MM-dd", "yyyyMMdd" },
+                                System.Globalization.CultureInfo.InvariantCulture,
+                                System.Globalization.DateTimeStyles.None, out var parsed))
+                        {
+                            WriteLine($"Invalid date '{raw}'. Use YYYY-MM-DD.");
+                            return null;
+                        }
+                        options.IncidentDate = parsed;
+                        break;
+
+                    case "--apps":
+                    case "--extensions":
+                        if (i + 1 >= args.Length)
+                        {
+                            WriteLine("--apps requires a comma-separated list of extension names.");
+                            return null;
+                        }
+                        foreach (var name in args[++i].Split(',', StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            var trimmed = name.Trim();
+                            if (trimmed.Length > 0) options.AppNames.Add(trimmed);
+                        }
+                        break;
+
+                    case "--profile":
+                    case "-p":
+                        if (i + 1 >= args.Length)
+                        {
+                            WriteLine("--profile requires a value.");
+                            return null;
+                        }
+                        options.ProfileName = args[++i];
+                        break;
+
+                    case "--no-license":
+                        options.SkipLicense = true;
+                        break;
+
+                    default:
+                        WriteLine($"Unknown option '{args[i]}'. Use --debug-collect --help for usage.");
+                        return null;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(options.Description))
+            {
+                options.Description =
+                    $"(no description provided - bundle generated via CLI on {DateTime.Now:yyyy-MM-dd HH:mm:ss})";
+            }
+
+            // Daily logs only exist for the current month; warn but allow override.
+            if (options.IncidentDate.Year != DateTime.Now.Year || options.IncidentDate.Month != DateTime.Now.Month)
+            {
+                WriteLine("Warning: incident date is outside the current month - matching log files");
+                WriteLine("         may have been rotated and not be available anymore.");
+                WriteLine();
+            }
+
+            return options;
+        }
+
+        private static void ShowDebugCollectHelp()
+        {
+            WriteLine("Usage: darts-hub --debug-collect [OPTIONS]");
+            WriteLine();
+            WriteLine("Creates a ZIP file inside the 'debug/' folder of the darts-hub directory");
+            WriteLine("containing log files, sanitized configuration and a system/security report.");
+            WriteLine("Useful when the GUI does not start at all - everything works headless.");
+            WriteLine();
+            WriteLine("OPTIONS:");
+            WriteLine("  -d, --description <text>   Free-form problem description (recommended).");
+            WriteLine("      --date <YYYY-MM-DD>    Day the issue occurred (default: today).");
+            WriteLine("      --apps <list>          Comma-separated extension names to include.");
+            WriteLine("                             Default: all apps in the active profile.");
+            WriteLine("      --profile <name>       Profile to use (default: profile tagged for start).");
+            WriteLine("      --no-license           Skip license info collection.");
+            WriteLine("  -h, --help                 Show this help.");
+            WriteLine();
+            WriteLine("EXAMPLES:");
+            WriteLine("  darts-hub --debug-collect");
+            WriteLine("  darts-hub --debug-collect --description \"Caller stops after leg 3\"");
+            WriteLine("  darts-hub --debug-collect --apps darts-caller,darts-wled --date 2025-06-12");
         }
 
         #endregion

@@ -734,6 +734,24 @@
 							<TextBlock Text="Version Rollback" FontSize="14" VerticalAlignment="Center"/>
 						</StackPanel>
 					</Button>
+					<Border Height="1" Background="#FF3A3A3C" Margin="12,6"/>
+					<Button x:Name="SidebarDebugCollectionButton"
+							HorizontalAlignment="Stretch"
+							HorizontalContentAlignment="Left"
+							Background="Transparent"
+							Foreground="White"
+							BorderThickness="0"
+							CornerRadius="4"
+							Padding="16,10"
+							Margin="6,2"
+							FontSize="14"
+							Click="SidebarDebugCollectionButton_Click"
+							ToolTip.Tip="Bundle log files and configuration into a ZIP for support">
+						<StackPanel Orientation="Horizontal" Spacing="12">
+							<TextBlock Text="&#x1F41E;" FontSize="18" VerticalAlignment="Center"/>
+							<TextBlock Text="Debug Collection" FontSize="14" VerticalAlignment="Center"/>
+						</StackPanel>
+					</Button>
 				</StackPanel>
 
 				<!-- Profile Controls (bottom) -->

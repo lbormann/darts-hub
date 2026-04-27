@@ -1,0 +1,148 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="darts_hub.UI.DebugCollectionDialog"
+        Width="640"
+        Height="720"
+        MinWidth="520"
+        MinHeight="560"
+        CanResize="True"
+        WindowStartupLocation="CenterOwner"
+        Title="Create Debug Collection"
+        Background="#FF1E1E1E">
+  <Border Padding="20" Background="#FF252526" CornerRadius="10">
+    <Grid RowDefinitions="Auto,*,Auto,Auto">
+
+      <!-- Header -->
+      <StackPanel Grid.Row="0" Spacing="6" Margin="0,0,0,12">
+        <TextBlock Text="Debug Collection"
+                   Foreground="White"
+                   FontSize="22"
+                   FontWeight="Bold"/>
+        <TextBlock TextWrapping="Wrap"
+                   Foreground="#FFBFBFBF"
+                   FontSize="12"
+                   Text="This tool gathers everything our maintainers need to investigate an issue. Pick the affected extensions, the day the problem happened and add a short description. The wizard will then bundle the matching log files, the darts-caller log, the darts-hub log, your config.json and a sanitized copy of apps-downloadable.json (without your Autodarts credentials) into a single ZIP archive."/>
+      </StackPanel>
+
+      <!-- Content -->
+      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="16">
+
+          <!-- Extensions -->
+          <StackPanel Spacing="6">
+            <TextBlock Text="1. Extensions with problems"
+                       Foreground="#FF9CDCFE"
+                       FontWeight="SemiBold"
+                       FontSize="14"/>
+            <TextBlock TextWrapping="Wrap"
+                       Foreground="#FFA0A0A0"
+                       FontSize="11"
+                       Text="Tick every extension that misbehaved. The darts-caller log is always included automatically because most issues are linked to it."/>
+            <Border Background="#FF1B1B1C"
+                    BorderBrush="#FF3A3A3C"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="10"
+                    MinHeight="120">
+              <ItemsControl x:Name="ExtensionsItemsControl">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <CheckBox Content="{Binding DisplayName}"
+                              IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                              Foreground="#FFE6E6E6"
+                              Margin="0,2"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Border>
+          </StackPanel>
+
+          <!-- Date picker -->
+          <StackPanel Spacing="6">
+            <TextBlock Text="2. Day the problem occurred"
+                       Foreground="#FF9CDCFE"
+                       FontWeight="SemiBold"
+                       FontSize="14"/>
+            <TextBlock TextWrapping="Wrap"
+                       Foreground="#FFA0A0A0"
+                       FontSize="11"
+                       Text="Daily log files are stored per day-of-month. Pick the date when the issue happened so we copy the matching log files."/>
+            <DatePicker x:Name="IncidentDatePicker" HorizontalAlignment="Left"/>
+          </StackPanel>
+
+          <!-- Description -->
+          <StackPanel Spacing="6">
+            <TextBlock Text="3. Problem description"
+                       Foreground="#FF9CDCFE"
+                       FontWeight="SemiBold"
+                       FontSize="14"/>
+            <TextBlock TextWrapping="Wrap"
+                       Foreground="#FFA0A0A0"
+                       FontSize="11"
+                       Text="Describe what you did, what you expected and what actually happened. Mention approximate times so we can locate the right log entries. The more context the better!"/>
+            <TextBox x:Name="ProblemDescriptionTextBox"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     MinHeight="120"
+                     MaxHeight="220"
+                     VerticalContentAlignment="Top"
+                     Watermark="Example: At ~19:42 the caller stopped reading checkouts after the third leg. WLED kept showing the score effect forever..."/>
+          </StackPanel>
+
+          <!-- Privacy notice -->
+          <Border Background="#33009BFA"
+                  BorderBrush="#5500BFFF"
+                  BorderThickness="1"
+                  CornerRadius="6"
+                  Padding="10">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Privacy"
+                         Foreground="#FF80D8FF"
+                         FontWeight="Bold"
+                         FontSize="13"/>
+              <TextBlock TextWrapping="Wrap"
+                         Foreground="#FFC8E6FF"
+                         FontSize="11"
+                         Text="Your Autodarts e-mail (U) and password (P) are removed from the apps-downloadable.json copy before zipping. Your board id (B) is kept because it helps us correlate logs and is also added to the file name."/>
+            </StackPanel>
+          </Border>
+
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- Status / progress -->
+      <StackPanel Grid.Row="2" x:Name="StatusPanel" Spacing="6" Margin="0,12,0,0" IsVisible="False">
+        <ProgressBar x:Name="CollectionProgressBar" IsIndeterminate="True" Height="6"/>
+        <TextBlock x:Name="StatusText"
+                   Foreground="#FFBFBFBF"
+                   FontSize="12"
+                   TextWrapping="Wrap"/>
+      </StackPanel>
+
+      <!-- Buttons -->
+      <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,12,0,0">
+        <Button x:Name="CancelButton"
+                Content="Close"
+                Width="110"
+                Height="36"
+                Background="#FF2B2B2B"
+                Foreground="#FFE6E6E6"
+                BorderBrush="#FF464646"
+                BorderThickness="1"
+                CornerRadius="6"
+                Click="CancelButton_Click"/>
+        <Button x:Name="CreateButton"
+                Content="Create Debug ZIP"
+                Width="170"
+                Height="36"
+                Background="#FF2E8B57"
+                Foreground="White"
+                BorderBrush="#FF3BBF72"
+                BorderThickness="1"
+                CornerRadius="6"
+                Click="CreateButton_Click"/>
+      </StackPanel>
+
+    </Grid>
+  </Border>
+</Window>

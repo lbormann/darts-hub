@@ -55,6 +55,8 @@ namespace darts_hub
                         lowerArg.Contains("import") ||
                         lowerArg.Contains("extensions") ||
                         lowerArg.Contains("params") ||
+                        lowerArg.Contains("debug") ||
+                        lowerArg.Contains("collect") ||
                         lowerArg.Equals("--verbose") == false && // verbose starts GUI
                         lowerArg.Equals("--beta") == false)     // beta starts GUI
                     {

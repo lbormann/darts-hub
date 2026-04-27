@@ -1,4 +1,25 @@
-﻿## b1.5.0.6
+﻿## b1.5.0.7
+### New Features
+    - Debug Collection: new sidebar entry that bundles logs, sanitized config and a system/security report into a single ZIP for support.
+        - GUI dialog with extension multi-select, incident date picker, problem description and animated success view (Open Folder / Copy Path / Discord buttons).
+        - ZIP is written to `<darts-hub>/debug/DH_debug_collection_<timestamp>_<boardId>.zip`.
+        - Headless CLI variant `--debug-collect` so the bundle can be created even when the GUI does not start.
+            - Options: `--description`, `--date`, `--apps`, `--profile`, `--no-license`, `--help`.
+    - System / Security report inside `system_info.txt`:
+        - OS, framework, hardware, time zone, culture, working set.
+        - License **status only** (key never included), expiration, feature count, short hardware-ID hash.
+        - Admin / root elevation detection (Windows / Linux / macOS).
+        - Registered antivirus / firewall products via Windows Security Center (Defender, Avast, AVG, Bitdefender, ESET, Kaspersky, Norton, McAfee, Sophos, Webroot, Trend Micro, …).
+        - Windows Defender exclusion list + cross-check whether the darts-hub directory and each selected extension are excluded.
+        - Linux: `ufw` / `firewalld` / `iptables` / `nft` / ClamAV / SELinux / AppArmor.
+        - macOS: Application Layer Firewall, Gatekeeper, SIP, XProtect note.
+### Privacy
+    - Autodarts e-mail (U) and password (P) are stripped from the bundled `apps-downloadable.json`.
+    - License key is never part of the package - only the status snapshot.
+### Documentation
+    - README: new `DEBUG COLLECTION` section covering GUI usage, CLI usage and privacy notes.
+
+## b1.5.0.6
 ### Bugfix
     - logfiles were written in multiple forlders. Now they are all written in the darts-hub/logs folder. 
 ### Improvements
