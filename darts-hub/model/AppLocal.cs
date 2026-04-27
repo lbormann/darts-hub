@@ -18,6 +18,14 @@ namespace darts_hub.model
         // METHODS
 
 
+        /// <summary>
+        /// Custom extensions / user-provided executables get a graceful
+        /// shutdown attempt (SIGTERM on Linux/macOS, WM_CLOSE on Windows)
+        /// with a 10s timeout before being hard-killed.
+        /// </summary>
+        protected override bool UseGracefulShutdown => true;
+
+
         public AppLocal(string name,
                         string? customName = null,
                         string? helpUrl = null,

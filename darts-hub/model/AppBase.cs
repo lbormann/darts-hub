@@ -312,7 +312,10 @@ namespace darts_hub.model
                 // Check if we need to create a new log file (new day or first time)
                 if (currentLogDay != today || string.IsNullOrEmpty(currentLogFilePath))
                 {
-                    var logsDir = Path.Combine(Environment.CurrentDirectory, "logs", SanitizeFileName(CustomName));
+                    // Always write logs next to the darts-hub executable, regardless of the
+                    // process's current working directory (which may differ when launched via
+                    // shortcut, service, or from the user's home directory).
+                    var logsDir = Path.Combine(Helper.GetAppBasePath(), "logs", SanitizeFileName(CustomName));
                     
                     // Create directory if it doesn't exist
                     if (!Directory.Exists(logsDir))
@@ -699,6 +702,20 @@ namespace darts_hub.model
             return issues;
         }
 
+        /// <summary>
+        /// When true, <see cref="Close"/> first tries a graceful shutdown
+        /// (SIGTERM on Linux/macOS, WM_CLOSE on Windows) and only falls back
+        /// to a hard kill after <see cref="GracefulShutdownTimeoutMs"/>.
+        /// Default is false (immediate hard kill - existing behavior).
+        /// </summary>
+        protected virtual bool UseGracefulShutdown => false;
+
+        /// <summary>
+        /// Timeout in milliseconds to wait for a graceful shutdown before
+        /// the process is hard-killed.
+        /// </summary>
+        protected virtual int GracefulShutdownTimeoutMs => 10000;
+
         public void Close()
         {
             executable = SetRunExecutable();
@@ -709,22 +726,37 @@ namespace darts_hub.model
                 try
                 {
                     //Console.WriteLine(Name + " tries to exit");
-                    
+
                     // Log application stop
                     WriteToLogFile($"=== {CustomName} stopping ===", false, "SYSTEM");
-                    
-                    if(process != null)
+
+                    if (UseGracefulShutdown)
                     {
-                        process.CloseMainWindow();
-                        process.Close();
+                        if (processId != defaultProcessId)
+                        {
+                            WriteToLogFile($"Sending graceful shutdown signal (timeout {GracefulShutdownTimeoutMs} ms)", false, "SYSTEM");
+                            Helper.KillProcessGracefully(processId, GracefulShutdownTimeoutMs);
+                        }
+                        if (process != null)
+                        {
+                            try { process.Close(); } catch { /* ignore */ }
+                        }
                     }
-                    if (processId != defaultProcessId)
+                    else
                     {
-                        Helper.KillProcess(processId);
-                    }
-                    if (executable != null)
-                    {
-                        Helper.KillProcess(executable);
+                        if (process != null)
+                        {
+                            process.CloseMainWindow();
+                            process.Close();
+                        }
+                        if (processId != defaultProcessId)
+                        {
+                            Helper.KillProcess(processId);
+                        }
+                        if (executable != null)
+                        {
+                            Helper.KillProcess(executable);
+                        }
                     }
                     AppRunningState = false;
                     HasUnappliedChanges = false;

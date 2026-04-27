@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using darts_hub.control;
 using darts_hub.model;
 using System;
 using System.Collections.Generic;
@@ -372,8 +373,11 @@ namespace darts_hub.UI
                 }
             }
 
-            // Create logs directory if it doesn't exist
-            var logsDir = System.IO.Path.Combine(Environment.CurrentDirectory, "logs");
+            // Create logs directory if it doesn't exist.
+            // Always use the darts-hub executable's directory so logs are written to
+            // <darts-hub-dir>/logs and never to the user's home directory (which would
+            // happen if Environment.CurrentDirectory points elsewhere).
+            var logsDir = System.IO.Path.Combine(Helper.GetAppBasePath(), "logs");
             if (!System.IO.Directory.Exists(logsDir))
             {
                 System.IO.Directory.CreateDirectory(logsDir);

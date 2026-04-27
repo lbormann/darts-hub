@@ -1,4 +1,23 @@
-﻿## b1.5.0.5
+﻿## b1.5.0.6
+### Bugfix
+    - logfiles were written in multiple forlders. Now they are all written in the darts-hub/logs folder. 
+### Improvements
+    - during DH closing, it now closes custom apps with SIGTERM insted of SIGKILL. If the app doesnt close after 10 sec it will use SIGKILL. 
+### Darts-WLED
+    - fixed some bugs where effects could overlap each other, specially when using PIDE argument. 
+
+### Darts-Caller
+    - fix bug where player specific remaining score messages were not played for the bot player.
+    - reworked playback threads to avoid overlapping sounds and called scores after match is finished.
+    - fix wrong language pack for NL and FR voices
+
+### SPECIAL NOTE
+    - to get acces to the new Darts-WLED features, you have to request a experience license. 
+        https://license.darts-hub.i3ull3t.de/form.html
+    *read the Darts WLED documentation to get more information about new features!*
+    *https://github.com/lbormann/darts-wled*
+
+## b1.5.0.5
 ### UI Improvements
     - UI: Add dedicated application settings page (accessible via sidebar menu)
     - UI: Move Setup Wizard button from About page to sidebar menu

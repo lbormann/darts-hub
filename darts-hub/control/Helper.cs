@@ -222,6 +222,98 @@ namespace darts_hub.control
             process.Kill(false);
         }
 
+        // libc kill() for Unix-like systems (Linux + macOS).
+        // Used to send SIGTERM (15) before falling back to SIGKILL (9).
+        [DllImport("libc", SetLastError = true, EntryPoint = "kill")]
+        private static extern int sys_kill(int pid, int sig);
+
+        private const int SIGTERM = 15;
+
+        /// <summary>
+        /// Tries to terminate a process gracefully (SIGTERM on Linux/macOS,
+        /// WM_CLOSE via CloseMainWindow on Windows). If the process does not
+        /// exit within <paramref name="timeoutMs"/>, a hard kill (SIGKILL /
+        /// TerminateProcess) is performed. Cross-platform.
+        /// </summary>
+        public static void KillProcessGracefully(int processId, int timeoutMs = 10000)
+        {
+            if (processId <= 0) return;
+
+            Process? process;
+            try
+            {
+                process = Process.GetProcessById(processId);
+            }
+            catch
+            {
+                return; // already gone
+            }
+
+            if (process == null || process.HasExited) return;
+
+            try
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    // Windows has no SIGTERM. CloseMainWindow sends WM_CLOSE which
+                    // allows GUI apps to shut down cleanly. Console apps without a
+                    // window will simply ignore it and be killed after the timeout.
+                    try { process.CloseMainWindow(); } catch { /* ignore */ }
+                }
+                else
+                {
+                    SendSigTerm(processId);
+                }
+
+                if (process.WaitForExit(timeoutMs))
+                {
+                    return;
+                }
+
+                // Timeout: hard kill
+                if (!process.HasExited)
+                {
+                    process.Kill(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"KillProcessGracefully({processId}) error: {ex.Message}");
+                try
+                {
+                    if (!process.HasExited) process.Kill(false);
+                }
+                catch { /* ignore */ }
+            }
+        }
+
+        private static void SendSigTerm(int pid)
+        {
+            try
+            {
+                if (sys_kill(pid, SIGTERM) == 0) return;
+            }
+            catch
+            {
+                // P/Invoke failed (e.g. libc not resolvable) - fall back to /bin/kill
+            }
+
+            try
+            {
+                using var p = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "/bin/kill",
+                    Arguments = $"-{SIGTERM} {pid}",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                });
+                p?.WaitForExit(2000);
+            }
+            catch { /* ignore - caller will hard-kill on timeout */ }
+        }
+
         public static void KillProcess(string processName)
         {
             processName = Path.GetFileNameWithoutExtension(processName);
