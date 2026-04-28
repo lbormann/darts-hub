@@ -697,6 +697,13 @@ namespace darts_hub.model
                 {
                     issues.AddRange(WledPlayerIdleEffectHelper.GetPlayerIdleConfigurationIssues(arg.Value));
                 }
+
+                // Dart multiplier effects: additional semantic validation
+                if (string.Equals(arg.Name, "DMU", StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrEmpty(arg.Value))
+                {
+                    issues.AddRange(WledDartMultiplierEffectHelper.GetDartMultiplierConfigurationIssues(arg.Value));
+                }
             }
 
             return issues;

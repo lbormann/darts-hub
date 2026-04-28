@@ -18,6 +18,24 @@
     - License key is never part of the package - only the status snapshot.
 ### Documentation
     - README: new `DEBUG COLLECTION` section covering GUI usage, CLI usage and privacy notes.
+### Darts-WLED
+    - add `-DMU` argument: per-dart multiplier effects (1/2/3) and field-specific effects (e.g. t20, d25), triggered on dart1/2/3-thrown. Supports multi-endpoint targeting and random-choice. Always overridden by Score/Combo/Busted/Game-Won/Match-Won/High-Finish. Documented in Readme.md.
+        - GUI configurator: Add-button per multiplier, key dropdown (generic 1/2/3 or specific s/d/t field), mode selector (Manual / WLED Effects / Presets / Color Effects), random-choice list and per-device duration slider.
+### SPECIAL NOTE
+    - to get acces to the new Darts-WLED features, you have to request a experience license. 
+        https://license.darts-hub.i3ull3t.de/form.html
+    *read the Darts WLED documentation to get more information about new features!*
+    *https://github.com/lbormann/darts-wled*
+
+> ℹ️ **Note:** New features and full argument documentation for each extension are maintained in the extension's own README. See:
+> - [darts-caller](https://github.com/lbormann/darts-caller/blob/master/README.md)
+> - [darts-extern](https://github.com/lbormann/darts-extern/blob/master/README.md)
+> - [darts-wled](https://github.com/lbormann/darts-wled/blob/master/README.md)
+> - [darts-pixelit](https://github.com/lbormann/darts-pixelit/blob/master/README.md)
+> - [darts-gif](https://github.com/lbormann/darts-gif/blob/master/README.md)
+> - [darts-voice](https://github.com/lbormann/darts-voice/blob/master/README.md)
+> - [cam-loader](https://github.com/lbormann/cam-loader/blob/master/README.md)
+
 
 ## b1.5.0.6
 ### Bugfix

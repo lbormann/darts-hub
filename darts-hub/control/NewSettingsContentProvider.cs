@@ -1641,12 +1641,18 @@ namespace darts_hub.control
                                                    WledPlayerIdleEffectHelper.IsPlayerIdleEffectParameter(param);
             System.Diagnostics.Debug.WriteLine($"Is WLED Player Idle Effect Parameter: {isWledPlayerIdleEffectParameter}");
 
+            // Check if this is a WLED dart multiplier effect parameter (only for darts-wled)
+            bool isWledDartMultiplierEffectParameter = app?.Name == "darts-wled" &&
+                                                       WledDartMultiplierEffectHelper.IsDartMultiplierEffectParameter(param);
+            System.Diagnostics.Debug.WriteLine($"Is WLED Dart Multiplier Effect Parameter: {isWledDartMultiplierEffectParameter}");
+
             // Check if this is a WLED regular effect parameter (only for darts-wled, not darts-pixelit, and not score area)
             bool isWledEffectParameter = app?.Name == "darts-wled" && 
                                        WledSettings.IsEffectParameter(param) && 
                                        !isWledScoreAreaEffectParameter &&
                                        !isWledComboEffectParameter &&
-                                       !isWledPlayerIdleEffectParameter;
+                                       !isWledPlayerIdleEffectParameter &&
+                                       !isWledDartMultiplierEffectParameter;
             System.Diagnostics.Debug.WriteLine($"Is WLED Effect Parameter: {isWledEffectParameter}");
 
             switch (type)
@@ -1668,6 +1674,11 @@ namespace darts_hub.control
                     {
                         System.Diagnostics.Debug.WriteLine($"CREATING: WLED Player Idle Effect Parameter Control");
                         return WledPlayerIdleEffectHelper.CreatePlayerIdleEffectParameterControl(param, saveCallback, app);
+                    }
+                    else if (isWledDartMultiplierEffectParameter)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"CREATING: WLED Dart Multiplier Effect Parameter Control");
+                        return WledDartMultiplierEffectHelper.CreateDartMultiplierEffectParameterControl(param, saveCallback, app);
                     }
                     else if (isWledScoreAreaEffectParameter)
                     {

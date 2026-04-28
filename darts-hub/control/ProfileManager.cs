@@ -506,7 +506,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-mac64",
                 MacArm64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-mac"
             };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b1.11.0.6");
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b1.11.0.9");
 
 
             var dartsPixelitDownloadMap = new DownloadMap
@@ -729,6 +729,7 @@ namespace darts_hub.control
                         new(name: "SLEOFF", type: "int[0..1000]", required: false, nameHuman: "-SLEOFF / ----sleep_off_timeout", section: "Sleepmode", requiredFeature: "i_m_able_to_read"),
                         new(name: "CMB", type: "string", required: false, isMulti: true, nameHuman: "-CMB / --combo_effects", section: "Combo Effects", requiredFeature: "i_m_able_to_read"),
                         new(name: "PIDE", type: "string", required: false, isMulti: true, isMultiKeyed: true, nameHuman: "-PIDE / --player_idle_effects", section: "Idle Effects", requiredFeature: "i_m_able_to_read"),
+                        new(name: "DMU", type: "string", required: false, isMulti: true, isMultiKeyed: true, nameHuman: "-DMU / --dart_multiplier_effects", section: "Dart Multiplier Effects", requiredFeature: "i_m_able_to_read"),
                         //  new(name: "TEST", type: "string", required: false, isMulti: true, nameHuman: "test", section: "WLED")
 
 
@@ -1225,6 +1226,11 @@ namespace darts_hub.control
                     {
                         dartsWled.Configuration.Arguments.Add(new(name: "PIDE", type: "string", required: false, isMulti: true, isMultiKeyed: true, nameHuman: "-PIDE / --player_idle_effects", section: "Idle Effects", requiredFeature: "i_m_able_to_read"));
                     }
+                    var wledDMU = dartsWled.Configuration.Arguments.Find(a => a.Name == "DMU");
+                    if (wledDMU == null)
+                    {
+                        dartsWled.Configuration.Arguments.Add(new(name: "DMU", type: "string", required: false, isMulti: true, isMultiKeyed: true, nameHuman: "-DMU / --dart_multiplier_effects", section: "Dart Multiplier Effects", requiredFeature: "i_m_able_to_read"));
+                    }
 
                     for (int i = 0; i <= 180; i++)
                     {
@@ -1313,6 +1319,8 @@ namespace darts_hub.control
                     if (IDE6WLEDMig != null) { IDE6WLEDMig.Section = "Idle Effects"; IDE6WLEDMig.IsMulti = true; }
                     var PIDEWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "PIDE");
                     if (PIDEWLEDMig != null) { PIDEWLEDMig.Section = "Idle Effects"; PIDEWLEDMig.IsMulti = true; PIDEWLEDMig.IsMultiKeyed = true; }
+                    var DMUWLEDMig = dartsWled.Configuration.Arguments.Find(a => a.Name == "DMU");
+                    if (DMUWLEDMig != null) { DMUWLEDMig.Section = "Dart Multiplier Effects"; DMUWLEDMig.IsMulti = true; DMUWLEDMig.IsMultiKeyed = true; DMUWLEDMig.RequiredFeature = "i_m_able_to_read"; }
 
 
 

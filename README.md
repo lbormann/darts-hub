@@ -132,14 +132,7 @@ If you would like to stay on specific app-version, create an empty file called "
 
 Disclaimer: If you're using a specific version of an app with configuration, like the darts-caller and the current darts-hub version doesn't fit to app`s configuration, there's a chance the app might not start properly.
 
-## TROUBLESHOOTING
-
-### App isn't starting at all
-
-If you're running darts-hub on windows the affected app is probably classified as a virus. The easiest way to verify this is to close darts-hub. After that, add the main folder (darts-hub) as an exception for screening. Restart darts-hub and try to start the app.
-
-
-## VERSION ROLLBACK 🆕
+## VERSION ROLLBACK 
 
 Darts-hub includes a version rollback feature that lets you revert to a previous release if a new update causes problems. You can access it through the **sidebar menu** in the application settings area.
 
@@ -167,7 +160,7 @@ This is useful to avoid being prompted repeatedly to update to a version you kno
 If you have **Beta Tester mode** enabled (in the application settings), beta versions will also appear in the rollback dropdown.
 
 
-## LICENSE MANAGEMENT 🆕
+## LICENSE MANAGEMENT 
 
 Darts-hub supports an optional **expert license** system that unlocks premium features for certain extensions. You can manage your license through the **License** page in the sidebar menu.
 
@@ -201,7 +194,7 @@ Click **"Remove License"** on the License page to clear the stored license key a
 Each license is bound to a **hardware ID** derived from your machine. If you move to a new computer, you may need to request a new license or contact support.
 
 
-## DEBUG COLLECTION 🆕
+## DEBUG COLLECTION 
 
 When something goes wrong, darts-hub can build a single ZIP file with everything the maintainers need to investigate the issue. The bundle contains daily log files, a sanitized copy of the configuration and a system / security report.
 
@@ -295,7 +288,7 @@ The CLI mode prints the resulting file path and a short list of any collection n
 | `--backup-restore <file>` | Restores backup from file |
 | `--backup-cleanup [count]` | Deletes old backups (keeps the last N) |
 
-### Debug Collection 🆕
+### Debug Collection 
 
 | Command | Description |
 |---------|-------------|
@@ -406,6 +399,16 @@ darts-hub --list-exports
 For detailed documentation, see:
 - [📖 Configuration Export/Import Guide](docs/config-export-import.md)
 - [📖 Command Line Interface Documentation](docs/command-line-interface.md)
+
+## TROUBLESHOOTING
+
+### App isn't starting at all
+
+If you're running darts-hub on windows the affected app is probably classified as a virus. 
+The easiest way to verify this is to close darts-hub. After that, add the main folder (darts-hub) as an exception for screening. 
+Restart darts-hub and try to start the app.
+Microsoft Defender is pretty sensitive for software which is not officially signed and uses websocket connections. 
+
 
 ## RESOURCES
 
