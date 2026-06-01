@@ -475,14 +475,14 @@ namespace darts_hub.control
 
             var dartsCallerDownloadMap = new DownloadMap
             {
-                WindowsX64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller",
-                LinuxArm64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-arm",
-                MacX64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-macx64",
-                MacArm64 = "https://github.com/lbormann/darts-caller/releases/download/***VERSION***/darts-caller-mac"
+                WindowsX64 = "https://github.com/Peschi90/darts-caller/releases/download/***VERSION***/darts-caller.exe",
+                LinuxX64 = "https://github.com/Peschi90/darts-caller/releases/download/***VERSION***/darts-caller",
+                LinuxArm64 = "https://github.com/Peschi90/darts-caller/releases/download/***VERSION***/darts-caller-arm64",
+                //LinuxArm = "https://github.com/Peschi90/darts-caller/releases/download/***VERSION***/darts-caller-arm",
+                MacX64 = "https://github.com/Peschi90/darts-caller/releases/download/***VERSION***/darts-caller-macx64",
+                MacArm64 = "https://github.com/Peschi90/darts-caller/releases/download/***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("v2.20.4");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("b3.0.0.3");
 
 
             var dartsExternDownloadMap = new DownloadMap
@@ -499,14 +499,14 @@ namespace darts_hub.control
 
             var dartsWledDownloadMap = new DownloadMap
             {
-                WindowsX64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled",
-                LinuxArm64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-arm",
-                MacX64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-mac64",
-                MacArm64 = "https://github.com/lbormann/darts-wled/releases/download/***VERSION***/darts-wled-mac"
+                WindowsX64 = "https://github.com/Peschi90/darts-wled/releases/download/***VERSION***/darts-wled.exe",
+                LinuxX64 = "https://github.com/Peschi90/darts-wled/releases/download/***VERSION***/darts-wled",
+                LinuxArm64 = "https://github.com/Peschi90/darts-wled/releases/download/***VERSION***/darts-wled-arm64",
+                //LinuxArm = "https://github.com/Peschi90/darts-wled/releases/download/***VERSION***/darts-wled-arm",
+                MacX64 = "https://github.com/Peschi90/darts-wled/releases/download/***VERSION***/darts-wled-mac64",
+                MacArm64 = "https://github.com/Peschi90/darts-wled/releases/download/***VERSION***/darts-wled-mac"
             };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b1.11.0.9");
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b2.0.0.2");
 
 
             var dartsPixelitDownloadMap = new DownloadMap
@@ -593,7 +593,7 @@ namespace darts_hub.control
 
         private async void CreateDummyAppsDownloadable()
         {
-            //var readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-caller/refs/heads/master/README.md"; // URL zur README-Datei
+            //var readmeUrl = "https://raw.githubusercontent.com/Peschi90/darts-caller/refs/heads/master/README.md"; // URL zur README-Datei
             //var parser = new ReadmeParser();
             //var argumentDescriptions = await parser.GetArgumentsFromReadme(readmeUrl);
 
@@ -605,9 +605,9 @@ namespace darts_hub.control
                 AppDownloadable dartsCaller =
                     new(
                         downloadUrl: dartsCallerDownloadUrl,
-                        changelogUrl: "https://raw.githubusercontent.com/lbormann/darts-caller/master/CHANGELOG.md",
+                        changelogUrl: "https://raw.githubusercontent.com/Peschi90/darts-caller/master/CHANGELOG.md",
                         name: "darts-caller",
-                        helpUrl: "https://github.com/lbormann/darts-caller",
+                        helpUrl: "https://github.com/Peschi90/darts-caller",
                         descriptionShort: "Calls out thrown points",
                         configuration: new(
                             prefix: "-",
@@ -692,7 +692,7 @@ namespace darts_hub.control
                 apps.Add(dartsExtern);
             }
 
-            //readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-wled/refs/heads/main/README.md";
+            //readmeUrl = "https://raw.githubusercontent.com/Peschi90/darts-wled/refs/heads/main/README.md";
             //argumentDescriptions = await parser.GetArgumentsFromReadme(readmeUrl);
             if (!string.IsNullOrEmpty(dartsWledDownloadUrl))
             {
@@ -757,9 +757,9 @@ namespace darts_hub.control
                 AppDownloadable dartsWled =
                 new(
                     downloadUrl: dartsWledDownloadUrl,
-                    changelogUrl: "https://raw.githubusercontent.com/lbormann/darts-wled/master/CHANGELOG.md",
+                    changelogUrl: "https://raw.githubusercontent.com/Peschi90/darts-wled/master/CHANGELOG.md",
                     name: "darts-wled",
-                    helpUrl: "https://github.com/lbormann/darts-wled",
+                    helpUrl: "https://github.com/Peschi90/darts-wled",
                     descriptionShort: "Controls WLED installations by autodarts-events",
                     configuration: new(
                         prefix: "-",

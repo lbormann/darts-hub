@@ -1,0 +1,105 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="darts_hub.UI.NotificationsPanel"
+             Background="Transparent">
+    <Border Background="#E61E1E22"
+            BorderBrush="#FF3A3A3F"
+            BorderThickness="1"
+            CornerRadius="10"
+            BoxShadow="0 8 32 0 #88000000">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Background="#E626262B"
+                    CornerRadius="10,10,0,0"
+                    Padding="14,10"
+                    BorderBrush="#FF3A3A3F"
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <TextBlock Text="&#x1F514;" FontSize="18" Foreground="#FFE0C25A" VerticalAlignment="Center"/>
+                        <TextBlock Text="Notifications" FontSize="16" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                        <Border x:Name="HeaderUnreadBadge"
+                                Background="#FFE54D4D"
+                                CornerRadius="9"
+                                Padding="7,1"
+                                VerticalAlignment="Center"
+                                IsVisible="False">
+                            <TextBlock x:Name="HeaderUnreadText" Text="0" FontSize="11" Foreground="White" FontWeight="Bold"/>
+                        </Border>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                        <Button x:Name="RefreshButton"
+                                Padding="8,4"
+                                Background="Transparent"
+                                BorderBrush="#FF555558"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Foreground="White"
+                                FontSize="12"
+                                Content="&#x21BB;"
+                                ToolTip.Tip="Refresh"
+                                Click="RefreshButton_Click"/>
+                        <Button x:Name="CloseButton"
+                                Padding="8,4"
+                                Background="Transparent"
+                                BorderBrush="#FF555558"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Foreground="White"
+                                FontSize="12"
+                                Content="&#x2715;"
+                                ToolTip.Tip="Close"
+                                Click="CloseButton_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <Grid Grid.Row="1">
+                <!-- List view -->
+                <ScrollViewer x:Name="ListScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="ListPanel" Margin="0,6,0,6"/>
+                </ScrollViewer>
+
+                <!-- Empty state -->
+                <StackPanel x:Name="EmptyState"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="8"
+                            IsVisible="False">
+                    <TextBlock Text="&#x1F4ED;" FontSize="48" Foreground="#FF555558" HorizontalAlignment="Center"/>
+                    <TextBlock Text="You're all caught up." FontSize="14" Foreground="#FF999999" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Detail view -->
+                <ScrollViewer x:Name="DetailScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" IsVisible="False">
+                    <StackPanel x:Name="DetailPanel" Margin="14,10,14,14" Spacing="12"/>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- Footer -->
+            <Border Grid.Row="2"
+                    Background="#E626262B"
+                    CornerRadius="0,0,10,10"
+                    BorderBrush="#FF3A3A3F"
+                    BorderThickness="0,1,0,0"
+                    Padding="14,8">
+                <TextBlock x:Name="FooterStatus"
+                           Text=""
+                           FontSize="11"
+                           Foreground="#FF888888"/>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

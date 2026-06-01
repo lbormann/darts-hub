@@ -41,6 +41,9 @@ namespace darts_hub
         private Configurator configurator;
         private control.LicenseManager? licenseManager;
         private bool licenseStatusBarSubscribed;
+        private control.NotificationManager? notificationManager;
+        private UI.NotificationsPanel? notificationsPanel;
+        private bool notificationPanelOpen;
         #endregion
 
         #region Properties
@@ -152,6 +155,130 @@ namespace darts_hub
         public Configurator GetConfigurator() => configurator;
         public ProfileManager GetProfileManager() => profileManager;
         public control.LicenseManager GetLicenseManager() => licenseManager ??= new control.LicenseManager(configurator);
+
+        /// <summary>
+        /// Returns the (lazy) NotificationManager, starting the background poll loop on first access.
+        /// </summary>
+        public control.NotificationManager GetNotificationManager()
+        {
+            if (notificationManager == null)
+            {
+                notificationManager = new control.NotificationManager(GetLicenseManager());
+                notificationManager.Changed += (_, e) => Dispatcher.UIThread.Post(() =>
+                {
+                    UpdateNotificationBadge(e.UnreadCount);
+                    ShowToastsFor(e.Added);
+                });
+                notificationManager.Start();
+            }
+            return notificationManager;
+        }
+
+        private void UpdateNotificationBadge(int unread)
+        {
+            var badge = this.FindControl<Border>("NotificationBadge");
+            var badgeText = this.FindControl<TextBlock>("NotificationBadgeText");
+            if (badge == null || badgeText == null) return;
+
+            badge.IsVisible = unread > 0;
+            badgeText.Text = unread > 99 ? "99+" : unread.ToString();
+        }
+
+        private void ShowToastsFor(System.Collections.Generic.IReadOnlyList<model.Notification> added)
+        {
+            if (added == null || added.Count == 0) return;
+
+            var host = this.FindControl<StackPanel>("NotificationToastHost");
+            if (host == null) return;
+
+            foreach (var n in added)
+            {
+                // Skip if already read/dismissed (e.g. on first sync after restart)
+                if (!n.IsUnread) continue;
+
+                // Big modal + OS sound for warning / critical
+                if (n.Severity == model.NotificationSeverity.Critical ||
+                    n.Severity == model.NotificationSeverity.Warning)
+                {
+                    ShowAlertWindow(n);
+                }
+
+                var toast = new UI.NotificationToast(n);
+                toast.Clicked += (_, _) =>
+                {
+                    if (!notificationPanelOpen) ShowNotificationPanel();
+                };
+                host.Children.Insert(0, toast);
+                toast.Start();
+            }
+        }
+
+        private void ShowAlertWindow(model.Notification n)
+        {
+            try
+            {
+                var alert = new UI.NotificationAlertWindow(n, notificationManager);
+                alert.Show(this);
+                alert.Activate();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainWindow] ShowAlertWindow failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Opens the notifications panel from outside the main window (e.g. the alert window).
+        /// </summary>
+        public void OpenNotificationPanelExternally()
+        {
+            if (!notificationPanelOpen) ShowNotificationPanel();
+            Activate();
+        }
+
+        private void NotificationBellButton_Click(object? sender, RoutedEventArgs e)
+        {
+            if (notificationPanelOpen) HideNotificationPanel();
+            else ShowNotificationPanel();
+        }
+
+        private void NotificationPanelOverlay_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            HideNotificationPanel();
+        }
+
+        private void ShowNotificationPanel()
+        {
+            var host = this.FindControl<Border>("NotificationPanelHost");
+            var overlay = this.FindControl<Border>("NotificationPanelOverlay");
+            if (host == null || overlay == null) return;
+
+            if (notificationsPanel == null)
+            {
+                notificationsPanel = new UI.NotificationsPanel();
+                notificationsPanel.Initialize(GetNotificationManager());
+                notificationsPanel.CloseRequested += (_, _) => HideNotificationPanel();
+                host.Child = notificationsPanel;
+            }
+            else
+            {
+                // ensure manager attached (after dispose / re-create cases)
+                GetNotificationManager();
+            }
+
+            overlay.IsVisible = true;
+            host.IsVisible = true;
+            notificationPanelOpen = true;
+        }
+
+        private void HideNotificationPanel()
+        {
+            var host = this.FindControl<Border>("NotificationPanelHost");
+            var overlay = this.FindControl<Border>("NotificationPanelOverlay");
+            if (host != null) host.IsVisible = false;
+            if (overlay != null) overlay.IsVisible = false;
+            notificationPanelOpen = false;
+        }
 
         public void SetWait(bool wait, string waitingText = "")
         {
@@ -298,6 +425,8 @@ namespace darts_hub
             {
                 SaveWindowLayout();
                 ExecuteWledCloseActions();
+                notificationManager?.Stop();
+                notificationsPanel?.Detach();
                 initializationManager?.Dispose();
                 consoleManager?.Dispose();
                 navigationManager?.Dispose();

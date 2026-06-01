@@ -39,6 +39,9 @@ namespace darts_hub.UI
             // Validate license and update status bar, then execute WLED start actions
             await mainWindow.UpdateLicenseStatusBarAsync();
             mainWindow.ExecuteWledStartActions();
+
+            // Start background notification polling
+            mainWindow.GetNotificationManager();
         }
 
         public void InitializeViewModel()

@@ -568,18 +568,85 @@
 				BorderBrush="#FF464647"
 				BorderThickness="0,1,0,0"
 				Padding="10,4">
-			<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-				<TextBlock x:Name="StatusBarLicenseIcon"
-						   Text="&#x1F511;"
-						   FontSize="12"
-						   VerticalAlignment="Center"/>
-				<TextBlock x:Name="StatusBarLicenseText"
-						   Text="License: Checking..."
-						   FontSize="12"
-						   Foreground="#FF999999"
-						   VerticalAlignment="Center"/>
-			</StackPanel>
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="Auto"/>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="Auto"/>
+				</Grid.ColumnDefinitions>
+
+				<!-- Notification Bell with badge -->
+				<Button x:Name="NotificationBellButton"
+						Grid.Column="0"
+						Background="Transparent"
+						BorderThickness="0"
+						Padding="6,2"
+						Cursor="Hand"
+						Click="NotificationBellButton_Click"
+						ToolTip.Tip="Notifications">
+					<Grid>
+						<TextBlock Text="&#x1F514;" FontSize="14" Foreground="#FFCCCCCC" VerticalAlignment="Center"/>
+						<Border x:Name="NotificationBadge"
+								Background="#FFE54D4D"
+								CornerRadius="8"
+								MinWidth="14"
+								Height="14"
+								Padding="3,0"
+								HorizontalAlignment="Right"
+								VerticalAlignment="Top"
+								Margin="0,-3,-6,0"
+								IsVisible="False">
+							<TextBlock x:Name="NotificationBadgeText"
+									   Text="0"
+									   FontSize="9"
+									   FontWeight="Bold"
+									   Foreground="White"
+									   HorizontalAlignment="Center"
+									   VerticalAlignment="Center"/>
+						</Border>
+					</Grid>
+				</Button>
+
+				<StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+					<TextBlock x:Name="StatusBarLicenseIcon"
+							   Text="&#x1F511;"
+							   FontSize="12"
+							   VerticalAlignment="Center"/>
+					<TextBlock x:Name="StatusBarLicenseText"
+							   Text="License: Checking..."
+							   FontSize="12"
+							   Foreground="#FF999999"
+							   VerticalAlignment="Center"/>
+				</StackPanel>
+			</Grid>
 		</Border>
+
+		<!-- Notification Panel Overlay -->
+		<Border x:Name="NotificationPanelOverlay"
+				Grid.RowSpan="2"
+				Background="#66000000"
+				IsVisible="False"
+				ZIndex="980"
+				PointerPressed="NotificationPanelOverlay_PointerPressed"/>
+		<Border x:Name="NotificationPanelHost"
+				Grid.RowSpan="2"
+				Width="440"
+				MaxHeight="820"
+				HorizontalAlignment="Right"
+				VerticalAlignment="Stretch"
+				Margin="0,60,16,40"
+				IsVisible="False"
+				ZIndex="985"/>
+
+		<!-- Toast host (top-right) for newly arrived notifications -->
+		<StackPanel x:Name="NotificationToastHost"
+					Grid.RowSpan="2"
+					HorizontalAlignment="Right"
+					VerticalAlignment="Top"
+					Margin="0,16,16,0"
+					Spacing="10"
+					ZIndex="990"
+					IsHitTestVisible="True"/>
 
 		<!-- Sidebar Menu Overlay (click to close) - covers entire window -->
 		<Border x:Name="SidebarMenuOverlay"

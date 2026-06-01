@@ -1,4 +1,15 @@
-﻿## b1.5.0.7
+﻿
+## b1.5.0.8
+### Notifications
+    - New in-app notification system (poll/ack/vote against the license server, HMAC-signed).
+    - Notification bell + unread badge in the status bar; click opens a semi-transparent, tall side panel.
+    - Top-right toast pop-up for new items (10 s auto-close with progress bar, hover pauses, manual close, click opens panel).
+    - Warning & Critical notifications additionally open a large modal alert and play an OS warning sound (Windows/macOS/Linux).
+    - Polls are interactive (single/multi-select), results rendered with bars; vote is sent to the server.
+    - Markdown rendering (headings, lists, quotes, code, bold/italic/links) with HTML fallback for `body_html`.
+    - Offline cache (`notifications.json`) keeps state across restarts; respects server `poll_interval` with exponential back-off on errors.
+
+## b1.5.0.7
 ### New Features
     - Debug Collection: new sidebar entry that bundles logs, sanitized config and a system/security report into a single ZIP for support.
         - GUI dialog with extension multi-select, incident date picker, problem description and animated success view (Open Folder / Copy Path / Discord buttons).

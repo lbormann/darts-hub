@@ -194,6 +194,21 @@ Click **"Remove License"** on the License page to clear the stored license key a
 Each license is bound to a **hardware ID** derived from your machine. If you move to a new computer, you may need to request a new license or contact support.
 
 
+## NOTIFICATIONS
+
+darts-hub receives announcements, warnings and polls from the license server and shows them directly in the app.
+
+- **Bell icon** in the status bar with an unread badge; click it to open the notification panel (semi-transparent, scrollable, modern dark UI).
+- **Toast pop-up** in the top-right corner whenever a new notification arrives – auto-closes after 10 seconds with a progress bar (hover to pause, click ✕ to dismiss, click the body to open the panel).
+- **Critical** and **Warning** notifications additionally open a **large modal alert window** and play an OS warning sound (Windows / macOS / Linux).
+- **Polls** are interactive: single- or multi-select; after voting, results are shown as percentage bars.
+- **Markdown and HTML** bodies are both supported (headings, lists, code blocks, links). No scripts are ever executed.
+- **Offline cache** keeps your notifications across restarts (`notifications.json` next to `config.json`).
+- Background polling honours the server-provided interval (default 60 s) and uses exponential back-off when the server is unreachable; cached items remain visible.
+
+> Works without a license key too – in anonymous mode you only receive broadcast notifications (audience `all`). With a valid license key you also get license- and feature-targeted messages.
+
+
 ## DEBUG COLLECTION 
 
 When something goes wrong, darts-hub can build a single ZIP file with everything the maintainers need to investigate the issue. The bundle contains daily log files, a sanitized copy of the configuration and a system / security report.
