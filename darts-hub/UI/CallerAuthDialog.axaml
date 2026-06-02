@@ -1,0 +1,85 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="darts_hub.UI.CallerAuthDialog"
+        Width="640"
+        Height="760"
+        MinWidth="480"
+        MinHeight="520"
+        CanResize="True"
+        WindowStartupLocation="CenterOwner"
+        Title="Connect darts-caller to Autodarts"
+        Background="#FF1E1E1E">
+  <Border Padding="22" Background="#FF252526" CornerRadius="10">
+    <Grid RowDefinitions="Auto,*,Auto">
+      <StackPanel Grid.Row="0" Spacing="6">
+        <TextBlock Text="Connect darts-caller to your Autodarts account"
+                   Foreground="White" FontSize="20" FontWeight="Bold" TextWrapping="Wrap" />
+        <TextBlock Text="darts-caller needs you to approve this device in your Autodarts account."
+                   Foreground="#FFBFBFBF" FontSize="12" TextWrapping="Wrap" />
+      </StackPanel>
+
+      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,14,0,0">
+        <StackPanel Spacing="16">
+
+          <Border Background="#33007ACC" BorderBrush="#FF007ACC" BorderThickness="1" CornerRadius="6" Padding="12">
+            <StackPanel Spacing="8">
+              <TextBlock Text="1. Approve in your browser" Foreground="#FF9CDCFE" FontWeight="SemiBold" />
+              <TextBlock Text="A browser window should open automatically. If it didn't, click the button below or open the link manually."
+                         Foreground="#FFDFDFDF" TextWrapping="Wrap" />
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button x:Name="OpenDirectButton" Content="Open browser" Width="160" Height="34"
+                        Background="#FF2E8B57" Foreground="White" BorderBrush="#FF3BBF72" BorderThickness="1" CornerRadius="6"
+                        Click="OpenDirectButton_Click" />
+                <Button x:Name="CopyDirectButton" Content="Copy direct link" Width="160" Height="34"
+                        Background="#FF2B2B2B" Foreground="#FFE6E6E6" BorderBrush="#FF464646" BorderThickness="1" CornerRadius="6"
+                        Click="CopyDirectButton_Click" />
+              </StackPanel>
+              <TextBlock x:Name="DirectUrlText" Foreground="#FF9CDCFE" FontSize="12" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+
+          <Border Background="#33444444" BorderBrush="#FF555555" BorderThickness="1" CornerRadius="6" Padding="12">
+            <StackPanel Spacing="8">
+              <TextBlock Text="2. Or enter the code manually" Foreground="#FF9CDCFE" FontWeight="SemiBold" />
+              <TextBlock Text="Open https://auth.autodarts.io/link on any device and enter:" Foreground="#FFDFDFDF" TextWrapping="Wrap" />
+              <Border Background="#FF1B1B1B" CornerRadius="6" Padding="10" HorizontalAlignment="Left">
+                <TextBlock x:Name="CodeText" Text="----" Foreground="White" FontFamily="Consolas, Menlo, monospace"
+                           FontSize="28" FontWeight="Bold" />
+              </Border>
+              <Button x:Name="CopyCodeButton" Content="Copy code" Width="160" Height="32"
+                      Background="#FF2B2B2B" Foreground="#FFE6E6E6" BorderBrush="#FF464646" BorderThickness="1" CornerRadius="6"
+                      Click="CopyCodeButton_Click" />
+            </StackPanel>
+          </Border>
+
+          <Border x:Name="WebCallerBox" Background="#33A85DFF" BorderBrush="#FFA85DFF" BorderThickness="1" CornerRadius="6" Padding="12" IsVisible="False">
+            <StackPanel Spacing="8">
+              <TextBlock Text="3. No browser on this PC?" Foreground="#FFD0B3FF" FontWeight="SemiBold" />
+              <TextBlock Text="Open the darts-caller web interface from your phone or another device in the same network and approve the connection from there."
+                         Foreground="#FFDFDFDF" TextWrapping="Wrap" />
+              <TextBlock x:Name="WebCallerUrlText" Foreground="#FFD0B3FF" FontSize="13" TextWrapping="Wrap" />
+              <Button x:Name="CopyWebCallerButton" Content="Copy web-caller URL" Width="200" Height="32"
+                      Background="#FF2B2B2B" Foreground="#FFE6E6E6" BorderBrush="#FF464646" BorderThickness="1" CornerRadius="6"
+                      Click="CopyWebCallerButton_Click" />
+            </StackPanel>
+          </Border>
+
+          <Border x:Name="SuccessBox" Background="#332E8B57" BorderBrush="#FF2E8B57" BorderThickness="1" CornerRadius="6" Padding="12" IsVisible="False">
+            <StackPanel Spacing="6">
+              <TextBlock Text="✓ Connected to Autodarts" Foreground="#FF7FE0A5" FontWeight="Bold" FontSize="16" />
+              <TextBlock x:Name="SuccessInfoText" Foreground="#FFDFDFDF" TextWrapping="Wrap" />
+              <TextBlock x:Name="SuccessCountdownText" Foreground="#FFBFBFBF" FontSize="12" />
+            </StackPanel>
+          </Border>
+
+        </StackPanel>
+      </ScrollViewer>
+
+      <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,14,0,0">
+        <Button x:Name="CloseButton" Content="Close" Width="110" Height="34"
+                Background="#FF2B2B2B" Foreground="#FFE6E6E6" BorderBrush="#FF464646" BorderThickness="1" CornerRadius="6"
+                Click="CloseButton_Click" />
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>

@@ -23,7 +23,7 @@ namespace darts_hub.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "b1.5.0.7";
+        public static readonly string version = "a1.5.0.9";
         //public static readonly string version = "b1.4.1.20";
 
 

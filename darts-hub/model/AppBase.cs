@@ -826,6 +826,14 @@ namespace darts_hub.model
                 process.StartInfo.RedirectStandardError = true;
                 process.StartInfo.CreateNoWindow = true;
                 process.StartInfo.UseShellExecute = false;
+                // Child processes (e.g. darts-caller) emit UTF-8 output. Without
+                // this the redirected streams are decoded with the OEM/system
+                // code page and box-drawing/emoji characters become mojibake
+                // (e.g. "â”€" instead of "─", "âœ"" instead of "✓").
+                process.StartInfo.StandardOutputEncoding = System.Text.Encoding.UTF8;
+                process.StartInfo.StandardErrorEncoding = System.Text.Encoding.UTF8;
+                process.StartInfo.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8";
+                process.StartInfo.EnvironmentVariables["PYTHONUTF8"] = "1";
                 process.Exited += (sender, e) =>
                 {
                     //Console.WriteLine(

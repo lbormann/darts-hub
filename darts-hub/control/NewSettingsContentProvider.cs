@@ -1147,6 +1147,7 @@ namespace darts_hub.control
             {
                 var configuredSections = app.Configuration.Arguments
                     .Where(arg => !arg.IsRuntimeArgument && (arg.Required || arg.IsValueChanged || !string.IsNullOrEmpty(arg.Value)))
+                    .Where(arg => !darts_hub.UI.AppSettingsRenderer.IsHiddenCallerCredential(app, arg))
                     .Select(arg => arg.Section ?? "General")
                     .Distinct()
                     .OrderBy(s => s)
@@ -1239,6 +1240,7 @@ namespace darts_hub.control
             // Get configured and required parameters grouped by section
             var configuredParams = app.Configuration.Arguments
                 .Where(arg => !arg.IsRuntimeArgument && (arg.Required || arg.IsValueChanged || !string.IsNullOrEmpty(arg.Value)))
+                .Where(arg => !darts_hub.UI.AppSettingsRenderer.IsHiddenCallerCredential(app, arg))
                 .GroupBy(arg => arg.Section ?? "General")
                 .OrderBy(group => group.Key)
                 .ToList();
@@ -2070,6 +2072,7 @@ namespace darts_hub.control
             // Get available parameters (not configured and not runtime) grouped by section
             var availableParamsBySection = app.Configuration.Arguments
                 .Where(arg => !arg.IsRuntimeArgument && !arg.Required && string.IsNullOrEmpty(arg.Value) && !arg.IsValueChanged)
+                .Where(arg => !darts_hub.UI.AppSettingsRenderer.IsHiddenCallerCredential(app, arg))
                 .GroupBy(arg => arg.Section ?? "General")
                 .OrderBy(group => group.Key)
                 .ToList();

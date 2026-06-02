@@ -44,6 +44,8 @@ namespace darts_hub
         private control.NotificationManager? notificationManager;
         private UI.NotificationsPanel? notificationsPanel;
         private bool notificationPanelOpen;
+        private control.CallerAuthMonitor? callerAuthMonitor;
+        private UI.CallerAuthDialog? activeCallerAuthDialog;
         #endregion
 
         #region Properties
@@ -342,6 +344,61 @@ namespace darts_hub
             consoleManager.SelectAppTab(app);
         }
 
+        private void AttachCallerAuthMonitor(Profile? profile)
+        {
+            if (callerAuthMonitor == null)
+            {
+                callerAuthMonitor = new control.CallerAuthMonitor();
+                callerAuthMonitor.AuthPromptDetected += CallerAuthMonitor_AuthPromptDetected;
+                callerAuthMonitor.AuthSuccessDetected += CallerAuthMonitor_AuthSuccessDetected;
+            }
+            callerAuthMonitor.Attach(profile);
+        }
+
+        private void CallerAuthMonitor_AuthPromptDetected(object? sender, control.CallerAuthPromptEventArgs e)
+        {
+            Dispatcher.UIThread.Post(async () =>
+            {
+                try
+                {
+                    if (activeCallerAuthDialog != null)
+                    {
+                        activeCallerAuthDialog.SetPrompt(e.Code, e.DirectUrl, e.WebCallerUrl);
+                        try { activeCallerAuthDialog.Activate(); } catch { /* ignore */ }
+                        return;
+                    }
+
+                    if (WindowState == WindowState.Minimized)
+                    {
+                        WindowState = WindowState.Normal;
+                    }
+                    Activate();
+
+                    var dialog = new UI.CallerAuthDialog();
+                    activeCallerAuthDialog = dialog;
+                    dialog.Closed += (_, _) =>
+                    {
+                        if (ReferenceEquals(activeCallerAuthDialog, dialog))
+                            activeCallerAuthDialog = null;
+                    };
+                    dialog.SetPrompt(e.Code, e.DirectUrl, e.WebCallerUrl);
+                    await dialog.ShowDialog(this);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[MainWindow] CallerAuthPromptDetected handler failed: {ex.Message}");
+                }
+            });
+        }
+
+        private void CallerAuthMonitor_AuthSuccessDetected(object? sender, control.CallerAuthSuccessEventArgs e)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                activeCallerAuthDialog?.NotifySuccess(e.UserInfo);
+            });
+        }
+
         public async Task ShowSetupWizard()
         {
             try
@@ -590,7 +647,8 @@ namespace darts_hub
                 selectedProfile = profile;
                 navigationManager.SetSelectedProfile(profile);
                 consoleManager.SetSelectedProfile(profile);
-                
+                AttachCallerAuthMonitor(profile);
+
                 SettingsPanel.Children.Clear();
                 selectedApp = null;
                 

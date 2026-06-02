@@ -431,8 +431,10 @@ namespace darts_hub.control.wizard
                 return WizardValidationResult.Error("Darts caller is required and must be configured.");
             }
 
-            // Basic validation - ensure required arguments are set
-            var requiredArgs = new[] { "U", "P", "B", "M" }; // Email, Password, Board ID, Media Path
+            // Basic validation - ensure required arguments are set.
+            // U/P are intentionally not validated anymore: darts-caller uses
+            // the new Autodarts device-link auth and no longer requires them.
+            var requiredArgs = new[] { "B", "M" }; // Board ID, Media Path
             var missingArgs = new List<string>();
 
             foreach (var argName in requiredArgs)

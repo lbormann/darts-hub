@@ -8,12 +8,12 @@ It automatically downloads and updates those apps, provides configuration window
 
 Apps managed by darts-hub:
 
-* [darts-caller](https://github.com/lbormann/darts-caller)
-* [darts-extern](https://github.com/lbormann/darts-extern)
-* [darts-wled](https://github.com/lbormann/darts-wled)
-* [darts-pixelit](https://github.com/lbormann/darts-pixelit)
-* [darts-gif](https://github.com/lbormann/darts-gif)
-* [darts-voice](https://github.com/lbormann/darts-voice)
+* [darts-caller](https://github.com/Peschi90/darts-caller)
+* [darts-extern](https://github.com/Peschi90/darts-extern)
+* [darts-wled](https://github.com/Peschi90/darts-wled)
+* [darts-pixelit](https://github.com/Peschi90/darts-pixelit)
+* [darts-gif](https://github.com/Peschi90/darts-gif)
+* [darts-voice](https://github.com/Peschi90/darts-voice)
 * [cam-loader](https://github.com/lbormann/cam-loader)
 * custom-urls
 * custom-apps
@@ -121,6 +121,19 @@ Some Apps have mandatory configuration fields to work properly. You can also spo
 After Changing a configuration field, you have to restart the extension to apply changes. 
 
 Side note: a grayed out configuration field means, that it uses the default value of the app itself. The displayed value doesn't match the app`s default value necessarily. If you would like to know which default value will be used, have a look at specific app README.
+
+### Connect darts-caller to your Autodarts account
+
+Newer versions of darts-caller use a **device-link login** to connect to Autodarts — your Autodarts e-mail and password are no longer needed in darts-hub, so the corresponding fields are hidden in the settings, in the setup wizard and in the Robbel3D one-click setup.
+
+When darts-hub detects that the caller is waiting for approval, a dedicated dialog opens automatically:
+
+1. **Open the link in your browser.** darts-caller usually opens the browser by itself. If it doesn't, click **"Open browser"** in the dialog or use **"Copy direct link"** and paste it.
+2. **Or enter the code manually.** Open `https://auth.autodarts.io/link` on any device, log in to your Autodarts account and type the 8-character code shown in the dialog (use **"Copy code"** if you prefer).
+3. **No browser on the PC running the caller?** The dialog also shows a `http://<pc-ip>:<port>` URL (default port `8079`, or your configured `-HP` value). Open that URL on your phone or another device in the same network and approve the connection from there.
+4. Once the caller reports "Connected to Autodarts", the dialog shows a green confirmation and **closes itself after 5 seconds**.
+
+You only need to do this on first login or whenever the caller's stored token expires.
 
 ### Custom-apps
 

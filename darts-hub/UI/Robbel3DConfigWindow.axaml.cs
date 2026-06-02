@@ -898,8 +898,6 @@ namespace darts_hub.UI
                         $"The following required Caller parameters are missing:\n\n• {missingParamsList}\n\n" +
                         "Please fill in all required fields above before applying the Robbel3D configuration.\n\n" +
                         "Required parameters:\n" +
-                        "• U: Your Autodarts email address\n" +
-                        "• P: Your Autodarts password\n" +
                         "• B: Your Autodarts board ID\n" +
                         "• M: Path to your media/sounds directory", 
                         MsBox.Avalonia.Enums.Icon.Warning);

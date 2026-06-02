@@ -64,8 +64,10 @@ namespace darts_hub.control.wizard.caller
 
             content.Children.Add(header);
 
-            // Essential arguments - Autodarts credentials and media path
-            var essentialArgs = new[] { "U", "P", "B", "M" }; // Email, Password, Board ID, Media Path
+            // darts-caller now uses the new Autodarts device-link auth flow,
+            // so the email (U) and password (P) inputs are no longer needed
+            // and have been removed from this step.
+            var essentialArgs = new[] { "B", "M" }; // Board ID, Media Path
 
             foreach (var argName in essentialArgs)
             {
@@ -104,8 +106,6 @@ namespace darts_hub.control.wizard.caller
             // Fallback descriptions for essential Caller arguments
             return argument.Name.ToUpper() switch
             {
-                "U" => "Your Autodarts email address for authentication and connection to the service",
-                "P" => "Your Autodarts password - this will be stored securely for automatic login",
                 "B" => "Your Autodarts board ID - this identifies your specific dartboard in the system",
                 "M" => "Path to folder containing voice media files for announcements (required for voice calls)",
                 _ => $"Caller voice announcement setting: {argument.NameHuman}"

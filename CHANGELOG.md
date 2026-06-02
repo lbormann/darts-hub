@@ -1,5 +1,14 @@
 ﻿
-## b1.5.0.8
+## a1.5.0.9
+### Darts-Caller
+    - Support for the new Autodarts device-link authentication.
+        - When darts-caller prints the "Connect darts-caller to your Autodarts account" prompt, darts-hub now opens a dedicated dialog with the link code, a direct browser button and a "copy link/code" button.
+        - If you cannot open a browser on the PC running the caller, the dialog also shows the local web-caller URL (`http://<pc-ip>:<port>`, default port 8079 or your configured `-HP` value) so you can approve the connection from your phone or tablet.
+        - The dialog detects the successful "Connected to Autodarts" log line and closes itself automatically after 5 seconds.
+        - The dialog is resizable so the instructions can be enlarged on small screens.
+    - Autodarts email (`-U`) and password (`-P`) inputs are hidden everywhere (classic and new settings view, setup wizard, and Robbel3D one-click setup) because the new device-link flow replaces them. Existing values are kept but no longer required.
+### Fixes
+    - Extension console output (e.g. darts-caller) is now decoded as UTF-8. Box-drawing characters, `✓`, `—`, `…` and similar symbols are no longer shown as `â”€`, `âœ"`, `â€¦`, `â€"`.
 ### Notifications
     - New in-app notification system (poll/ack/vote against the license server, HMAC-signed).
     - Notification bell + unread badge in the status bar; click opens a semi-transparent, tall side panel.
@@ -36,15 +45,15 @@
     - to get acces to the new Darts-WLED features, you have to request a experience license. 
         https://license.darts-hub.i3ull3t.de/form.html
     *read the Darts WLED documentation to get more information about new features!*
-    *https://github.com/lbormann/darts-wled*
+    *https://github.com/Peschi90/darts-wled*
 
 > ℹ️ **Note:** New features and full argument documentation for each extension are maintained in the extension's own README. See:
-> - [darts-caller](https://github.com/lbormann/darts-caller/blob/master/README.md)
-> - [darts-extern](https://github.com/lbormann/darts-extern/blob/master/README.md)
-> - [darts-wled](https://github.com/lbormann/darts-wled/blob/master/README.md)
-> - [darts-pixelit](https://github.com/lbormann/darts-pixelit/blob/master/README.md)
-> - [darts-gif](https://github.com/lbormann/darts-gif/blob/master/README.md)
-> - [darts-voice](https://github.com/lbormann/darts-voice/blob/master/README.md)
+> - [darts-caller](https://github.com/Peschi90/darts-caller/blob/master/README.md)
+> - [darts-extern](https://github.com/Peschi90/darts-extern/blob/master/README.md)
+> - [darts-wled](https://github.com/Peschi90/darts-wled/blob/master/README.md)
+> - [darts-pixelit](https://github.com/Peschi90/darts-pixelit/blob/master/README.md)
+> - [darts-gif](https://github.com/Peschi90/darts-gif/blob/master/README.md)
+> - [darts-voice](https://github.com/Peschi90/darts-voice/blob/master/README.md)
 > - [cam-loader](https://github.com/lbormann/cam-loader/blob/master/README.md)
 
 
@@ -65,7 +74,7 @@
     - to get acces to the new Darts-WLED features, you have to request a experience license. 
         https://license.darts-hub.i3ull3t.de/form.html
     *read the Darts WLED documentation to get more information about new features!*
-    *https://github.com/lbormann/darts-wled*
+    *https://github.com/Peschi90/darts-wled*
 
 ## b1.5.0.5
 ### UI Improvements

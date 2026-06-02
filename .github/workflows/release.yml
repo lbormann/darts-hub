@@ -5,6 +5,7 @@ on:
     tags:
       - 'v*' # Automatischer Trigger bei v-Tags (z.B. v1.0.0, v1.2.3)
       - 'b*' # Automatischer Trigger bei b-Tags (z.B. b1.0.0-beta, b1.2.3-alpha)
+      - 'a*' # Automatischer Trigger bei a-Tags (z.B. a1.0.0) - nur Artifacts, kein Release
   workflow_dispatch: # Ermöglicht manuellen Start
     inputs:
       tag_name:
@@ -290,6 +291,7 @@ jobs:
   create-release:
     needs: [extract-changelog, build-macos, build-windows, build-linux]
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.ref, 'refs/tags/a') }}
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4

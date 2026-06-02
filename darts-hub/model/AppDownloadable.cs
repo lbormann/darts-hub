@@ -21,6 +21,14 @@ namespace darts_hub.model
 
         public string DownloadUrl { get; set; }
 
+        /// <summary>
+        /// When true, an additional signature manifest file
+        /// (named "manifest.sig.json-{filename}" alongside the main download in the
+        /// release) is downloaded together with the main file and stored next to it
+        /// as "manifest.sig.json".
+        /// </summary>
+        public bool DownloadsManifest { get; set; }
+
         public event EventHandler<AppEventArgs>? DownloadStarted;
         public event EventHandler<AppEventArgs>? DownloadFinished;
         public event EventHandler<AppEventArgs>? DownloadFailed;
@@ -45,7 +53,8 @@ namespace darts_hub.model
                                 bool runAsAdmin = false,
                                 bool chmod = true,
                                 ProcessWindowStyle? startWindowState = null,
-                                Configuration? configuration = null) 
+                                Configuration? configuration = null,
+                                bool downloadsManifest = false) 
             : base(name: name,
                     customName: customName,
                     helpUrl: helpUrl,
@@ -59,7 +68,8 @@ namespace darts_hub.model
                     )
         {
             DownloadUrl = downloadUrl;
-            
+            DownloadsManifest = downloadsManifest;
+
             GeneratePaths();
         }
 
@@ -87,7 +97,19 @@ namespace darts_hub.model
                 skipRun = localFileSize == -2 ? false : true;
 
                 // Console.WriteLine($"url-file: {urlFileSize}  - local-file: {downloadPathFile}");
-                if (urlFileSize == localFileSize) return false;
+                if (urlFileSize == localFileSize)
+                {
+                    // Main file is up-to-date but make sure the manifest signature is present
+                    if (DownloadsManifest)
+                    {
+                        var manifestTargetPath = Path.Combine(downloadPath, "manifest.sig.json");
+                        if (!File.Exists(manifestTargetPath))
+                        {
+                            try { DownloadManifestSignature(); } catch { /* non-fatal */ }
+                        }
+                    }
+                    return false;
+                }
 
                 // removes existing app and creates a new directory
                 Helper.RemoveDirectory(downloadPath, true);
@@ -135,11 +157,42 @@ namespace darts_hub.model
             OnDownloadProgressed(e);
         }
 
+        private void DownloadManifestSignature()
+        {
+            try
+            {
+                var assetFileName = Helper.GetFileNameByUrl(DownloadUrl);
+                var manifestAssetName = $"manifest.sig.json-{assetFileName}";
+                var lastSlash = DownloadUrl.LastIndexOf('/');
+                if (lastSlash < 0) return;
+
+                var manifestUrl = DownloadUrl.Substring(0, lastSlash + 1) + manifestAssetName;
+                var manifestTargetPath = Path.Combine(downloadPath, "manifest.sig.json");
+
+                Directory.CreateDirectory(downloadPath);
+                if (File.Exists(manifestTargetPath)) File.Delete(manifestTargetPath);
+
+                using var client = new WebClient();
+                client.DownloadFile(new Uri(manifestUrl), manifestTargetPath);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[{Name}] Failed to download manifest.sig.json: {ex.Message}");
+                throw;
+            }
+        }
+
         private void WebClient_DownloadCompleted(object? sender, AsyncCompletedEventArgs e)
         {
             try
             {
                 if (e.Error != null) throw e.Error;
+
+                // Download accompanying signature manifest if requested
+                if (DownloadsManifest)
+                {
+                    DownloadManifestSignature();
+                }
 
                 // Extract download if zip-file
                 var ext = Path.GetExtension(downloadPathFile).ToLower();

@@ -156,8 +156,8 @@
                                            TextWrapping="Wrap" 
                                            Margin="0,0,0,10"/>
                                 
-                                <!-- Autodarts Email (U) -->
-                                <StackPanel Margin="0,0,0,8">
+                                <!-- Autodarts Email (U) - hidden: darts-caller now uses the new device-link auth flow -->
+                                <StackPanel Margin="0,0,0,8" IsVisible="False">
                                     <TextBlock Text="Autodarts Email (U) *" 
                                                Foreground="White" 
                                                FontSize="12" 
@@ -167,9 +167,9 @@
                                              MinHeight="32"
                                              TextChanged="RequiredParameter_TextChanged"/>
                                 </StackPanel>
-                                
-                                <!-- Autodarts Password (P) -->
-                                <StackPanel Margin="0,0,0,8">
+
+                                <!-- Autodarts Password (P) - hidden: darts-caller now uses the new device-link auth flow -->
+                                <StackPanel Margin="0,0,0,8" IsVisible="False">
                                     <TextBlock Text="Autodarts Password (P) *" 
                                                Foreground="White" 
                                                FontSize="12" 

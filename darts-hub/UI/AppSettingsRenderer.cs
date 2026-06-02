@@ -37,6 +37,19 @@ namespace darts_hub.UI
             this.readmeParser = new ReadmeParser();
         }
 
+        /// <summary>
+        /// darts-caller switched to the new Autodarts device-link auth flow.
+        /// Email (U) and password (P) are no longer needed and must be hidden
+        /// from every settings surface to avoid confusing the user.
+        /// </summary>
+        internal static bool IsHiddenCallerCredential(AppBase app, Argument argument)
+        {
+            if (app == null || argument == null) return false;
+            if (!string.Equals(app.Name, "darts-caller", StringComparison.OrdinalIgnoreCase)) return false;
+            return string.Equals(argument.Name, "U", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(argument.Name, "P", StringComparison.OrdinalIgnoreCase);
+        }
+
         public async Task RenderAppSettings(AppBase app)
         {
             var settingsPanel = mainWindow.FindControl<StackPanel>("SettingsPanel");
@@ -735,7 +748,9 @@ namespace darts_hub.UI
             if (appConfiguration == null) return;
 
             var licenseManager = mainWindow.GetLicenseManager();
-            var argumentsBySection = appConfiguration.Arguments.GroupBy(a => a.Section);
+            var visibleArguments = appConfiguration.Arguments
+                .Where(a => !IsHiddenCallerCredential(app, a));
+            var argumentsBySection = visibleArguments.GroupBy(a => a.Section);
 
             foreach (var section in argumentsBySection)
             {
@@ -964,12 +979,12 @@ namespace darts_hub.UI
         {
             return appName switch
             {
-                "darts-caller" => "https://raw.githubusercontent.com/lbormann/darts-caller/refs/heads/master/README.md",
-                "darts-wled" => "https://raw.githubusercontent.com/lbormann/darts-wled/refs/heads/main/README.md",
-                "darts-pixelit" => "https://raw.githubusercontent.com/lbormann/darts-pixelit/refs/heads/main/README.md",
-                "darts-gif" => "https://raw.githubusercontent.com/lbormann/darts-gif/refs/heads/main/README.md",
-                "darts-voice" => "https://raw.githubusercontent.com/lbormann/darts-voice/refs/heads/main/README.md",
-                "darts-extern" => "https://raw.githubusercontent.com/lbormann/darts-extern/refs/heads/master/README.md",
+                "darts-caller" => "https://raw.githubusercontent.com/Peschi90/darts-caller/refs/heads/master/README.md",
+                "darts-wled" => "https://raw.githubusercontent.com/Peschi90/darts-wled/refs/heads/main/README.md",
+                "darts-pixelit" => "https://raw.githubusercontent.com/Peschi90/darts-pixelit/refs/heads/main/README.md",
+                "darts-gif" => "https://raw.githubusercontent.com/Peschi90/darts-gif/refs/heads/main/README.md",
+                "darts-voice" => "https://raw.githubusercontent.com/Peschi90/darts-voice/refs/heads/main/README.md",
+                "darts-extern" => "https://raw.githubusercontent.com/Peschi90/darts-extern/refs/heads/master/README.md",
                 _ => "error"
             };
         }

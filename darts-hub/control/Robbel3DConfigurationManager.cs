@@ -1743,11 +1743,11 @@ namespace darts_hub.control
             
             try
             {
-                // Check required parameters: U (Email), P (Password), B (Board ID), M (Media Path)
+                // Check required parameters: B (Board ID), M (Media Path).
+                // U (Email) and P (Password) are no longer required because
+                // darts-caller switched to the new Autodarts device-link auth.
                 var requiredParams = new Dictionary<string, string>
                 {
-                    ["U"] = "Autodarts Email",
-                    ["P"] = "Autodarts Password", 
                     ["B"] = "Autodarts Board ID",
                     ["M"] = "Media Path"
                 };

@@ -482,19 +482,19 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/Peschi90/darts-caller/releases/download/***VERSION***/darts-caller-macx64",
                 MacArm64 = "https://github.com/Peschi90/darts-caller/releases/download/***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("b3.0.0.3");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("b3.0.0.10");
 
 
             var dartsExternDownloadMap = new DownloadMap
             {
-                WindowsX64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern",
-                //LinuxArm64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern-arm",
-                MacX64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern-mac",
-                MacArm64 = "https://github.com/lbormann/darts-extern/releases/download/v***VERSION***/darts-extern-mac"
+                WindowsX64 = "https://github.com/Peschi90/darts-extern/releases/download/***VERSION***/darts-extern.exe",
+                LinuxX64 = "https://github.com/Peschi90/darts-extern/releases/download/***VERSION***/darts-extern",
+                //LinuxArm64 = "https://github.com/Peschi90/darts-extern/releases/download/***VERSION***/darts-extern-arm64",
+                //LinuxArm = "https://github.com/Peschi90/darts-extern/releases/download/***VERSION***/darts-extern-arm",
+                MacX64 = "https://github.com/Peschi90/darts-extern/releases/download/***VERSION***/darts-extern-mac",
+                MacArm64 = "https://github.com/Peschi90/darts-extern/releases/download/***VERSION***/darts-extern-mac"
             };
-            dartsExternDownloadUrl = dartsExternDownloadMap.GetDownloadUrlByOs("1.6.0");
+            dartsExternDownloadUrl = dartsExternDownloadMap.GetDownloadUrlByOs("b2.0.0.0");
 
 
             var dartsWledDownloadMap = new DownloadMap
@@ -506,43 +506,43 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/Peschi90/darts-wled/releases/download/***VERSION***/darts-wled-mac64",
                 MacArm64 = "https://github.com/Peschi90/darts-wled/releases/download/***VERSION***/darts-wled-mac"
             };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b2.0.0.2");
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b2.0.0.6");
 
 
             var dartsPixelitDownloadMap = new DownloadMap
             {
-                WindowsX64 = "https://github.com/lbormann/darts-pixelit/releases/download/***VERSION***/darts-pixelit.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-pixelit/releases/download/***VERSION***/darts-pixelit",
-                LinuxArm64 = "https://github.com/lbormann/darts-pixelit/releases/download/***VERSION***/darts-pixelit-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-pixelit/releases/download/***VERSION***/darts-pixelit-arm",
-                MacX64 = "https://github.com/lbormann/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac",
-                MacArm64 = "https://github.com/lbormann/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac"
+                WindowsX64 = "https://github.com/Peschi90/darts-pixelit/releases/download/***VERSION***/darts-pixelit.exe",
+                LinuxX64 = "https://github.com/Peschi90/darts-pixelit/releases/download/***VERSION***/darts-pixelit",
+                LinuxArm64 = "https://github.com/Peschi90/darts-pixelit/releases/download/***VERSION***/darts-pixelit-arm64",
+                //LinuxArm = "https://github.com/Peschi90/darts-pixelit/releases/download/***VERSION***/darts-pixelit-arm",
+                MacX64 = "https://github.com/Peschi90/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac",
+                MacArm64 = "https://github.com/Peschi90/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac"
             };
-            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("v1.3.1");
+            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("b2.0.0.5");
 
 
             var dartsGifDownloadMap = new DownloadMap
             {
-                WindowsX64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif",
-                LinuxArm64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-arm",
-                MacX64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-mac64",
-                MacArm64 = "https://github.com/lbormann/darts-gif/releases/download/v***VERSION***/darts-gif-mac"
+                WindowsX64 = "https://github.com/Peschi90/darts-gif/releases/download/***VERSION***/darts-gif.exe",
+                LinuxX64 = "https://github.com/Peschi90/darts-gif/releases/download/***VERSION***/darts-gif",
+                LinuxArm64 = "https://github.com/Peschi90/darts-gif/releases/download/***VERSION***/darts-gif-arm64",
+                //LinuxArm = "https://github.com/Peschi90/darts-gif/releases/download/***VERSION***/darts-gif-arm",
+                MacX64 = "https://github.com/Peschi90/darts-gif/releases/download/***VERSION***/darts-gif-mac64",
+                MacArm64 = "https://github.com/Peschi90/darts-gif/releases/download/***VERSION***/darts-gif-mac"
             };
-            dartsGifDownloadUrl = dartsGifDownloadMap.GetDownloadUrlByOs("1.1.0");
+            dartsGifDownloadUrl = dartsGifDownloadMap.GetDownloadUrlByOs("b2.0.0.5");
 
 
             var dartsVoiceDownloadMap = new DownloadMap
             {
-                WindowsX64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice.exe",
-                LinuxX64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice",
-                LinuxArm64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice-arm64",
-                //LinuxArm = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice-arm",
-                MacX64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice-mac",
-                MacArm64 = "https://github.com/lbormann/darts-voice/releases/download/v***VERSION***/darts-voice-mac"
+                WindowsX64 = "https://github.com/Peschi90/darts-voice/releases/download/***VERSION***/darts-voice.exe",
+                LinuxX64 = "https://github.com/Peschi90/darts-voice/releases/download/***VERSION***/darts-voice",
+                LinuxArm64 = "https://github.com/Peschi90/darts-voice/releases/download/***VERSION***/darts-voice-arm64",
+                //LinuxArm = "https://github.com/Peschi90/darts-voice/releases/download/***VERSION***/darts-voice-arm",
+                MacX64 = "https://github.com/Peschi90/darts-voice/releases/download/***VERSION***/darts-voice-mac",
+                MacArm64 = "https://github.com/Peschi90/darts-voice/releases/download/***VERSION***/darts-voice-mac"
             };
-            dartsVoiceDownloadUrl = dartsVoiceDownloadMap.GetDownloadUrlByOs("1.1.0");
+            dartsVoiceDownloadUrl = dartsVoiceDownloadMap.GetDownloadUrlByOs("b2.0.0.0");
 
 
             var camLoaderDownloadMap = new DownloadMap
@@ -613,8 +613,10 @@ namespace darts_hub.control
                             prefix: "-",
                             delimitter: " ",
                             arguments: new List<Argument> {
-                            new(name: "U", type: "string", required: true, nameHuman: "-U / --autodarts_email", section: "Autodarts"),
-                            new(name: "P", type: "password", required: true, nameHuman: "-P / --autodarts_password", section: "Autodarts"),
+                            // U/P are no longer required: darts-caller uses the new Autodarts device-link auth flow.
+                            // The arguments are kept for backwards compatibility with existing configurations.
+                            new(name: "U", type: "string", required: false, nameHuman: "-U / --autodarts_email", section: "Autodarts"),
+                            new(name: "P", type: "password", required: false, nameHuman: "-P / --autodarts_password", section: "Autodarts"),
                             new(name: "B", type: "string", required: true, nameHuman: "-B / --autodarts_board_id", section: "Autodarts"),
                             new(name: "M", type: "path", required: true, nameHuman: "-M / --media_path", section: "Media"),
                             new(name: "MS", type: "path", required: false, nameHuman: "-MS / --media_path_shared", section: "Media"),
@@ -662,9 +664,9 @@ namespace darts_hub.control
                 AppDownloadable dartsExtern =
                 new(
                     downloadUrl: dartsExternDownloadUrl,
-                    changelogUrl: "https://raw.githubusercontent.com/lbormann/darts-extern/master/CHANGELOG.md",
+                    changelogUrl: "https://raw.githubusercontent.com/Peschi90/darts-extern/master/CHANGELOG.md",
                     name: "darts-extern",
-                    helpUrl: "https://github.com/lbormann/darts-extern",
+                    helpUrl: "https://github.com/Peschi90/darts-extern",
                     descriptionShort: "Bridges and automates other dart-platforms",
                     configuration: new(
                         prefix: "--",
@@ -687,7 +689,8 @@ namespace darts_hub.control
                             new(name: "dartboards_user", type: "string", required: false, nameHuman: "--dartboards_user", section: "Dartboards", requiredOnArgument: "extern_platform=dartboards"),
                             new(name: "dartboards_password", type: "password", required: false, nameHuman: "--dartboards_password", section: "Dartboards", requiredOnArgument: "extern_platform=dartboards"),
                             new(name: "dartboards_skip_dart_modals", type: "bool", required: false, nameHuman: "--dartboards_skip_dart_modals", section: "Dartboards"),
-                        })
+                        }),
+                    downloadsManifest: true
                 );
                 apps.Add(dartsExtern);
             }
@@ -764,7 +767,8 @@ namespace darts_hub.control
                     configuration: new(
                         prefix: "-",
                         delimitter: " ",
-                        arguments: dartsWledArguments)
+                        arguments: dartsWledArguments),
+                    downloadsManifest: true
                     );
                 
                 apps.Add(dartsWled);
@@ -813,14 +817,15 @@ namespace darts_hub.control
                 AppDownloadable dartsPixelit =
                 new(
                     downloadUrl: dartsPixelitDownloadUrl,
-                    changelogUrl: "https://raw.githubusercontent.com/lbormann/darts-pixelit/main/CHANGELOG.md",
+                    changelogUrl: "https://raw.githubusercontent.com/Peschi90/darts-pixelit/main/CHANGELOG.md",
                     name: "darts-pixelit",
-                    helpUrl: "https://github.com/lbormann/darts-pixelit",
+                    helpUrl: "https://github.com/Peschi90/darts-pixelit",
                     descriptionShort: "Controls PIXELIT installations by autodarts-events",
                     configuration: new(
                         prefix: "-",
                         delimitter: " ",
-                        arguments: dartsPixelitArguments)
+                        arguments: dartsPixelitArguments),
+                        downloadsManifest: true
                     );
                 apps.Add(dartsPixelit);
             }
@@ -856,14 +861,15 @@ namespace darts_hub.control
                 AppDownloadable dartsGif =
                 new(
                     downloadUrl: dartsGifDownloadUrl,
-                    changelogUrl: "https://raw.githubusercontent.com/lbormann/darts-gif/main/CHANGELOG.md",
+                    changelogUrl: "https://raw.githubusercontent.com/Peschi90/darts-gif/main/CHANGELOG.md",
                     name: "darts-gif",
-                    helpUrl: "https://github.com/lbormann/darts-gif",
+                    helpUrl: "https://github.com/Peschi90/darts-gif",
                     descriptionShort: "Displays images according to autodarts-events",
                     configuration: new(
                         prefix: "-",
                         delimitter: " ",
-                        arguments: dartsGifArguments)
+                        arguments: dartsGifArguments),
+                        downloadsManifest: true
                     );
                 apps.Add(dartsGif);
             }
@@ -918,14 +924,15 @@ namespace darts_hub.control
                 AppDownloadable dartsVoice =
                 new(
                     downloadUrl: dartsVoiceDownloadUrl,
-                    changelogUrl: "https://raw.githubusercontent.com/lbormann/darts-voice/main/CHANGELOG.md",
+                    changelogUrl: "https://raw.githubusercontent.com/Peschi90/darts-voice/main/CHANGELOG.md",
                     name: "darts-voice",
-                    helpUrl: "https://github.com/lbormann/darts-voice",
+                    helpUrl: "https://github.com/Peschi90/darts-voice",
                     descriptionShort: "Controls autodarts by using your voice",
                     configuration: new(
                         prefix: "-",
                         delimitter: " ",
-                        arguments: dartsVoiceArguments)
+                        arguments: dartsVoiceArguments),
+                    downloadsManifest: true
                     );
                 apps.Add(dartsVoice);
             }
@@ -965,7 +972,7 @@ namespace darts_hub.control
 
         private async void MigrateAppsDownloadable()
         {
-            //var readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-caller/refs/heads/master/README.md"; // URL zur README-Datei
+            //var readmeUrl = "https://raw.githubusercontent.com/Peschi90/darts-caller/refs/heads/master/README.md"; // URL zur README-Datei
             //var parser = new ReadmeParser();
             //var argumentDescriptions = await parser.GetArgumentsFromReadme(readmeUrl);
             var dartsCaller = AppsDownloadable.Find(a => a.Name == "darts-caller");
@@ -1036,9 +1043,10 @@ namespace darts_hub.control
             {
                 if (dartsWledDownloadUrl != null)
                 {
-                    //readmeUrl = "https://raw.githubusercontent.com/lbormann/darts-wled/refs/heads/main/README.md";
+                    //readmeUrl = "https://raw.githubusercontent.com/Peschi90/darts-wled/refs/heads/main/README.md";
                     //argumentDescriptions = await parser.GetArgumentsFromReadme(readmeUrl);
                     dartsWled.DownloadUrl = dartsWledDownloadUrl;
+                    dartsWled.DownloadsManifest = true;
 
                     var boardStopAfterWin = dartsWled.Configuration.Arguments.Find(a => a.Name == "BSW");
                     if (boardStopAfterWin == null)
@@ -1338,10 +1346,43 @@ namespace darts_hub.control
                 if (dartsPixelitDownloadUrl != null)
                 {
                     dartsPixelit.DownloadUrl = dartsPixelitDownloadUrl;
+                    dartsPixelit.DownloadsManifest = true;
 
                     // Add more migs..
                 }
             }
+            var dartsGif = AppsDownloadable.Find(a => a.Name == "darts-gif");
+            if (dartsGif != null)
+            {
+                if (dartsGifDownloadUrl != null)
+                {
+                    dartsGif.DownloadUrl = dartsGifDownloadUrl;
+                    dartsGif.DownloadsManifest = true;
+                    // Add more migs..
+                }
+            }
+            var dartsVoice = AppsDownloadable.Find(a => a.Name == "darts-voice");
+            if (dartsVoice != null)
+            {
+                if (dartsVoiceDownloadUrl != null)
+                {
+                    dartsVoice.DownloadUrl = dartsVoiceDownloadUrl;
+                    dartsVoice.DownloadsManifest = true;
+                    // Add more migs..
+                }
+            }
+            var dartsExtern = AppsDownloadable.Find(a => a.Name == "darts-extern");
+            if (dartsExtern != null)
+            {
+                if (dartsExternDownloadUrl != null)
+                {
+                    dartsExtern.DownloadUrl = dartsExternDownloadUrl;
+                    dartsExtern.DownloadsManifest = true;
+                    // Add more migs..
+                }
+            }
+
+
         }
 
 
