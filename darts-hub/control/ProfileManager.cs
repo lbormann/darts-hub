@@ -645,7 +645,8 @@ namespace darts_hub.control
                             new(name: "CC", type: "bool", required: false, nameHuman: "-CC / --cert_check", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "CRL", type: "bool", required: false, nameHuman: "-CRL / --caller_real_life", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
                             new(name: "CBS", type: "bool", required: false, nameHuman: "-CBS / --call_blind_support", section: "Calls", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
-                            new(name: "MLA", type: "bool", required: false, nameHuman: "-MLA / --message_log_all", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"})
+                            new(name: "MLA", type: "bool", required: false, nameHuman: "-MLA / --message_log_all", section: "Service", valueMapping: new Dictionary<string, string>{["True"] = "1",["False"] = "0"}),
+                            new(name: "ULE", type: "int[0..1]", required: false, nameHuman: "-ULE / --user_license_extensions", section: "Service")
                             })
                         );
                 
@@ -1021,6 +1022,11 @@ namespace darts_hub.control
                     if (messagelogall == null)
                     {
                         dartsCaller.Configuration.Arguments.Add(new(name: "MLA", type: "bool", required: false, nameHuman: "-MLA / --message_log_all", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }));
+                    }
+                    var userLicenseExtensions = dartsCaller.Configuration.Arguments.Find(a => a.Name == "ULE");
+                    if (userLicenseExtensions == null)
+                    {
+                        dartsCaller.Configuration.Arguments.Add(new(name: "ULE", type: "int[0..1]", required: false, nameHuman: "-ULE / --user_license_extensions", section: "Service"));
                     }
 
 

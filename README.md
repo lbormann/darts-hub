@@ -130,7 +130,7 @@ When darts-hub detects that the caller is waiting for approval, a dedicated dial
 
 1. **Open the link in your browser.** darts-caller usually opens the browser by itself. If it doesn't, click **"Open browser"** in the dialog or use **"Copy direct link"** and paste it.
 2. **Or enter the code manually.** Open `https://auth.autodarts.io/link` on any device, log in to your Autodarts account and type the 8-character code shown in the dialog (use **"Copy code"** if you prefer).
-3. **No browser on the PC running the caller?** The dialog also shows a `http://<pc-ip>:<port>` URL (default port `8079`, or your configured `-HP` value). Open that URL on your phone or another device in the same network and approve the connection from there.
+3. **No browser on the PC running the caller?** The dialog also shows a `https://<pc-ip>:<port>` URL (default port `8079`, or your configured `-HP` value). Open that URL on your phone or another device in the same network and approve the connection from there.
 4. Once the caller reports "Connected to Autodarts", the dialog shows a green confirmation and **closes itself after 5 seconds**.
 
 You only need to do this on first login or whenever the caller's stored token expires.
