@@ -51,15 +51,83 @@ namespace darts_hub.control
             this.api = new NotificationApi(BaseUrl, ApiKey, SecretKey);
             this.store = new NotificationStore();
             this.hardwareId = LicenseManager.GetHardwareId();
+            this.ClientVersion = NormalizeVersion(Updater.version);
         }
 
         public string BaseUrl_ => api.BaseUrl;
 
+        /// <summary>
+        /// Semver-style client version sent with each poll so the server can
+        /// apply min_version / max_version targeting. Built-in prefixes
+        /// (e.g. "a"/"b" in "a1.5.0.14") are stripped.
+        /// </summary>
+        public string ClientVersion { get; }
+
+        /// <summary>
+        /// Strips a leading non-numeric channel prefix (a/b/v) from the build
+        /// version so it can be compared as a plain semver string server-side.
+        /// </summary>
+        private static string NormalizeVersion(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+            var v = raw.Trim();
+            var start = 0;
+            while (start < v.Length && !char.IsDigit(v[start])) start++;
+            return v[start..];
+        }
+
         public IReadOnlyList<Notification> Notifications => store.All
-            .Where(n => n.State.DismissedAt == null && !n.IsExpired)
+            .Where(n => n.State.DismissedAt == null && !n.IsExpired && IsVersionMatch(n))
             .OrderByDescending(n => n.IsPinned)
             .ThenByDescending(n => n.Id)
             .ToList();
+
+        /// <summary>
+        /// Client-side guard for version targeting. The server already filters,
+        /// but cached notifications are re-checked in case the app was updated
+        /// since they were stored.
+        /// </summary>
+        private bool IsVersionMatch(Notification n)
+        {
+            if (string.IsNullOrWhiteSpace(n.MinVersion) && string.IsNullOrWhiteSpace(n.MaxVersion))
+                return true;
+            if (string.IsNullOrWhiteSpace(ClientVersion))
+                return false;
+
+            if (!string.IsNullOrWhiteSpace(n.MinVersion) && CompareVersions(ClientVersion, n.MinVersion!) < 0)
+                return false;
+            if (!string.IsNullOrWhiteSpace(n.MaxVersion) && CompareVersions(ClientVersion, n.MaxVersion!) > 0)
+                return false;
+            return true;
+        }
+
+        /// <summary>
+        /// Loosely compares two dot-separated version strings numerically,
+        /// ignoring any pre-release suffix (e.g. "-beta1").
+        /// </summary>
+        private static int CompareVersions(string a, string b)
+        {
+            static int[] Parts(string s)
+            {
+                var core = s.Split('-', '+')[0];
+                var segs = core.Split('.');
+                var nums = new int[segs.Length];
+                for (var i = 0; i < segs.Length; i++)
+                    nums[i] = int.TryParse(segs[i], out var x) ? x : 0;
+                return nums;
+            }
+
+            var pa = Parts(a);
+            var pb = Parts(b);
+            var len = Math.Max(pa.Length, pb.Length);
+            for (var i = 0; i < len; i++)
+            {
+                var va = i < pa.Length ? pa[i] : 0;
+                var vb = i < pb.Length ? pb[i] : 0;
+                if (va != vb) return va.CompareTo(vb);
+            }
+            return 0;
+        }
 
         public int UnreadCount => Notifications.Count(n => n.IsUnread);
 
@@ -158,6 +226,7 @@ namespace darts_hub.control
                     licenseManager.HasStoredLicenseKey ? licenseManager.StoredLicenseKey : null,
                     hardwareId,
                     sinceId,
+                    ClientVersion,
                     ct).ConfigureAwait(false);
 
                 if (!result.Success)
@@ -186,7 +255,11 @@ namespace darts_hub.control
         {
             try
             {
-                Changed?.Invoke(this, new NotificationsChangedEventArgs(Notifications, added, UnreadCount));
+                // Only surface added items that actually pass version/expiry filtering
+                var visibleAdded = added
+                    .Where(n => !n.IsExpired && n.State.DismissedAt == null && IsVersionMatch(n))
+                    .ToList();
+                Changed?.Invoke(this, new NotificationsChangedEventArgs(Notifications, visibleAdded, UnreadCount));
             }
             catch (Exception ex)
             {

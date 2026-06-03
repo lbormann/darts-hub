@@ -17,6 +17,7 @@
     - Polls are interactive (single/multi-select), results rendered with bars; vote is sent to the server.
     - Markdown rendering (headings, lists, quotes, code, bold/italic/links) with HTML fallback for `body_html`.
     - Offline cache (`notifications.json`) keeps state across restarts; respects server `poll_interval` with exponential back-off on errors.
+    - Validity handling: sends `client_version` on poll and honours `min_version` / `max_version` targeting plus `expires_at` (client-side re-check on cached items).
 
 ## b1.5.0.7
 ### New Features

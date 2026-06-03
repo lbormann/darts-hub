@@ -93,6 +93,8 @@ namespace darts_hub.model
         [JsonProperty("requires_ack")] public bool RequiresAck { get; set; }
         [JsonProperty("publish_at")] public string? PublishAt { get; set; }
         [JsonProperty("expires_at")] public string? ExpiresAt { get; set; }
+        [JsonProperty("min_version")] public string? MinVersion { get; set; }
+        [JsonProperty("max_version")] public string? MaxVersion { get; set; }
 
         [JsonProperty("attachments")] public List<NotificationAttachment> Attachments { get; set; } = new();
         [JsonProperty("links")] public List<NotificationLink> Links { get; set; } = new();

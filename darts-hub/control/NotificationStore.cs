@@ -82,6 +82,8 @@ namespace darts_hub.control
                         existing.RequiresAck = inc.RequiresAck;
                         existing.PublishAt = inc.PublishAt;
                         existing.ExpiresAt = inc.ExpiresAt;
+                        existing.MinVersion = inc.MinVersion;
+                        existing.MaxVersion = inc.MaxVersion;
                         existing.Attachments = inc.Attachments;
                         existing.Links = inc.Links;
                         MergePolls(existing, inc);

@@ -61,16 +61,18 @@ namespace darts_hub.control
 
         public string BaseUrl => baseUrl;
 
-        public async Task<NotificationPollResult> PollAsync(string? licenseKey, string hardwareId, long sinceId, CancellationToken ct = default)
+        public async Task<NotificationPollResult> PollAsync(string? licenseKey, string hardwareId, long sinceId, string? clientVersion = null, CancellationToken ct = default)
         {
             var body = new JObject
             {
                 ["license_key"] = licenseKey ?? string.Empty,
                 ["hardware_id"] = hardwareId,
                 ["since_id"] = sinceId
-            }.ToString(Formatting.None);
+            };
+            if (!string.IsNullOrWhiteSpace(clientVersion))
+                body["client_version"] = clientVersion;
 
-            var raw = await PostAsync("/api/notifications/poll", body, ct);
+            var raw = await PostAsync("/api/notifications/poll", body.ToString(Formatting.None), ct);
             return ParsePollResponse(raw);
         }
 
