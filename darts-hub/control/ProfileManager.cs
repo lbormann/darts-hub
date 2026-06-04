@@ -482,7 +482,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/Peschi90/darts-caller/releases/download/***VERSION***/darts-caller-macx64",
                 MacArm64 = "https://github.com/Peschi90/darts-caller/releases/download/***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("b3.0.0.16");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("b3.0.1.1");
 
 
             var dartsExternDownloadMap = new DownloadMap
@@ -506,7 +506,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/Peschi90/darts-wled/releases/download/***VERSION***/darts-wled-mac64",
                 MacArm64 = "https://github.com/Peschi90/darts-wled/releases/download/***VERSION***/darts-wled-mac"
             };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b2.0.0.9");
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b2.0.1.0");
 
 
             var dartsPixelitDownloadMap = new DownloadMap
@@ -518,7 +518,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/Peschi90/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac",
                 MacArm64 = "https://github.com/Peschi90/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac"
             };
-            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("b2.0.0.5");
+            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("b2.0.1.0");
 
 
             var dartsGifDownloadMap = new DownloadMap
@@ -530,7 +530,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/Peschi90/darts-gif/releases/download/***VERSION***/darts-gif-mac64",
                 MacArm64 = "https://github.com/Peschi90/darts-gif/releases/download/***VERSION***/darts-gif-mac"
             };
-            dartsGifDownloadUrl = dartsGifDownloadMap.GetDownloadUrlByOs("b2.0.0.6");
+            dartsGifDownloadUrl = dartsGifDownloadMap.GetDownloadUrlByOs("b2.0.1.0");
 
 
             var dartsVoiceDownloadMap = new DownloadMap
