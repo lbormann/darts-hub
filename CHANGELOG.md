@@ -1,5 +1,5 @@
 ﻿
-## b2.0.1.0
+## b2.0.1.1
 ### Darts-Caller
     - Support for the new Autodarts device-link authentication.
         - When darts-caller prints the "Connect darts-caller to your Autodarts account" prompt, darts-hub now opens a dedicated dialog with the link code, a direct browser button and a "copy link/code" button.

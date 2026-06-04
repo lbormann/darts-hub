@@ -506,7 +506,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/Peschi90/darts-wled/releases/download/***VERSION***/darts-wled-mac64",
                 MacArm64 = "https://github.com/Peschi90/darts-wled/releases/download/***VERSION***/darts-wled-mac"
             };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b2.0.1.0");
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b2.0.1.1");
 
 
             var dartsPixelitDownloadMap = new DownloadMap
@@ -518,7 +518,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/Peschi90/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac",
                 MacArm64 = "https://github.com/Peschi90/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac"
             };
-            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("b2.0.1.0");
+            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("b2.0.1.1");
 
 
             var dartsGifDownloadMap = new DownloadMap
@@ -530,7 +530,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/Peschi90/darts-gif/releases/download/***VERSION***/darts-gif-mac64",
                 MacArm64 = "https://github.com/Peschi90/darts-gif/releases/download/***VERSION***/darts-gif-mac"
             };
-            dartsGifDownloadUrl = dartsGifDownloadMap.GetDownloadUrlByOs("b2.0.1.0");
+            dartsGifDownloadUrl = dartsGifDownloadMap.GetDownloadUrlByOs("b2.0.1.1");
 
 
             var dartsVoiceDownloadMap = new DownloadMap
