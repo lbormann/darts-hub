@@ -1,4 +1,8 @@
 ﻿
+## b2.0.1.4
+### BUGFIX
+    - Custom URL doesnt start
+
 ## b2.0.1.3
 ### Darts-Caller
     - Support for the new Autodarts device-link authentication.

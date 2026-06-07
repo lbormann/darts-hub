@@ -830,10 +830,17 @@ namespace darts_hub.model
                 // this the redirected streams are decoded with the OEM/system
                 // code page and box-drawing/emoji characters become mojibake
                 // (e.g. "â”€" instead of "─", "âœ"" instead of "✓").
-                process.StartInfo.StandardOutputEncoding = System.Text.Encoding.UTF8;
-                process.StartInfo.StandardErrorEncoding = System.Text.Encoding.UTF8;
-                process.StartInfo.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8";
-                process.StartInfo.EnvironmentVariables["PYTHONUTF8"] = "1";
+                // These settings require UseShellExecute=false AND redirected
+                // streams; for AppOpen URIs we switch to ShellExecute below, so
+                // applying them there would make Process.Start() throw
+                // InvalidOperationException and the URL would never open.
+                if (!isUri)
+                {
+                    process.StartInfo.StandardOutputEncoding = System.Text.Encoding.UTF8;
+                    process.StartInfo.StandardErrorEncoding = System.Text.Encoding.UTF8;
+                    process.StartInfo.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8";
+                    process.StartInfo.EnvironmentVariables["PYTHONUTF8"] = "1";
+                }
                 process.Exited += (sender, e) =>
                 {
                     //Console.WriteLine(
