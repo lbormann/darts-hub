@@ -9,6 +9,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace darts_hub.model
@@ -51,7 +52,19 @@ namespace darts_hub.model
     {
 
         // ATTRIBUTES
-        public const int MaxAppMonitorEntries = 600;
+        // Maximum number of lines kept per stream (stdout / stderr) in memory.
+        // Reduced from 600 to 300 to prevent UI hangs / overflows when chatty
+        // extensions (e.g. darts-caller) produce a lot of output over time.
+        public const int MaxAppMonitorEntries = 300;
+
+        // Maximum number of characters per single output line. Anything longer
+        // is truncated to keep memory usage and TextBox layout cost bounded.
+        private const int MaxLineLength = 2000;
+
+        // Minimum time between AppMonitor PropertyChanged notifications. The
+        // UI (and bindings on TextBox.Text) does not need to re-render for
+        // every single log line - throttling avoids saturating the UI thread.
+        private const int MonitorNotifyThrottleMs = 250;
 
         public string Name { get; set; }
         public string CustomName { get; set; }
@@ -69,13 +82,37 @@ namespace darts_hub.model
         [JsonIgnore]
         public Argument? ArgumentRequired { get; private set; }
 
-        [JsonIgnore]
-        public string AppConsoleStdOutput { get; private set; }
+        // Bounded ring buffers for stdout / stderr lines. Using Queue<string>
+        // avoids the O(N^2) cost of repeatedly concatenating large strings.
+        private readonly Queue<string> stdOutLines = new Queue<string>();
+        private readonly Queue<string> stdErrLines = new Queue<string>();
+        private readonly object outputLock = new object();
 
         [JsonIgnore]
-        public string AppConsoleStdError { get; private set; }
+        public string AppConsoleStdOutput
+        {
+            get
+            {
+                lock (outputLock)
+                {
+                    return string.Join(Environment.NewLine, stdOutLines);
+                }
+            }
+        }
 
-        
+        [JsonIgnore]
+        public string AppConsoleStdError
+        {
+            get
+            {
+                lock (outputLock)
+                {
+                    return string.Join(Environment.NewLine, stdErrLines);
+                }
+            }
+        }
+
+
         private bool _appRunningState;
         [JsonIgnore]
         public bool AppRunningState
@@ -95,21 +132,37 @@ namespace darts_hub.model
         public bool HasUnappliedChanges { get; set; }
 
         [JsonIgnore]
-        public int AppMonitorEntries { get; private set; }
+        public int AppMonitorEntries
+        {
+            get
+            {
+                lock (outputLock)
+                {
+                    return stdOutLines.Count + stdErrLines.Count;
+                }
+            }
+        }
 
+        // Cached, throttled snapshot of the combined monitor text.
+        private string _appMonitor = string.Empty;
+        private DateTime _lastMonitorNotify = DateTime.MinValue;
+        private bool _monitorDirty;
 
-        private string _appMonitor;
         [JsonIgnore]
         public string AppMonitor
         {
-            get => _appMonitor;
-            private set
+            get
             {
-                if (_appMonitor != value)
+                // Rebuild snapshot lazily so readers always see the latest data
+                // even if a notification has been throttled.
+                lock (outputLock)
                 {
-                    _appMonitor = value;
-                    AppMonitorAvailable = _appMonitor != String.Empty ? true : false;
-                    OnPropertyChanged();
+                    if (_monitorDirty)
+                    {
+                        _appMonitor = BuildMonitorTextUnlocked();
+                        _monitorDirty = false;
+                    }
+                    return _appMonitor;
                 }
             }
         }
@@ -151,6 +204,113 @@ namespace darts_hub.model
         private static DateTime lastConfigLoad = DateTime.MinValue;
         
         public event PropertyChangedEventHandler PropertyChanged;
+
+        // ---- Output buffer helpers --------------------------------------
+
+        /// <summary>
+        /// Builds the combined monitor text from the current buffers.
+        /// Caller MUST hold <see cref="outputLock"/>.
+        /// </summary>
+        private string BuildMonitorTextUnlocked()
+        {
+            if (stdOutLines.Count == 0 && stdErrLines.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder();
+            bool first = true;
+            foreach (var line in stdOutLines)
+            {
+                if (!first) sb.Append(Environment.NewLine);
+                sb.Append(line);
+                first = false;
+            }
+
+            if (stdErrLines.Count > 0)
+            {
+                if (!first)
+                {
+                    sb.Append(Environment.NewLine);
+                    sb.Append(Environment.NewLine);
+                }
+                first = true;
+                foreach (var line in stdErrLines)
+                {
+                    if (!first) sb.Append(Environment.NewLine);
+                    sb.Append(line);
+                    first = false;
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Appends a single line of output to the appropriate ring buffer and
+        /// raises a throttled <see cref="AppMonitor"/> change notification.
+        /// </summary>
+        private void AppendMonitorLine(string line, bool isError)
+        {
+            if (string.IsNullOrEmpty(line)) return;
+
+            // Truncate very long lines (defensive cap - some extensions can emit
+            // huge single-line JSON / stack traces that would otherwise blow up
+            // the UI TextBox layout).
+            if (line.Length > MaxLineLength)
+            {
+                line = line.Substring(0, MaxLineLength) + "... [truncated]";
+            }
+
+            bool shouldNotify;
+            lock (outputLock)
+            {
+                var target = isError ? stdErrLines : stdOutLines;
+                target.Enqueue(line);
+                while (target.Count > MaxAppMonitorEntries)
+                {
+                    target.Dequeue();
+                }
+
+                _monitorDirty = true;
+
+                // Throttle PropertyChanged so the UI binding does not re-render
+                // a multi-KB string for every single log line.
+                var now = DateTime.UtcNow;
+                shouldNotify = (now - _lastMonitorNotify).TotalMilliseconds >= MonitorNotifyThrottleMs;
+                if (shouldNotify)
+                {
+                    _lastMonitorNotify = now;
+                }
+            }
+
+            if (shouldNotify)
+            {
+                AppMonitorAvailable = true;
+                OnPropertyChanged(nameof(AppMonitor));
+            }
+            else if (!AppMonitorAvailable)
+            {
+                AppMonitorAvailable = true;
+            }
+        }
+
+        /// <summary>
+        /// Clears both output buffers and notifies bindings.
+        /// </summary>
+        private void ClearMonitorBuffers()
+        {
+            lock (outputLock)
+            {
+                stdOutLines.Clear();
+                stdErrLines.Clear();
+                _appMonitor = string.Empty;
+                _monitorDirty = false;
+                _lastMonitorNotify = DateTime.MinValue;
+            }
+            AppMonitorAvailable = false;
+            OnPropertyChanged(nameof(AppMonitor));
+        }
 
         // METHODS
 
@@ -800,10 +960,7 @@ namespace darts_hub.model
             {
                 // Only reset console output when starting a new process (restart)
                 // Do NOT reset during continuous execution
-                AppConsoleStdOutput = String.Empty;
-                AppConsoleStdError = String.Empty;
-                AppMonitor = String.Empty;
-                AppMonitorEntries = 0; // Reset counter only on application start/restart
+                ClearMonitorBuffers();
 
                 // Initialize logging for this session
                 EnsureLogFile();
@@ -860,35 +1017,15 @@ namespace darts_hub.model
                     eventHandled.TrySetResult(true);
                 };
                 process.OutputDataReceived += (sender, e) =>
-                {   
+                {
                     if (!String.IsNullOrEmpty(e.Data))
                     {
                         // Write to daily log file with smart log level detection
                         WriteToLogFile(e.Data, false);
-                        
-                        // Instead of hard reset, trim old lines to prevent memory issues
-                        // but keep output continuous during application execution
-                        if (AppMonitorEntries >= MaxAppMonitorEntries * 2) // Allow double the limit before trimming
-                        {
-                            // Trim to keep most recent MaxAppMonitorEntries lines
-                            var outputLines = AppConsoleStdOutput.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-                            var errorLines = AppConsoleStdError.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-                            
-                            if (outputLines.Length > MaxAppMonitorEntries)
-                            {
-                                AppConsoleStdOutput = string.Join(Environment.NewLine, outputLines.Skip(outputLines.Length - MaxAppMonitorEntries));
-                            }
-                            if (errorLines.Length > MaxAppMonitorEntries)
-                            {
-                                AppConsoleStdError = string.Join(Environment.NewLine, errorLines.Skip(errorLines.Length - MaxAppMonitorEntries));
-                            }
-                            
-                            AppMonitorEntries = MaxAppMonitorEntries; // Reset to manageable number
-                        }
-                        
-                        AppConsoleStdOutput += e.Data + Environment.NewLine;
-                        AppMonitor = AppConsoleStdOutput + Environment.NewLine + Environment.NewLine + AppConsoleStdError;
-                        AppMonitorEntries++;
+
+                        // Append to bounded ring buffer; AppMonitor change
+                        // notifications are throttled inside AppendMonitorLine.
+                        AppendMonitorLine(e.Data, isError: false);
                     }
                 };
                 process.ErrorDataReceived += (sender, e) =>
@@ -897,30 +1034,10 @@ namespace darts_hub.model
                     {
                         // Write to daily log file with smart log level detection (from error stream)
                         WriteToLogFile(e.Data, true);
-                        
-                        // Instead of hard reset, trim old lines to prevent memory issues
-                        // but keep output continuous during application.execution
-                        if (AppMonitorEntries >= MaxAppMonitorEntries * 2) // Allow double the limit before trimming
-                        {
-                            // Trim to keep most recent MaxAppMonitorEntries lines
-                            var outputLines = AppConsoleStdOutput.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-                            var errorLines = AppConsoleStdError.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-                            
-                            if (outputLines.Length > MaxAppMonitorEntries)
-                            {
-                                AppConsoleStdOutput = string.Join(Environment.NewLine, outputLines.Skip(outputLines.Length - MaxAppMonitorEntries));
-                            }
-                            if (errorLines.Length > MaxAppMonitorEntries)
-                            {
-                                AppConsoleStdError = string.Join(Environment.NewLine, errorLines.Skip(errorLines.Length - MaxAppMonitorEntries));
-                            }
-                            
-                            AppMonitorEntries = MaxAppMonitorEntries; // Reset to manageable number
-                        }
-                        
-                        AppConsoleStdError += e.Data + Environment.NewLine;
-                        AppMonitor = AppConsoleStdOutput + Environment.NewLine + Environment.NewLine + AppConsoleStdError;
-                        AppMonitorEntries++;
+
+                        // Append to bounded ring buffer; AppMonitor change
+                        // notifications are throttled inside AppendMonitorLine.
+                        AppendMonitorLine(e.Data, isError: true);
                     }
                 };
                 process.StartInfo.FileName = executable;

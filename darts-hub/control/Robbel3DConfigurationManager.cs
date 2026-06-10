@@ -22,12 +22,106 @@ namespace darts_hub.control
         };
         private const string ConfigsDirectory = "configs";
         private const string Robbel3DConfigFile = "robbel3d-configuration.json";
-        
+
+        // WLED 0.16.x removed the /edit HTTP file editor and changed the way the FS is exposed.
+        // From this version on we must use the JSON REST API (/json/cfg, /json/state) instead
+        // and download the existing config/presets through the plain static file endpoints
+        // (/cfg.json, /presets.json). See https://github.com/wled/WLED/issues/5542 for details.
+        private const int WledModernApiMajor = 0;
+        private const int WledModernApiMinor = 16;
+
+        // Cache for detected WLED versions per endpoint - avoids repeated /json/info calls
+        // during a single ApplyConfiguration run.
+        private static readonly Dictionary<string, Version?> _wledVersionCache =
+            new(StringComparer.OrdinalIgnoreCase);
+
         static Robbel3DConfigurationManager()
         {
             // Configure HTTP client for better WLED compatibility
             httpClient.DefaultRequestHeaders.Add("User-Agent", "Darts-Hub-Robbel3D/1.0");
             httpClient.DefaultRequestHeaders.Add("Accept", "application/json, text/html, */*");
+        }
+
+        /// <summary>
+        /// Reads the firmware version from /json/info and parses it into a <see cref="Version"/>.
+        /// Returns null when the device is unreachable or the version cannot be parsed.
+        /// Suffixes like "-b6" or "-rc1" are stripped before parsing.
+        /// </summary>
+        private static async Task<Version?> GetWledVersionAsync(string endpoint)
+        {
+            var key = endpoint.TrimEnd('/');
+            if (_wledVersionCache.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            Version? parsed = null;
+            try
+            {
+                var url = $"{key}/json/info";
+                using var response = await httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var info = JsonConvert.DeserializeObject<JObject>(content);
+                    var verToken = info?["ver"];
+                    var verString = verToken?.ToString();
+
+                    if (!string.IsNullOrWhiteSpace(verString))
+                    {
+                        var clean = verString.Trim();
+                        var dashIndex = clean.IndexOf('-');
+                        if (dashIndex > 0)
+                        {
+                            clean = clean.Substring(0, dashIndex);
+                        }
+
+                        if (Version.TryParse(clean, out var version))
+                        {
+                            parsed = version;
+                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] Detected WLED version '{verString}' at {endpoint}");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] Could not parse WLED version string '{verString}' at {endpoint}");
+                        }
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] /json/info returned {response.StatusCode} for {endpoint}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Failed to detect WLED version for {endpoint}: {ex.Message}");
+            }
+
+            _wledVersionCache[key] = parsed;
+            return parsed;
+        }
+
+        /// <summary>
+        /// Returns true when the device firmware is greater than or equal to WLED 0.16.0.
+        /// In that case the legacy /edit endpoints are no longer available and the
+        /// JSON REST API must be used to upload config and presets.
+        /// </summary>
+        private static async Task<bool> IsModernWledApiAsync(string endpoint)
+        {
+            var version = await GetWledVersionAsync(endpoint);
+            if (version == null)
+            {
+                // Be conservative: assume legacy when we can't determine the version,
+                // because legacy uploads have a fallback chain that also tries JSON paths.
+                return false;
+            }
+
+            if (version.Major > WledModernApiMajor)
+            {
+                return true;
+            }
+
+            return version.Major == WledModernApiMajor && version.Minor >= WledModernApiMinor;
         }
 
         /// <summary>
@@ -535,7 +629,11 @@ namespace darts_hub.control
         
         /// <summary>
         /// Uploads WLED configuration file to the device via complete file replacement
-        /// Uses dynamic config to preserve ALL WLED fields
+        /// Uses dynamic config to preserve ALL WLED fields.
+        /// 
+        /// WLED 0.16+ removed the /edit HTTP endpoint entirely, so for those firmwares the
+        /// JSON REST API (POST /json/cfg) is used. Older firmwares still get the legacy
+        /// /edit multipart upload + restart flow.
         /// </summary>
         private static async Task<bool> UploadWledConfigDynamic(dynamic? configRaw, string wledIpAddress)
         {
@@ -546,32 +644,41 @@ namespace darts_hub.control
                     System.Diagnostics.Debug.WriteLine("[Robbel3D] No WLED config to upload (configRaw is null)");
                     return false;
                 }
-                
+
                 var endpoint = wledIpAddress.StartsWith("http") ? wledIpAddress : $"http://{wledIpAddress}";
-                
+
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Starting complete WLED config file replacement to {endpoint} (using dynamic config)");
-                
+
                 // Step 1: Download existing config from controller
                 var existingConfig = await DownloadExistingWledConfig(endpoint);
-                
+
                 // Step 2: Build upload config: controller config as base, replace hw.led with local (incl. pin override)
                 var mergedConfig = BuildConfigWithLedOverride(configRaw, existingConfig);
-                
-                // Step 3: Delete existing config files (try all possible names and extensions)
+
+                // Step 3: Choose upload strategy based on firmware version
+                var useModernApi = await IsModernWledApiAsync(endpoint);
+
+                if (useModernApi)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED 0.16+ detected - uploading config via JSON API (POST /json/cfg)");
+                    return await UploadWledConfigViaJsonApi(endpoint, mergedConfig);
+                }
+
+                // Legacy path (< 0.16): delete existing file then upload via /edit multipart form
                 await DeleteWledFile(endpoint, "/cfg.json");       // Standard WLED config file
                 await DeleteWledFile(endpoint, "/cfg.jso");        // Controller might save as .jso
-                
+
                 // Step 4: Upload new config file with preserved controller settings and updated hw.led (use compact JSON format!)
                 var configJson = JsonConvert.SerializeObject(mergedConfig, Formatting.None);
                 var success = await UploadWledConfigFile(endpoint, "cfg.json", configJson);
-                
+
                 if (success)
                 {
                     System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED config file uploaded successfully, triggering restart...");
-                    
+
                     // Step 5: Trigger restart to apply config
                     await TriggerWledRestart(endpoint);
-                    
+
                     // Step 6: Wait for restart - longer wait for config changes
                     System.Diagnostics.Debug.WriteLine("[Robbel3D] Waiting for WLED restart after config upload...");
                     await Task.Delay(15000); // 15 seconds for config restart (longer than presets)
@@ -600,6 +707,78 @@ namespace darts_hub.control
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error in complete WLED config replacement: {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Uploads the full device config to a WLED 0.16+ controller via the JSON REST API.
+        /// WLED accepts the entire cfg.json payload via POST /json/cfg and persists it to LittleFS,
+        /// triggering a reboot when required fields change.
+        /// </summary>
+        private static async Task<bool> UploadWledConfigViaJsonApi(string endpoint, dynamic mergedConfig)
+        {
+            try
+            {
+                var configJson = JsonConvert.SerializeObject(mergedConfig, Formatting.None);
+                var url = $"{endpoint}/json/cfg";
+
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] POST {url} (size: {configJson.Length} chars)");
+
+                using var content = new StringContent(configJson, System.Text.Encoding.UTF8, "application/json");
+                using var response = await httpClient.PostAsync(url, content);
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] /json/cfg response: {response.StatusCode} - {Truncate(responseBody, 200)}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED 0.16+ config upload via JSON API failed");
+                    return false;
+                }
+
+                // WLED reboots automatically when network/hw settings change. Give it time and
+                // then verify the new config is present.
+                System.Diagnostics.Debug.WriteLine("[Robbel3D] Waiting for WLED to apply config (this can take ~15s if a reboot is triggered)...");
+                await Task.Delay(15000);
+
+                // Clear the version cache so any post-reboot detection picks up the fresh value.
+                _wledVersionCache.Remove(endpoint.TrimEnd('/'));
+
+                var verified = await VerifyWledFile(endpoint, "/cfg.json");
+                if (verified)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED 0.16+ config verified after upload");
+                    return true;
+                }
+
+                // Verification can fail right after a reboot if the device is still coming back online.
+                // Wait a bit longer and try once more before giving up.
+                System.Diagnostics.Debug.WriteLine("[Robbel3D] Initial verification failed, waiting another 10s for device to be reachable...");
+                await Task.Delay(10000);
+
+                verified = await VerifyWledFile(endpoint, "/cfg.json");
+                if (verified)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED 0.16+ config verified after extended wait");
+                    return true;
+                }
+
+                System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED 0.16+ config could not be verified after upload");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error uploading WLED config via JSON API: {ex.Message}");
+                return false;
+            }
+        }
+
+        private static string Truncate(string value, int max)
+        {
+            if (string.IsNullOrEmpty(value) || value.Length <= max)
+            {
+                return value ?? string.Empty;
+            }
+            return value.Substring(0, max) + "...";
         }
 
         private static dynamic BuildConfigWithLedOverride(dynamic newConfig, dynamic? existingConfig)
@@ -636,17 +815,21 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Downloads the existing WLED configuration from the controller
+        /// Downloads the existing WLED configuration from the controller.
+        /// WLED 0.16+ removed the /edit endpoint, so the static file is requested directly first
+        /// and the legacy /edit?download=... path is only used as a fallback for older firmware.
         /// </summary>
         private static async Task<dynamic?> DownloadExistingWledConfig(string endpoint)
         {
             try
             {
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Downloading existing WLED config from {endpoint}");
-                
-                // Try to download existing config file (check both .json and .jso)
+
+                // Try modern direct path first (works on all firmwares >= 0.13 that expose LittleFS files
+                // and is the ONLY working option on WLED 0.16+ where /edit was removed).
                 var downloadUrls = new[]
                 {
+                    $"{endpoint}/cfg.json",
                     $"{endpoint}/edit?download={Uri.EscapeDataString("/cfg.json")}"
                 };
 
@@ -655,12 +838,19 @@ namespace darts_hub.control
                     try
                     {
                         var response = await httpClient.GetAsync(url);
-                        
+
                         if (response.IsSuccessStatusCode)
                         {
                             var content = await response.Content.ReadAsStringAsync();
-                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] Downloaded existing config (size: {content.Length} chars)");
-                            
+                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] Downloaded existing config from {url} (size: {content.Length} chars)");
+
+                            // Some firmwares return an HTML error page with 200 OK - validate that we got JSON.
+                            if (!LooksLikeJson(content))
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Response from {url} is not JSON, skipping");
+                                continue;
+                            }
+
                             var existingConfig = JsonConvert.DeserializeObject(content);
                             System.Diagnostics.Debug.WriteLine("[Robbel3D] Successfully parsed existing WLED config");
                             return existingConfig;
@@ -672,7 +862,7 @@ namespace darts_hub.control
                         continue;
                     }
                 }
-                
+
                 System.Diagnostics.Debug.WriteLine("[Robbel3D] No existing config found to download");
                 return null;
             }
@@ -681,6 +871,22 @@ namespace darts_hub.control
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error downloading existing WLED config: {ex.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Checks whether a payload is plausibly JSON (used to guard against HTML error pages
+        /// that some WLED firmwares return with a 200 OK status code).
+        /// </summary>
+        private static bool LooksLikeJson(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return false;
+            }
+
+            var trimmed = content.TrimStart();
+            return trimmed.StartsWith("{", StringComparison.Ordinal)
+                || trimmed.StartsWith("[", StringComparison.Ordinal);
         }
 
         /// <summary>
@@ -1136,7 +1342,9 @@ namespace darts_hub.control
 
         /// <summary>
         /// Verifies that a file exists on WLED device and shows its content
-        /// Enhanced to check both .json and .jso extensions with detailed content preview
+        /// Enhanced to check both .json and .jso extensions with detailed content preview.
+        /// WLED 0.16+ removed the /edit endpoint, so the static file is requested directly first
+        /// and the legacy /edit?download=... URL is only tried as a fallback.
         /// </summary>
         private static async Task<bool> VerifyWledFile(string endpoint, string remotePath)
         {
@@ -1151,56 +1359,71 @@ namespace darts_hub.control
 
                 foreach (var path in pathsToTry)
                 {
-                    try
+                    // Modern direct path first, legacy /edit as fallback
+                    var verifyUrls = new[]
                     {
-                        var url = $"{endpoint}/edit?download={Uri.EscapeDataString(path)}";
-                        System.Diagnostics.Debug.WriteLine($"[Robbel3D] Verifying file at: {url}");
-                        
-                        var response = await httpClient.GetAsync(url);
-                        
-                        if (response.IsSuccessStatusCode)
+                        $"{endpoint}{(path.StartsWith("/") ? path : "/" + path)}",
+                        $"{endpoint}/edit?download={Uri.EscapeDataString(path)}"
+                    };
+
+                    foreach (var url in verifyUrls)
+                    {
+                        try
                         {
-                            var content = await response.Content.ReadAsStringAsync();
-                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] File {path} verified successfully (size: {content.Length} chars)");
-                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] Content preview (first 200 chars): {content.Substring(0, Math.Min(200, content.Length))}");
+                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] Verifying file at: {url}");
 
+                            var response = await httpClient.GetAsync(url);
 
-                            // Try to parse and log structure info
-                            try
+                            if (response.IsSuccessStatusCode)
                             {
-                                var jsonDoc = JsonConvert.DeserializeObject(content);
-                                System.Diagnostics.Debug.WriteLine($"[Robbel3D] File {path} contains valid JSON structure");
-                                
-                                // For cfg.json, check if it's actually our config
-                                if (path.Contains("cfg"))
+                                var content = await response.Content.ReadAsStringAsync();
+
+                                // Some firmwares respond with HTML pages on 200 OK - require JSON content
+                                if (!LooksLikeJson(content))
                                 {
-                                    dynamic config = jsonDoc;
-                                    if (config?.hw?.led?.total != null)
+                                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] Response from {url} is not JSON, trying next URL");
+                                    continue;
+                                }
+
+                                System.Diagnostics.Debug.WriteLine($"[Robbel3D] File {path} verified successfully (size: {content.Length} chars)");
+                                System.Diagnostics.Debug.WriteLine($"[Robbel3D] Content preview (first 200 chars): {content.Substring(0, Math.Min(200, content.Length))}");
+
+                                // Try to parse and log structure info
+                                try
+                                {
+                                    var jsonDoc = JsonConvert.DeserializeObject(content);
+                                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] File {path} contains valid JSON structure");
+
+                                    // For cfg.json, check if it's actually our config
+                                    if (path.Contains("cfg"))
                                     {
-                                        System.Diagnostics.Debug.WriteLine($"[Robbel3D] Config contains LED count: {config.hw.led.total}");
+                                        dynamic config = jsonDoc;
+                                        if (config?.hw?.led?.total != null)
+                                        {
+                                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] Config contains LED count: {config.hw.led.total}");
+                                        }
                                     }
                                 }
-                            }
-                            catch (Exception parseEx)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"[Robbel3D] File {path} contains non-JSON content or parsing error: {parseEx.Message}");
-                            }
-                            
+                                catch (Exception parseEx)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[Robbel3D] File {path} contains non-JSON content or parsing error: {parseEx.Message}");
+                                }
 
-                            return true;
+                                return true;
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[Robbel3D] File {path} not found at {url}: {response.StatusCode}");
+                            }
                         }
-                        else
+                        catch (Exception pathEx)
                         {
-                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] File {path} not found: {response.StatusCode}");
+                            System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error checking {url}: {pathEx.Message}");
+                            continue;
                         }
-                    }
-                    catch (Exception pathEx)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[Robbel3D] Error checking {path}: {pathEx.Message}");
-                        continue;
                     }
                 }
-                
+
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] File {remotePath} not found with any extension");
                 return false;
             }
@@ -1212,18 +1435,31 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Uploads WLED presets as a complete presets.json file replacement to the device
-        /// Enhanced to handle WLED controller limitations and provide better debugging
+        /// Uploads WLED presets as a complete presets.json file replacement to the device.
+        /// 
+        /// WLED 0.16+ removed the /edit endpoint, so on those firmwares the presets are
+        /// uploaded individually through the JSON state API (POST /json/state) - that path
+        /// is identical to what the upcoming WLED web UI does. Older firmwares keep the
+        /// proven /edit multipart upload + restart flow.
         /// </summary>
         private static async Task<bool> UploadWledPresetsAsFile(Dictionary<int, object> presets, string wledIpAddress)
         {
             try
             {
                 var endpoint = wledIpAddress.StartsWith("http") ? wledIpAddress : $"http://{wledIpAddress}";
-                
+
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Starting complete WLED presets file replacement to {endpoint}");
-                
-                // Step 1: Delete existing presets files (try all possible names and extensions)     
+
+                // Step 0: For WLED 0.16+ we cannot push presets.json directly (no /edit endpoint).
+                // Use the individual JSON-API upload, which is the only supported path on modern firmware.
+                var useModernApi = await IsModernWledApiAsync(endpoint);
+                if (useModernApi)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED 0.16+ detected - flashing presets individually via JSON API");
+                    return await UploadWledPresets(presets, wledIpAddress);
+                }
+
+                // Step 1: Delete existing presets files (try all possible names and extensions)
                 await DeleteWledFile(endpoint, "/presets.json");     // Standard WLED presets file
                 await DeleteWledFile(endpoint, "/presets.jso");      // Controller might save as .jso
                 await DeleteWledFile(endpoint, "/preset.json");      // Alternative name (without 's')
@@ -1411,16 +1647,19 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Shows a preview of uploaded presets by checking their names
+        /// Shows a preview of uploaded presets by checking their names.
+        /// WLED 0.16+ removed the /edit endpoint, so the direct static file path is queried first.
         /// </summary>
         private static async Task ShowPresetsPreview(string endpoint, Dictionary<int, object> originalPresets)
         {
             try
             {
                 // Try to read back the uploaded presets to show what was actually saved
-                // Check both .json and .jso extensions
+                // Modern direct paths first, legacy /edit paths as fallback
                 var urls = new[]
                 {
+                    $"{endpoint}/presets.json",
+                    $"{endpoint}/presets.jso",
                     $"{endpoint}/edit?download={Uri.EscapeDataString("/presets.json")}",
                     $"{endpoint}/edit?download={Uri.EscapeDataString("/presets.jso")}"
                 };
@@ -1699,17 +1938,30 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Resets WLED device to factory defaults (optional safety feature)
+        /// Resets WLED device to factory defaults (optional safety feature).
+        /// On WLED 0.16+ the /edit endpoint is gone, so the legacy DELETE calls are
+        /// silently no-ops and a restart is the only operation performed. The actual
+        /// reset on modern firmware happens implicitly during the following config upload
+        /// (which overwrites cfg.json) and is no longer required as a pre-step.
         /// </summary>
         public static async Task<bool> ResetWledDevice(string wledIpAddress)
         {
             try
             {
                 var endpoint = wledIpAddress.StartsWith("http") ? wledIpAddress : $"http://{wledIpAddress}";
-                
+
                 System.Diagnostics.Debug.WriteLine($"[Robbel3D] Resetting WLED device at {endpoint}");
-                
-                // Step 1: Delete config and presets files (all possible names and extensions)
+
+                var useModernApi = await IsModernWledApiAsync(endpoint);
+                if (useModernApi)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED 0.16+ detected - /edit-based delete is not available; restarting device only");
+                    await TriggerWledRestart(endpoint);
+                    System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED device restart triggered (factory reset must be done via UI on 0.16+)");
+                    return true;
+                }
+
+                // Legacy reset path: explicitly delete every known config/preset file via /edit
                 await DeleteWledFile(endpoint, "/cfg.json");         // Standard WLED config
                 await DeleteWledFile(endpoint, "/cfg.jso");          // Controller format
                 await DeleteWledFile(endpoint, "/presets.json");     // Standard WLED presets
@@ -1719,10 +1971,10 @@ namespace darts_hub.control
                 await DeleteWledFile(endpoint, "/config.json");      // Another alternative
                 await DeleteWledFile(endpoint, "/wled_config.json"); // Another alternative
                 await DeleteWledFile(endpoint, "/wled_presets.json");// Another alternative
-                
+
                 // Step 2: Trigger restart
                 await TriggerWledRestart(endpoint);
-                
+
                 System.Diagnostics.Debug.WriteLine("[Robbel3D] WLED device reset completed");
                 return true;
             }
