@@ -1,5 +1,5 @@
 ﻿
-## a2.0.1.7
+## a2.0.1.8
 ### BUGFIX
     - Fixed the Robbel3D one click setup for WLED preset upload. It should now work with WLED v16.0.0 and upload the presets to your WLED controller.
 
