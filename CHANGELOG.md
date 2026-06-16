@@ -1,13 +1,9 @@
 ﻿
-## a2.0.1.12
+## a2.0.1.13
 ### BUGFIX
     - Fixed the Robbel3D one click setup for WLED preset upload. It should now work with WLED v16.0.0 and upload the presets to your WLED controller.
-
-## b2.0.1.4
-### BUGFIX
     - Custom URL doesnt start
 
-## b2.0.1.3
 ### Darts-Caller
     - Support for the new Autodarts device-link authentication.
         - When darts-caller prints the "Connect darts-caller to your Autodarts account" prompt, darts-hub now opens a dedicated dialog with the link code, a direct browser button and a "copy link/code" button.
@@ -15,6 +11,9 @@
         - The dialog detects the successful "Connected to Autodarts" log line and closes itself automatically after 5 seconds.
         - The dialog is resizable so the instructions can be enlarged on small screens.
     - Autodarts email (`-U`) and password (`-P`) inputs are hidden everywhere (classic and new settings view, setup wizard, and Robbel3D one-click setup) because the new device-link flow replaces them. Existing values are kept but no longer required.
+### Darts-Awtrix
+    - Sneep Peek of Darts-Awtrix integration
+
 ### Fixes
     - Extension console output (e.g. darts-caller) is now decoded as UTF-8. Box-drawing characters, `✓`, `—`, `…` and similar symbols are no longer shown as `â”€`, `âœ"`, `â€¦`, `â€"`.
 ### Notifications

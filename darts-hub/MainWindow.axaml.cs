@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -510,7 +510,7 @@ namespace darts_hub
                 if (devices == null || devices.Count == 0)
                     return;
 
-                // Fire-and-forget � don't block startup
+                // Fire-and-forget – don't block startup
                 _ = Task.Run(async () => await control.WledShutdownService.ExecuteStartAllAsync(devices));
             }
             catch (Exception ex)
@@ -661,6 +661,15 @@ namespace darts_hub
 
         private async Task OnAppSelected(AppBase app)
         {
+            // Preview extensions are visible in the navigation as a "stay tuned" entry,
+            // but the settings page must not be opened for them. Instead, show a polished
+            // coming-soon dialog and keep the previous selection.
+            if (IsPreviewExtension(app))
+            {
+                await ShowPreviewExtensionDialog(app);
+                return;
+            }
+
             selectedApp = app;
 
             // Show settings mode if not already
@@ -669,10 +678,41 @@ namespace darts_hub
                 contentModeManager.ShowSettingsMode();
                 consoleManager.Stop();
             }
-            
+
             // Render app settings
             var appSettingsRenderer = new AppSettingsRenderer(this, configurator);
             await appSettingsRenderer.RenderAppSettings(app);
+        }
+
+        private static bool IsPreviewExtension(AppBase app)
+        {
+            if (app == null) return false;
+            var name = app.CustomName ?? app.Name ?? string.Empty;
+            return name.IndexOf("awtrix", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private async Task ShowPreviewExtensionDialog(AppBase app)
+        {
+            try
+            {
+                var title = !string.IsNullOrWhiteSpace(app?.CustomName) ? app.CustomName : (app?.Name ?? "Extension");
+                var icon = "🟦";
+                var teaser = "Darts-AWTRIX brings your darts to AWTRIX 3 LED matrix displays " +
+                             "(Ulanzi TC001 & co.) with live scores, animations and notifications. " +
+                             "We are putting the finishing touches on it — stay tuned for the next release!";
+
+                var dialog = new ComingSoonDialog(
+                    title: title,
+                    iconText: icon,
+                    teaser: teaser,
+                    helpUrl: app?.HelpUrl);
+
+                await dialog.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MainWindow] Failed to show coming-soon dialog: {ex.Message}");
+            }
         }
 
         private void RefreshCurrentAppSettings()
@@ -797,7 +837,7 @@ namespace darts_hub
                     var bullet = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
                     bullet.Children.Add(new TextBlock
                     {
-                        Text = "�",
+                        Text = "•",
                         FontSize = 14,
                         FontWeight = Avalonia.Media.FontWeight.Bold
                     });

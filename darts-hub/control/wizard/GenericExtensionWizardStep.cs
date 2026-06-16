@@ -74,6 +74,11 @@ namespace darts_hub.control.wizard
                     Description = "Set up external services and API connections";
                     IconName = "darts";
                     break;
+                case "awtrix":
+                    Title = "Configure AWTRIX Matrix Display";
+                    Description = "Set up AWTRIX 3 LED matrix endpoints, templates and effects";
+                    IconName = "darts";
+                    break;
                 default:
                     Title = $"Configure {extensionName}";
                     Description = $"Set up {extensionName} extension";
@@ -249,6 +254,7 @@ namespace darts_hub.control.wizard
                 "voice" => "🗣️",
                 "gif" => "🎬",
                 "extern" => "🔗",
+                "awtrix" => "🟦",
                 _ => "⚙️"
             };
         }
@@ -985,6 +991,13 @@ namespace darts_hub.control.wizard
     public class ExternConfigWizardStep : GenericExtensionWizardStep
     {
         public ExternConfigWizardStep() : base("extern", "https://raw.githubusercontent.com/lbormann/darts-extern/refs/heads/master/README.md")
+        {
+        }
+    }
+
+    public class AwtrixConfigWizardStep : GenericExtensionWizardStep
+    {
+        public AwtrixConfigWizardStep() : base("awtrix", "https://raw.githubusercontent.com/Peschi90/darts-awtrix/refs/heads/main/README.md")
         {
         }
     }

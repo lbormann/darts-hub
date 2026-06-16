@@ -1,0 +1,195 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="darts_hub.UI.ComingSoonDialog"
+        Width="620"
+        Height="640"
+        MinWidth="480"
+        MinHeight="520"
+        CanResize="True"
+        WindowStartupLocation="CenterOwner"
+        Title="Stay tuned"
+        Background="#FF1E1E1E">
+  <Border Padding="22" Background="#FF252526" CornerRadius="10">
+    <Grid RowDefinitions="Auto,*,Auto">
+
+      <!-- Header -->
+      <StackPanel Grid.Row="0" Spacing="6">
+        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+          <Border Width="44" Height="44"
+                  CornerRadius="8"
+                  Background="#33007ACC"
+                  BorderBrush="#FF007ACC"
+                  BorderThickness="1"
+                  VerticalAlignment="Center">
+            <TextBlock x:Name="IconText"
+                       Text="🟦"
+                       FontSize="22"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
+          </Border>
+          <StackPanel Spacing="2" VerticalAlignment="Center">
+            <TextBlock Text="STAY TUNED"
+                       Foreground="#FF9CDCFE"
+                       FontSize="11"
+                       FontWeight="Bold"
+                       LetterSpacing="2" />
+            <TextBlock x:Name="TitleText"
+                       Text="Extension"
+                       Foreground="White"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       TextWrapping="Wrap"
+                       TextTrimming="CharacterEllipsis" />
+          </StackPanel>
+        </StackPanel>
+        <TextBlock Text="This extension is already prepared inside darts-hub, but it is not yet available for configuration."
+                   Foreground="#FFBFBFBF"
+                   FontSize="12"
+                   TextWrapping="Wrap" />
+      </StackPanel>
+
+      <!-- Scrollable content -->
+      <ScrollViewer Grid.Row="1"
+                    VerticalScrollBarVisibility="Auto"
+                    HorizontalScrollBarVisibility="Disabled"
+                    Margin="0,14,0,0">
+        <StackPanel Spacing="14">
+
+          <!-- Teaser box -->
+          <Border Background="#33A85DFF"
+                  BorderBrush="#FFA85DFF"
+                  BorderThickness="1"
+                  CornerRadius="6"
+                  Padding="12">
+            <StackPanel Spacing="6">
+              <TextBlock Text="🚧 Coming Soon"
+                         Foreground="#FFD0B3FF"
+                         FontWeight="SemiBold"
+                         FontSize="13" />
+              <TextBlock x:Name="TeaserText"
+                         Text="This extension is being polished and will arrive in an upcoming release."
+                         Foreground="#FFDFDFDF"
+                         FontSize="13"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+
+          <!-- What to expect -->
+          <Border Background="#33007ACC"
+                  BorderBrush="#FF007ACC"
+                  BorderThickness="1"
+                  CornerRadius="6"
+                  Padding="12">
+            <StackPanel Spacing="8">
+              <TextBlock Text="What you can expect"
+                         Foreground="#FF9CDCFE"
+                         FontWeight="SemiBold"
+                         FontSize="13" />
+
+              <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                <TextBlock Text="✨"
+                           FontSize="13"
+                           VerticalAlignment="Top"
+                           Margin="0,1,0,0" />
+                <TextBlock Text="A guided setup wizard tailored to this extension."
+                           Foreground="#FFDFDFDF"
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           MaxWidth="480" />
+              </StackPanel>
+
+              <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                <TextBlock Text="⚙"
+                           FontSize="13"
+                           VerticalAlignment="Top"
+                           Margin="0,1,0,0" />
+                <TextBlock Text="Smart defaults so it works out-of-the-box for typical setups."
+                           Foreground="#FFDFDFDF"
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           MaxWidth="480" />
+              </StackPanel>
+
+              <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                <TextBlock Text="🔁"
+                           FontSize="13"
+                           VerticalAlignment="Top"
+                           Margin="0,1,0,0" />
+                <TextBlock Text="Seamless updates through the standard darts-hub update flow."
+                           Foreground="#FFDFDFDF"
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           MaxWidth="480" />
+              </StackPanel>
+
+              <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                <TextBlock Text="📦"
+                           FontSize="13"
+                           VerticalAlignment="Top"
+                           Margin="0,1,0,0" />
+                <TextBlock Text="The extension will be downloadable directly from inside darts-hub once released."
+                           Foreground="#FFDFDFDF"
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           MaxWidth="480" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <!-- Help URL box -->
+          <Border x:Name="HelpUrlPanel"
+                  IsVisible="False"
+                  Background="#332E8B57"
+                  BorderBrush="#FF2E8B57"
+                  BorderThickness="1"
+                  CornerRadius="6"
+                  Padding="12">
+            <StackPanel Spacing="6">
+              <TextBlock Text="Want a sneak peek?"
+                         Foreground="#FF7FE0A5"
+                         FontWeight="SemiBold"
+                         FontSize="13" />
+              <TextBlock Text="Follow the project on GitHub to track progress and get notified when the first release lands."
+                         Foreground="#FFDFDFDF"
+                         FontSize="12"
+                         TextWrapping="Wrap" />
+              <TextBlock x:Name="HelpUrlText"
+                         Foreground="#FF7FE0A5"
+                         FontSize="12"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- Footer -->
+      <StackPanel Grid.Row="2"
+                  Orientation="Horizontal"
+                  HorizontalAlignment="Right"
+                  Spacing="10"
+                  Margin="0,14,0,0">
+        <Button x:Name="OpenHelpButton"
+                Content="Open project page"
+                IsVisible="False"
+                Width="180" Height="34"
+                Background="#FF2E8B57"
+                Foreground="White"
+                BorderBrush="#FF3BBF72"
+                BorderThickness="1"
+                CornerRadius="6"
+                Click="OpenHelpButton_Click" />
+        <Button x:Name="GotItButton"
+                Content="Got it"
+                Width="110" Height="34"
+                Background="#FF2B2B2B"
+                Foreground="#FFE6E6E6"
+                BorderBrush="#FF464646"
+                BorderThickness="1"
+                CornerRadius="6"
+                Click="GotItButton_Click" />
+      </StackPanel>
+
+    </Grid>
+  </Border>
+</Window>

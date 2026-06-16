@@ -12,6 +12,7 @@ Apps managed by darts-hub:
 * [darts-extern](https://github.com/Peschi90/darts-extern)
 * [darts-wled](https://github.com/Peschi90/darts-wled)
 * [darts-pixelit](https://github.com/Peschi90/darts-pixelit)
+* [darts-awtrix](https://github.com/Peschi90/darts-awtrix)
 * [darts-gif](https://github.com/Peschi90/darts-gif)
 * [darts-voice](https://github.com/Peschi90/darts-voice)
 * [cam-loader](https://github.com/lbormann/cam-loader)

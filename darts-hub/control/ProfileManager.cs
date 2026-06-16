@@ -33,6 +33,7 @@ namespace darts_hub.control
         private string? dartsPixelitDownloadUrl;
         private string? dartsGifDownloadUrl;
         private string? dartsVoiceDownloadUrl;
+        private string? dartsAwtrixDownloadUrl;
         private string? camLoaderDownloadUrl;
         private string? virtualDartsZoomDownloadUrl;
         
@@ -482,7 +483,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/Peschi90/darts-caller/releases/download/***VERSION***/darts-caller-macx64",
                 MacArm64 = "https://github.com/Peschi90/darts-caller/releases/download/***VERSION***/darts-caller-mac"
             };
-            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("b3.0.1.10");
+            dartsCallerDownloadUrl = dartsCallerDownloadMap.GetDownloadUrlByOs("b3.0.1.11");
 
 
             var dartsExternDownloadMap = new DownloadMap
@@ -506,7 +507,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/Peschi90/darts-wled/releases/download/***VERSION***/darts-wled-mac64",
                 MacArm64 = "https://github.com/Peschi90/darts-wled/releases/download/***VERSION***/darts-wled-mac"
             };
-            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b2.0.1.4");
+            dartsWledDownloadUrl = dartsWledDownloadMap.GetDownloadUrlByOs("b2.0.1.5");
 
 
             var dartsPixelitDownloadMap = new DownloadMap
@@ -518,7 +519,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/Peschi90/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac",
                 MacArm64 = "https://github.com/Peschi90/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac"
             };
-            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("b2.0.1.4");
+            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("b2.0.1.5");
 
 
             var dartsGifDownloadMap = new DownloadMap
@@ -530,7 +531,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/Peschi90/darts-gif/releases/download/***VERSION***/darts-gif-mac64",
                 MacArm64 = "https://github.com/Peschi90/darts-gif/releases/download/***VERSION***/darts-gif-mac"
             };
-            dartsGifDownloadUrl = dartsGifDownloadMap.GetDownloadUrlByOs("b2.0.1.4");
+            dartsGifDownloadUrl = dartsGifDownloadMap.GetDownloadUrlByOs("b2.0.1.5");
 
 
             var dartsVoiceDownloadMap = new DownloadMap
@@ -543,6 +544,19 @@ namespace darts_hub.control
                 MacArm64 = "https://github.com/Peschi90/darts-voice/releases/download/***VERSION***/darts-voice-mac"
             };
             dartsVoiceDownloadUrl = dartsVoiceDownloadMap.GetDownloadUrlByOs("b2.0.0.1");
+
+
+            // darts-awtrix (preview / stay tuned - extension is fully prepared but the UI
+            // entry is intentionally locked until the first official release is published)
+            var dartsAwtrixDownloadMap = new DownloadMap
+            {
+                WindowsX64 = "https://github.com/Peschi90/darts-awtrix/releases/download/***VERSION***/darts-awtrix.exe",
+                LinuxX64 = "https://github.com/Peschi90/darts-awtrix/releases/download/***VERSION***/darts-awtrix",
+                LinuxArm64 = "https://github.com/Peschi90/darts-awtrix/releases/download/***VERSION***/darts-awtrix-arm64",
+                MacX64 = "https://github.com/Peschi90/darts-awtrix/releases/download/***VERSION***/darts-awtrix-mac",
+                MacArm64 = "https://github.com/Peschi90/darts-awtrix/releases/download/***VERSION***/darts-awtrix-mac"
+            };
+            dartsAwtrixDownloadUrl = dartsAwtrixDownloadMap.GetDownloadUrlByOs("b1.0.0.0");
 
 
             var camLoaderDownloadMap = new DownloadMap
@@ -936,6 +950,64 @@ namespace darts_hub.control
                     downloadsManifest: true
                     );
                 apps.Add(dartsVoice);
+            }
+
+            if (!string.IsNullOrEmpty(dartsAwtrixDownloadUrl))
+            {
+                var dartsAwtrixArguments = new List<Argument> {
+                        new(name: "CON", type: "string", required: false, nameHuman: "-CON / --connection", section: "Service"),
+                        new(name: "AEPS", type: "string", required: true, isMulti: true, nameHuman: "-AEPS / --awtrix_endpoints", section: "AWTRIX"),
+                        new(name: "TP", type: "path", required: true, nameHuman: "-TP / --templates_path", section: "AWTRIX"),
+                        new(name: "BRI", type: "int[0..255]", required: false, nameHuman: "-BRI / --effect_brightness", section: "Display Settings"),
+                        new(name: "ABRI", type: "bool", required: false, nameHuman: "-ABRI / --auto_brightness", section: "Display Settings", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
+                        new(name: "TEFF", type: "int[0..10]", required: false, nameHuman: "-TEFF / --transition_effect", section: "Display Settings"),
+                        new(name: "TSPEED", type: "int", required: false, nameHuman: "-TSPEED / --transition_speed", section: "Display Settings"),
+                        new(name: "TCOL", type: "string", required: false, nameHuman: "-TCOL / --text_color", section: "Display Settings"),
+                        new(name: "SSPEED", type: "int", required: false, nameHuman: "-SSPEED / --scroll_speed", section: "Display Settings"),
+                        new(name: "UPC", type: "int[0..1]", required: false, nameHuman: "-UPC / --uppercase", section: "Display Settings"),
+                        new(name: "DUR", type: "int", required: false, nameHuman: "-DUR / --notify_duration", section: "Display Settings"),
+                        new(name: "PWR", type: "int[0..1]", required: false, nameHuman: "-PWR / --matrix_power", section: "Display Settings"),
+                        new(name: "ATR", type: "int[0..1]", required: false, nameHuman: "-ATR / --auto_transition", section: "Display Settings"),
+                        new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "-HFO / --high_finish_on", section: "Game Events"),
+                        new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "-HF / --high_finish_effects", section: "Game Events"),
+                        new(name: "AS", type: "string", required: false, isMulti: true, nameHuman: "-AS / --app_start_effects", section: "Game Events"),
+                        new(name: "IDE", type: "string", required: false, isMulti: true, nameHuman: "-IDE / --idle_effects", section: "Game Events"),
+                        new(name: "GS", type: "string", required: false, isMulti: true, nameHuman: "-GS / --game_start_effects", section: "Game Events"),
+                        new(name: "MS", type: "string", required: false, isMulti: true, nameHuman: "-MS / --match_start_effects", section: "Game Events"),
+                        new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "-G / --game_won_effects", section: "Game Events"),
+                        new(name: "M", type: "string", required: false, isMulti: true, nameHuman: "-M / --match_won_effects", section: "Game Events"),
+                        new(name: "B", type: "string", required: false, isMulti: true, nameHuman: "-B / --busted_effects", section: "Game Events"),
+                        new(name: "PJ", type: "string", required: false, isMulti: true, nameHuman: "-PJ / --player_joined_effects", section: "Lobby Events"),
+                        new(name: "PL", type: "string", required: false, isMulti: true, nameHuman: "-PL / --player_left_effects", section: "Lobby Events"),
+                        new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
+                    };
+                for (int i = 0; i <= 180; i++)
+                {
+                    var score = i.ToString();
+                    Argument scoreArgument = new(name: "S" + score, type: "string", required: false, isMulti: true, nameHuman: "-S" + score + " / --score_" + score + "_effects", section: "Score Effects");
+                    dartsAwtrixArguments.Add(scoreArgument);
+                }
+                for (int i = 1; i <= 12; i++)
+                {
+                    var areaNumber = i.ToString();
+                    Argument areaArgument = new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "-A" + areaNumber + " / --score_area_" + areaNumber + "_effects", section: "Area Effects");
+                    dartsAwtrixArguments.Add(areaArgument);
+                }
+
+                AppDownloadable dartsAwtrix =
+                new(
+                    downloadUrl: dartsAwtrixDownloadUrl,
+                    changelogUrl: "https://raw.githubusercontent.com/Peschi90/darts-awtrix/main/CHANGELOG.md",
+                    name: "darts-awtrix",
+                    helpUrl: "https://github.com/Peschi90/darts-awtrix",
+                    descriptionShort: "Controls AWTRIX 3 LED matrix displays by autodarts-events",
+                    configuration: new(
+                        prefix: "-",
+                        delimitter: " ",
+                        arguments: dartsAwtrixArguments),
+                    downloadsManifest: true
+                    );
+                apps.Add(dartsAwtrix);
             }
 
             if (!string.IsNullOrEmpty(camLoaderDownloadUrl))
@@ -1377,6 +1449,76 @@ namespace darts_hub.control
                     // Add more migs..
                 }
             }
+            var dartsAwtrix = AppsDownloadable.Find(a => a.Name == "darts-awtrix");
+            if (dartsAwtrix == null)
+            {
+                // App was added later than the user's first install - inject it now so the
+                // (preview) entry shows up in existing profiles.
+                if (!string.IsNullOrEmpty(dartsAwtrixDownloadUrl))
+                {
+                    var dartsAwtrixArguments = new List<Argument> {
+                        new(name: "CON", type: "string", required: false, nameHuman: "-CON / --connection", section: "Service"),
+                        new(name: "AEPS", type: "string", required: true, isMulti: true, nameHuman: "-AEPS / --awtrix_endpoints", section: "AWTRIX"),
+                        new(name: "TP", type: "path", required: true, nameHuman: "-TP / --templates_path", section: "AWTRIX"),
+                        new(name: "BRI", type: "int[0..255]", required: false, nameHuman: "-BRI / --effect_brightness", section: "Display Settings"),
+                        new(name: "ABRI", type: "bool", required: false, nameHuman: "-ABRI / --auto_brightness", section: "Display Settings", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" }),
+                        new(name: "TEFF", type: "int[0..10]", required: false, nameHuman: "-TEFF / --transition_effect", section: "Display Settings"),
+                        new(name: "TSPEED", type: "int", required: false, nameHuman: "-TSPEED / --transition_speed", section: "Display Settings"),
+                        new(name: "TCOL", type: "string", required: false, nameHuman: "-TCOL / --text_color", section: "Display Settings"),
+                        new(name: "SSPEED", type: "int", required: false, nameHuman: "-SSPEED / --scroll_speed", section: "Display Settings"),
+                        new(name: "UPC", type: "int[0..1]", required: false, nameHuman: "-UPC / --uppercase", section: "Display Settings"),
+                        new(name: "DUR", type: "int", required: false, nameHuman: "-DUR / --notify_duration", section: "Display Settings"),
+                        new(name: "PWR", type: "int[0..1]", required: false, nameHuman: "-PWR / --matrix_power", section: "Display Settings"),
+                        new(name: "ATR", type: "int[0..1]", required: false, nameHuman: "-ATR / --auto_transition", section: "Display Settings"),
+                        new(name: "HFO", type: "int[2..170]", required: false, nameHuman: "-HFO / --high_finish_on", section: "Game Events"),
+                        new(name: "HF", type: "string", required: false, isMulti: true, nameHuman: "-HF / --high_finish_effects", section: "Game Events"),
+                        new(name: "AS", type: "string", required: false, isMulti: true, nameHuman: "-AS / --app_start_effects", section: "Game Events"),
+                        new(name: "IDE", type: "string", required: false, isMulti: true, nameHuman: "-IDE / --idle_effects", section: "Game Events"),
+                        new(name: "GS", type: "string", required: false, isMulti: true, nameHuman: "-GS / --game_start_effects", section: "Game Events"),
+                        new(name: "MS", type: "string", required: false, isMulti: true, nameHuman: "-MS / --match_start_effects", section: "Game Events"),
+                        new(name: "G", type: "string", required: false, isMulti: true, nameHuman: "-G / --game_won_effects", section: "Game Events"),
+                        new(name: "M", type: "string", required: false, isMulti: true, nameHuman: "-M / --match_won_effects", section: "Game Events"),
+                        new(name: "B", type: "string", required: false, isMulti: true, nameHuman: "-B / --busted_effects", section: "Game Events"),
+                        new(name: "PJ", type: "string", required: false, isMulti: true, nameHuman: "-PJ / --player_joined_effects", section: "Lobby Events"),
+                        new(name: "PL", type: "string", required: false, isMulti: true, nameHuman: "-PL / --player_left_effects", section: "Lobby Events"),
+                        new(name: "DEB", type: "bool", required: false, nameHuman: "-DEB / --debug", section: "Service", valueMapping: new Dictionary<string, string> { ["True"] = "1", ["False"] = "0" })
+                    };
+                    for (int i = 0; i <= 180; i++)
+                    {
+                        var score = i.ToString();
+                        dartsAwtrixArguments.Add(new(name: "S" + score, type: "string", required: false, isMulti: true, nameHuman: "-S" + score + " / --score_" + score + "_effects", section: "Score Effects"));
+                    }
+                    for (int i = 1; i <= 12; i++)
+                    {
+                        var areaNumber = i.ToString();
+                        dartsAwtrixArguments.Add(new(name: "A" + areaNumber, type: "string", required: false, isMulti: true, nameHuman: "-A" + areaNumber + " / --score_area_" + areaNumber + "_effects", section: "Area Effects"));
+                    }
+
+                    var dartsAwtrixNew = new AppDownloadable(
+                        downloadUrl: dartsAwtrixDownloadUrl,
+                        changelogUrl: "https://raw.githubusercontent.com/Peschi90/darts-awtrix/main/CHANGELOG.md",
+                        name: "darts-awtrix",
+                        helpUrl: "https://github.com/Peschi90/darts-awtrix",
+                        descriptionShort: "Controls AWTRIX 3 LED matrix displays by autodarts-events",
+                        configuration: new(
+                            prefix: "-",
+                            delimitter: " ",
+                            arguments: dartsAwtrixArguments),
+                        downloadsManifest: true
+                    );
+                    AppsDownloadable.Add(dartsAwtrixNew);
+                    AppsAll.Add(dartsAwtrixNew);
+                }
+            }
+            else
+            {
+                if (dartsAwtrixDownloadUrl != null)
+                {
+                    dartsAwtrix.DownloadUrl = dartsAwtrixDownloadUrl;
+                    dartsAwtrix.DownloadsManifest = true;
+                    // Add more migs..
+                }
+            }
             var dartsExtern = AppsDownloadable.Find(a => a.Name == "darts-extern");
             if (dartsExtern != null)
             {
@@ -1406,6 +1548,7 @@ namespace darts_hub.control
             var dartsPixelit = AppsDownloadable.Find(a => a.Name == "darts-pixelit") != null;
             var dartsGif = AppsDownloadable.Find(a => a.Name == "darts-gif") != null;
             var dartsVoice = AppsDownloadable.Find(a => a.Name == "darts-voice") != null;
+            var dartsAwtrix = AppsDownloadable.Find(a => a.Name == "darts-awtrix") != null;
             var camLoader = AppsDownloadable.Find(a => a.Name == "cam-loader") != null;
             var virtualDartsZoom = AppsDownloadable.Find(a => a.Name == "virtual-darts-zoom") != null;
 
@@ -1432,6 +1575,7 @@ namespace darts_hub.control
                 if (dartsPixelit) p1Apps.Add("darts-pixelit", new ProfileState());
                 if (dartsGif) p1Apps.Add("darts-gif", new ProfileState());
                 if (dartsVoice) p1Apps.Add("darts-voice", new ProfileState());
+                if (dartsAwtrix) p1Apps.Add("darts-awtrix", new ProfileState());
                 if (camLoader) p1Apps.Add("cam-loader", new ProfileState());
                 if (custom1) p1Apps.Add("custom-1", new ProfileState());
                 if (custom2) p1Apps.Add("custom-2", new ProfileState());
@@ -1456,6 +1600,7 @@ namespace darts_hub.control
                 if (dartsPixelit) p2Apps.Add("darts-pixelit", new ProfileState());
                 if (dartsGif) p2Apps.Add("darts-gif", new ProfileState());
                 if (dartsVoice) p2Apps.Add("darts-voice", new ProfileState());
+                if (dartsAwtrix) p2Apps.Add("darts-awtrix", new ProfileState());
                 if (dartsExtern) p2Apps.Add("darts-extern", new ProfileState(true, true, runtimeArguments: p2Args)); // extern stays required
                 if (virtualDartsZoom) p2Apps.Add("virtual-darts-zoom", new ProfileState());
                 if (camLoader) p2Apps.Add("cam-loader", new ProfileState());
@@ -1484,6 +1629,7 @@ namespace darts_hub.control
                 if (dartsPixelit) p3Apps.Add("darts-pixelit", new ProfileState());
                 if (dartsGif) p3Apps.Add("darts-gif", new ProfileState());
                 if (dartsVoice) p3Apps.Add("darts-voice", new ProfileState());
+                if (dartsAwtrix) p3Apps.Add("darts-awtrix", new ProfileState());
                 if (dartsExtern) p3Apps.Add("darts-extern", new ProfileState(true, true, runtimeArguments: p3Args)); // extern stays required
                 if (virtualDartsZoom) p3Apps.Add("virtual-darts-zoom", new ProfileState());
                 if (camLoader) p3Apps.Add("cam-loader", new ProfileState());
@@ -1512,6 +1658,7 @@ namespace darts_hub.control
                 if (dartsPixelit) p4Apps.Add("darts-pixelit", new ProfileState());
                 if (dartsGif) p4Apps.Add("darts-gif", new ProfileState());
                 if (dartsVoice) p4Apps.Add("darts-voice", new ProfileState());
+                if (dartsAwtrix) p4Apps.Add("darts-awtrix", new ProfileState());
                 if (dartsExtern) p4Apps.Add("darts-extern", new ProfileState(true, true, runtimeArguments: p4Args)); // extern stays required
                 if (virtualDartsZoom) p4Apps.Add("virtual-darts-zoom", new ProfileState());
                 if (camLoader) p4Apps.Add("cam-loader", new ProfileState());
@@ -1537,7 +1684,24 @@ namespace darts_hub.control
 
         private void MigrateProfiles()
         {
-            // Add more migs..
+            // Ensure darts-awtrix appears in every existing profile that already has
+            // any darts-* extension. The extension is shipped as a preview / "stay
+            // tuned" entry but should be visible alongside the other extensions so
+            // users know it is coming.
+            var dartsAwtrixApp = AppsDownloadable.Find(a => a.Name == "darts-awtrix");
+            if (dartsAwtrixApp == null) return;
+
+            foreach (var profile in Profiles)
+            {
+                if (profile.Apps.ContainsKey("darts-awtrix")) continue;
+
+                var hasAnyDartsApp = profile.Apps.Keys.Any(k => k.StartsWith("darts-", StringComparison.OrdinalIgnoreCase));
+                if (!hasAnyDartsApp) continue;
+
+                var state = new ProfileState();
+                state.SetApp(dartsAwtrixApp);
+                profile.Apps.Add("darts-awtrix", state);
+            }
         }
 
 

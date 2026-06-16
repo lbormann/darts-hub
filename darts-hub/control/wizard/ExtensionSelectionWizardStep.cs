@@ -1,7 +1,11 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Layout;
 using Avalonia.Media;
 using darts_hub.model;
+using darts_hub.UI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -28,6 +32,22 @@ namespace darts_hub.control.wizard
         // Property to store selected extensions for other wizard steps
         public HashSet<string> SelectedExtensions { get; private set; }
 
+        /// <summary>
+        /// Extensions that are shipped but not yet released. They show up in the list
+        /// as a "Stay tuned" preview card and cannot be selected for configuration.
+        /// </summary>
+        private static readonly HashSet<string> PreviewExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "awtrix"
+        };
+
+        private static bool IsPreviewExtensionKey(string extensionKey)
+        {
+            if (string.IsNullOrEmpty(extensionKey)) return false;
+            return PreviewExtensions.Any(p => extensionKey.IndexOf(p, StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
+
         public void Initialize(Profile profile, ProfileManager profileManager, Configurator configurator)
         {
             this.profile = profile;
@@ -44,7 +64,7 @@ namespace darts_hub.control.wizard
                 {
                     var app = appState.App;
                     var appName = app.CustomName.ToLower();
-                    
+
                     // Add configurable extensions (excluding caller which is mandatory)
                     if (app.IsConfigurable() && !appName.Contains("caller"))
                     {
@@ -209,9 +229,15 @@ namespace darts_hub.control.wizard
 
         private Control CreateExtensionCard(string extensionKey, AppBase app)
         {
+            bool isPreview = IsPreviewExtensionKey(extensionKey);
+
             var card = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(51, 70, 70, 70)),
+                Background = isPreview
+                    ? new SolidColorBrush(Color.FromArgb(60, 100, 149, 237))
+                    : new SolidColorBrush(Color.FromArgb(51, 70, 70, 70)),
+                BorderBrush = isPreview ? new SolidColorBrush(Color.FromRgb(100, 149, 237)) : null,
+                BorderThickness = isPreview ? new Avalonia.Thickness(1) : new Avalonia.Thickness(0),
                 CornerRadius = new Avalonia.CornerRadius(8),
                 Padding = new Avalonia.Thickness(15)
             };
@@ -230,8 +256,9 @@ namespace darts_hub.control.wizard
                 Content = GetExtensionDisplayName(extensionKey, app), // Add the extension name here
                 FontSize = 14,
                 FontWeight = FontWeight.Bold,
-                Foreground = Brushes.White,
-                IsChecked = GetDefaultSelection(extensionKey)
+                Foreground = isPreview ? new SolidColorBrush(Color.FromRgb(200, 215, 245)) : Brushes.White,
+                IsChecked = !isPreview && GetDefaultSelection(extensionKey),
+                IsEnabled = !isPreview
             };
 
             checkBox.Checked += (s, e) => UpdateSelection();
@@ -248,6 +275,24 @@ namespace darts_hub.control.wizard
 
             headerPanel.Children.Add(checkBox);
 
+            if (isPreview)
+            {
+                headerPanel.Children.Add(new Border
+                {
+                    Background = new SolidColorBrush(Color.FromRgb(100, 149, 237)),
+                    CornerRadius = new Avalonia.CornerRadius(10),
+                    Padding = new Avalonia.Thickness(10, 3),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Child = new TextBlock
+                    {
+                        Text = "STAY TUNED",
+                        FontSize = 10,
+                        FontWeight = FontWeight.Bold,
+                        Foreground = Brushes.White
+                    }
+                });
+            }
+
             panel.Children.Add(headerPanel);
 
             // Description
@@ -260,21 +305,68 @@ namespace darts_hub.control.wizard
                 TextWrapping = TextWrapping.Wrap
             });
 
-            // Configuration count
-            var configCount = app.Configuration?.Arguments?.Count(a => !a.IsRuntimeArgument) ?? 0;
-            if (configCount > 0)
+            if (isPreview)
             {
-                panel.Children.Add(new TextBlock
+                var previewHint = new TextBlock
                 {
-                    Text = $"📝 {configCount} configuration options available",
+                    Text = "🚧 This extension is being polished — coming soon! Tap the card to learn more.",
                     FontSize = 11,
-                    Foreground = new SolidColorBrush(Color.FromRgb(153, 153, 153)),
-                    FontStyle = FontStyle.Italic
-                });
+                    Foreground = new SolidColorBrush(Color.FromRgb(170, 195, 240)),
+                    FontStyle = FontStyle.Italic,
+                    TextWrapping = TextWrapping.Wrap
+                };
+                panel.Children.Add(previewHint);
+
+                card.Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand);
+                card.PointerPressed += async (s, e) =>
+                {
+                    await ShowComingSoonDialog(extensionKey, app);
+                };
+            }
+            else
+            {
+                // Configuration count (only meaningful for selectable extensions)
+                var configCount = app.Configuration?.Arguments?.Count(a => !a.IsRuntimeArgument) ?? 0;
+                if (configCount > 0)
+                {
+                    panel.Children.Add(new TextBlock
+                    {
+                        Text = $"📝 {configCount} configuration options available",
+                        FontSize = 11,
+                        Foreground = new SolidColorBrush(Color.FromRgb(153, 153, 153)),
+                        FontStyle = FontStyle.Italic
+                    });
+                }
             }
 
             card.Child = panel;
             return card;
+        }
+
+        private async Task ShowComingSoonDialog(string extensionKey, AppBase app)
+        {
+            try
+            {
+                var dialog = new ComingSoonDialog(
+                    title: GetExtensionDisplayName(extensionKey, app),
+                    iconText: GetExtensionIcon(extensionKey),
+                    teaser: GetExtensionDescription(extensionKey),
+                    helpUrl: app.HelpUrl);
+
+                var ownerWindow = (Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+                if (ownerWindow != null)
+                {
+                    await dialog.ShowDialog(ownerWindow);
+                }
+                else
+                {
+                    dialog.Show();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ExtensionSelection] Failed to show coming-soon dialog: {ex.Message}");
+            }
         }
 
         private bool GetDefaultSelection(string extensionKey)
@@ -297,6 +389,7 @@ namespace darts_hub.control.wizard
                 var key when key.Contains("voice") => "🎯",
                 var key when key.Contains("gif") => "🎬",
                 var key when key.Contains("extern") => "🔧",
+                var key when key.Contains("awtrix") => "🟦",
                 _ => "🔧"
             };
         }
@@ -310,6 +403,7 @@ namespace darts_hub.control.wizard
                 var key when key.Contains("voice") => "Controle your Autodarts with Voice commands",
                 var key when key.Contains("gif") => "Display animated GIFs and custom visuals during dart games for entertainment.",
                 var key when key.Contains("extern") => "Integrate with external services and APIs for extended functionality.",
+                var key when key.Contains("awtrix") => "Bring your darts to AWTRIX 3 LED matrix displays (Ulanzi TC001 & co.) with scores, animations and notifications.",
                 _ => "Additional functionality and customization options for your dart setup."
             };
         }
@@ -324,6 +418,7 @@ namespace darts_hub.control.wizard
                 var key when key.Contains("voice") => "Darts-Voice",
                 var key when key.Contains("gif") => "Darts-GIF Display & Media",
                 var key when key.Contains("extern") => "External Integrations",
+                var key when key.Contains("awtrix") => "Darts-AWTRIX Matrix Display",
                 _ => null
             };
 

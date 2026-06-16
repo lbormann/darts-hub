@@ -246,6 +246,57 @@
         }
       }
     },
+    "darts-awtrix": {
+      "displayName": "Darts-AWTRIX Matrix Display",
+      "icon": "🟦",
+      "description": "Controls AWTRIX 3 LED matrix displays (e.g. Ulanzi TC001) with autodarts game events",
+      "primaryArguments": [
+        "AEPS",
+        "TP",
+        "BRI",
+        "AS",
+        "IDE",
+        "G",
+        "M"
+      ],
+      "sections": {
+        "Connection Settings": {
+          "priority": 1,
+          "expanded": true,
+          "arguments": ["CON", "AEPS", "TP"]
+        },
+        "Display Settings": {
+          "priority": 2,
+          "expanded": true,
+          "arguments": ["BRI", "ABRI", "TEFF", "TSPEED", "TCOL", "SSPEED", "UPC", "DUR", "PWR", "ATR"]
+        },
+        "Game Events": {
+          "priority": 3,
+          "expanded": true,
+          "arguments": ["AS", "IDE", "GS", "MS", "G", "M", "B", "HFO", "HF"]
+        },
+        "Lobby Events": {
+          "priority": 4,
+          "expanded": false,
+          "arguments": ["PJ", "PL"]
+        },
+        "Score Effects": {
+          "priority": 5,
+          "expanded": false,
+          "arguments": ["S0", "S1", "S2", "S3", "S4", "S5", "S10", "S15", "S20", "S25", "S30", "S40", "S50", "S60", "S80", "S100", "S120", "S140", "S160", "S180"]
+        },
+        "Area Effects": {
+          "priority": 6,
+          "expanded": false,
+          "arguments": ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12"]
+        },
+        "Advanced": {
+          "priority": 7,
+          "expanded": false,
+          "arguments": ["DEB"]
+        }
+      }
+    },
     "darts-extern": {
       "displayName": "External Integration",
       "icon": "🔗",
@@ -296,6 +347,7 @@
     "CON": "localhost:8079",
     "WEPS": "192.168.1.100",
     "PEPS": "192.168.1.100",
+    "AEPS": "192.168.1.100",
     "BRI": "255",
     "brightness": "255",
     "V": "1",
@@ -330,6 +382,13 @@
     "BSS": "0.0",
     "WEB": "0",
     "WEBP": "8079",
+    "ABRI": "False",
+    "TEFF": "1",
+    "TSPEED": "400",
+    "UPC": "0",
+    "DUR": "0",
+    "PWR": "1",
+    "ATR": "0",
     "extern_platform": "lidarts"
   }
 }
