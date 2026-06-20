@@ -180,23 +180,114 @@ namespace darts_hub.control
         };
 
         /// <summary>
-        /// Resolves the path to the wled_data.json file
+        /// Resolves the path to the wled_data.json file.
+        ///
+        /// IMPORTANT: The install logic (AppDownloadable.GeneratePaths) places darts-wled under
+        /// <see cref="Helper.GetAppBasePath"/>. We must therefore use the SAME base path here,
+        /// otherwise the file is unreachable on Linux/macOS (single-file publish, .app bundles,
+        /// launching from a different working directory, etc.) where Assembly.Location is empty
+        /// and the working directory does not match the install location.
         /// </summary>
         private static string? ResolveWledDataFilePath()
         {
-            var executableDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ??
-                                     Directory.GetCurrentDirectory();
+            var attempted = new List<string>();
 
-            var dataFilePath = Path.Combine(executableDirectory, "darts-wled", "wled_data.json");
-            if (File.Exists(dataFilePath))
-                return dataFilePath;
+            foreach (var baseDirectory in EnumerateCandidateBaseDirectories())
+            {
+                if (string.IsNullOrWhiteSpace(baseDirectory))
+                    continue;
 
-            var fallbackPath = Path.Combine("darts-wled", "wled_data.json");
-            if (File.Exists(fallbackPath))
-                return fallbackPath;
+                string candidate;
+                try
+                {
+                    candidate = Path.Combine(baseDirectory, "darts-wled", "wled_data.json");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[WLED] Skipped base '{baseDirectory}': {ex.Message}");
+                    continue;
+                }
 
-            System.Diagnostics.Debug.WriteLine($"WLED data file not found at: {dataFilePath} or {fallbackPath}");
+                attempted.Add(candidate);
+
+                try
+                {
+                    if (File.Exists(candidate))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[WLED] wled_data.json resolved at: {candidate}");
+                        return candidate;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[WLED] File.Exists check failed for '{candidate}': {ex.Message}");
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine(
+                "[WLED] wled_data.json not found. Searched paths:" + Environment.NewLine +
+                string.Join(Environment.NewLine, attempted));
             return null;
+        }
+
+        /// <summary>
+        /// Returns candidate base directories to search for the darts-wled folder, in
+        /// descending order of reliability. The first entry intentionally mirrors the
+        /// install path used by <see cref="model.AppDownloadable"/> so the read path
+        /// is always aligned with the write path across Windows, Linux and macOS.
+        /// </summary>
+        private static IEnumerable<string?> EnumerateCandidateBaseDirectories()
+        {
+            // 1) Same base used by the installer (authoritative on all platforms).
+            string? appBasePath = null;
+            try { appBasePath = Helper.GetAppBasePath(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[WLED] Helper.GetAppBasePath failed: {ex.Message}"); }
+            yield return appBasePath;
+
+            // 2) Process executable directory - reliable on .NET 6+ incl. single-file publish.
+            string? processDir = null;
+            try
+            {
+                var processPath = Environment.ProcessPath;
+                if (!string.IsNullOrWhiteSpace(processPath))
+                    processDir = Path.GetDirectoryName(processPath);
+            }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[WLED] Environment.ProcessPath failed: {ex.Message}"); }
+            yield return processDir;
+
+            // 3) Main module file name - covers macOS .app bundles where ProcessPath may differ.
+            string? mainModuleDir = null;
+            try
+            {
+                var mainModuleFile = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+                if (!string.IsNullOrWhiteSpace(mainModuleFile))
+                    mainModuleDir = Path.GetDirectoryName(mainModuleFile);
+            }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[WLED] MainModule.FileName failed: {ex.Message}"); }
+            yield return mainModuleDir;
+
+            // 4) AppContext.BaseDirectory - canonical "where am I installed" answer.
+            string? appContextBase = null;
+            try { appContextBase = AppContext.BaseDirectory; }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[WLED] AppContext.BaseDirectory failed: {ex.Message}"); }
+            yield return appContextBase;
+
+            // 5) Assembly location - works for non-bundled framework-dependent deployments.
+            string? assemblyDir = null;
+            try
+            {
+                var location = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                if (!string.IsNullOrWhiteSpace(location))
+                    assemblyDir = Path.GetDirectoryName(location);
+            }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[WLED] Assembly.Location failed: {ex.Message}"); }
+            yield return assemblyDir;
+
+            // 6) Last resort: current working directory (may differ from install location).
+            string? currentDir = null;
+            try { currentDir = Directory.GetCurrentDirectory(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[WLED] Directory.GetCurrentDirectory failed: {ex.Message}"); }
+            yield return currentDir;
         }
 
         /// <summary>

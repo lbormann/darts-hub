@@ -1,4 +1,8 @@
 ﻿
+## v2.0.2.1
+### Bugfix
+    - Fixed problem where wled presets where not loaded in settings screen. 
+
 ## v2.0.2.0
 ### BUGFIX
     - Fixed the Robbel3D one click setup for WLED preset upload. It should now work with WLED v16.0.0 and upload the presets to your WLED controller.
