@@ -1,11 +1,14 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using darts_hub.model;
+using Microsoft.Win32;
 
 namespace darts_hub.control
 {
@@ -126,7 +129,7 @@ namespace darts_hub.control
                 return new LicenseResult { Success = false, Valid = false, Message = "No license key configured." };
             }
 
-            var hardwareId = GetHardwareId();
+            var hardwareId = GetOrCreateHardwareId();
             Debug.WriteLine($"[LicenseManager] Validating license key: {StoredLicenseKey}");
             Debug.WriteLine($"[LicenseManager] Hardware ID: {hardwareId}");
 
@@ -161,17 +164,58 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Generates a deterministic hardware ID for the current machine.
+        /// Returns the hardware ID currently bound to this installation.
+        /// If no ID is cached yet in <see cref="AppConfiguration.HardwareId"/>, a new one is
+        /// generated from stable per-machine sources and persisted, so subsequent application
+        /// or PC restarts always yield the same value.
         /// </summary>
+        public string GetOrCreateHardwareId()
+        {
+            var cached = configurator.Settings.HardwareId;
+            if (!string.IsNullOrWhiteSpace(cached))
+                return cached;
+
+            var generated = GetHardwareId();
+            configurator.Settings.HardwareId = generated;
+
+            try
+            {
+                configurator.SaveSettings();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LicenseManager] Failed to persist hardware ID: {ex.Message}");
+            }
+
+            return generated;
+        }
+
+        /// <summary>
+        /// Generates a deterministic hardware ID for the current machine using stable,
+        /// platform-specific identifiers (Windows MachineGuid, Linux /etc/machine-id,
+        /// macOS IOPlatformUUID). Falls back to a less-stable identifier only when
+        /// none of those sources are available.
+        /// </summary>
+        /// <remarks>
+        /// The returned value is a lowercase SHA-256 hex string (64 chars) to preserve
+        /// the exact format previously sent to the license server.
+        /// </remarks>
         public static string GetHardwareId()
         {
             try
             {
-                var machineName = Environment.MachineName;
-                var userName = Environment.UserName;
-                var osVersion = Environment.OSVersion.ToString();
+                var raw = TryGetStableMachineIdentifier();
 
-                var raw = $"{machineName}|{userName}|{osVersion}";
+                if (string.IsNullOrWhiteSpace(raw))
+                {
+                    // Last-resort fallback. We deliberately exclude OSVersion / UserName here,
+                    // because both change without any hardware change and would cause the
+                    // license server to register a new "device" on every Windows update or
+                    // when the app is started under a different user (e.g. via UAC elevation
+                    // or a scheduled task).
+                    raw = "machine:" + Environment.MachineName;
+                }
+
                 using var sha = SHA256.Create();
                 var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(raw));
                 return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
@@ -180,6 +224,130 @@ namespace darts_hub.control
             {
                 Debug.WriteLine($"[LicenseManager] Failed to generate hardware ID: {ex.Message}");
                 return "unknown-hardware-id";
+            }
+        }
+
+        private static string? TryGetStableMachineIdentifier()
+        {
+            try
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    var winId = TryReadWindowsMachineGuid();
+                    if (!string.IsNullOrWhiteSpace(winId))
+                        return "win:" + winId;
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    var linuxId = TryReadFirstLine("/etc/machine-id")
+                                  ?? TryReadFirstLine("/var/lib/dbus/machine-id");
+                    if (!string.IsNullOrWhiteSpace(linuxId))
+                        return "linux:" + linuxId;
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    var macId = TryReadMacPlatformUuid();
+                    if (!string.IsNullOrWhiteSpace(macId))
+                        return "mac:" + macId;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LicenseManager] Failed to read stable machine identifier: {ex.Message}");
+            }
+
+            return null;
+        }
+
+        [SupportedOSPlatform("windows")]
+        private static string? TryReadWindowsMachineGuid()
+        {
+            // HKLM\SOFTWARE\Microsoft\Cryptography\MachineGuid is created by Windows at
+            // install time and survives updates, user changes and hostname changes.
+            // It only changes when Windows is reinstalled.
+            try
+            {
+                using var key = RegistryKey
+                    .OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64)
+                    .OpenSubKey(@"SOFTWARE\Microsoft\Cryptography");
+
+                var value = key?.GetValue("MachineGuid") as string;
+                if (!string.IsNullOrWhiteSpace(value))
+                    return value;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LicenseManager] Failed to read MachineGuid (64-bit view): {ex.Message}");
+            }
+
+            try
+            {
+                using var key = RegistryKey
+                    .OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32)
+                    .OpenSubKey(@"SOFTWARE\Microsoft\Cryptography");
+
+                return key?.GetValue("MachineGuid") as string;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LicenseManager] Failed to read MachineGuid (32-bit view): {ex.Message}");
+                return null;
+            }
+        }
+
+        private static string? TryReadFirstLine(string path)
+        {
+            try
+            {
+                if (!File.Exists(path)) return null;
+                var content = File.ReadAllText(path).Trim();
+                return string.IsNullOrWhiteSpace(content) ? null : content;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LicenseManager] Failed to read {path}: {ex.Message}");
+                return null;
+            }
+        }
+
+        [SupportedOSPlatform("macos")]
+        private static string? TryReadMacPlatformUuid()
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "/usr/sbin/ioreg",
+                    Arguments = "-rd1 -c IOPlatformExpertDevice",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using var process = Process.Start(psi);
+                if (process == null) return null;
+
+                var output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit(2000);
+
+                const string marker = "IOPlatformUUID";
+                var idx = output.IndexOf(marker, StringComparison.Ordinal);
+                if (idx < 0) return null;
+
+                var start = output.IndexOf('"', idx + marker.Length);
+                if (start < 0) return null;
+                start = output.IndexOf('"', start + 1);
+                if (start < 0) return null;
+                var end = output.IndexOf('"', start + 1);
+                if (end < 0) return null;
+
+                var uuid = output.Substring(start + 1, end - start - 1).Trim();
+                return string.IsNullOrWhiteSpace(uuid) ? null : uuid;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LicenseManager] Failed to read macOS IOPlatformUUID: {ex.Message}");
+                return null;
             }
         }
 

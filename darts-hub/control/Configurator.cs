@@ -17,6 +17,7 @@ namespace darts_hub.control
         public bool WizardCompleted { get; set; }
         public bool ShowRobbel3DSetup { get; set; }
         public string LicenseKey { get; set; } = string.Empty;
+        public string HardwareId { get; set; } = string.Empty;
         public int SplashCountdownSeconds { get; set; } = 1;
 
         // Window layout persistence
@@ -141,6 +142,13 @@ namespace darts_hub.control
                 settingsUpdated = true;
             }
 
+            // Ensure HardwareId property exists (for backward compatibility)
+            if (parsedSettings.Property(nameof(AppConfiguration.HardwareId), StringComparison.OrdinalIgnoreCase) == null)
+            {
+                Settings.HardwareId = string.Empty;
+                settingsUpdated = true;
+            }
+
             // Force Robbel3D setup flag to true and request restart if it was explicitly false
             if (!Settings.ShowRobbel3DSetup)
             {
@@ -179,6 +187,7 @@ namespace darts_hub.control
                 UseSpecificMonitor = false,
                 PreferredMonitorIndex = 0,
                 SkippedVersion = string.Empty,
+                HardwareId = string.Empty,
                 WledOnCloseDevices = new List<WledDeviceConfig>(),
                 WledOnStartDevices = new List<WledStartDeviceConfig>()
             };

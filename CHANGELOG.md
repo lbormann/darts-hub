@@ -1,4 +1,11 @@
-﻿
+﻿## a2.0.2.3
+### Websocket
+    - new internal Caller Websocket for better performance and stability.
+
+## v2.0.2.2
+### Bugfix
+    - Hardware ID issues for License activation. 
+
 ## v2.0.2.1
 ### Bugfix
     - Fixed problem where wled presets where not loaded in settings screen. 
