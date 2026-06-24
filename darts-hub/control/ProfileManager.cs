@@ -519,7 +519,7 @@ namespace darts_hub.control
                 MacX64 = "https://github.com/Peschi90/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac",
                 MacArm64 = "https://github.com/Peschi90/darts-pixelit/releases/download/***VERSION***/darts-pixelit-mac"
             };
-            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("b2.0.1.6");
+            dartsPixelitDownloadUrl = dartsPixelitDownloadMap.GetDownloadUrlByOs("b2.0.1.7");
 
 
             var dartsGifDownloadMap = new DownloadMap
