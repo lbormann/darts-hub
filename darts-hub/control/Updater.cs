@@ -23,7 +23,7 @@ namespace darts_hub.control
         // ATTRIBUTES
 
         // Increase for new build ..
-        public static readonly string version = "a2.0.2.3";
+        public static readonly string version = "a2.0.2.4";
         //public static readonly string version = "b1.4.1.20";
 
 
@@ -35,9 +35,32 @@ namespace darts_hub.control
         public static event EventHandler<DownloadProgressChangedEventArgs>? ReleaseDownloadProgressed;
 
         private static string latestRepoVersion = string.Empty;
-        private const string appSourceUrl = "https://github.com/lbormann/darts-hub/releases/download";
-        private const string appSourceUrlLatest = "https://api.github.com/repos/lbormann/darts-hub/releases/latest";
-        public static readonly string appSourceUrlChangelog = "https://raw.githubusercontent.com/lbormann/darts-hub/main/CHANGELOG.md";
+
+        /// <summary>
+        /// All known upstream GitHub repositories that publish darts-hub releases.
+        /// The updater checks every source in parallel and picks the newest version
+        /// (regardless of channel: stable or beta).
+        /// </summary>
+        private static readonly UpdateSource[] updateSources = new[]
+        {
+            new UpdateSource("lbormann/darts-hub"),
+            new UpdateSource("Peschi90/darts-hub")
+        };
+
+        // Kept for backward compatibility with existing external references.
+        // Points to the changelog of the source that delivered the most recent
+        // version found by the last check (defaults to the primary source).
+        public static string appSourceUrlChangelog { get; private set; } = updateSources[0].ChangelogUrl;
+
+        // The source that owns the currently selected `latestRepoVersion`
+        // (set during version checks and rollback lookups; used for downloads).
+        private static UpdateSource selectedSource = updateSources[0];
+
+        // Maps a version tag to the source that published it. Populated by
+        // FetchAvailableVersionsAsync so rollback can pick the correct repo.
+        private static readonly Dictionary<string, UpdateSource> versionToSource =
+            new(StringComparer.OrdinalIgnoreCase);
+
         private const string appDestination = "updates";
         private const string requestUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36";
         private const int requestTimeout = 10; // Increased from 4 to 10 seconds
@@ -88,67 +111,66 @@ namespace darts_hub.control
             try
             {
                 UpdaterLogger.LogInfo($"Current version: {version}");
-                UpdaterLogger.LogInfo($"Checking latest stable release from: {appSourceUrlLatest}");
-                
-                var latestGithubVersion = await RetryHelper.ExecuteWithRetryAsync(async () =>
+                UpdaterLogger.LogInfo($"Checking latest stable release from {updateSources.Length} source(s)");
+
+                // Query every configured source in parallel and pick the newest
+                // version across all of them.
+                var perSourceResults = await Task.WhenAll(updateSources.Select(FetchLatestStableForSourceAsync));
+
+                UpdateSource? winningSource = null;
+                string? winningVersion = null;
+
+                foreach (var (source, tag) in perSourceResults)
                 {
-                    using var client = new HttpClient();
-                    client.DefaultRequestHeaders.Add("User-Agent", requestUserAgent);
-                    client.Timeout = TimeSpan.FromSeconds(requestTimeout);
-                    
-                    UpdaterLogger.LogDebug("Sending HTTP request to GitHub API");
-                    var result = await client.GetStringAsync(appSourceUrlLatest);
-                    
-                    UpdaterLogger.LogDebug("Parsing GitHub API response");
-                    int tagNameIndex = result.IndexOf("tag_name");
-                    if (tagNameIndex == -1) 
-                    {
-                        UpdaterLogger.LogError("GitHub API response parsing failed: tag_name not found");
-                        throw new ArgumentException("github-tagName-Index not found");
-                    }
-                    
-                    result = result.Substring(tagNameIndex);
-                    int tagNameCommaIndex = result.IndexOf(',');
-                    if (tagNameCommaIndex == -1) 
-                    {
-                        UpdaterLogger.LogError("GitHub API response parsing failed: tag_name comma not found");
-                        throw new ArgumentException("github-tagNameComma-Index not found");
-                    }
-                    
-                    result = result.Substring("tag_name: \"".Length, tagNameCommaIndex - "tag_name: \"".Length);
-                    return result.Replace("\"", "");
-                }, 3, 2000, "GitHub API Version Check");
+                    if (string.IsNullOrEmpty(tag))
+                        continue;
 
-                UpdaterLogger.LogInfo($"Latest GitHub version: {latestGithubVersion}");
-                LatestFoundVersion = latestGithubVersion;
+                    if (winningVersion == null || CompareVersions(tag, winningVersion) > 0)
+                    {
+                        winningVersion = tag;
+                        winningSource = source;
+                    }
+                }
 
-                if (CompareVersions(version, latestGithubVersion) < 0)
+                if (winningVersion == null || winningSource == null)
+                {
+                    UpdaterLogger.LogWarning("No stable releases found across any source");
+                    OnReleaseDownloadFailed(new ReleaseEventArgs("vx.x.x", "No stable releases found"));
+                    return;
+                }
+
+                UpdaterLogger.LogInfo($"Latest stable version: {winningVersion} (source: {winningSource.Repository})");
+                LatestFoundVersion = winningVersion;
+
+                if (CompareVersions(version, winningVersion) < 0)
                 {
                     // Skip when the found version is not newer than the skipped version
-                    if (!string.IsNullOrEmpty(SkippedVersion) 
-                        && CompareVersions(latestGithubVersion, SkippedVersion) <= 0)
+                    if (!string.IsNullOrEmpty(SkippedVersion)
+                        && CompareVersions(winningVersion, SkippedVersion) <= 0)
                     {
-                        UpdaterLogger.LogInfo($"Version {latestGithubVersion} is <= skipped version {SkippedVersion} - treating as no update");
-                        OnNoNewReleaseFound(new ReleaseEventArgs(latestGithubVersion, string.Empty));
+                        UpdaterLogger.LogInfo($"Version {winningVersion} is <= skipped version {SkippedVersion} - treating as no update");
+                        OnNoNewReleaseFound(new ReleaseEventArgs(winningVersion, string.Empty));
                     }
                     else
                     {
                         UpdaterLogger.LogInfo("New version found - fetching changelog");
-                        latestRepoVersion = latestGithubVersion;
+                        latestRepoVersion = winningVersion;
+                        selectedSource = winningSource;
+                        appSourceUrlChangelog = winningSource.ChangelogUrl;
 
-                    var changelog = await RetryHelper.ExecuteWithRetryAsync(async () =>
-                    {
-                        return await Helper.AsyncHttpGet(appSourceUrlChangelog, requestTimeout);
-                    }, 3, 1000, "Changelog Download");
+                        var changelog = await RetryHelper.ExecuteWithRetryAsync(async () =>
+                        {
+                            return await Helper.AsyncHttpGet(winningSource.ChangelogUrl, requestTimeout);
+                        }, 3, 1000, "Changelog Download");
 
-                    UpdaterLogger.LogInfo($"Successfully retrieved changelog ({changelog.Length} characters)");
+                        UpdaterLogger.LogInfo($"Successfully retrieved changelog ({changelog.Length} characters)");
                         OnNewReleaseFound(new ReleaseEventArgs(latestRepoVersion, changelog));
                     }
                 }
                 else
                 {
                     UpdaterLogger.LogInfo("Current version is up to date");
-                    OnNoNewReleaseFound(new ReleaseEventArgs(latestGithubVersion, string.Empty));
+                    OnNoNewReleaseFound(new ReleaseEventArgs(winningVersion, string.Empty));
                 }
             }
             catch (Exception ex)
@@ -158,58 +180,85 @@ namespace darts_hub.control
             }
         }
 
-        private static async Task CheckNewBetaVersion()
+        private static async Task<(UpdateSource Source, string? Tag)> FetchLatestStableForSourceAsync(UpdateSource source)
         {
             try
             {
-                UpdaterLogger.LogInfo($"Current version: {version}");
-                UpdaterLogger.LogInfo("Checking for newest release (beta or stable) from GitHub API");
-
-                var newestVersion = await RetryHelper.ExecuteWithRetryAsync(async () =>
+                var tag = await RetryHelper.ExecuteWithRetryAsync(async () =>
                 {
                     using var client = new HttpClient();
                     client.DefaultRequestHeaders.Add("User-Agent", requestUserAgent);
                     client.Timeout = TimeSpan.FromSeconds(requestTimeout);
 
-                    UpdaterLogger.LogDebug("Sending HTTP request to GitHub API for all releases");
-                    var result = await client.GetStringAsync("https://api.github.com/repos/lbormann/darts-hub/releases");
+                    UpdaterLogger.LogDebug($"Sending HTTP request to {source.LatestReleaseApiUrl}");
+                    var result = await client.GetStringAsync(source.LatestReleaseApiUrl);
+                    return ExtractTagName(result, source.Repository);
+                }, 3, 2000, $"GitHub API Stable Version Check ({source.Repository})");
 
-                    UpdaterLogger.LogDebug("Parsing releases to find newest version (beta or stable)");
-                    var releases = JsonDocument.Parse(result).RootElement.EnumerateArray();
-                    string? bestTag = null;
+                UpdaterLogger.LogInfo($"Latest stable from {source.Repository}: {tag}");
+                return (source, tag);
+            }
+            catch (Exception ex)
+            {
+                UpdaterLogger.LogWarning($"Failed to fetch latest stable release from {source.Repository}: {ex.Message}");
+                return (source, null);
+            }
+        }
 
-                    foreach (var release in releases)
-                    {
-                        if (release.GetProperty("draft").GetBoolean())
-                            continue;
+        private static string ExtractTagName(string json, string repositoryForLog)
+        {
+            int tagNameIndex = json.IndexOf("tag_name");
+            if (tagNameIndex == -1)
+            {
+                UpdaterLogger.LogError($"GitHub API response parsing failed for {repositoryForLog}: tag_name not found");
+                throw new ArgumentException("github-tagName-Index not found");
+            }
 
-                        var tag = release.GetProperty("tag_name").GetString();
-                        if (string.IsNullOrEmpty(tag))
-                            continue;
+            var sub = json.Substring(tagNameIndex);
+            int tagNameCommaIndex = sub.IndexOf(',');
+            if (tagNameCommaIndex == -1)
+            {
+                UpdaterLogger.LogError($"GitHub API response parsing failed for {repositoryForLog}: tag_name comma not found");
+                throw new ArgumentException("github-tagNameComma-Index not found");
+            }
 
-                        if (bestTag == null || CompareVersions(tag, bestTag) > 0)
-                        {
-                            bestTag = tag;
-                        }
-                    }
+            sub = sub.Substring("tag_name: \"".Length, tagNameCommaIndex - "tag_name: \"".Length);
+            return sub.Replace("\"", "");
+        }
 
-                    if (bestTag == null)
-                    {
-                        UpdaterLogger.LogWarning("No releases found");
-                    }
+        private static async Task CheckNewBetaVersion()
+        {
+            try
+            {
+                UpdaterLogger.LogInfo($"Current version: {version}");
+                UpdaterLogger.LogInfo($"Checking for newest release (beta or stable) across {updateSources.Length} source(s)");
 
-                    return bestTag;
-                }, 3, 2000, "GitHub API Beta Version Check");
+                var perSourceResults = await Task.WhenAll(updateSources.Select(FetchNewestForSourceAsync));
 
-                if (newestVersion != null)
+                UpdateSource? winningSource = null;
+                string? newestVersion = null;
+
+                foreach (var (source, tag) in perSourceResults)
                 {
-                    UpdaterLogger.LogInfo($"Newest available version: {newestVersion}");
+                    if (string.IsNullOrEmpty(tag))
+                        continue;
+
+                    if (newestVersion == null || CompareVersions(tag, newestVersion) > 0)
+                    {
+                        newestVersion = tag;
+                        winningSource = source;
+                    }
+                }
+
+                if (newestVersion != null && winningSource != null)
+                {
+                    UpdaterLogger.LogInfo($"Newest available version: {newestVersion} (source: {winningSource.Repository})");
                     LatestFoundVersion = newestVersion;
 
                     if (CompareVersions(version, newestVersion) < 0)
                     {
                         // Skip when the found version is not newer than the skipped version
-                        if (!string.IsNullOrEmpty(SkippedVersion) 
+                        if (!string.IsNullOrEmpty(SkippedVersion)
                             && CompareVersions(newestVersion, SkippedVersion) <= 0)
                         {
                             UpdaterLogger.LogInfo($"Version {newestVersion} is <= skipped version {SkippedVersion} - treating as no update");
@@ -219,13 +268,15 @@ namespace darts_hub.control
                         {
                             UpdaterLogger.LogInfo("Newer version found - fetching changelog");
                             latestRepoVersion = newestVersion;
+                            selectedSource = winningSource;
+                            appSourceUrlChangelog = winningSource.ChangelogUrl;
 
-                        var changelog = await RetryHelper.ExecuteWithRetryAsync(async () =>
-                        {
-                            return await Helper.AsyncHttpGet(appSourceUrlChangelog, requestTimeout);
-                        }, 3, 1000, "Changelog Download");
+                            var changelog = await RetryHelper.ExecuteWithRetryAsync(async () =>
+                            {
+                                return await Helper.AsyncHttpGet(winningSource.ChangelogUrl, requestTimeout);
+                            }, 3, 1000, "Changelog Download");
 
-                        UpdaterLogger.LogInfo($"Successfully retrieved changelog ({changelog.Length} characters)");
+                            UpdaterLogger.LogInfo($"Successfully retrieved changelog ({changelog.Length} characters)");
                             OnNewReleaseFound(new ReleaseEventArgs(latestRepoVersion, changelog));
                         }
                     }
@@ -237,7 +288,7 @@ namespace darts_hub.control
                 }
                 else
                 {
-                    UpdaterLogger.LogWarning("No releases available");
+                    UpdaterLogger.LogWarning("No releases available across any source");
                     OnNoNewReleaseFound(new ReleaseEventArgs("vx.x.x", "No releases found."));
                 }
             }
@@ -245,6 +296,50 @@ namespace darts_hub.control
             {
                 UpdaterLogger.LogError("Failed to check for beta version updates", ex);
                 OnReleaseDownloadFailed(new ReleaseEventArgs("vx.x.x", ex.Message));
+            }
+        }
+
+        private static async Task<(UpdateSource Source, string? Tag)> FetchNewestForSourceAsync(UpdateSource source)
+        {
+            try
+            {
+                var tag = await RetryHelper.ExecuteWithRetryAsync(async () =>
+                {
+                    using var client = new HttpClient();
+                    client.DefaultRequestHeaders.Add("User-Agent", requestUserAgent);
+                    client.Timeout = TimeSpan.FromSeconds(requestTimeout);
+
+                    UpdaterLogger.LogDebug($"Sending HTTP request to {source.AllReleasesApiUrl}");
+                    var result = await client.GetStringAsync(source.AllReleasesApiUrl);
+
+                    var releases = JsonDocument.Parse(result).RootElement.EnumerateArray();
+                    string? bestTag = null;
+
+                    foreach (var release in releases)
+                    {
+                        if (release.GetProperty("draft").GetBoolean())
+                            continue;
+
+                        var tagName = release.GetProperty("tag_name").GetString();
+                        if (string.IsNullOrEmpty(tagName))
+                            continue;
+
+                        if (bestTag == null || CompareVersions(tagName, bestTag) > 0)
+                        {
+                            bestTag = tagName;
+                        }
+                    }
+
+                    return bestTag;
+                }, 3, 2000, $"GitHub API Beta Version Check ({source.Repository})");
+
+                UpdaterLogger.LogInfo($"Newest from {source.Repository}: {tag ?? "<none>"}");
+                return (source, tag);
+            }
+            catch (Exception ex)
+            {
+                UpdaterLogger.LogWarning($"Failed to fetch releases from {source.Repository}: {ex.Message}");
+                return (source, null);
             }
         }
 
@@ -270,8 +365,8 @@ namespace darts_hub.control
                     downloadPath = Path.Join(destinationPath, appDestination, appSourceFile);
                     downloadDirectory = Path.GetDirectoryName(downloadPath);
 
-                    string downloadUrl = appSourceUrl + "/" + latestRepoVersion + "/" + appSourceFile;
-                    
+                    string downloadUrl = selectedSource.DownloadBase + "/" + latestRepoVersion + "/" + appSourceFile;
+
                     UpdaterLogger.LogInfo($"Download URL: {downloadUrl}");
                     UpdaterLogger.LogInfo($"Download path: {downloadPath}");
                     UpdaterLogger.LogInfo($"Download directory: {downloadDirectory}");
@@ -619,49 +714,86 @@ namespace darts_hub.control
         }
 
         /// <summary>
-        /// Fetches the last available release versions from GitHub (up to 4), excluding the current version.
-        /// If beta mode is active, beta versions are included; otherwise only stable (v-prefixed) versions.
+        /// Fetches the last available release versions from all configured sources (up to maxCount),
+        /// excluding the current version. If beta mode is active, beta versions are included;
+        /// otherwise only stable (v-prefixed) versions.
+        /// Also records which source published each tag so rollback can target the correct repository.
         /// Does not use RetryHelper to avoid triggering the global loading overlay.
         /// </summary>
         public static async Task<List<string>> FetchAvailableVersionsAsync(int maxCount = 4)
         {
-            UpdaterLogger.LogInfo($"Fetching available versions (beta={IsBetaTester}, max={maxCount})");
+            UpdaterLogger.LogInfo($"Fetching available versions (beta={IsBetaTester}, max={maxCount}, sources={updateSources.Length})");
 
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.Add("User-Agent", requestUserAgent);
-            client.Timeout = TimeSpan.FromSeconds(requestTimeout);
+            // Reset previous mapping so callers always see a fresh state.
+            versionToSource.Clear();
 
-            var result = await client.GetStringAsync("https://api.github.com/repos/lbormann/darts-hub/releases");
-            var releases = JsonDocument.Parse(result).RootElement.EnumerateArray();
-            var tags = new List<string>();
+            var perSourceTags = await Task.WhenAll(updateSources.Select(FetchAllVersionsForSourceAsync));
 
-            foreach (var release in releases)
+            // Aggregate tags across sources; first writer per tag wins to make the mapping stable.
+            var aggregated = new List<string>();
+            foreach (var (source, sourceTags) in perSourceTags)
             {
-                if (release.GetProperty("draft").GetBoolean())
+                if (sourceTags == null)
                     continue;
 
-                var tag = release.GetProperty("tag_name").GetString();
-                if (string.IsNullOrEmpty(tag))
-                    continue;
+                foreach (var tag in sourceTags)
+                {
+                    if (string.IsNullOrEmpty(tag))
+                        continue;
 
-                // Skip current version
-                if (string.Equals(tag, version, StringComparison.OrdinalIgnoreCase))
-                    continue;
+                    // Skip current version
+                    if (string.Equals(tag, version, StringComparison.OrdinalIgnoreCase))
+                        continue;
 
-                bool isBeta = tag.StartsWith("b", StringComparison.OrdinalIgnoreCase);
+                    bool isBeta = tag.StartsWith("b", StringComparison.OrdinalIgnoreCase);
+                    if (!IsBetaTester && isBeta)
+                        continue;
 
-                if (!IsBetaTester && isBeta)
-                    continue;
-
-                tags.Add(tag);
+                    if (!versionToSource.ContainsKey(tag))
+                    {
+                        versionToSource[tag] = source;
+                        aggregated.Add(tag);
+                    }
+                }
             }
 
             // Sort descending (newest first)
-            tags.Sort((a, b) => CompareVersions(b, a));
+            aggregated.Sort((a, b) => CompareVersions(b, a));
 
-            var versions = tags.Take(maxCount).ToList();
-            UpdaterLogger.LogInfo($"Found {versions.Count} available version(s)");
+            var versions = aggregated.Take(maxCount).ToList();
+            UpdaterLogger.LogInfo($"Found {versions.Count} available version(s) across {updateSources.Length} source(s)");
             return versions;
+        }
+
+        private static async Task<(UpdateSource Source, List<string>? Tags)> FetchAllVersionsForSourceAsync(UpdateSource source)
+        {
+            try
+            {
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.Add("User-Agent", requestUserAgent);
+                client.Timeout = TimeSpan.FromSeconds(requestTimeout);
+
+                var result = await client.GetStringAsync(source.AllReleasesApiUrl);
+                var releases = JsonDocument.Parse(result).RootElement.EnumerateArray();
+
+                var tags = new List<string>();
+                foreach (var release in releases)
+                {
+                    if (release.GetProperty("draft").GetBoolean())
+                        continue;
+
+                    var tag = release.GetProperty("tag_name").GetString();
+                    if (!string.IsNullOrEmpty(tag))
+                        tags.Add(tag);
+                }
+
+                return (source, tags);
+            }
+            catch (Exception ex)
+            {
+                UpdaterLogger.LogWarning($"Failed to fetch available versions from {source.Repository}: {ex.Message}");
+                return (source, null);
+            }
         }
 
         /// <summary>
@@ -693,9 +825,16 @@ namespace darts_hub.control
                 downloadPath = Path.Join(destinationPath, appDestination, appSourceFile);
                 downloadDirectory = Path.GetDirectoryName(downloadPath);
 
-                string downloadUrl = appSourceUrl + "/" + targetVersion + "/" + appSourceFile;
+                // Choose the source that previously advertised this tag (set by
+                // FetchAvailableVersionsAsync); fall back to the primary source.
+                var sourceForRollback = versionToSource.TryGetValue(targetVersion, out var mappedSource)
+                    ? mappedSource
+                    : updateSources[0];
+                selectedSource = sourceForRollback;
 
-                UpdaterLogger.LogInfo($"Download URL: {downloadUrl}");
+                string downloadUrl = sourceForRollback.DownloadBase + "/" + targetVersion + "/" + appSourceFile;
+
+                UpdaterLogger.LogInfo($"Download URL: {downloadUrl} (source: {sourceForRollback.Repository})");
                 UpdaterLogger.LogInfo($"Download path: {downloadPath}");
 
                 UpdaterLogger.LogInfo("Cleaning up existing download directory");
@@ -767,6 +906,32 @@ namespace darts_hub.control
         private static void OnReleaseDownloadProgressed(DownloadProgressChangedEventArgs e)
         {
             ReleaseDownloadProgressed?.Invoke(typeof(Updater), e);
+        }
+
+        /// <summary>
+        /// Represents a GitHub repository that publishes darts-hub releases.
+        /// Holds all derived URLs (API endpoints, download base, raw changelog)
+        /// for a single "owner/repo" slug.
+        /// </summary>
+        private sealed class UpdateSource
+        {
+            public UpdateSource(string repository)
+            {
+                if (string.IsNullOrWhiteSpace(repository))
+                    throw new ArgumentException("Repository slug must not be empty.", nameof(repository));
+
+                Repository = repository;
+                LatestReleaseApiUrl = $"https://api.github.com/repos/{repository}/releases/latest";
+                AllReleasesApiUrl = $"https://api.github.com/repos/{repository}/releases";
+                DownloadBase = $"https://github.com/{repository}/releases/download";
+                ChangelogUrl = $"https://raw.githubusercontent.com/{repository}/main/CHANGELOG.md";
+            }
+
+            public string Repository { get; }
+            public string LatestReleaseApiUrl { get; }
+            public string AllReleasesApiUrl { get; }
+            public string DownloadBase { get; }
+            public string ChangelogUrl { get; }
         }
 
     }
