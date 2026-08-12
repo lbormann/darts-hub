@@ -1,4 +1,8 @@
-﻿## v2.0.2.5
+﻿## v2.0.2.6
+### Darts-Caller
+    - version Update because of autodarts domain changes.
+
+## v2.0.2.5
 ### Websocket
     - new internal Caller Websocket for better performance and stability.
 
